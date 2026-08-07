@@ -11,6 +11,7 @@ import { register as registerAwake } from "./tools/awake.js";
 import { register as registerScreenshot } from "./tools/screenshot.js";
 import { register as registerAnnotate } from "./tools/annotate.js";
 import { register as registerAgents } from "./tools/agents.js";
+import { register as registerUpdate } from "./tools/update.js";
 
 const { version } = createRequire(import.meta.url)("../package.json");
 
@@ -24,6 +25,7 @@ export function createPlonkServer(): McpServer {
   registerScreenshot(server);
   registerAnnotate(server);
   registerAgents(server);
+  registerUpdate(server);
   return server;
 }
 

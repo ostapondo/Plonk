@@ -6,7 +6,14 @@ No dates, just order. Things ship when they're ready. Ideas and votes go to
 ## Now
 
 - **Notarized builds** — no more "Open Anyway" dance on first launch.
-- **Auto-updates** — Sparkle, so 0.0.x fixes reach you without re-downloading.
+
+Auto-updates shipped, without Sparkle: the Updates page checks GitHub, and
+installing swaps in a build only when it is signed with the same certificate as
+the running copy. That check is what macOS uses for Accessibility and Screen
+Recording too, so an update keeps the permissions the user already granted. The
+check is one call to api.github.com, carries no identifier, and can be turned
+off. Notarization will change the signing certificate once, and the permissions
+along with it — the last time that happens.
 
 ## Next — any agent, not just one
 

@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let eventBroadcaster = EventBroadcaster()
     private let voice = VoiceManager()
     private let hotkeys = HotkeyManager()
+    private let updates = UpdateManager()
     private let model = AppModel()
     private lazy var launcher = WorkspaceLauncher(windows: windows)
     private lazy var presenter = WindowPresenter(model: model)
@@ -42,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupVoice()
         setupDragSnap()
         setupServer()
+        setupUpdates()
         refreshModel()
 
         applyLaunchAtLogin(store.config.launchAtLogin)
@@ -209,6 +211,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragSnap.start()
     }
 
+    private func setupUpdates() {
+        updates.onChange = { [weak self] in
+            guard let self else { return }
+            refreshUpdateModel()
+            refreshStatusMenu()
+            router?.changes.bump("update")
+        }
+        // Progress moves the bar and nothing else: agents are told about an
+        // update starting and finishing, not about every chunk of it.
+        updates.onProgress = { [weak self] in
+            self?.model.updateProgress = self?.updates.progress ?? 0
+        }
+        updates.automatic = store.config.updateCheckAutomatically
+        statusMenu.updateVersion = { [weak self] in self?.updates.available?.version.text }
+        statusMenu.onOpenUpdate = { [weak self] in self?.openPage("update") }
+
+        router.updateState = { [weak self] in
+            guard let self else { return [:] }
+            var state: [String: Any] = [
+                "installed": UpdateManager.currentVersionText,
+                "available": updates.available != nil,
+                "phase": updates.phase.rawValue,
+                "status": updates.status,
+                "automatic": store.config.updateCheckAutomatically,
+            ]
+            if let release = updates.available {
+                state["latest"] = release.version.text
+                state["notes"] = release.notes
+                state["page"] = release.pageURL.absoluteString
+            }
+            return state
+        }
+        router.checkForUpdates = { [weak self] in self?.updates.check() }
+        router.installUpdate = { [weak self] in
+            // The reply has to reach the caller before the process goes away.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.updates.install() }
+        }
+        updates.start()
+    }
+
     private func setupServer() {
         router = Router(store: store, windows: windows, awake: awake, agents: agents)
         router.changes.onEvent = { [weak self] rev, what in
@@ -316,17 +358,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsPage(id: "awake", title: "Keep Awake", icon: "cup.and.saucer", section: "Gadgets") { AnyView(AwakePage(model: $0)) },
             SettingsPage(id: "shot", title: "Screenshot", icon: "camera.viewfinder", section: "Gadgets") { AnyView(ShotPage(model: $0)) },
             SettingsPage(id: "ai", title: "AI · MCP", icon: "sparkles", section: "Setup") { AnyView(AIPage(model: $0)) },
+            SettingsPage(id: "update", title: "Updates", icon: "arrow.down.circle", section: "Setup") { AnyView(UpdatePage(model: $0)) },
         ]
         refreshWorkspaceModel()
         refreshZoneModel()
         refreshHotkeyModel()
         refreshAgentModel()
+        refreshUpdateModel()
     }
 
     /// Preflight does not prompt, so it is safe to poll whenever a window opens.
     private func refreshPermissions() {
         model.accessibilityGranted = windows.isTrusted
         model.screenRecordingGranted = CGPreflightScreenCaptureAccess()
+    }
+
+    private func refreshUpdateModel() {
+        model.updateCheckAutomatically = store.config.updateCheckAutomatically
+        model.updateAvailableVersion = updates.available?.version.text ?? ""
+        model.updateNotes = updates.available?.notes ?? ""
+        model.updateStatus = updates.status
+        model.updatePhase = updates.phase.rawValue
+        model.updateProgress = updates.progress
     }
 
     private func refreshAgentModel() {
@@ -427,6 +480,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func openMainWindow() {
         refreshPermissions()
         presenter.showMainWindow()
+    }
+
+    private func openPage(_ id: String) {
+        model.selectedPage = id
+        openMainWindow()
     }
 }
 
@@ -661,5 +719,23 @@ extension AppDelegate: AppActions {
     func setAgentExclusive(_ on: Bool) {
         store.update { $0.agentExclusive = on }
         refreshAgentModel()
+    }
+
+    func setUpdateCheckAutomatically(_ on: Bool) {
+        store.update { $0.updateCheckAutomatically = on }
+        updates.automatic = on
+        refreshUpdateModel()
+    }
+
+    func checkForUpdates() {
+        updates.check()
+    }
+
+    func installUpdate() {
+        updates.install()
+    }
+
+    func openReleasePage() {
+        NSWorkspace.shared.open(updates.available?.pageURL ?? Release.releasesPageURL)
     }
 }

@@ -89,10 +89,12 @@ One listener on loopback. The only outbound connection Plonk makes is the
 update check: on launch and once a day it asks `api.github.com` for the latest
 release, and sends nothing but a User-Agent naming the app and its version — no
 identifier, no account, no analytics, no crash reporter. Turn it off under
-Updates and it stops happening; `nettop` or Little Snitch will then show a
-process that only ever listens. The URLs compiled into the app are that
-endpoint, the releases page, and the issue tracker that opens when you click
-Report a bug — [Release.swift](App/Sources/plonk/Release.swift) has all three.
+Updates and it stops happening — including for agents, which get a 409 rather
+than a connection made on your behalf, so the buttons on that page are the only
+thing that can trigger one. `nettop` or Little Snitch will then show a process
+that only ever listens. The URLs compiled into the app are that endpoint, the
+releases page, and the issue tracker that opens when you click Report a bug —
+[Release.swift](App/Sources/plonk/Release.swift) has all three.
 
 **A web page cannot drive it.** The API is loopback-only and unauthenticated, so
 it refuses anything carrying headers a browser cannot suppress:

@@ -1,0 +1,169 @@
+import Foundation
+
+// Everything about a published release that can be worked out without touching
+// the network or the disk, so the update path is testable without either.
+
+/// A dotted version, tolerant of the "v" GitHub puts on tags.
+struct ReleaseVersion: Comparable, CustomStringConvertible {
+    let parts: [Int]
+    let text: String
+
+    init?(_ raw: String) {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        let body = trimmed.hasPrefix("v") || trimmed.hasPrefix("V")
+            ? String(trimmed.dropFirst()) : trimmed
+        // A pre-release suffix ("0.1.0-beta.2") orders below its own release,
+        // which is more than this needs: releases that carry one are skipped
+        // before they ever get here.
+        let numeric = body.prefix { $0.isNumber || $0 == "." }
+        let parts = numeric.split(separator: ".").compactMap { Int($0) }
+        guard !parts.isEmpty else { return nil }
+        self.parts = parts
+        self.text = body
+    }
+
+    var description: String { text }
+
+    static func < (lhs: ReleaseVersion, rhs: ReleaseVersion) -> Bool {
+        let width = max(lhs.parts.count, rhs.parts.count)
+        for index in 0..<width {
+            let left = index < lhs.parts.count ? lhs.parts[index] : 0
+            let right = index < rhs.parts.count ? rhs.parts[index] : 0
+            if left != right { return left < right }
+        }
+        return false
+    }
+
+    static func == (lhs: ReleaseVersion, rhs: ReleaseVersion) -> Bool {
+        !(lhs < rhs) && !(rhs < lhs)
+    }
+}
+
+struct Release {
+    let version: ReleaseVersion
+    /// The .zip asset holding Plonk.app.
+    let downloadURL: URL
+    let pageURL: URL
+    let notes: String
+    /// Asset size in bytes, for the progress bar. Zero when GitHub omits it.
+    let size: Int64
+
+    /// Reads GitHub's `releases/latest` payload. Drafts and pre-releases are
+    /// rejected rather than offered: they are published to be tried by hand.
+    static func parse(_ data: Data) throws -> Release {
+        // Whatever comes back leaves as an UpdateError: the text reaches the
+        // user, and "JSON text did not start with array or object" does not
+        // tell them anything they can act on.
+        let parsed = try? JSONSerialization.jsonObject(with: data)
+        guard let root = parsed as? [String: Any] else {
+            throw UpdateError.malformedFeed("the release feed was not an object")
+        }
+        if root["draft"] as? Bool == true || root["prerelease"] as? Bool == true {
+            throw UpdateError.malformedFeed("the latest release is a draft or pre-release")
+        }
+        guard let tag = root["tag_name"] as? String, let version = ReleaseVersion(tag) else {
+            throw UpdateError.malformedFeed("the release has no usable tag_name")
+        }
+        // The app archive, not merely the first zip: a release that also
+        // carries symbols or checksums would otherwise hand the updater
+        // whichever asset happened to be uploaded first, and every installed
+        // copy would follow it. The named form wins, a lone zip is the
+        // fallback for releases made before the name settled.
+        let assets = (root["assets"] as? [[String: Any]]) ?? []
+        let zips = assets.filter { ($0["name"] as? String)?.hasSuffix(".zip") == true }
+        let named = zips.first { ($0["name"] as? String)?.hasPrefix("Plonk-") == true }
+        guard let asset = named ?? (zips.count == 1 ? zips.first : nil),
+              let download = (asset["browser_download_url"] as? String).flatMap(URL.init(string:)) else {
+            throw UpdateError.malformedFeed(
+                zips.isEmpty
+                    ? "release \(version) ships no .zip asset"
+                    : "release \(version) ships several zips and none is named Plonk-<version>.zip"
+            )
+        }
+        let page = (root["html_url"] as? String).flatMap(URL.init(string:))
+            ?? URL(string: "https://github.com/\(repository)/releases/latest")!
+        return Release(
+            version: version,
+            downloadURL: download,
+            pageURL: page,
+            notes: (root["body"] as? String) ?? "",
+            size: (asset["size"] as? NSNumber)?.int64Value ?? 0
+        )
+    }
+
+    static let repository = "ostapondo/Plonk"
+    static let latestURL = URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!
+    static let releasesPageURL = URL(string: "https://github.com/\(repository)/releases/latest")!
+
+    /// Swaps the staged copy in once the running one has exited. It has to
+    /// outlive the app it is replacing, so it is a script rather than work on a
+    /// queue: nothing in this process is around to finish the job. Paths arrive
+    /// as arguments, never interpolated, so a space or a quote in one cannot
+    /// turn into shell syntax.
+    static let installScript = """
+    #!/bin/sh
+    # Written by Plonk. Replaces an installed Plonk.app with a verified copy.
+    set -u
+    pid=$1
+    staged=$2
+    installed=$3
+
+    # The app quits right after spawning this; 10s is long past generous.
+    waited=0
+    while kill -0 "$pid" 2>/dev/null; do
+    	[ "$waited" -ge 100 ] && exit 1
+    	waited=$((waited + 1))
+    	sleep 0.1
+    done
+
+    aside="$installed.plonk-old"
+    rm -rf "$aside"
+    mv "$installed" "$aside" || exit 1
+    if ! ditto "$staged" "$installed"; then
+    	# Put the working copy back rather than leave the user with nothing.
+    	rm -rf "$installed"
+    	mv "$aside" "$installed"
+    	exit 1
+    fi
+    # Belt and braces: URLSession sets no quarantine, but a future download path
+    # might, and a quarantined bundle would face the user with Gatekeeper.
+    xattr -d -r com.apple.quarantine "$installed" 2>/dev/null
+    rm -rf "$aside" "$staged"
+    open "$installed"
+    """
+}
+
+enum UpdateError: LocalizedError {
+    case malformedFeed(String)
+    case network(String)
+    case unpackFailed(String)
+    case signatureRejected(String)
+    case adHocCopy
+    case notInstalled
+    case notWritable(String)
+    case wrongPayload(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .malformedFeed(let why):
+            return "The update feed could not be read: \(why)."
+        case .network(let why):
+            return "The update check failed: \(why)."
+        case .unpackFailed(let why):
+            return "The download could not be unpacked: \(why)."
+        case .signatureRejected(let why):
+            return "The download was rejected: \(why). Nothing was installed."
+        case .adHocCopy:
+            return """
+            This copy is ad-hoc signed, so a downloaded build cannot be checked against it. \
+            Update by hand from the releases page, once; later updates install themselves.
+            """
+        case .notInstalled:
+            return "Updates only apply to Plonk.app, and this copy is running unbundled."
+        case .notWritable(let path):
+            return "Plonk cannot write to \(path). Move Plonk.app somewhere you own, then try again."
+        case .wrongPayload(let why):
+            return "The download did not contain the expected app: \(why)."
+        }
+    }
+}

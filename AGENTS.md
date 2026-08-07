@@ -68,7 +68,11 @@ Put new logic there and cover it in `App/Tests/plonkTests/`.
   requests (`ControlServer.browserRejection`). Do not add CORS headers.
 - Nothing on the main thread may wait on another process or on the user.
   `screencapture` runs asynchronously for exactly this reason.
-- Do not add network calls, telemetry, or third-party Swift dependencies.
+- No telemetry, no analytics, no crash reporting, and no third-party Swift
+  dependencies. The update check in `UpdateManager` is the only outbound
+  connection the app is allowed to make — one host, no identifier, and off
+  entirely when the user says so. Anything else that wants the network needs
+  the README's privacy section rewritten first, which is the point of the rule.
 - Do not commit build artifacts (`.build/`, `Plonk.app`, `node_modules/`).
 
 ## Agent notes
@@ -86,6 +90,15 @@ Things that have already cost someone an hour.
   ad-hoc signing. A grant that keeps vanishing across rebuilds is a stale entry
   from an older signature: `tccutil reset ScreenCapture dev.plonk.app`, then
   grant it once more.
+- **Releases go out through `scripts/release.sh`, never by hand.** v0.0.3 was
+  zipped manually, went out ad-hoc signed, and reset the permissions of every
+  user who installed it — and no copy can auto-update to or from it, because
+  `UpdateManager` installs a build only when it satisfies the running copy's
+  designated requirement. The script holds every release to the requirement
+  recorded in `scripts/release-requirement` — not to the bundle's own
+  signature, which would only be comparing a build with itself. Changing that
+  file changes it for everyone who has already installed: they lose both
+  permissions once and cannot update automatically across the change.
 - **`CGFloat` is not `Double`.** It is its own struct, so
   `[String: CGFloat] as? [String: Double]` returns nil. Anything that crosses
   the `[String: Any]` boundary — `WindowManager.listWindows` and everything

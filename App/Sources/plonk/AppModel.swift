@@ -49,6 +49,12 @@ protocol AppActions: AnyObject {
     /// Nil clears the selection, so any agent may drive again.
     func selectAgent(_ name: String?)
     func setAgentExclusive(_ on: Bool)
+
+    func setUpdateCheckAutomatically(_ on: Bool)
+    func checkForUpdates()
+    /// Quits and relaunches into the new version when it succeeds.
+    func installUpdate()
+    func openReleasePage()
 }
 
 final class AppModel: ObservableObject {
@@ -91,6 +97,13 @@ final class AppModel: ObservableObject {
     @Published var connectedAgents: [String] = []
     @Published var selectedAgent: String?
     @Published var agentExclusive = false
+    @Published var updateCheckAutomatically = true
+    /// Non-empty only while a newer release is on offer.
+    @Published var updateAvailableVersion = ""
+    @Published var updateNotes = ""
+    @Published var updateStatus = ""
+    @Published var updatePhase = "idle"
+    @Published var updateProgress = 0.0
 
     weak var actions: AppActions?
 }

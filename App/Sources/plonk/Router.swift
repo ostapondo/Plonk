@@ -24,6 +24,9 @@ import Network
 //   POST /agents/exclusive { on }      only the selected agent may change things
 //   POST /agents/ask       { prompt, agent? }   queue a task for an agent (default: active)
 //   GET  /agents/inbox?agent=<name>&wait=<0-25>  long-poll the agent's queued tasks
+//   GET  /update/state     installed and available versions, and what the last check found
+//   POST /update/check     asks GitHub for the latest release; the result lands in /update/state
+//   POST /update/install   downloads it, checks its signature, swaps it in, relaunches
 //   GET  /events           SSE stream of {"rev","what"}; rev also rides in /state
 //
 // Requests may carry X-Plonk-Agent: name/version (and X-Plonk-Agent-Pid) so
@@ -50,6 +53,11 @@ final class Router {
     /// Set by AppDelegate. Takes over a connection for the event stream and
     /// the revision its first frame reports.
     var attachEvents: ((NWConnection, Int) -> Void)?
+    /// Set by AppDelegate. Checking reaches the network and installing quits
+    /// the app, so neither belongs to a route handler.
+    var updateState: (() -> [String: Any])?
+    var checkForUpdates: (() -> Void)?
+    var installUpdate: (() -> Void)?
     var didChangeLayouts: (() -> Void)?
     var didChangeZones: (() -> Void)?
     var didChangeAgents: (() -> Void)?
@@ -272,6 +280,59 @@ final class Router {
         case ("POST", "/shot/annotate"):
             respond(annotateRoute(body))
 
+        case ("GET", "/update/state"):
+            respond(.ok(updateState?() ?? ["error": "updates are not available"]))
+
+        case ("POST", "/update/check"):
+            guard let checkForUpdates, let updateState else {
+                respond(.failed("updates are not available"))
+                return
+            }
+            // Turning the check off has to mean nothing dials out, including
+            // on an agent's behalf. The API has no authentication, so anything
+            // running as the user could otherwise undo the setting silently —
+            // and the app promises a process that only listens. The button in
+            // Plonk still works: that one is the user asking.
+            guard store.config.updateCheckAutomatically else {
+                respond(HTTPResponse(status: 409, json: [
+                    "error": "the user turned update checks off, so Plonk makes no outbound "
+                        + "connection. They can check from Plonk's Updates page, or switch it back on.",
+                ]))
+                return
+            }
+            checkForUpdates()
+            // The check is a network round trip, and nothing here may wait on
+            // one. The caller polls /update/state, or listens for "update" on
+            // /events, which is what the tool description tells it to do.
+            respond(.ok(updateState().merging(["ok": true, "checking": true]) { _, new in new }))
+
+        case ("POST", "/update/install"):
+            guard let installUpdate, let updateState else {
+                respond(.failed("updates are not available"))
+                return
+            }
+            // Installing downloads the build, so it is bound by the same
+            // promise as the check above.
+            guard store.config.updateCheckAutomatically else {
+                respond(HTTPResponse(status: 409, json: [
+                    "error": "the user turned update checks off, so Plonk makes no outbound "
+                        + "connection. They can install from Plonk's Updates page.",
+                ]))
+                return
+            }
+            let state = updateState()
+            guard state["available"] as? Bool == true else {
+                respond(.badRequest("no newer release is on offer; POST /update/check first"))
+                return
+            }
+            installUpdate()
+            respond(.ok(state.merging([
+                "ok": true,
+                "installing": true,
+                "note": "Plonk quits to swap the bundle in and relaunches itself; "
+                    + "the API is unreachable for a few seconds",
+            ]) { _, new in new }))
+
         default:
             respond(.notFound("unknown route \(request.method) \(request.path)"))
         }
@@ -323,7 +384,8 @@ final class Router {
 
     /// Everything that changes windows or config. Reads and screenshots stay
     /// open to every agent; hello must stay open or nobody could register.
-    private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake"]
+    // /update is guarded because installing one quits and relaunches the app.
+    private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake", "/update"]
     // /agents/ask is guarded too: a prompt is a way to move windows by proxy,
     // and it can launch an adapter's shell command outright.
     private static let guardedPaths: Set<String> = ["/agents/select", "/agents/exclusive", "/agents/ask"]
@@ -394,6 +456,7 @@ final class Router {
             "agent_adapters": store.config.agentAdapters.map(\.name),
             "agent_exclusive": store.config.agentExclusive,
         ]
+        if let update = updateState?() { state["update"] = update }
         if let selected = store.config.selectedAgent { state["selected_agent"] = selected }
         return state
     }

@@ -14,6 +14,9 @@ final class StatusMenuController: NSObject {
     var agentEntries: () -> [(name: String, selected: Bool)] = { [] }
     var isExclusive: () -> Bool = { false }
     var hasSelection: () -> Bool = { false }
+    /// The version on offer, or nil when the copy is current. Queried when the
+    /// menu opens, so a check that lands while it is shut still shows up.
+    var updateVersion: () -> String? = { nil }
 
     var onOpenWindow: (() -> Void)?
     var onCaptureRegion: (() -> Void)?
@@ -22,10 +25,12 @@ final class StatusMenuController: NSObject {
     var onReportBug: (() -> Void)?
     var onSelectAgent: ((String?) -> Void)?
     var onToggleExclusive: (() -> Void)?
+    var onOpenUpdate: (() -> Void)?
 
     private static let keepAwakeTag = 101
     private static let workspacesTag = 102
     private static let agentsTag = 103
+    private static let updateTag = 104
 
     override init() {
         super.init()
@@ -52,6 +57,12 @@ final class StatusMenuController: NSObject {
         menu.addItem(awake)
 
         menu.addItem(.separator())
+        // Hidden unless there is something to install, so the menu keeps its
+        // "only what is worth doing without opening anything" shape.
+        let update = entry("Update Available", #selector(openUpdate))
+        update.tag = Self.updateTag
+        update.isHidden = true
+        menu.addItem(update)
         menu.addItem(entry("Report a Bug", #selector(reportBug)))
         menu.addItem(NSMenuItem(title: "Quit Plonk",
                                 action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
@@ -96,6 +107,7 @@ final class StatusMenuController: NSObject {
     @objc private func captureRegion() { onCaptureRegion?() }
     @objc private func toggleAwake() { onToggleAwake?() }
     @objc private func reportBug() { onReportBug?() }
+    @objc private func openUpdate() { onOpenUpdate?() }
 
     @objc private func launchWorkspace(_ sender: NSMenuItem) {
         onLaunchWorkspace?(sender.title)
@@ -111,6 +123,11 @@ final class StatusMenuController: NSObject {
 extension StatusMenuController: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.item(withTag: Self.keepAwakeTag)?.state = isAwakeRequested() ? .on : .off
+        if let update = menu.item(withTag: Self.updateTag) {
+            let version = updateVersion()
+            update.isHidden = version == nil
+            update.title = version.map { "Update to \($0)…" } ?? "Update Available"
+        }
         refreshAgentsSubmenu(in: menu)
 
         guard let item = menu.item(withTag: Self.workspacesTag), let submenu = item.submenu else { return }

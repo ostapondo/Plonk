@@ -80,6 +80,9 @@ struct Config: Codable {
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
     var launchAtLogin = true
+    // The only setting that decides whether the app ever opens an outbound
+    // connection. Off means no release check, automatic or otherwise.
+    var updateCheckAutomatically = true
     // Which MCP client the user picked as the active agent (by client name),
     // and whether only that agent may change windows and settings.
     var selectedAgent: String?
@@ -114,6 +117,7 @@ struct Config: Codable {
         shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
         shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
         launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
+        updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
         selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
         agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
         agentAdapters = try c.decodeIfPresent([AgentAdapter].self, forKey: .agentAdapters) ?? []
