@@ -167,6 +167,29 @@ private func connectRow(_ client: String, _ command: String) -> some View {
     }
 }
 
+struct VoicePage: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        Form {
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "voice"))
+            } header: {
+                Text("Push to Talk")
+            } footer: {
+                Text("Hold the key, say it, let go — the words go to the active agent from the Agents list on the AI page. Recognition runs on this Mac and nothing is recorded; only the finished sentence reaches the agent. macOS asks for Microphone and Speech Recognition on first use.")
+            }
+            Section {
+                Text("\"Browser on the left, terminal right\" — the agent arranges it. \"Launch my review workspace\", \"keep the screen awake an hour\" — same. Anything you could type to the agent, you can say.")
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("What to Say")
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
 struct AIPage: View {
     @ObservedObject var model: AppModel
     @State private var copied: String?

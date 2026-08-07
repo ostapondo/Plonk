@@ -41,6 +41,10 @@ cat > "$APP/Contents/Info.plist" <<EOF
 	<true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Push-to-talk voice commands listen while the key is held.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Spoken commands are transcribed on this Mac and sent to your agent.</string>
 </dict>
 </plist>
 EOF

@@ -24,6 +24,8 @@ final class HotkeyManager {
     private(set) var unavailable: [HotkeyAction] = []
 
     var onAction: ((HotkeyAction) -> Void)?
+    /// Fires when a bound key is released — what makes push-to-talk possible.
+    var onActionUp: ((HotkeyAction) -> Void)?
 
     func setEnabled(_ on: Bool) {
         guard on != enabled else { return }
@@ -70,7 +72,10 @@ final class HotkeyManager {
     private func installHandlerIfNeeded() {
         guard !handlerInstalled else { return }
         handlerInstalled = true
-        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        var eventTypes = [
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased)),
+        ]
         let selfPtr = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         InstallEventHandler(GetApplicationEventTarget(), { _, event, userData in
             guard let event, let userData else { return noErr }
@@ -79,8 +84,11 @@ final class HotkeyManager {
                               nil, MemoryLayout<EventHotKeyID>.size, nil, &hkID)
             let manager = Unmanaged<HotkeyManager>.fromOpaque(userData).takeUnretainedValue()
             guard let action = manager.actions[hkID.id] else { return noErr }
-            DispatchQueue.main.async { manager.onAction?(action) }
+            let released = GetEventKind(event) == UInt32(kEventHotKeyReleased)
+            DispatchQueue.main.async {
+                (released ? manager.onActionUp : manager.onAction)?(action)
+            }
             return noErr
-        }, 1, &eventType, selfPtr, nil)
+        }, 2, &eventTypes, selfPtr, nil)
     }
 }

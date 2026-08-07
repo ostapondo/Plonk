@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let awake = AwakeManager()
     private let agents = AgentRegistry()
     private let eventBroadcaster = EventBroadcaster()
+    private let voice = VoiceManager()
     private let hotkeys = HotkeyManager()
     private let model = AppModel()
     private lazy var launcher = WorkspaceLauncher(windows: windows)
@@ -38,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupAwake()
         setupLauncher()
         setupHotkeys()
+        setupVoice()
         setupDragSnap()
         setupServer()
         refreshModel()
@@ -141,6 +143,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupHotkeys() {
         hotkeys.onAction = { [weak self] action in self?.perform(action) }
+        hotkeys.onActionUp = { [weak self] action in
+            guard action == .voice else { return }
+            self?.voice.finishCapture()
+        }
         hotkeys.bindings = store.config.resolvedHotkeys
         if store.config.hotkeysEnabled { hotkeys.setEnabled(true) }
         refreshHotkeyModel()
@@ -152,9 +158,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             dragSnap.previewZones()
         case .captureRegion:
             runCapture(.region, openEditor: true)
+        case .voice:
+            voice.beginCapture()
         default:
             guard let preset = action.preset else { return }
             windows.applyPreset(preset, to: NSWorkspace.shared.frontmostApplication)
+        }
+    }
+
+    private func setupVoice() {
+        voice.onPartial = { text in
+            HUD.shared.show(text.isEmpty ? "Listening…" : text)
+        }
+        voice.onError = { message in HUD.shared.show(message) }
+        voice.onTranscript = { [weak self] text in
+            guard let self else { return }
+            let response = router.dispatch(prompt: text)
+            if let error = response.json["error"] as? String {
+                HUD.shared.show(error)
+            } else {
+                let agent = (response.json["agent"] as? String) ?? "agent"
+                HUD.shared.show("→ \(agent): \(text)")
+            }
         }
     }
 
@@ -280,6 +305,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsPage(id: "shortcuts", title: "Shortcuts", icon: "keyboard") { AnyView(ShortcutsPage(model: $0)) },
             SettingsPage(id: "workspaces", title: "Workspaces", icon: "rectangle.3.group", section: "Windows") { AnyView(WorkspacesPage(model: $0)) },
             SettingsPage(id: "zones", title: "Zones", icon: "square.grid.2x2", section: "Windows") { AnyView(ZonesPage(model: $0)) },
+            SettingsPage(id: "voice", title: "Voice", icon: "mic", section: "Gadgets") { AnyView(VoicePage(model: $0)) },
             SettingsPage(id: "awake", title: "Keep Awake", icon: "cup.and.saucer", section: "Gadgets") { AnyView(AwakePage(model: $0)) },
             SettingsPage(id: "shot", title: "Screenshot", icon: "camera.viewfinder", section: "Gadgets") { AnyView(ShotPage(model: $0)) },
             SettingsPage(id: "ai", title: "AI · MCP", icon: "sparkles", section: "Setup") { AnyView(AIPage(model: $0)) },

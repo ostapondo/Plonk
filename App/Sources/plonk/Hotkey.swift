@@ -146,6 +146,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     case topLeft, topRight, bottomLeft, bottomRight
     case maximize, center
     case showZones, captureRegion
+    case voice
 
     var id: String { rawValue }
 
@@ -161,7 +162,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .bottomRight: return .bottomRight
         case .maximize: return .maximize
         case .center: return .center
-        case .showZones, .captureRegion: return nil
+        case .showZones, .captureRegion, .voice: return nil
         }
     }
 
@@ -169,6 +170,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         switch self {
         case .showZones: return "Flash the zones"
         case .captureRegion: return "Capture a region"
+        case .voice: return "Push to talk"
         default: return preset?.title ?? rawValue
         }
     }
@@ -178,6 +180,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         switch self {
         case .showZones: return "square.grid.2x2"
         case .captureRegion: return "camera.viewfinder"
+        case .voice: return "mic"
         default: return "macwindow"
         }
     }
@@ -187,7 +190,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .leftHalf, .rightHalf, .topHalf, .bottomHalf: return "Halves"
         case .topLeft, .topRight, .bottomLeft, .bottomRight: return "Quarters"
         case .maximize, .center: return "Whole screen"
-        case .showZones, .captureRegion: return "Other"
+        case .showZones, .captureRegion, .voice: return "Other"
         }
     }
 
@@ -196,6 +199,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         switch self {
         case .showZones: return "zones"
         case .captureRegion: return "shot"
+        case .voice: return "voice"
         default: return "zones"
         }
     }
@@ -219,6 +223,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .center: code = kVK_ANSI_C
         case .showZones: code = kVK_ANSI_Z
         case .captureRegion: code = kVK_ANSI_S
+        case .voice: code = kVK_ANSI_V
         }
         return Hotkey(keyCode: UInt32(code), control: true, option: true)
     }

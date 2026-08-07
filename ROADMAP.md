@@ -21,13 +21,13 @@ long-polled inbox → MCP sampling, with CLI adapters as the fallback), and live
 state — `GET /events` streams `{"rev","what"}` server-sent events while `rev`
 rides in `/state`, so agents notice what the user and other agents just did.
 
-## Later — voice
+## Voice
 
-- **Push-to-talk** — hold a hotkey, say it, release. Local speech recognition,
-  nothing leaves the Mac.
-- **Voice → agent** — what you said goes to the active agent from the selector,
-  and the agent drives Plonk as usual: "browser left, terminal right, save it
-  as review".
+Push-to-talk shipped: hold `⌃⌥V` (rebindable on the Voice page), say it, let
+go. Recognition runs on the Mac — nothing leaves it — and the transcript goes
+to the active agent over the agents channel: "browser left, terminal right,
+save it as review". Still to come:
+
 - **Voice → command** — common actions ("snap this left", "keep awake an hour")
   run directly, no agent in the loop, so they work offline and instantly.
 - **Spoken replies** — short confirmations back, optional and off by default.
