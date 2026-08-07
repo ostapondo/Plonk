@@ -70,6 +70,41 @@ Or build everything from source: clone the repo, run `./scripts/build.sh`, and
 point `claude mcp add plonk -- node …/mcp/dist/server.js` at a locally built
 server (`cd mcp && npm install && npm run build`).
 
+## Check it yourself
+
+Accessibility is the only way macOS lets one app move another's windows, and
+Screen Recording is what a screenshot costs. That is a lot to hand something you
+installed a minute ago, so none of this is a promise — it is all checkable.
+
+**Nothing dials out.** Every socket the app has open:
+
+```sh
+lsof -nP -i -a -p "$(pgrep -f 'Plonk.app/Contents/MacOS/plonk')"
+plonk  …  TCP 127.0.0.1:43917 (LISTEN)
+```
+
+One listener on loopback, no outbound connection, and `nettop` or Little Snitch
+will say the same over a longer look. There is no analytics, no crash reporter
+and no update check. The only URL compiled into the app is its issue tracker,
+which opens in your browser when you click Report a bug.
+
+**A web page cannot drive it.** The API is loopback-only and unauthenticated, so
+it refuses anything carrying headers a browser cannot suppress:
+
+```sh
+curl -so /dev/null -w '%{http_code}\n' -H 'Origin: https://example.com' \
+  http://127.0.0.1:43917/state
+403
+```
+
+**There is not much else to hide.** [Package.swift](App/Package.swift) declares
+no third-party dependencies, so a build from source is this repo and nothing
+else. Config is plain JSON at `~/Library/Application Support/Plonk/config.json`.
+Screenshots go where you send them. There is no account to make.
+
+The MCP server is a separate npm package that depends only on the official MCP
+SDK and zod. It speaks to `127.0.0.1:43917` and nowhere else.
+
 ## Workspaces
 
 <p align="center">
@@ -162,8 +197,8 @@ tell two sessions of the same client apart.
 
 - The app is the single source of truth; the MCP server is a stateless bridge.
 - The API binds to `127.0.0.1` and refuses anything carrying browser headers, so
-  an open web page cannot drive your desktop.
-- No outbound connections, no analytics, zero third-party Swift dependencies.
+  an open web page cannot drive your desktop — see
+  [Check it yourself](#check-it-yourself).
 - Config is plain JSON at `~/Library/Application Support/Plonk/config.json`.
 
 ## Build
