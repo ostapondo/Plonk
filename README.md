@@ -1,13 +1,14 @@
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>The Mac window manager your AI agent can drive.</strong><br>
-<sub>To plonk is to set a thing down exactly where it belongs. This menu bar does it to your windows.</sub></p>
+<p align="center"><strong>The Mac window manager that puts your desk back together.</strong><br>
+<sub>To plonk is to set a thing down exactly where it belongs. This menu bar does it to your
+windows — you drag them there, or your agent says where.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.0.3-58a6ff?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.0.4-58a6ff?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-13_tools-8957e5?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-18_tools-8957e5?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
 </p>
@@ -76,17 +77,22 @@ Accessibility is the only way macOS lets one app move another's windows, and
 Screen Recording is what a screenshot costs. That is a lot to hand something you
 installed a minute ago, so none of this is a promise — it is all checkable.
 
-**Nothing dials out.** Every socket the app has open:
+**One thing dials out, and you can switch it off.** Every socket the app has
+open:
 
 ```sh
 lsof -nP -i -a -p "$(pgrep -f 'Plonk.app/Contents/MacOS/plonk')"
 plonk  …  TCP 127.0.0.1:43917 (LISTEN)
 ```
 
-One listener on loopback, no outbound connection, and `nettop` or Little Snitch
-will say the same over a longer look. There is no analytics, no crash reporter
-and no update check. The only URL compiled into the app is its issue tracker,
-which opens in your browser when you click Report a bug.
+One listener on loopback. The only outbound connection Plonk makes is the
+update check: on launch and once a day it asks `api.github.com` for the latest
+release, and sends nothing but a User-Agent naming the app and its version — no
+identifier, no account, no analytics, no crash reporter. Turn it off under
+Updates and it stops happening; `nettop` or Little Snitch will then show a
+process that only ever listens. The URLs compiled into the app are that
+endpoint, the releases page, and the issue tracker that opens when you click
+Report a bug — [Release.swift](App/Sources/plonk/Release.swift) has all three.
 
 **A web page cannot drive it.** The API is loopback-only and unauthenticated, so
 it refuses anything carrying headers a browser cannot suppress:
@@ -164,6 +170,7 @@ it.
 | **Keep awake** | IOKit power assertions, not a jiggler. Display-on or system-only, pause on battery, auto while charging, timed sessions, and a menu bar icon that glows while it holds |
 | **Screenshots** | Region, window or screen through the native picker, then pen, arrow, rectangle, ellipse and highlighter. Saves at native resolution |
 | **Notices** | A panel in the top-right corner, not Notification Center: no permission to ask for, nothing left in your history, and it can show the screenshot instead of describing it |
+| **Updates** | One button on the Updates page. Plonk installs a build only if it is signed with the same certificate as the copy you are running — which is the same test macOS applies, so your Accessibility and Screen Recording grants carry over instead of being asked for again. Anything that fails the check is discarded and nothing is replaced. Switch the check off and the app never looks |
 
 ## For agents
 
