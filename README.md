@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/zones.svg" alt="A screen split into three zones, with a window being dragged into the highlighted one" width="720">
+  <img src="docs/demo.gif" alt="An agent is told where the windows go, arranges them, saves the setup as a workspace, and launches it back onto an empty desktop" width="720">
 </p>
 
 Drag a window, the zones light up, drop it in. Or skip the dragging and say it:
@@ -45,6 +45,10 @@ Grant Accessibility when asked, then relaunch. Screen Recording is asked for
 separately, the first time you capture. Nothing else — no Full Disk Access, no
 Automation, no Keychain.
 
+If you later move or rename Plonk.app (or its folder), macOS quietly ties the
+old grant to the old path: windows of newly launched apps stop being seen.
+Remove Plonk from Privacy & Security → Accessibility and grant it again.
+
 To let an agent drive it (Node 18+):
 
 ```sh
@@ -74,6 +78,10 @@ puts them back — from the Workspaces page, or right-click the menu bar icon.
 | **The catch** | macOS cannot open an app straight into a position, so windows appear first and jump a moment later. A second window of the same app cannot be conjured — give it a file to open instead |
 
 ## Zones
+
+<p align="center">
+  <img src="docs/zones.svg" alt="A screen split into three zones, with a window being dragged into the highlighted one" width="720">
+</p>
 
 <p align="center">
   <img src="docs/zone-sets.svg" alt="Five built-in zone sets and a sixth, irregular one drawn by hand" width="720">
