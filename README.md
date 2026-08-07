@@ -30,24 +30,30 @@ Everything runs on your Mac. No account, no cloud, no telemetry.
 
 ## Install
 
-macOS 13+, a Swift toolchain, Node 18+.
+macOS 13+.
 
 ```sh
-git clone https://github.com/ostapondo/plonk && cd plonk
-./scripts/build.sh
-open Plonk.app
+brew install --cask ostapondo/plonk/plonk
 ```
+
+Or download [the latest release](https://github.com/ostapondo/plonk/releases/latest),
+unzip, and drop Plonk.app into Applications. The build is not notarized yet, so
+macOS will balk at the first launch — approve it under System Settings → Privacy
+& Security → Open Anyway.
 
 Grant Accessibility when asked, then relaunch. Screen Recording is asked for
 separately, the first time you capture. Nothing else — no Full Disk Access, no
 Automation, no Keychain.
 
-To let an agent drive it:
+To let an agent drive it (Node 18+):
 
 ```sh
-cd mcp && npm install && npm run build
-claude mcp add plonk -- node "$(pwd)/dist/server.js"
+claude mcp add plonk -- npx -y plonk-mcp
 ```
+
+Or build everything from source: clone the repo, run `./scripts/build.sh`, and
+point `claude mcp add plonk -- node …/mcp/dist/server.js` at a locally built
+server (`cd mcp && npm install && npm run build`).
 
 ## Workspaces
 
