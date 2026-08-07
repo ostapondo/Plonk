@@ -79,17 +79,32 @@ struct AgentRegistryTests {
         #expect(registry.drain(for: "cursor").isEmpty)
     }
 
-    /// A client that polls again has abandoned the previous connection, so the
-    /// stale waiter must not stay first in line for the next task.
-    @Test func aSecondPollReplacesTheParkedWaiter() {
+    /// A stale waiter must not stay first in line for the next task, but two
+    /// windows of the same client share a name and must both keep waiting —
+    /// evicting one on the other's poll would spin them both.
+    @Test func theNewestWaiterGetsTheTaskAndTheOthersKeepWaiting() {
         let registry = AgentRegistry()
         var first: [String]?
         var second: [String]?
         registry.wait(for: "cursor", seconds: 25) { first = $0.map(\.prompt) }
         registry.wait(for: "cursor", seconds: 25) { second = $0.map(\.prompt) }
-        #expect(first == [])
+        #expect(first == nil)
+        #expect(second == nil)
         registry.enqueue("browser left", for: "cursor")
         #expect(second == ["browser left"])
+        #expect(first == nil)
+        registry.enqueue("terminal right", for: "cursor")
+        #expect(first == ["terminal right"])
+    }
+
+    @Test func parkedWaitersAreCapped() {
+        let registry = AgentRegistry()
+        var answered = 0
+        for _ in 0..<(AgentRegistry.maxWaiters + 3) {
+            registry.wait(for: "cursor", seconds: 25) { _ in answered += 1 }
+        }
+        // The oldest are flushed empty to free their sockets.
+        #expect(answered == 3)
     }
 
     @Test func theQueueIsBounded() {

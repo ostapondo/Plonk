@@ -252,6 +252,15 @@ final class Router {
                 respond(.badRequest("query must include agent, e.g. /agents/inbox?agent=claude-code&wait=25"))
                 return
             }
+            // Draining a queue takes its prompts away, so a client that says
+            // who it is may only read its own. Whether it is the active agent
+            // has nothing to do with it.
+            if let agent, agent != name {
+                respond(HTTPResponse(status: 409, json: [
+                    "error": "\"\(agent)\" cannot read the queue of \"\(name)\"; poll your own name",
+                ]))
+                return
+            }
             let wait = min(max(Double(query["wait"] ?? "0") ?? 0, 0), 25)
             agents.wait(for: name, seconds: wait) { tasks in
                 respond(.ok(["tasks": tasks.map(\.asDict)]))
@@ -319,25 +328,14 @@ final class Router {
     // and it can launch an adapter's shell command outright.
     private static let guardedPaths: Set<String> = ["/agents/select", "/agents/exclusive", "/agents/ask"]
 
-    /// Reading someone else's queue takes their prompts away, so the inbox is
-    /// gated like a mutation even though it is a GET.
-    private static let guardedGets: Set<String> = ["/agents/inbox"]
-
     /// The 409 reason when "only the selected agent controls" blocks this
-    /// request, nil when it may proceed.
+    /// request, nil when it may proceed. The inbox is not here: who may read a
+    /// queue depends on whose queue it is, which the route itself checks.
     static func exclusiveRejection(method: String, path: String, agent: String?,
                                    selected: String?, exclusive: Bool) -> String? {
-        guard exclusive, let selected, !selected.isEmpty else { return nil }
-        let guarded: Bool
-        switch method {
-        case "POST":
-            guarded = Self.guardedPaths.contains(path)
-                || Self.guardedPrefixes.contains { path == $0 || path.hasPrefix($0 + "/") }
-        case "GET":
-            guarded = Self.guardedGets.contains(path)
-        default:
-            return nil
-        }
+        guard exclusive, let selected, !selected.isEmpty, method == "POST" else { return nil }
+        let guarded = Self.guardedPaths.contains(path)
+            || Self.guardedPrefixes.contains { path == $0 || path.hasPrefix($0 + "/") }
         guard guarded, agent != selected else { return nil }
         let who = agent.map { "\"\($0)\"" } ?? "an unidentified client"
         return "the user made \"\(selected)\" the only agent allowed to change windows and settings, "

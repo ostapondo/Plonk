@@ -26,9 +26,18 @@ struct AgentAdapterTests {
             #expect(invocation.environment["PLONK_PROMPT"] == nasty)
         }
     }
+
+    /// Safety is not enough: the words have to arrive. A template that quotes
+    /// the placeholder would otherwise hand the tool the literal variable name
+    /// while Plonk reported success.
+    @Test func aQuotedPlaceholderStillExpands() {
+        for template in ["mytool --ask '{prompt}'", "mytool --ask \"{prompt}\"", "mytool --ask {prompt}"] {
+            let invocation = AgentAdapter.invocation(command: template, prompt: "browser left")
+            #expect(invocation.command == "mytool --ask \"$PLONK_PROMPT\"")
+            #expect(!invocation.command.contains("'$PLONK_PROMPT'"))
+        }
+    }
 }
-import Foundation
-@testable import plonk
 
 struct ConfigTests {
 

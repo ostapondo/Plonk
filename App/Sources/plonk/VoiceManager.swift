@@ -17,11 +17,11 @@ final class VoiceManager {
     private var task: SFSpeechRecognitionTask?
     private var lastText = ""
     private var finishing = false
-    /// True from the key going down until the session actually starts. The
-    /// permission callbacks are asynchronous, so the key can come back up
-    /// before there is anything to stop — without this the microphone would
-    /// stay live with no key held.
-    private var wanted = false
+    /// True only while a start is in flight: the permission callbacks are
+    /// asynchronous, so the key can come back up before there is anything to
+    /// stop, and a key repeat can ask twice. It is cleared on every path out
+    /// of `start`, so a start that fails cannot leave voice wedged.
+    private var starting = false
 
     private var listening: Bool { task != nil }
 
@@ -37,23 +37,23 @@ final class VoiceManager {
     }
 
     func beginCapture() {
-        guard !listening, !wanted else { return }
-        wanted = true
+        guard !listening, !starting else { return }
+        starting = true
         requestPermissions { [weak self] granted in
             guard let self else { return }
             guard granted else {
-                wanted = false
+                starting = false
                 onError?("Voice needs Microphone and Speech Recognition access: System Settings → Privacy & Security")
                 return
             }
             // Released while the permission prompt was up: nothing to record.
-            guard wanted else { return }
+            guard starting else { return }
             start()
         }
     }
 
     func finishCapture() {
-        wanted = false
+        starting = false
         guard listening, !finishing else { return }
         finishing = true
         engine.inputNode.removeTap(onBus: 0)
@@ -68,6 +68,8 @@ final class VoiceManager {
     }
 
     private func start() {
+        // Whatever happens below, a start is no longer in flight.
+        defer { starting = false }
         guard let recognizer = Self.recognizer() else {
             onError?("On-device speech recognition is not available for this language")
             return
@@ -127,7 +129,7 @@ final class VoiceManager {
         task = nil
         request = nil
         finishing = false
-        wanted = false
+        starting = false
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             onError?("Heard nothing")

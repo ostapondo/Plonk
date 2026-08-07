@@ -79,17 +79,22 @@ final class AgentRegistry {
     static let maxQueuedTasks = 20
 
     private var inbox: [String: [Task]] = [:]
-    /// The one parked long-poll responder per agent, waiting for a task or its
+    /// Long-poll responders parked per agent, waiting for a task or their
     /// timeout. Everything runs on the main queue (Router.handle does), so no
-    /// locking. Only one is kept: a client that polls again has abandoned its
-    /// previous connection, and handing a task to that dead socket would throw
-    /// the user's words away.
-    private var waiters: [String: (cancel: DispatchWorkItem, respond: ([Task]) -> Void)] = [:]
+    /// locking. Several are allowed because one client can hold two sessions
+    /// under the same name; a task goes to the newest, which is the one most
+    /// likely still connected. Stale ones simply time out empty.
+    private var waiters: [String: [(token: UUID, cancel: DispatchWorkItem, respond: ([Task]) -> Void)]] = [:]
+
+    /// Enough for a client with several windows open; beyond that the oldest
+    /// are almost certainly abandoned sockets.
+    static let maxWaiters = 8
 
     @discardableResult
     func enqueue(_ prompt: String, for agent: String) -> Task {
         let task = Task(prompt: prompt)
-        if let waiter = waiters.removeValue(forKey: agent) {
+        if var parked = waiters[agent], let waiter = parked.popLast() {
+            waiters[agent] = parked.isEmpty ? nil : parked
             waiter.cancel.cancel()
             waiter.respond([task])
         } else {
@@ -117,17 +122,24 @@ final class AgentRegistry {
             respond([])
             return
         }
-        // A second poll means the first connection is gone; let it go empty
-        // rather than leave it first in line for the next task.
-        if let previous = waiters.removeValue(forKey: agent) {
-            previous.cancel.cancel()
-            previous.respond([])
+        var parked = waiters[agent] ?? []
+        // Past the cap the oldest is the likeliest corpse; answer it empty so
+        // its connection closes instead of holding a slot.
+        while parked.count >= Self.maxWaiters {
+            let oldest = parked.removeFirst()
+            oldest.cancel.cancel()
+            oldest.respond([])
         }
+        let token = UUID()
         let cancel = DispatchWorkItem { [weak self] in
-            guard let self, let waiter = waiters.removeValue(forKey: agent) else { return }
+            guard let self, var current = waiters[agent],
+                  let index = current.firstIndex(where: { $0.token == token }) else { return }
+            let waiter = current.remove(at: index)
+            waiters[agent] = current.isEmpty ? nil : current
             waiter.respond([])
         }
-        waiters[agent] = (cancel: cancel, respond: respond)
+        parked.append((token: token, cancel: cancel, respond: respond))
+        waiters[agent] = parked
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: cancel)
     }
 

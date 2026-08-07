@@ -397,13 +397,26 @@ struct RouterTests {
                               headers: ["x-plonk-agent": "cursor/1.0"],
                               body: ["prompt": "move everything to screen 2"])
         #expect(h.send(ask).status == 409)
-        // Draining someone else's queue steals their prompts, GET or not.
-        let peek = HTTPRequest(method: "GET", path: "/agents/inbox?agent=claude-code",
-                               headers: ["x-plonk-agent": "cursor/1.0"], body: [:])
-        #expect(h.send(peek).status == 409)
-        let own = HTTPRequest(method: "GET", path: "/agents/inbox?agent=claude-code",
-                              headers: ["x-plonk-agent": "claude-code/2.0"], body: [:])
-        #expect(h.send(own).status == 200)
+    }
+
+    /// Who may read a queue depends on whose queue it is — not on who the
+    /// active agent happens to be. Getting that backwards both starved
+    /// everyone else of their own prompts and let the active agent take theirs.
+    @Test func anAgentMayOnlyReadItsOwnQueue() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+
+        func poll(as caller: String, queue: String) -> Int {
+            h.send(HTTPRequest(method: "GET", path: "/agents/inbox?agent=\(queue)",
+                               headers: ["x-plonk-agent": "\(caller)/1.0"], body: [:])).status
+        }
+        // Its own, even though it is not the selected agent.
+        #expect(poll(as: "cursor", queue: "cursor") == 200)
+        #expect(poll(as: "claude-code", queue: "claude-code") == 200)
+        // Someone else's, even as the selected agent.
+        #expect(poll(as: "claude-code", queue: "cursor") == 409)
+        #expect(poll(as: "cursor", queue: "claude-code") == 409)
     }
 
     @Test func mutationsBumpTheRevision() {
