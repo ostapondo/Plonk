@@ -1,7 +1,7 @@
 // Typed HTTP client for the Plonk app's localhost API.
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
-const BASE = "http://127.0.0.1:43917";
+export const BASE = "http://127.0.0.1:43917";
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 export interface Frame {
@@ -141,6 +141,14 @@ export async function call<T extends object = ApiResponse>(
   } catch {
     return { error: `Plonk returned ${res.status} with an unexpected body: ${text.slice(0, 200)}` };
   }
+}
+
+/**
+ * Whether the app is answering. Several servers may run at once — one per MCP
+ * client — but all of them are useless without the app behind the port.
+ */
+export async function isAppReachable(timeoutMs = 2_000): Promise<boolean> {
+  return !("error" in (await call("/ping", { timeoutMs })));
 }
 
 // An `error` key means the app refused or was unreachable; flagging it stops

@@ -37,6 +37,14 @@ struct RouterTests {
         "frame": ["x": 0, "y": 0, "w": 0.5, "h": 1],
     ]
 
+    /// The MCP server's liveness check, so it must not depend on Accessibility.
+    @Test func pingAnswersWithoutPermissions() {
+        let h = Harness()
+        let response = h.send(HTTPRequest(method: "GET", path: "/ping", headers: [:], body: [:]))
+        #expect(response.status == 200)
+        #expect(response.json["ok"] as? Bool == true)
+    }
+
     @Test func unknownRouteIsNotFound() {
         let h = Harness()
         #expect(h.send(HTTPRequest(method: "GET", path: "/nope", headers: [:], body: [:])).status == 404)
