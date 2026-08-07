@@ -56,9 +56,10 @@ claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
 codex mcp add plonk -- npx -y plonk-mcp    # Codex CLI
 ```
 
-Any MCP client works the same way — Cursor, Windsurf, Zed, Cline: give it
-`npx -y plonk-mcp` as a stdio server. Several clients at once is fine; see
-[Agents](#for-agents) below.
+Any MCP client works the same way — give it `npx -y plonk-mcp` as a stdio
+server. One-pagers: [Cursor](docs/clients/cursor.md) (with a one-click
+install button), [Zed](docs/clients/zed.md), [Cline](docs/clients/cline.md).
+Several clients at once is fine; see [Agents](#for-agents) below.
 
 A client that cannot spawn a process connects over HTTP instead:
 `npx -y plonk-mcp --http` serves Streamable HTTP at
