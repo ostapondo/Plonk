@@ -12,14 +12,12 @@ No dates, just order. Things ship when they're ready. Ideas and votes go to
 
 Plonk speaks MCP, so it already isn't married to Claude. Shipped so far:
 several clients connected at once, an agent registry with per-client identity,
-an active-agent selector (menu bar, settings, or the `select_agent` tool), and
-an optional "only the active agent controls" mode.
+an active-agent selector (menu bar, settings, or the `select_agent` tool), an
+optional "only the active agent controls" mode, and a Streamable HTTP
+transport (`plonk-mcp --http`) for clients that can't spawn a process.
 
 Still to do:
 
-- **HTTP transport** — connect over local HTTP, not just stdio, so agents that
-  can't spawn a process (the ChatGPT desktop app among them) can still drive
-  the desktop.
 - **Live state** — push changes to every connected client instead of each one
   polling `/state`, so agents see what the user and other agents just did.
 - **Reaching the agent** — a channel from Plonk to the active agent, so voice

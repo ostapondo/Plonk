@@ -60,6 +60,11 @@ Any MCP client works the same way — Cursor, Windsurf, Zed, Cline: give it
 `npx -y plonk-mcp` as a stdio server. Several clients at once is fine; see
 [Agents](#for-agents) below.
 
+A client that cannot spawn a process connects over HTTP instead:
+`npx -y plonk-mcp --http` serves Streamable HTTP at
+`http://127.0.0.1:43918/mcp` (loopback only, many clients per process,
+`--port` to change).
+
 Or build everything from source: clone the repo, run `./scripts/build.sh`, and
 point `claude mcp add plonk -- node …/mcp/dist/server.js` at a locally built
 server (`cd mcp && npm install && npm run build`).

@@ -1,0 +1,94 @@
+// Streamable HTTP transport: one process, many clients — for anything that
+// cannot spawn a stdio process. Binds to loopback only and carries the same
+// threat model as the app's own API: a web page must never be able to drive
+// the desktop, and a DNS-rebinding page must not reach the port by Host games.
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { randomUUID } from "node:crypto";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { runWithIdentity, type IdentityHolder } from "./api.js";
+import { createPlonkServer, startHello, watchClientInfo } from "./factory.js";
+
+interface Session {
+  transport: StreamableHTTPServerTransport;
+  holder: IdentityHolder;
+  stopHello?: () => void;
+}
+
+// The app's registry tells sessions apart by (name, pid). Every HTTP client
+// shares this process, so each session gets a synthetic pid instead.
+let syntheticPid = 100_000 + (process.pid % 1_000) * 100;
+
+function reject(res: ServerResponse, status: number, error: string): void {
+  res.writeHead(status, { "content-type": "application/json" });
+  res.end(JSON.stringify({ error }));
+}
+
+export async function serveHttp(port: number): Promise<void> {
+  const sessions = new Map<string, Session>();
+
+  const handle = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    // Browsers always attach Origin to cross-site POSTs and Sec-Fetch-Site to
+    // every request, and page script cannot suppress either.
+    if (req.headers.origin !== undefined || req.headers["sec-fetch-site"] !== undefined) {
+      reject(res, 403, "requests from web pages are not accepted");
+      return;
+    }
+    const host = (req.headers.host ?? "").toLowerCase();
+    if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) {
+      reject(res, 403, "unexpected Host header");
+      return;
+    }
+    if (new URL(req.url ?? "/", `http://${host}`).pathname !== "/mcp") {
+      reject(res, 404, "the MCP endpoint is /mcp");
+      return;
+    }
+
+    const sessionId = req.headers["mcp-session-id"];
+    const existing = typeof sessionId === "string" ? sessions.get(sessionId) : undefined;
+    if (existing) {
+      await runWithIdentity(existing.holder, () => existing.transport.handleRequest(req, res));
+      return;
+    }
+    if (req.method !== "POST") {
+      reject(res, 400, "start a session with an initialize POST first");
+      return;
+    }
+
+    const session: Session = {
+      holder: {},
+      transport: new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: (sid) => {
+          sessions.set(sid, session);
+        },
+      }),
+    };
+    session.transport.onclose = () => {
+      session.stopHello?.();
+      const sid = session.transport.sessionId;
+      if (sid !== undefined) sessions.delete(sid);
+    };
+
+    const server = createPlonkServer();
+    watchClientInfo(server, ({ name, version }) => {
+      const identity = { name, version, pid: syntheticPid++ };
+      session.holder.identity = identity;
+      session.stopHello = startHello(identity);
+    });
+    await server.connect(session.transport);
+    await runWithIdentity(session.holder, () => session.transport.handleRequest(req, res));
+  };
+
+  const httpServer = createServer((req, res) => {
+    handle(req, res).catch((err) => {
+      console.error("plonk-mcp:", err);
+      if (!res.headersSent) reject(res, 500, "internal error");
+    });
+  });
+
+  await new Promise<void>((resolve, rejectListen) => {
+    httpServer.once("error", rejectListen);
+    httpServer.listen(port, "127.0.0.1", resolve);
+  });
+  console.error(`plonk-mcp: Streamable HTTP at http://127.0.0.1:${port}/mcp`);
+}

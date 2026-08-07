@@ -119,21 +119,51 @@ const NOT_RUNNING =
   "Plonk menu bar app is not running. Ask the user to launch Plonk.app (its icon should appear in the menu bar).";
 
 // Stamped on every request so the app can attribute it to a client and, in
-// exclusive mode, gate on it. Set once the MCP handshake reveals who we serve.
-let agentHeaders: Record<string, string> = {};
-let identityName = "";
+// exclusive mode, gate on it. Over stdio there is one client per process and
+// the global identity is enough; over HTTP many clients share the process, so
+// each session carries its identity through AsyncLocalStorage instead.
+import { AsyncLocalStorage } from "node:async_hooks";
 
-export function setAgentIdentity(name: string, version: string): void {
-  identityName = name;
-  agentHeaders = {
-    "x-plonk-agent": version ? `${name}/${version}` : name,
-    "x-plonk-agent-pid": String(process.pid),
-  };
+export interface AgentIdentity {
+  name: string;
+  version: string;
+  pid: number;
 }
 
-/** The client name this server registered with, e.g. "claude-code". */
+/** Set once the handshake lands but read on every later call, hence a holder
+ * object rather than the identity itself. */
+export interface IdentityHolder {
+  identity?: AgentIdentity;
+}
+
+const identityStore = new AsyncLocalStorage<IdentityHolder>();
+let globalIdentity: AgentIdentity | undefined;
+
+export function setAgentIdentity(name: string, version: string): void {
+  globalIdentity = { name, version, pid: process.pid };
+}
+
+/** Run fn with a per-session identity; every call() inside sees it. */
+export function runWithIdentity<T>(holder: IdentityHolder, fn: () => T): T {
+  return identityStore.run(holder, fn);
+}
+
+function currentIdentity(): AgentIdentity | undefined {
+  return identityStore.getStore()?.identity ?? globalIdentity;
+}
+
+/** The client name this session registered with, e.g. "claude-code". */
 export function agentIdentityName(): string {
-  return identityName;
+  return currentIdentity()?.name ?? "";
+}
+
+function agentHeaders(): Record<string, string> {
+  const id = currentIdentity();
+  if (!id) return {};
+  return {
+    "x-plonk-agent": id.version ? `${id.name}/${id.version}` : id.name,
+    "x-plonk-agent-pid": String(id.pid),
+  };
 }
 
 export interface CallOptions {
@@ -154,7 +184,7 @@ export async function call<T extends object = ApiResponse>(
   try {
     res = await fetch(BASE + path, {
       method,
-      headers: { "content-type": "application/json", ...agentHeaders },
+      headers: { "content-type": "application/json", ...agentHeaders() },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: timeout,
     });
