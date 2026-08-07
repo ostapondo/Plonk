@@ -18,7 +18,7 @@ export function register(server: McpServer): void {
 
   server.tool(
     "assign_zone_set",
-    "Assign a zone set (built-in or saved) to a monitor. Omit 'name' to restore the default set (Halves); pass 'edge' for edge snapping instead of zones. Available set names and current assignments are in get_state.",
+    "Assign a zone set (built-in or saved) to one monitor, so dragging a window there snaps to that set's zones. Each monitor keeps its own assignment; assigning replaces whatever that monitor used before and takes effect on the next drag. Omit 'name' to restore the default set (Halves); pass 'edge' for plain edge snapping instead of zones. Available set names and current per-monitor assignments are in get_state.",
     {
       screen: z.number().int().describe("Monitor index (0 = primary)"),
       name: z.string().optional().describe("Zone set name, or 'edge' for edge snapping; omit for the default set"),
@@ -28,8 +28,8 @@ export function register(server: McpServer): void {
 
   server.tool(
     "delete_zone_set",
-    "Delete a saved zone set. Monitors using it fall back to the default set. Built-in sets cannot be deleted.",
-    { name: z.string() },
+    "Delete a saved zone set by name. Any monitor currently using it falls back to the default set (Halves), so snapping keeps working. Only sets made with save_zone_set can go: the built-ins (Halves, Thirds, 60 / 40, Quarters, Priority) are refused. Deleting is immediate and cannot be undone — the zones would have to be described again. Saved sets and their per-monitor assignments are listed in get_state; use assign_zone_set instead when a monitor should merely stop using a set that others still need.",
+    { name: z.string().describe("Saved zone set name, as shown in get_state") },
     async ({ name }) => text(await call("/zones/delete", { method: "POST", body: { name } }))
   );
 }
