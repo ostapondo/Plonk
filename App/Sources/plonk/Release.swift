@@ -47,6 +47,26 @@ struct Release {
     let notes: String
     /// Asset size in bytes, for the progress bar. Zero when GitHub omits it.
     let size: Int64
+    /// The asset's SHA-256, hex, as GitHub records it — nil for releases made
+    /// before it started publishing one. It arrives in the same response as
+    /// the download URL, so it is no defence against a feed that lies: that is
+    /// what the signature check is for. What it catches is the download itself
+    /// going wrong — truncated, cached stale, swapped between the feed and the
+    /// disk — and it catches it before a byte is unpacked or run.
+    let digest: String?
+
+    /// GitHub writes the digest as "sha256:<hex>". Anything else — a missing
+    /// field, another algorithm, a malformed hash — reads as nil rather than
+    /// failing the update: a release that predates the field is still a
+    /// release, and the signature check has not moved.
+    static func hexSHA256(from raw: Any?) -> String? {
+        guard let text = raw as? String else { return nil }
+        let parts = text.split(separator: ":", maxSplits: 1)
+        guard parts.count == 2, parts[0].lowercased() == "sha256" else { return nil }
+        let hex = parts[1].lowercased()
+        guard hex.count == 64, hex.allSatisfy(\.isHexDigit) else { return nil }
+        return hex
+    }
 
     /// Reads GitHub's `releases/latest` payload. Drafts and pre-releases are
     /// rejected rather than offered: they are published to be tried by hand.
@@ -87,7 +107,8 @@ struct Release {
             downloadURL: download,
             pageURL: page,
             notes: (root["body"] as? String) ?? "",
-            size: (asset["size"] as? NSNumber)?.int64Value ?? 0
+            size: (asset["size"] as? NSNumber)?.int64Value ?? 0,
+            digest: hexSHA256(from: asset["digest"])
         )
     }
 
@@ -138,6 +159,7 @@ enum UpdateError: LocalizedError {
     case network(String)
     case unpackFailed(String)
     case signatureRejected(String)
+    case digestMismatch
     case adHocCopy
     case notInstalled
     case notWritable(String)
@@ -153,6 +175,11 @@ enum UpdateError: LocalizedError {
             return "The download could not be unpacked: \(why)."
         case .signatureRejected(let why):
             return "The download was rejected: \(why). Nothing was installed."
+        case .digestMismatch:
+            return """
+            The download does not match the checksum published for it, so it is not the build \
+            that was offered. Nothing was installed.
+            """
         case .adHocCopy:
             return """
             This copy is ad-hoc signed, so a downloaded build cannot be checked against it. \
