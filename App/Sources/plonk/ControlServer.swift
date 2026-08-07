@@ -13,11 +13,26 @@ struct HTTPRequest {
 struct HTTPResponse {
     let status: Int
     let json: [String: Any]
+    /// Set instead of a body when the route keeps the socket: the connection
+    /// is handed over and the server writes nothing more. Server-sent events
+    /// are the only such route, and it stays a route rather than a special
+    /// case in the transport.
+    let handOff: ((NWConnection) -> Void)?
+
+    init(status: Int, json: [String: Any], handOff: ((NWConnection) -> Void)? = nil) {
+        self.status = status
+        self.json = json
+        self.handOff = handOff
+    }
 
     static func ok(_ json: [String: Any]) -> HTTPResponse { HTTPResponse(status: 200, json: json) }
     static func badRequest(_ message: String) -> HTTPResponse { HTTPResponse(status: 400, json: ["error": message]) }
     static func notFound(_ message: String) -> HTTPResponse { HTTPResponse(status: 404, json: ["error": message]) }
     static func failed(_ message: String) -> HTTPResponse { HTTPResponse(status: 500, json: ["error": message]) }
+    /// Gives the raw connection to `attach`, which owns it from then on.
+    static func stream(_ attach: @escaping (NWConnection) -> Void) -> HTTPResponse {
+        HTTPResponse(status: 200, json: [:], handOff: attach)
+    }
 }
 
 final class ControlServer {
@@ -25,11 +40,6 @@ final class ControlServer {
 
     private var listener: NWListener?
     private let handle: (HTTPRequest, @escaping (HTTPResponse) -> Void) -> Void
-    /// When set, GET /events connections are handed over as SSE streams
-    /// instead of the usual request/response cycle.
-    var events: EventBroadcaster?
-    /// The revision the first SSE frame reports.
-    var currentRev: () -> Int = { 1 }
 
     /// Called on the main queue when the port cannot be claimed, which in
     /// practice means a second Plonk is already running.
@@ -79,16 +89,6 @@ final class ControlServer {
                 self.respond(conn, HTTPResponse(status: 403, json: ["error": reason]))
                 return
             }
-            if request.method == "GET", request.path == "/events" || request.path.hasPrefix("/events?") {
-                DispatchQueue.main.async {
-                    guard let events = self.events else {
-                        self.respond(conn, .notFound("events are not available"))
-                        return
-                    }
-                    events.attach(conn, rev: self.currentRev())
-                }
-                return
-            }
             DispatchQueue.main.async {
                 self.handle(request) { [weak self] response in
                     self?.respond(conn, response)
@@ -133,6 +133,10 @@ final class ControlServer {
     }
 
     private func respond(_ conn: NWConnection, _ response: HTTPResponse) {
+        if let handOff = response.handOff {
+            handOff(conn)
+            return
+        }
         let body = (try? JSONSerialization.data(withJSONObject: response.json, options: [.sortedKeys])) ?? Data("{}".utf8)
         let head = "HTTP/1.1 \(response.status) \(Self.reason(response.status))\r\n"
             + "Content-Type: application/json\r\n"

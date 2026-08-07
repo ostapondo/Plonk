@@ -5,7 +5,7 @@
 // `--http [--port N]` serves Streamable HTTP at http://127.0.0.1:<port>/mcp
 // instead, for clients that cannot spawn a process — several at once.
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { BASE, isAppReachable, setAgentIdentity } from "./api.js";
+import { BASE, isAppReachable, processIdentityHolder } from "./api.js";
 import { createPlonkServer, startHello, startInboxLoop, watchClientInfo } from "./factory.js";
 import { serveHttp } from "./http.js";
 
@@ -20,10 +20,11 @@ if (args.includes("--http")) {
   }
   await serveHttp(port);
 } else {
+  const holder = processIdentityHolder();
   const server = createPlonkServer();
   watchClientInfo(server, ({ name, version }) => {
-    setAgentIdentity(name, version);
     const identity = { name, version, pid: process.pid };
+    holder.identity = identity;
     startHello(identity);
     startInboxLoop(server, identity);
   });

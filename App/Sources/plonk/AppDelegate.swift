@@ -214,6 +214,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         router.changes.onEvent = { [weak self] rev, what in
             self?.eventBroadcaster.broadcast(rev: rev, what: what)
         }
+        router.attachEvents = { [weak self] conn, rev in
+            self?.eventBroadcaster.attach(conn, rev: rev)
+        }
         // Every source of change funnels into the bus at its own choke point,
         // so no caller has to remember to announce itself.
         store.didMutate = { [weak self] in self?.router.changes.bump("config") }
@@ -261,8 +264,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return respond(.failed("shutting down")) }
             router.handle(request, respond: respond)
         }
-        server.events = eventBroadcaster
-        server.currentRev = { [weak self] in self?.router.changes.rev ?? 1 }
         server.onUnavailable = { [weak self] message in self?.model.apiWarning = message }
         do {
             try server.start()

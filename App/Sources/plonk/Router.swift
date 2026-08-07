@@ -1,4 +1,5 @@
 import AppKit
+import Network
 
 // HTTP surface of the app. Kept apart from AppDelegate so routes can be
 // exercised without a status bar or windows.
@@ -46,6 +47,9 @@ final class Router {
     var launchWorkspace: ((String, Workspace, Int?, @escaping ([[String: Any]]) -> Void) -> Void)?
     /// Set by AppDelegate; spawning a process is not Router's business.
     var runAdapter: ((AgentAdapter, String) -> Void)?
+    /// Set by AppDelegate. Takes over a connection for the event stream and
+    /// the revision its first frame reports.
+    var attachEvents: ((NWConnection, Int) -> Void)?
     var didChangeLayouts: (() -> Void)?
     var didChangeZones: (() -> Void)?
     var didChangeAgents: (() -> Void)?
@@ -234,6 +238,14 @@ final class Router {
                 return
             }
             respond(dispatch(prompt: prompt, to: trimmedName(body["agent"])))
+
+        case ("GET", "/events"):
+            guard let attachEvents else {
+                respond(.notFound("events are not available"))
+                return
+            }
+            let rev = changes.rev
+            respond(.stream { conn in attachEvents(conn, rev) })
 
         case ("GET", "/agents/inbox"):
             guard let name = query["agent"], !name.isEmpty else {
