@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let windows = WindowManager()
     private let awake = AwakeManager()
     private let agents = AgentRegistry()
+    private let eventBroadcaster = EventBroadcaster()
     private let hotkeys = HotkeyManager()
     private let model = AppModel()
     private lazy var launcher = WorkspaceLauncher(windows: windows)
@@ -182,7 +183,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupServer() {
         router = Router(store: store, windows: windows, awake: awake, agents: agents)
-        agents.onChange = { [weak self] in self?.refreshAgentModel() }
+        router.changes.onEvent = { [weak self] rev, what in
+            self?.eventBroadcaster.broadcast(rev: rev, what: what)
+        }
+        agents.onChange = { [weak self] in
+            self?.refreshAgentModel()
+            self?.router.changes.bump("agents")
+        }
         router.didChangeAgents = { [weak self] in self?.refreshAgentModel() }
         router.didChangeLayouts = { [weak self] in self?.refreshWorkspaceModel() }
         router.didChangeZones = { [weak self] in
@@ -223,6 +230,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return respond(.failed("shutting down")) }
             router.handle(request, respond: respond)
         }
+        server.events = eventBroadcaster
+        server.currentRev = { [weak self] in self?.router.changes.rev ?? 1 }
         server.onUnavailable = { [weak self] message in self?.model.apiWarning = message }
         do {
             try server.start()

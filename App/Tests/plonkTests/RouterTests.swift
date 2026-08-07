@@ -376,6 +376,16 @@ struct RouterTests {
         #expect(Router.splitQuery("/state").path == "/state")
     }
 
+    @Test func mutationsBumpTheRevision() {
+        let h = Harness()
+        let before = h.router.changes.rev
+        var events: [String] = []
+        h.router.changes.onEvent = { _, what in events.append(what) }
+        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
+        #expect(h.router.changes.rev > before)
+        #expect(events.contains("config"))
+    }
+
     @Test func agentChangesNotifyTheUI() {
         let h = Harness()
         var notifications = 0

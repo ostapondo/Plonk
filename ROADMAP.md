@@ -16,12 +16,10 @@ an active-agent selector (menu bar, settings, or the `select_agent` tool), an
 optional "only the active agent controls" mode, and a Streamable HTTP
 transport (`plonk-mcp --http`) for clients that can't spawn a process.
 
-Still to do:
-
-- **Live state** — push changes to every connected client instead of each one
-  polling `/state`, so agents see what the user and other agents just did.
-- **Reaching the agent** — a channel from Plonk to the active agent, so voice
-  and hotkeys have somewhere to send what you said.
+Also shipped: a channel from Plonk to the active agent (`/agents/ask` →
+long-polled inbox → MCP sampling, with CLI adapters as the fallback), and live
+state — `GET /events` streams `{"rev","what"}` server-sent events while `rev`
+rides in `/state`, so agents notice what the user and other agents just did.
 
 ## Later — voice
 

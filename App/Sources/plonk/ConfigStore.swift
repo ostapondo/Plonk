@@ -151,6 +151,8 @@ final class ConfigStore {
     private(set) var config = Config()
     /// Set when `load` had to set an unreadable config aside, so the UI can say so.
     private(set) var loadFailure: String?
+    /// Fires after every update(), whoever triggered it — feeds live events.
+    var didMutate: (() -> Void)?
 
     private let url: URL
     private let backupURL: URL
@@ -191,5 +193,6 @@ final class ConfigStore {
     func update(_ mutate: (inout Config) -> Void) {
         mutate(&config)
         save()
+        didMutate?()
     }
 }

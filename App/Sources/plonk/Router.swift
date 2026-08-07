@@ -23,6 +23,7 @@ import AppKit
 //   POST /agents/exclusive { on }      only the selected agent may change things
 //   POST /agents/ask       { prompt, agent? }   queue a task for an agent (default: active)
 //   GET  /agents/inbox?agent=<name>&wait=<0-25>  long-poll the agent's queued tasks
+//   GET  /events           SSE stream of {"rev","what"}; rev also rides in /state
 //
 // Requests may carry X-Plonk-Agent: name/version (and X-Plonk-Agent-Pid) so
 // the app knows who is driving; plonk-mcp sends them on every call.
@@ -36,6 +37,7 @@ final class Router {
     private let windows: WindowManager
     private let awake: AwakeManager
     let agents: AgentRegistry
+    let changes: ChangeBus
 
     /// Set by AppDelegate; the editor and permission prompts need AppKit.
     var capture: ((CaptureMode, Bool, @escaping (NSImage?) -> Void) -> Void)?
@@ -51,11 +53,15 @@ final class Router {
     var announce: ((_ text: String, _ imagePath: String?) -> Void)?
 
     init(store: ConfigStore, windows: WindowManager, awake: AwakeManager,
-         agents: AgentRegistry = AgentRegistry()) {
+         agents: AgentRegistry = AgentRegistry(), changes: ChangeBus = ChangeBus()) {
         self.store = store
         self.windows = windows
         self.awake = awake
         self.agents = agents
+        self.changes = changes
+        // Config writes come from every direction (UI, HTTP, hotkeys), so the
+        // store itself is the one reliable place to notice them.
+        store.didMutate = { [weak self] in self?.changes.bump("config") }
     }
 
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
@@ -332,6 +338,7 @@ final class Router {
         }
 
         var state: [String: Any] = [
+            "rev": changes.rev,
             "awake": awake.isOn,
             "awake_details": [
                 "requested": awake.requested,
@@ -435,6 +442,7 @@ final class Router {
             screen: spec.screen,
             frac: FracRect(spec.x, spec.y, spec.w, spec.h)
         )
+        if error == nil { changes.bump("windows") }
         return error.map { ["ok": false, "app": spec.app, "error": $0] } ?? ["ok": true, "app": spec.app]
     }
 
@@ -462,6 +470,7 @@ final class Router {
         let error = windows.place(app: app, titleContains: title, screen: screen,
                                   frac: zones[number - 1].frac)
         if let error { return .failed(error) }
+        changes.bump("windows")
         return .ok(["ok": true, "app": app, "screen": screen, "zone": number, "zones": zones.count])
     }
 

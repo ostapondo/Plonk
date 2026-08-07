@@ -25,6 +25,11 @@ final class ControlServer {
 
     private var listener: NWListener?
     private let handle: (HTTPRequest, @escaping (HTTPResponse) -> Void) -> Void
+    /// When set, GET /events connections are handed over as SSE streams
+    /// instead of the usual request/response cycle.
+    var events: EventBroadcaster?
+    /// The revision the first SSE frame reports.
+    var currentRev: () -> Int = { 1 }
 
     /// Called on the main queue when the port cannot be claimed, which in
     /// practice means a second Plonk is already running.
@@ -72,6 +77,16 @@ final class ControlServer {
             }
             if let reason = Self.browserRejection(for: request) {
                 self.respond(conn, HTTPResponse(status: 403, json: ["error": reason]))
+                return
+            }
+            if request.method == "GET", request.path == "/events" || request.path.hasPrefix("/events?") {
+                DispatchQueue.main.async {
+                    guard let events = self.events else {
+                        self.respond(conn, .notFound("events are not available"))
+                        return
+                    }
+                    events.attach(conn, rev: self.currentRev())
+                }
                 return
             }
             DispatchQueue.main.async {
