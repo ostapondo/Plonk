@@ -178,11 +178,21 @@ cd mcp && npm run build   # the MCP server
 `App/` is the Swift menu bar app, `mcp/` the TypeScript MCP server. Point an
 agent at [AGENTS.md](AGENTS.md) before it touches either.
 
-`build.sh` signs with a `Plonk Dev` keychain identity when one exists and
-falls back to ad-hoc. Ad-hoc signatures change every build, and macOS ties the
-Accessibility grant to the signature — so create that certificate once
-(Keychain Access → Certificate Assistant → Create a Certificate → type
-"Code Signing", name it `Plonk Dev`) and rebuilds stop resetting permissions.
+`build.sh` signs with a `Plonk Dev` keychain identity and stops if it is
+missing. macOS ties Accessibility and Screen Recording to the signature, and an
+ad-hoc one changes every build, so create that certificate once (Keychain
+Access → Certificate Assistant → Create a Certificate → type "Code Signing",
+name it `Plonk Dev`) and rebuilds stop resetting permissions. Set
+`PLONK_SIGN_IDENTITY` to sign with a different one.
+
+If a permission was first granted while the app was ad-hoc signed, the old
+grant is pinned to a signature that no longer exists and every rebuild looks
+like a reset. Clear it once and grant again:
+
+```sh
+tccutil reset ScreenCapture dev.plonk.app
+tccutil reset Accessibility dev.plonk.app
+```
 
 Releases: bump `MARKETING_VERSION` and `BUILD_NUMBER` in
 [version.env](version.env). `scripts/build.sh` reads both into `Info.plist`.

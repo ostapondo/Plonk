@@ -79,6 +79,13 @@ Things that have already cost someone an hour.
   refreshes `App/.build`; the app the user is running is `Plonk.app`. After any
   change you intend to check live:
   `./scripts/build.sh && pkill -f "Plonk.app/Contents/MacOS/plonk"; sleep 2; open Plonk.app`
+- **Permissions are pinned to the code signature, not to the app.** TCC stores
+  the designated requirement, so any change to it drops Accessibility and
+  Screen Recording at once. `scripts/build.sh` refuses to build without the
+  `Plonk Dev` identity for exactly this reason — never work around it by
+  ad-hoc signing. A grant that keeps vanishing across rebuilds is a stale entry
+  from an older signature: `tccutil reset ScreenCapture dev.plonk.app`, then
+  grant it once more.
 - **`CGFloat` is not `Double`.** It is its own struct, so
   `[String: CGFloat] as? [String: Double]` returns nil. Anything that crosses
   the `[String: Any]` boundary — `WindowManager.listWindows` and everything

@@ -8,6 +8,25 @@ cd "$(dirname "$0")/.."
 # deciding whether a copy is newer, so it has to rise on every release.
 . ./version.env
 
+# TCC keys Accessibility and Screen Recording on the signature, so the identity
+# has to be the same one every build. An ad-hoc signature is a new identity each
+# time, which silently revokes both — refuse to produce a bundle like that
+# rather than let it look built and then fail at the first window move. Checked
+# before anything is written, so a missing identity leaves the working app alone.
+IDENTITY=${PLONK_SIGN_IDENTITY:-Plonk Dev}
+if ! security find-identity -v -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
+	cat >&2 <<MSG
+error: code-signing identity "$IDENTITY" is not in the keychain.
+
+Create it once, then re-run this script:
+  Keychain Access > Certificate Assistant > Create a Certificate...
+  Name: $IDENTITY   Identity Type: Self Signed Root   Type: Code Signing
+
+Set PLONK_SIGN_IDENTITY to build with a different one.
+MSG
+	exit 1
+fi
+
 (cd App && swift build -c release)
 
 APP=Plonk.app
@@ -48,13 +67,17 @@ cat > "$APP/Contents/Info.plist" <<EOF
 </dict>
 </plist>
 EOF
-# Sign with a stable identity when one exists: an ad-hoc signature changes
-# every build, which makes macOS drop the app's Accessibility permission.
-IDENTITY=${PLONK_SIGN_IDENTITY:-Plonk Dev}
-if security find-identity -v -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
-	codesign --force --options runtime --sign "$IDENTITY" "$APP"
-else
-	echo "warning: signing identity \"$IDENTITY\" not found, falling back to ad-hoc" >&2
-	codesign --force --sign - "$APP"
+codesign --force --options runtime --sign "$IDENTITY" "$APP"
+
+# A changed requirement means every permission the app holds has just been
+# dropped. That is worth a line of output; discovering it from a failed capture
+# is not.
+REQUIREMENT=$(codesign -d -r- "$APP" 2>/dev/null | sed -n 's/^designated => //p')
+STAMP=App/.build/last-designated-requirement
+if [ -f "$STAMP" ] && [ "$(cat "$STAMP")" != "$REQUIREMENT" ]; then
+	echo "warning: signing identity changed since the last build; macOS will ask for Accessibility and Screen Recording again" >&2
 fi
+mkdir -p "$(dirname "$STAMP")"
+printf '%s\n' "$REQUIREMENT" > "$STAMP"
+
 echo "built $APP"
