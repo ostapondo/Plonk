@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.ostapondo/plonk",
+  "description": "MCP server for Plonk — the Mac window manager your AI agent can drive. Layouts, workspaces, snap zones, keep-awake and screenshots.",
+  "repository": {
+    "url": "https://github.com/ostapondo/plonk",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "websiteUrl": "https://github.com/ostapondo/plonk",
+  "version": "0.0.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "plonk-mcp",
+      "version": "0.0.2",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
