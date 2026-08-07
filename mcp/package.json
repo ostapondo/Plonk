@@ -1,6 +1,6 @@
 {
   "name": "plonk-mcp",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "mcpName": "io.github.ostapondo/plonk",
   "description": "MCP server for Plonk — the Mac window manager your AI agent can drive. Layouts, workspaces, snap zones, keep-awake and screenshots.",
   "type": "module",
@@ -21,9 +21,15 @@
     "workspaces",
     "screenshots"
   ],
-  "engines": { "node": ">=18" },
-  "files": ["dist"],
-  "bin": { "plonk-mcp": "dist/server.js" },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "plonk-mcp": "dist/server.js"
+  },
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",

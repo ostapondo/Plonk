@@ -5,7 +5,7 @@
 windows — you drag them there, or your agent says where.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.0.4-58a6ff?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.0.5-58a6ff?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
   <img alt="MCP" src="https://img.shields.io/badge/MCP-18_tools-8957e5?style=flat-square">
