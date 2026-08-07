@@ -32,6 +32,23 @@ struct LayoutItemSpec: Codable {
 struct AgentAdapter: Codable {
     var name: String
     var command: String
+
+    /// The environment variable the prompt travels in. Substituting the text
+    /// into the command line cannot be made safe — a template that happens to
+    /// quote {prompt} would break any escaping we applied — so the shell never
+    /// sees the words at all, only the name of a variable holding them.
+    static let promptVariable = "PLONK_PROMPT"
+
+    /// The command to run for `prompt`, with the prompt supplied out of band.
+    /// `{prompt}` becomes a reference to the variable; a template without it
+    /// gets one appended.
+    static func invocation(command: String, prompt: String) -> (command: String, environment: [String: String]) {
+        let reference = "\"$\(promptVariable)\""
+        let line = command.contains("{prompt}")
+            ? command.replacingOccurrences(of: "{prompt}", with: reference)
+            : command + " " + reference
+        return (line, [promptVariable: prompt])
+    }
 }
 
 struct Config: Codable {

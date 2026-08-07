@@ -17,6 +17,15 @@ export function register(server: McpServer): void {
         .describe("Also turn 'only the active agent controls' on or off"),
     },
     async ({ name, exclusive }) => {
+      // An unset identity would turn "select myself" into "" — the value that
+      // clears the user's choice — so refuse rather than undo their selection.
+      if (name === undefined && !agentIdentityName()) {
+        return text({
+          error:
+            "this client has not finished registering with Plonk yet, so it cannot select itself; " +
+            "retry in a moment or pass an explicit name from get_state",
+        });
+      }
       const target = name === undefined ? agentIdentityName() : name;
       const selected = await call("/agents/select", { method: "POST", body: { name: target } });
       if ("error" in selected || exclusive === undefined) return text(selected);

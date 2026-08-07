@@ -17,6 +17,8 @@ struct RouterTests {
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             store = ConfigStore(directory: directory)
             router = Router(store: store, windows: WindowManager(), awake: AwakeManager())
+            // Mirrors AppDelegate.setupServer, which owns this wiring.
+            store.didMutate = { [router] in router.changes.bump("config") }
         }
 
         deinit { try? FileManager.default.removeItem(at: directory) }
@@ -374,6 +376,34 @@ struct RouterTests {
         #expect(split.query["agent"] == "claude-code")
         #expect(split.query["wait"] == "25")
         #expect(Router.splitQuery("/state").path == "/state")
+    }
+
+    /// A bare "=" pair used to trap and take the whole app down with it.
+    @Test func malformedQueriesDoNotCrash() {
+        #expect(Router.splitQuery("/state?=").path == "/state")
+        #expect(Router.splitQuery("/state?a=1&=&b=2").query["b"] == "2")
+        #expect(Router.splitQuery("/state?").path == "/state")
+        #expect(Router.splitQuery("/state?flag").query["flag"] == "")
+        let h = Harness()
+        #expect(h.send(HTTPRequest(method: "GET", path: "/state?=", headers: [:], body: [:])).status != 404)
+    }
+
+    /// A prompt is a way to move windows by proxy, and can launch an adapter.
+    @Test func exclusiveModeGuardsTheAgentChannel() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+        let ask = HTTPRequest(method: "POST", path: "/agents/ask",
+                              headers: ["x-plonk-agent": "cursor/1.0"],
+                              body: ["prompt": "move everything to screen 2"])
+        #expect(h.send(ask).status == 409)
+        // Draining someone else's queue steals their prompts, GET or not.
+        let peek = HTTPRequest(method: "GET", path: "/agents/inbox?agent=claude-code",
+                               headers: ["x-plonk-agent": "cursor/1.0"], body: [:])
+        #expect(h.send(peek).status == 409)
+        let own = HTTPRequest(method: "GET", path: "/agents/inbox?agent=claude-code",
+                              headers: ["x-plonk-agent": "claude-code/2.0"], body: [:])
+        #expect(h.send(own).status == 200)
     }
 
     @Test func mutationsBumpTheRevision() {

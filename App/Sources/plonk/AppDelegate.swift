@@ -113,6 +113,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model.awakeRequested = awake.requested
             refreshStatusMenu()
             persistAwakeSession()
+            // Also fires when the power source or a timeout flips it, which
+            // writes no config and would otherwise never reach a listener.
+            router?.changes.bump("awake")
         }
         awake.startObservingPowerSource()
         if store.config.awakeRequested {
@@ -211,6 +214,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         router.changes.onEvent = { [weak self] rev, what in
             self?.eventBroadcaster.broadcast(rev: rev, what: what)
         }
+        // Every source of change funnels into the bus at its own choke point,
+        // so no caller has to remember to announce itself.
+        store.didMutate = { [weak self] in self?.router.changes.bump("config") }
+        windows.onDidPlace = { [weak self] in self?.router.changes.bump("windows") }
         agents.onChange = { [weak self] in
             self?.refreshAgentModel()
             self?.router.changes.bump("agents")
@@ -236,13 +243,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Adapters may run for minutes, so they never touch the main thread.
         router.runAdapter = { adapter, prompt in
             DispatchQueue.global(qos: .userInitiated).async {
-                let escaped = "'" + prompt.replacingOccurrences(of: "'", with: "'\\''") + "'"
-                let command = adapter.command.contains("{prompt}")
-                    ? adapter.command.replacingOccurrences(of: "{prompt}", with: escaped)
-                    : adapter.command + " " + escaped
+                let invocation = AgentAdapter.invocation(command: adapter.command, prompt: prompt)
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-                process.arguments = ["-lc", command]
+                process.arguments = ["-lc", invocation.command]
+                process.environment = ProcessInfo.processInfo.environment
+                    .merging(invocation.environment) { _, prompt in prompt }
                 do {
                     try process.run()
                 } catch {

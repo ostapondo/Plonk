@@ -26,12 +26,14 @@ final class AgentRegistry {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         let key = "\(trimmed)#\(pid.map(String.init) ?? "?")"
-        let isNew = sessions[key] == nil
-        var session = sessions[key] ?? AgentSession(name: trimmed, version: version, pid: pid, lastSeen: now)
+        let previous = sessions[key]
+        var session = previous ?? AgentSession(name: trimmed, version: version, pid: pid, lastSeen: now)
         if !version.isEmpty { session.version = version }
         session.lastSeen = now
         sessions[key] = session
-        if isNew { onChange?() }
+        // Heartbeats from a session already online change nothing anyone is
+        // watching; arriving and coming back do.
+        if previous.map({ !isOnline($0, now: now) }) ?? true { onChange?() }
     }
 
     /// Refresh from a request's `X-Plonk-Agent: name/version` header, so agents
@@ -64,25 +66,36 @@ final class AgentRegistry {
 
         var asDict: [String: Any] {
             ["id": id, "prompt": prompt,
-             "created": ISO8601DateFormatter().string(from: created)]
+             "created": AgentRegistry.iso.string(from: created)]
         }
     }
 
+    /// Building one of these is far dearer than formatting with it, and
+    /// everything here is main-queue confined.
+    static let iso = ISO8601DateFormatter()
+
+    /// Prompts an agent never came back for are worthless; keeping the newest
+    /// few bounds a queue nobody may ever drain.
+    static let maxQueuedTasks = 20
+
     private var inbox: [String: [Task]] = [:]
-    /// Long-poll responders parked until a task arrives or the timeout fires.
-    /// Everything runs on the main queue (Router.handle does), so no locking.
-    private var waiters: [String: [(token: UUID, cancel: DispatchWorkItem, respond: ([Task]) -> Void)]] = [:]
+    /// The one parked long-poll responder per agent, waiting for a task or its
+    /// timeout. Everything runs on the main queue (Router.handle does), so no
+    /// locking. Only one is kept: a client that polls again has abandoned its
+    /// previous connection, and handing a task to that dead socket would throw
+    /// the user's words away.
+    private var waiters: [String: (cancel: DispatchWorkItem, respond: ([Task]) -> Void)] = [:]
 
     @discardableResult
     func enqueue(_ prompt: String, for agent: String) -> Task {
         let task = Task(prompt: prompt)
-        if var parked = waiters[agent], !parked.isEmpty {
-            let waiter = parked.removeFirst()
-            waiters[agent] = parked
+        if let waiter = waiters.removeValue(forKey: agent) {
             waiter.cancel.cancel()
             waiter.respond([task])
         } else {
-            inbox[agent, default: []].append(task)
+            var queued = inbox[agent] ?? []
+            queued.append(task)
+            inbox[agent] = queued.suffix(Self.maxQueuedTasks)
         }
         return task
     }
@@ -99,15 +112,22 @@ final class AgentRegistry {
             respond(queued)
             return
         }
-        let token = UUID()
+        // A caller that asked not to wait wants an answer, not a parked socket.
+        guard seconds > 0 else {
+            respond([])
+            return
+        }
+        // A second poll means the first connection is gone; let it go empty
+        // rather than leave it first in line for the next task.
+        if let previous = waiters.removeValue(forKey: agent) {
+            previous.cancel.cancel()
+            previous.respond([])
+        }
         let cancel = DispatchWorkItem { [weak self] in
-            guard let self, var parked = waiters[agent],
-                  let index = parked.firstIndex(where: { $0.token == token }) else { return }
-            let waiter = parked.remove(at: index)
-            waiters[agent] = parked
+            guard let self, let waiter = waiters.removeValue(forKey: agent) else { return }
             waiter.respond([])
         }
-        waiters[agent, default: []].append((token: token, cancel: cancel, respond: respond))
+        waiters[agent] = (cancel: cancel, respond: respond)
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: cancel)
     }
 

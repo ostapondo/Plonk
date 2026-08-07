@@ -79,6 +79,43 @@ struct AgentRegistryTests {
         #expect(registry.drain(for: "cursor").isEmpty)
     }
 
+    /// A client that polls again has abandoned the previous connection, so the
+    /// stale waiter must not stay first in line for the next task.
+    @Test func aSecondPollReplacesTheParkedWaiter() {
+        let registry = AgentRegistry()
+        var first: [String]?
+        var second: [String]?
+        registry.wait(for: "cursor", seconds: 25) { first = $0.map(\.prompt) }
+        registry.wait(for: "cursor", seconds: 25) { second = $0.map(\.prompt) }
+        #expect(first == [])
+        registry.enqueue("browser left", for: "cursor")
+        #expect(second == ["browser left"])
+    }
+
+    @Test func theQueueIsBounded() {
+        let registry = AgentRegistry()
+        for index in 0..<(AgentRegistry.maxQueuedTasks + 5) {
+            registry.enqueue("task \(index)", for: "cursor")
+        }
+        let drained = registry.drain(for: "cursor")
+        #expect(drained.count == AgentRegistry.maxQueuedTasks)
+        // The newest survive; a months-old voice command is worthless.
+        #expect(drained.last?.prompt == "task \(AgentRegistry.maxQueuedTasks + 4)")
+    }
+
+    @Test func aReturningSessionIsAnnouncedAgain() {
+        let registry = AgentRegistry()
+        var changes = 0
+        registry.onChange = { changes += 1 }
+        let start = Date()
+        registry.register(name: "zed", pid: 3, now: start)
+        registry.register(name: "zed", pid: 3, now: start.addingTimeInterval(30))
+        #expect(changes == 1)
+        registry.register(name: "zed", pid: 3,
+                          now: start.addingTimeInterval(AgentRegistry.presenceTimeout + 60))
+        #expect(changes == 2)
+    }
+
     @Test func tasksForOneAgentDoNotLeakToAnother() {
         let registry = AgentRegistry()
         registry.enqueue("for claude", for: "claude-code")

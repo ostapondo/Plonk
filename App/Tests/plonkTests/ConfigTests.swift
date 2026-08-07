@@ -2,6 +2,34 @@ import Testing
 import Foundation
 @testable import plonk
 
+/// The one place a prompt from voice or /agents/ask meets a shell.
+struct AgentAdapterTests {
+
+    @Test func thePromptTravelsInTheEnvironmentNotTheCommandLine() {
+        let invocation = AgentAdapter.invocation(command: "claude -p {prompt}", prompt: "browser left")
+        #expect(invocation.command == "claude -p \"$PLONK_PROMPT\"")
+        #expect(invocation.environment["PLONK_PROMPT"] == "browser left")
+    }
+
+    @Test func aTemplateWithoutThePlaceholderGetsOneAppended() {
+        let invocation = AgentAdapter.invocation(command: "codex exec", prompt: "hi")
+        #expect(invocation.command == "codex exec \"$PLONK_PROMPT\"")
+    }
+
+    /// Shell metacharacters used to escape a quoted template and run.
+    @Test func metacharactersNeverReachTheShell() {
+        let nasty = "open docs; rm -rf ~/tmp && echo $(whoami) `id` 'quoted'"
+        for template in ["claude -p {prompt}", "mytool --ask '{prompt}'", "mytool --ask \"{prompt}\""] {
+            let invocation = AgentAdapter.invocation(command: template, prompt: nasty)
+            #expect(!invocation.command.contains("rm -rf"))
+            #expect(!invocation.command.contains("whoami"))
+            #expect(invocation.environment["PLONK_PROMPT"] == nasty)
+        }
+    }
+}
+import Foundation
+@testable import plonk
+
 struct ConfigTests {
 
     private func decode(_ json: String) throws -> Config {

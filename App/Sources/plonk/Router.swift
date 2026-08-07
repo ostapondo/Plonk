@@ -59,9 +59,6 @@ final class Router {
         self.awake = awake
         self.agents = agents
         self.changes = changes
-        // Config writes come from every direction (UI, HTTP, hotkeys), so the
-        // store itself is the one reliable place to notice them.
-        store.didMutate = { [weak self] in self?.changes.bump("config") }
     }
 
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
@@ -283,16 +280,17 @@ final class Router {
     }
 
     /// "/agents/inbox?agent=x&wait=25" → ("/agents/inbox", ["agent": "x", "wait": "25"]).
+    /// URLComponents owns the escaping and the malformed cases; hand-rolling
+    /// this trapped on a bare "=" pair, which any caller could send.
     static func splitQuery(_ raw: String) -> (path: String, query: [String: String]) {
-        guard let mark = raw.firstIndex(of: "?") else { return (raw, [:]) }
-        let path = String(raw[raw.startIndex..<mark])
-        var query: [String: String] = [:]
-        for pair in raw[raw.index(after: mark)...].split(separator: "&") {
-            let kv = pair.split(separator: "=", maxSplits: 1)
-            guard let key = String(kv[0]).removingPercentEncoding else { continue }
-            query[key] = kv.count > 1 ? (String(kv[1]).removingPercentEncoding ?? "") : ""
+        guard raw.contains("?") else { return (raw, [:]) }
+        guard let components = URLComponents(string: raw) else {
+            return (String(raw.prefix(while: { $0 != "?" })), [:])
         }
-        return (path, query)
+        let query = (components.queryItems ?? []).reduce(into: [String: String]()) { result, item in
+            result[item.name] = item.value ?? ""
+        }
+        return (components.path, query)
     }
 
     /// The name half of an `X-Plonk-Agent: name/version` header.
@@ -305,15 +303,29 @@ final class Router {
     /// Everything that changes windows or config. Reads and screenshots stay
     /// open to every agent; hello must stay open or nobody could register.
     private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake"]
-    private static let guardedPaths: Set<String> = ["/agents/select", "/agents/exclusive"]
+    // /agents/ask is guarded too: a prompt is a way to move windows by proxy,
+    // and it can launch an adapter's shell command outright.
+    private static let guardedPaths: Set<String> = ["/agents/select", "/agents/exclusive", "/agents/ask"]
+
+    /// Reading someone else's queue takes their prompts away, so the inbox is
+    /// gated like a mutation even though it is a GET.
+    private static let guardedGets: Set<String> = ["/agents/inbox"]
 
     /// The 409 reason when "only the selected agent controls" blocks this
     /// request, nil when it may proceed.
     static func exclusiveRejection(method: String, path: String, agent: String?,
                                    selected: String?, exclusive: Bool) -> String? {
-        guard exclusive, let selected, !selected.isEmpty, method == "POST" else { return nil }
-        let guarded = Self.guardedPaths.contains(path)
-            || Self.guardedPrefixes.contains { path == $0 || path.hasPrefix($0 + "/") }
+        guard exclusive, let selected, !selected.isEmpty else { return nil }
+        let guarded: Bool
+        switch method {
+        case "POST":
+            guarded = Self.guardedPaths.contains(path)
+                || Self.guardedPrefixes.contains { path == $0 || path.hasPrefix($0 + "/") }
+        case "GET":
+            guarded = Self.guardedGets.contains(path)
+        default:
+            return nil
+        }
         guard guarded, agent != selected else { return nil }
         let who = agent.map { "\"\($0)\"" } ?? "an unidentified client"
         return "the user made \"\(selected)\" the only agent allowed to change windows and settings, "
@@ -442,7 +454,6 @@ final class Router {
             screen: spec.screen,
             frac: FracRect(spec.x, spec.y, spec.w, spec.h)
         )
-        if error == nil { changes.bump("windows") }
         return error.map { ["ok": false, "app": spec.app, "error": $0] } ?? ["ok": true, "app": spec.app]
     }
 
@@ -470,7 +481,6 @@ final class Router {
         let error = windows.place(app: app, titleContains: title, screen: screen,
                                   frac: zones[number - 1].frac)
         if let error { return .failed(error) }
-        changes.bump("windows")
         return .ok(["ok": true, "app": app, "screen": screen, "zone": number, "zones": zones.count])
     }
 
