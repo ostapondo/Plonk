@@ -1,4 +1,5 @@
 import AppKit
+import CryptoKit
 import Security
 
 // Checks GitHub for a newer release and, when the user asks, installs it.
@@ -211,6 +212,7 @@ final class UpdateManager {
                 .appendingPathComponent("plonk-update-\(UUID().uuidString)", isDirectory: true)
             defer { try? FileManager.default.removeItem(at: archive) }
             do {
+                try checkDigest(of: archive, matches: release)
                 try unpack(archive, into: directory)
                 let staged = directory.appendingPathComponent(installed.lastPathComponent)
                 try checkPayload(at: staged, matches: release)
@@ -223,6 +225,30 @@ final class UpdateManager {
                 finish(error)
             }
         }
+    }
+
+    /// The cheapest check there is, and the first one: the bytes on disk have
+    /// to be the bytes the feed described. It runs before `ditto` is handed
+    /// the archive, so a download that went wrong on the way is never unpacked
+    /// at all. Releases cut before GitHub published a digest carry none, and
+    /// those fall through to the signature check exactly as they used to.
+    private func checkDigest(of archive: URL, matches release: Release) throws {
+        guard let expected = release.digest else { return }
+        let handle: FileHandle
+        do {
+            handle = try FileHandle(forReadingFrom: archive)
+        } catch {
+            throw UpdateError.unpackFailed(error.localizedDescription)
+        }
+        defer { try? handle.close() }
+        // Hashed in chunks rather than read whole: the archive is the entire
+        // app, and this runs on a machine already busy launching one.
+        var hasher = SHA256()
+        while let chunk = try? handle.read(upToCount: 1 << 20), !chunk.isEmpty {
+            hasher.update(data: chunk)
+        }
+        let actual = hasher.finalize().map { String(format: "%02x", $0) }.joined()
+        guard actual == expected else { throw UpdateError.digestMismatch }
     }
 
     private func unpack(_ archive: URL, into directory: URL) throws {

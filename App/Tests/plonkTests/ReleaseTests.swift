@@ -109,6 +109,44 @@ struct ReleaseParsingTests {
                        "browser_download_url": "https://example.invalid/Plonk-0.0.4.zip"]]
         #expect(try Release.parse(feed(assets: assets)).size == 0)
     }
+
+    @Test func theAssetDigestIsCarriedThrough() throws {
+        let hash = String(repeating: "ab", count: 32)
+        let assets = [["name": "Plonk-0.0.4.zip",
+                       "browser_download_url": "https://example.invalid/Plonk-0.0.4.zip",
+                       "digest": "sha256:\(hash.uppercased())"]]
+        #expect(try Release.parse(feed(assets: assets)).digest == hash)
+    }
+
+    /// Releases cut before GitHub published a digest still have to install,
+    /// and they are checked the way they always were.
+    @Test func aReleaseWithoutADigestStillParses() throws {
+        #expect(try Release.parse(feed()).digest == nil)
+    }
+}
+
+struct ReleaseDigestTests {
+
+    @Test func onlyASha256OfTheRightShapeIsAccepted() {
+        let hash = String(repeating: "0f", count: 32)
+        #expect(Release.hexSHA256(from: "sha256:\(hash)") == hash)
+        #expect(Release.hexSHA256(from: "SHA256:\(hash)") == hash)
+    }
+
+    /// A digest that cannot be read has to come back nil rather than an empty
+    /// or truncated string: the caller skips the check when there is none, so
+    /// anything short of a real hash must not present itself as one.
+    @Test func anythingElseIsNoDigestRatherThanABadOne() {
+        let hash = String(repeating: "0f", count: 32)
+        #expect(Release.hexSHA256(from: nil) == nil)
+        #expect(Release.hexSHA256(from: 42) == nil)
+        #expect(Release.hexSHA256(from: "") == nil)
+        #expect(Release.hexSHA256(from: hash) == nil, "no algorithm named")
+        #expect(Release.hexSHA256(from: "sha512:\(hash)") == nil)
+        #expect(Release.hexSHA256(from: "sha256:") == nil)
+        #expect(Release.hexSHA256(from: "sha256:\(hash.dropLast())") == nil, "too short")
+        #expect(Release.hexSHA256(from: "sha256:\(hash.dropLast())zz") == nil, "not hex")
+    }
 }
 
 struct InstallScriptTests {
