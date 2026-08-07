@@ -231,6 +231,10 @@ tccutil reset Accessibility dev.plonk.app
 
 Releases: bump `MARKETING_VERSION` and `BUILD_NUMBER` in
 [version.env](version.env). `scripts/build.sh` reads both into `Info.plist`.
+`scripts/release.sh` then builds with a Developer ID certificate, notarizes,
+staples the ticket into the bundle and writes `Plonk-<version>.zip` with the
+sha256 the cask needs. It needs a paid Apple account and stored `notarytool`
+credentials, and says how to get both if either is missing.
 
 ## License
 
