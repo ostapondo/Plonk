@@ -1,0 +1,218 @@
+import Testing
+import Foundation
+@testable import plonk
+
+// Routes that do not touch Accessibility or the screen. Window placement and
+// /state need a real desktop session, so they stay out of the suite.
+struct RouterTests {
+
+    private final class Harness {
+        let directory: URL
+        let store: ConfigStore
+        let router: Router
+
+        init() {
+            directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("plonk-router-\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            store = ConfigStore(directory: directory)
+            router = Router(store: store, windows: WindowManager(), awake: AwakeManager())
+        }
+
+        deinit { try? FileManager.default.removeItem(at: directory) }
+
+        func post(_ path: String, _ body: [String: Any]) -> HTTPResponse {
+            send(HTTPRequest(method: "POST", path: path, headers: [:], body: body))
+        }
+
+        func send(_ request: HTTPRequest) -> HTTPResponse {
+            var result: HTTPResponse?
+            router.handle(request) { result = $0 }
+            return result ?? .failed("no response")
+        }
+    }
+
+    private let sampleItem: [String: Any] = [
+        "app": "Safari",
+        "frame": ["x": 0, "y": 0, "w": 0.5, "h": 1],
+    ]
+
+    @Test func unknownRouteIsNotFound() {
+        let h = Harness()
+        #expect(h.send(HTTPRequest(method: "GET", path: "/nope", headers: [:], body: [:])).status == 404)
+    }
+
+    @Test func layoutWithoutItemsIsRejected() {
+        let h = Harness()
+        #expect(h.post("/layout", [:]).status == 400)
+        #expect(h.post("/layout", ["items": []]).status == 400)
+    }
+
+    @Test func savingAWorkspaceStoresIt() {
+        let h = Harness()
+        let response = h.post("/workspaces/save", ["name": " work ", "items": [sampleItem]])
+        #expect(response.status == 200)
+        #expect(response.json["saved"] as? String == "work")
+        #expect(h.store.config.workspaces["work"]?.items.count == 1)
+    }
+
+    @Test func savingAWorkspaceKeepsWhatAnAppShouldOpen() throws {
+        let h = Harness()
+        let item: [String: Any] = [
+            "app": "Visual Studio Code",
+            "bundle_id": "com.microsoft.VSCode",
+            "frame": ["x": 0, "y": 0, "w": 0.5, "h": 1],
+            "urls": ["~/Projects/plonk"],
+        ]
+        #expect(h.post("/workspaces/save", ["name": "work", "items": [item]]).status == 200)
+        let saved = try #require(h.store.config.workspaces["work"]?.items.first)
+        #expect(saved.bundleID == "com.microsoft.VSCode")
+        #expect(saved.urls == ["~/Projects/plonk"])
+    }
+
+    @Test func savingAWorkspaceNeedsAName() {
+        let h = Harness()
+        #expect(h.post("/workspaces/save", ["items": [sampleItem]]).status == 400)
+        #expect(h.post("/workspaces/save", ["name": "   ", "items": [sampleItem]]).status == 400)
+    }
+
+    /// Editing the items of a workspace must not silently reset how it launches.
+    @Test func resavingKeepsTheLaunchBehavior() {
+        let h = Harness()
+        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem], "move_existing": false])
+        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
+        #expect(h.store.config.workspaces["work"]?.moveExisting == false)
+    }
+
+    /// A frame outside the screen used to be saved and then placed the window
+    /// where nobody could reach it.
+    @Test func savingRejectsFramesOutsideTheScreen() {
+        let h = Harness()
+        let outside: [String: Any] = ["app": "Safari", "frame": ["x": 0.6, "y": 0, "w": 0.5, "h": 1]]
+        #expect(h.post("/workspaces/save", ["name": "work", "items": [outside]]).status == 400)
+        #expect(h.store.config.workspaces["work"] == nil)
+    }
+
+    /// One bad item used to be dropped silently, saving a workspace short a window.
+    @Test func savingRejectsTheWholeRequestWhenAnItemIsBad() {
+        let h = Harness()
+        let bad: [String: Any] = ["frame": ["x": 0, "y": 0, "w": 1, "h": 1]]
+        #expect(h.post("/workspaces/save", ["name": "work", "items": [sampleItem, bad]]).status == 400)
+        #expect(h.store.config.workspaces["work"] == nil)
+    }
+
+    @Test func layoutReportsAnOutOfRangeFramePerItem() throws {
+        let h = Harness()
+        let outside: [String: Any] = ["app": "Safari", "frame": ["x": 0, "y": 0, "w": 2, "h": 1]]
+        let response = h.post("/layout", ["items": [outside]])
+        #expect(response.status == 200)
+        let results = try #require(response.json["results"] as? [[String: Any]])
+        #expect(results.first?["ok"] as? Bool == false)
+    }
+
+    @Test func launchingAnUnknownWorkspaceIsNotFound() {
+        let h = Harness()
+        #expect(h.post("/workspaces/launch", ["name": "nope"]).status == 404)
+    }
+
+    @Test func launchingPassesTheWorkspaceAndScreenOn() throws {
+        let h = Harness()
+        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
+        var launched: (name: String, apps: [String], screen: Int?)?
+        h.router.launchWorkspace = { name, workspace, screen, done in
+            launched = (name, workspace.apps, screen)
+            done([["ok": true, "app": "Safari"]])
+        }
+        let response = h.post("/workspaces/launch", ["name": "work", "screen": 1])
+        #expect(response.status == 200)
+        #expect(response.json["ok"] as? Bool == true)
+        #expect(launched?.name == "work")
+        #expect(launched?.apps == ["Safari"])
+        #expect(launched?.screen == 1)
+    }
+
+    @Test func deletingReportsWhetherItExisted() {
+        let h = Harness()
+        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
+        #expect(h.post("/workspaces/delete", ["name": "work"]).status == 200)
+        #expect(h.post("/workspaces/delete", ["name": "work"]).status == 404)
+    }
+
+    /// Saved layouts became workspaces; the old paths still reach them.
+    @Test func layoutRoutesAreAliasesOfTheWorkspaceRoutes() {
+        let h = Harness()
+        #expect(h.post("/layouts/save", ["name": "work", "items": [sampleItem]]).status == 200)
+        #expect(h.store.config.workspaces["work"]?.items.count == 1)
+
+        var launchedName: String?
+        h.router.launchWorkspace = { name, _, _, done in
+            launchedName = name
+            done([])
+        }
+        #expect(h.post("/layouts/apply", ["name": "work"]).status == 200)
+        #expect(launchedName == "work")
+        #expect(h.post("/layouts/delete", ["name": "work"]).status == 200)
+    }
+
+    @Test func workspaceChangesNotifyTheUI() {
+        let h = Harness()
+        var notifications = 0
+        h.router.didChangeLayouts = { notifications += 1 }
+        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
+        _ = h.post("/workspaces/delete", ["name": "work"])
+        #expect(notifications == 2)
+    }
+
+    @Test func zoneSetsAreValidatedAgainstScreenBounds() {
+        let h = Harness()
+        let outside: [String: Any] = ["x": 0.6, "y": 0, "w": 0.5, "h": 1]
+        #expect(h.post("/zones/save", ["name": "bad", "zones": [outside]]).status == 400)
+        #expect(h.post("/zones/save", ["name": "bad", "zones": []]).status == 400)
+        #expect(h.store.config.zoneSets["bad"] == nil)
+    }
+
+    @Test func savingAZoneSetStoresIt() {
+        let h = Harness()
+        let zones: [[String: Any]] = [
+            ["x": 0, "y": 0, "w": 0.5, "h": 1],
+            ["x": 0.5, "y": 0, "w": 0.5, "h": 1],
+        ]
+        let response = h.post("/zones/save", ["name": "coding", "zones": zones])
+        #expect(response.status == 200)
+        #expect(h.store.config.zoneSets["coding"]?.count == 2)
+    }
+
+    @Test func assigningAnUnknownZoneSetIsNotFound() {
+        let h = Harness()
+        #expect(h.post("/zones/assign", ["screen": 0, "name": "nope"]).status == 404)
+    }
+
+    @Test func assigningNeedsAScreen() {
+        let h = Harness()
+        #expect(h.post("/zones/assign", ["name": "Halves"]).status == 400)
+    }
+
+    @Test func edgeSnappingIsStoredAsAnEmptyAssignment() {
+        let h = Harness()
+        #expect(h.post("/zones/assign", ["screen": 0, "name": "edge"]).status == 200)
+        #expect(h.store.config.zones(forKeys: ScreenIdentity.keys(forIndex: 0)).isEmpty)
+    }
+
+    @Test func deletingAZoneSetAlsoClearsItsAssignments() {
+        let h = Harness()
+        let zones: [[String: Any]] = [["x": 0, "y": 0, "w": 1, "h": 1]]
+        _ = h.post("/zones/save", ["name": "solo", "zones": zones, "screen": 0])
+        #expect(h.store.config.screenZoneSets.values.contains("solo"))
+
+        #expect(h.post("/zones/delete", ["name": "solo"]).status == 200)
+        #expect(h.store.config.zoneSets["solo"] == nil)
+        #expect(!h.store.config.screenZoneSets.values.contains("solo"))
+        #expect(h.post("/zones/delete", ["name": "solo"]).status == 404)
+    }
+
+    @Test func captureReportsCancellation() {
+        let h = Harness()
+        h.router.capture = { _, _, done in done(nil) }
+        #expect(h.post("/shot/capture", ["mode": "region"]).status == 409)
+    }
+}

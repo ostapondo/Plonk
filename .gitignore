@@ -1,0 +1,5 @@
+.build/
+.DS_Store
+Plonk.app/
+mcp/node_modules/
+mcp/dist/

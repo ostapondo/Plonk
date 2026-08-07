@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 210" width="760" height="210" role="img" aria-label="Claude talks to the MCP server over stdio, which calls the loopback HTTP API of the Plonk app, which drives Accessibility, IOKit and screencapture">
+  <defs>
+    <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b949e"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill: #8b949e; fill-opacity: 0.08; stroke: #8b949e; stroke-opacity: 0.6; stroke-width: 1.5; }
+    .app { fill: #58a6ff; fill-opacity: 0.14; stroke: #58a6ff; stroke-opacity: 0.85; stroke-width: 2; }
+    .t { font: 600 14px ui-sans-serif, -apple-system, Segoe UI, sans-serif; fill: #8b949e; text-anchor: middle; }
+    .s { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #8b949e; fill-opacity: 0.75; text-anchor: middle; }
+    .l { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #8b949e; fill-opacity: 0.75; text-anchor: middle; }
+    .link { stroke: #8b949e; stroke-opacity: 0.7; stroke-width: 1.5; fill: none; }
+  </style>
+
+  <rect class="box" x="14" y="40" width="150" height="66" rx="10"/>
+  <text class="t" x="89" y="68">Claude</text>
+  <text class="s" x="89" y="86">Code, Desktop</text>
+
+  <line class="link" x1="170" y1="73" x2="222" y2="73" marker-end="url(#tip)"/>
+  <text class="l" x="196" y="62">stdio</text>
+
+  <rect class="box" x="228" y="40" width="160" height="66" rx="10"/>
+  <text class="t" x="308" y="68">MCP server</text>
+  <text class="s" x="308" y="86">mcp/dist/server.js</text>
+
+  <line class="link" x1="394" y1="73" x2="446" y2="73" marker-end="url(#tip)"/>
+  <text class="l" x="420" y="62">HTTP</text>
+  <text class="l" x="420" y="92">loopback</text>
+
+  <rect class="app" x="452" y="40" width="180" height="66" rx="10"/>
+  <text class="t" x="542" y="68">Plonk.app</text>
+  <text class="s" x="542" y="86">127.0.0.1:43917</text>
+
+  <path class="link" d="M 542 112 L 542 134" marker-end="url(#tip)"/>
+
+  <rect class="box" x="330" y="140" width="424" height="54" rx="10"/>
+  <text class="s" x="542" y="163">Accessibility · IOKit power assertions</text>
+  <text class="s" x="542" y="181">Carbon hotkeys · screencapture</text>
+
+</svg>

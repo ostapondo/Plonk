@@ -1,0 +1,28 @@
+import AppKit
+
+// Screen indices shift whenever a display is unplugged or rearranged, so
+// anything persisted is keyed by the display's UUID. The index is still
+// accepted as a fallback key for configs written before that.
+
+enum ScreenIdentity {
+
+    static func uuid(forIndex index: Int) -> String? {
+        let screens = NSScreen.screens
+        guard screens.indices.contains(index),
+              let number = screens[index].deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+              let uuid = CGDisplayCreateUUIDFromDisplayID(CGDirectDisplayID(number.uint32Value))?.takeRetainedValue()
+        else { return nil }
+        return CFUUIDCreateString(nil, uuid) as String
+    }
+
+    /// Lookup keys for a screen, most stable first.
+    static func keys(forIndex index: Int) -> [String] {
+        guard let uuid = uuid(forIndex: index) else { return [String(index)] }
+        return [uuid, String(index)]
+    }
+
+    /// Where that display sits now, or nil when it is not attached.
+    static func index(forUUID uuid: String) -> Int? {
+        NSScreen.screens.indices.first { self.uuid(forIndex: $0) == uuid }
+    }
+}
