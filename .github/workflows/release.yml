@@ -1,0 +1,199 @@
+name: Release
+
+# Cutting a release is `git tag v0.0.5 && git push --tags`. Everything after
+# that happens here rather than on a laptop, and that is the point: the zip and
+# the npm tarball each leave with a provenance attestation GitHub signs, so
+# anyone can tie the binary they downloaded back to the commit it was built
+# from. The commands to check both are in SECURITY.md.
+#
+# Secrets, set once under Settings > Secrets and variables > Actions:
+#
+#   PLONK_SIGN_CERT_P12       the "Plonk Dev" certificate and its key, base64
+#   PLONK_SIGN_CERT_PASSWORD  the password used when exporting it
+#   NPM_TOKEN                 an npm automation token that can publish plonk-mcp
+#
+# To produce the first two: Keychain Access > login > My Certificates, right
+# click "Plonk Dev" > Export, save a .p12 with a password, then
+#   base64 -i Plonk-Dev.p12 | pbcopy
+#
+# That key is worth guarding. It is not a Gatekeeper identity and proves
+# nothing to Apple, but every installed copy of Plonk will install an update
+# signed with it — and only one signed with it. Losing it means no user can
+# auto-update again; leaking it means someone else can offer them a build.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  app:
+    runs-on: macos-15
+    permissions:
+      contents: write # create the release, upload the zip
+      id-token: write # sign the attestation
+      attestations: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read the version
+        id: version
+        run: |
+          set -eu
+          . ./version.env
+          echo "version=$MARKETING_VERSION" >> "$GITHUB_OUTPUT"
+          # version.env is the one source of truth for the release number, so a
+          # tag that disagrees with it is a mistake worth catching before a
+          # build goes out under the wrong name.
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$MARKETING_VERSION" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match MARKETING_VERSION=$MARKETING_VERSION in version.env"
+            exit 1
+          fi
+
+      - name: Import the signing certificate
+        env:
+          P12: ${{ secrets.PLONK_SIGN_CERT_P12 }}
+          P12_PASSWORD: ${{ secrets.PLONK_SIGN_CERT_PASSWORD }}
+        run: |
+          set -eu
+          if [ -z "${P12:-}" ]; then
+            echo "::error::PLONK_SIGN_CERT_P12 is not set — see the header of this workflow"
+            exit 1
+          fi
+          KEYCHAIN="$RUNNER_TEMP/plonk-signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          P12_FILE="$RUNNER_TEMP/signing.p12"
+          CERT_FILE="$RUNNER_TEMP/signing.pem"
+
+          printf '%s' "$P12" | base64 --decode > "$P12_FILE"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$P12_FILE" -k "$KEYCHAIN" -P "$P12_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/security
+
+          # "Plonk Dev" is a self-signed root, so nothing on a fresh runner
+          # vouches for it and `find-identity -v` — which build.sh checks —
+          # leaves it out until the system keychain is told to trust it. The
+          # certificate is read back out of the keychain rather than out of the
+          # .p12, which would need an openssl new enough for -legacy and the
+          # one on the runner is not it.
+          security find-certificate -c "Plonk Dev" -p "$KEYCHAIN" > "$CERT_FILE"
+          sudo security add-trusted-cert -d -r trustRoot \
+            -k /Library/Keychains/System.keychain "$CERT_FILE"
+
+          # codesign would otherwise stop to ask for the key, and there is
+          # nobody here to answer.
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" \
+            $(security list-keychains -d user | tr -d '"')
+          rm -f "$P12_FILE" "$CERT_FILE"
+
+          if ! security find-identity -v -p codesigning | grep -q "Plonk Dev"; then
+            echo "::error::the imported certificate is not a valid codesigning identity named \"Plonk Dev\""
+            security find-identity -v -p codesigning
+            exit 1
+          fi
+
+      - name: Test
+        run: ./scripts/test.sh
+
+      - name: Build, sign and package
+        env:
+          PLONK_SIGN_IDENTITY: Plonk Dev
+        run: ./scripts/release.sh
+
+      # What ties Plonk-<version>.zip to this repository, this commit and this
+      # workflow run. Without it the app's own promises are only checkable at
+      # runtime, on a binary nobody can trace back to the source.
+      - uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: Plonk-${{ steps.version.outputs.version }}.zip
+
+      - name: Publish the archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          ZIP="Plonk-$VERSION.zip"
+          SHA=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
+
+          # A release with notes on it was written by hand and is left alone;
+          # anything else lands as a draft, so nothing reaches the updater
+          # before someone has said what changed.
+          if ! gh release view "v$VERSION" > /dev/null 2>&1; then
+            gh release create "v$VERSION" --draft --title "Plonk $VERSION" --notes "$(
+              printf '%s\n' \
+                "Drafted by CI. Replace this with the release notes before publishing." \
+                "" \
+                "Built from \`$GITHUB_SHA\` by [this run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)." \
+                "Verify it against that commit before installing:" \
+                "" \
+                '```sh' \
+                "gh attestation verify $ZIP -R $GITHUB_REPOSITORY" \
+                '```' \
+                "" \
+                "sha256: \`$SHA\`"
+            )"
+          fi
+          gh release upload "v$VERSION" "$ZIP" --clobber
+
+          {
+            echo "### Plonk $VERSION"
+            echo
+            echo "- sha256: \`$SHA\`"
+            echo "- update the cask in \`ostapondo/homebrew-plonk\` with that version and sha256"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  mcp:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # what lets npm record where this tarball came from
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+
+      - run: npm ci
+        working-directory: mcp
+
+      - name: Check the version against version.env
+        id: version
+        run: |
+          set -eu
+          . ./version.env
+          PACKAGE=$(node -p "require('./mcp/package.json').version")
+          if [ "$PACKAGE" != "$MARKETING_VERSION" ]; then
+            echo "::error::mcp/package.json is $PACKAGE but version.env says $MARKETING_VERSION"
+            exit 1
+          fi
+          echo "version=$PACKAGE" >> "$GITHUB_OUTPUT"
+          # Re-running the workflow for a version already on npm is not a
+          # failure, it is a no-op — publishing again would be the failure.
+          if npm view "plonk-mcp@$PACKAGE" version > /dev/null 2>&1; then
+            echo "published=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --provenance is the whole reason this is not an `npm publish` from a
+      # laptop: it puts a signed statement on the registry naming the commit
+      # and the workflow that produced the tarball, which is what `npx -y
+      # plonk-mcp` otherwise asks people to take on faith.
+      - name: Publish with provenance
+        if: steps.version.outputs.published == 'no'
+        working-directory: mcp
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
+
+      - name: Already published
+        if: steps.version.outputs.published == 'yes'
+        run: echo "plonk-mcp@${{ steps.version.outputs.version }} is already on npm; nothing to do."
