@@ -6,12 +6,13 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { randomUUID } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { runWithIdentity, type IdentityHolder } from "./api.js";
-import { createPlonkServer, startHello, watchClientInfo } from "./factory.js";
+import { createPlonkServer, startHello, startInboxLoop, watchClientInfo } from "./factory.js";
 
 interface Session {
   transport: StreamableHTTPServerTransport;
   holder: IdentityHolder;
   stopHello?: () => void;
+  stopInbox?: () => void;
 }
 
 // The app's registry tells sessions apart by (name, pid). Every HTTP client
@@ -65,6 +66,7 @@ export async function serveHttp(port: number): Promise<void> {
     };
     session.transport.onclose = () => {
       session.stopHello?.();
+      session.stopInbox?.();
       const sid = session.transport.sessionId;
       if (sid !== undefined) sessions.delete(sid);
     };
@@ -74,6 +76,7 @@ export async function serveHttp(port: number): Promise<void> {
       const identity = { name, version, pid: syntheticPid++ };
       session.holder.identity = identity;
       session.stopHello = startHello(identity);
+      session.stopInbox = startInboxLoop(server, identity);
     });
     await server.connect(session.transport);
     await runWithIdentity(session.holder, () => session.transport.handleRequest(req, res));

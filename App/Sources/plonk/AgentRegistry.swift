@@ -53,6 +53,64 @@ final class AgentRegistry {
         Set(sessions.values.filter { isOnline($0, now: now) }.map(\.name)).sorted()
     }
 
+    // MARK: - Inbox
+
+    /// A prompt waiting for an agent to pick it up — the channel through which
+    /// voice and other outgoing requests reach the active agent.
+    struct Task {
+        let id = UUID().uuidString
+        let prompt: String
+        let created = Date()
+
+        var asDict: [String: Any] {
+            ["id": id, "prompt": prompt,
+             "created": ISO8601DateFormatter().string(from: created)]
+        }
+    }
+
+    private var inbox: [String: [Task]] = [:]
+    /// Long-poll responders parked until a task arrives or the timeout fires.
+    /// Everything runs on the main queue (Router.handle does), so no locking.
+    private var waiters: [String: [(token: UUID, cancel: DispatchWorkItem, respond: ([Task]) -> Void)]] = [:]
+
+    @discardableResult
+    func enqueue(_ prompt: String, for agent: String) -> Task {
+        let task = Task(prompt: prompt)
+        if var parked = waiters[agent], !parked.isEmpty {
+            let waiter = parked.removeFirst()
+            waiters[agent] = parked
+            waiter.cancel.cancel()
+            waiter.respond([task])
+        } else {
+            inbox[agent, default: []].append(task)
+        }
+        return task
+    }
+
+    func drain(for agent: String) -> [Task] {
+        inbox.removeValue(forKey: agent) ?? []
+    }
+
+    /// Parks the responder until a task arrives, up to `seconds`, then answers
+    /// with whatever there is (possibly nothing).
+    func wait(for agent: String, seconds: Double, respond: @escaping ([Task]) -> Void) {
+        let queued = drain(for: agent)
+        guard queued.isEmpty else {
+            respond(queued)
+            return
+        }
+        let token = UUID()
+        let cancel = DispatchWorkItem { [weak self] in
+            guard let self, var parked = waiters[agent],
+                  let index = parked.firstIndex(where: { $0.token == token }) else { return }
+            let waiter = parked.remove(at: index)
+            waiters[agent] = parked
+            waiter.respond([])
+        }
+        waiters[agent, default: []].append((token: token, cancel: cancel, respond: respond))
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: cancel)
+    }
+
     /// Sessions as they appear under "agents" in /state.
     func describe(selected: String?, now: Date = Date()) -> [[String: Any]] {
         sessions.values

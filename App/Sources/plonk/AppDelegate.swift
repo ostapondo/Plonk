@@ -81,6 +81,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMenu.agentEntries = { [weak self] in
             guard let self else { return [] }
             var names = agents.onlineNames()
+            for adapter in store.config.agentAdapters where !names.contains(adapter.name) {
+                names.append(adapter.name)
+            }
             if let selected = store.config.selectedAgent, !names.contains(selected) {
                 names.append(selected)
             }
@@ -197,6 +200,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         router.launchWorkspace = { [weak self] name, workspace, screen, done in
             guard let self else { return done([["ok": false, "error": "shutting down"]]) }
             launcher.launch(workspace, named: name, onScreen: screen, completion: done)
+        }
+        // Adapters may run for minutes, so they never touch the main thread.
+        router.runAdapter = { adapter, prompt in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let escaped = "'" + prompt.replacingOccurrences(of: "'", with: "'\\''") + "'"
+                let command = adapter.command.contains("{prompt}")
+                    ? adapter.command.replacingOccurrences(of: "{prompt}", with: escaped)
+                    : adapter.command + " " + escaped
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+                process.arguments = ["-lc", command]
+                do {
+                    try process.run()
+                } catch {
+                    NSLog("Plonk: adapter \(adapter.name) failed to start: \(error)")
+                }
+            }
         }
 
         let server = ControlServer { [weak self] request, respond in

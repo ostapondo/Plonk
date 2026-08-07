@@ -21,6 +21,8 @@ import AppKit
 //   POST /agents/hello     { name, version?, pid? }   registers/refreshes a session
 //   POST /agents/select    { name? }   no name clears the selection
 //   POST /agents/exclusive { on }      only the selected agent may change things
+//   POST /agents/ask       { prompt, agent? }   queue a task for an agent (default: active)
+//   GET  /agents/inbox?agent=<name>&wait=<0-25>  long-poll the agent's queued tasks
 //
 // Requests may carry X-Plonk-Agent: name/version (and X-Plonk-Agent-Pid) so
 // the app knows who is driving; plonk-mcp sends them on every call.
@@ -40,6 +42,8 @@ final class Router {
     /// Set by AppDelegate. Launching shows a panel and outlives the request, so
     /// it stays out of Router the same way capture does.
     var launchWorkspace: ((String, Workspace, Int?, @escaping ([[String: Any]]) -> Void) -> Void)?
+    /// Set by AppDelegate; spawning a process is not Router's business.
+    var runAdapter: ((AgentAdapter, String) -> Void)?
     var didChangeLayouts: (() -> Void)?
     var didChangeZones: (() -> Void)?
     var didChangeAgents: (() -> Void)?
@@ -55,11 +59,12 @@ final class Router {
     }
 
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
+        let (path, query) = Self.splitQuery(request.path)
         let agent = Self.agentName(fromHeader: request.headers["x-plonk-agent"])
         agents.touch(header: request.headers["x-plonk-agent"],
                      pid: request.headers["x-plonk-agent-pid"].flatMap(Int.init))
         if let reason = Self.exclusiveRejection(
-            method: request.method, path: request.path, agent: agent,
+            method: request.method, path: path, agent: agent,
             selected: store.config.selectedAgent, exclusive: store.config.agentExclusive
         ) {
             respond(HTTPResponse(status: 409, json: ["error": reason]))
@@ -67,7 +72,7 @@ final class Router {
         }
 
         let body = request.body
-        switch (request.method, request.path) {
+        switch (request.method, path) {
         case ("GET", "/ping"):
             respond(.ok(["ok": true, "app": "Plonk"]))
 
@@ -220,6 +225,23 @@ final class Router {
             didChangeAgents?()
             respond(.ok(["ok": true, "exclusive": on]))
 
+        case ("POST", "/agents/ask"):
+            guard let prompt = trimmedName(body["prompt"]) else {
+                respond(.badRequest("body must include prompt"))
+                return
+            }
+            respond(dispatch(prompt: prompt, to: trimmedName(body["agent"])))
+
+        case ("GET", "/agents/inbox"):
+            guard let name = query["agent"], !name.isEmpty else {
+                respond(.badRequest("query must include agent, e.g. /agents/inbox?agent=claude-code&wait=25"))
+                return
+            }
+            let wait = min(max(Double(query["wait"] ?? "0") ?? 0, 0), 25)
+            agents.wait(for: name, seconds: wait) { tasks in
+                respond(.ok(["tasks": tasks.map(\.asDict)]))
+            }
+
         case ("POST", "/shot/capture"):
             captureRoute(body, respond: respond)
 
@@ -232,6 +254,40 @@ final class Router {
     }
 
     // MARK: - Agents
+
+    /// Sends a prompt to an agent: a configured adapter is launched directly,
+    /// anything else is queued for its live session to pick up over
+    /// /agents/inbox. Voice and hotkeys land here too, via AppDelegate.
+    func dispatch(prompt: String, to requested: String? = nil) -> HTTPResponse {
+        guard let target = requested ?? store.config.selectedAgent else {
+            return .badRequest("no agent named and none selected — pass \"agent\" or pick an active agent in Plonk")
+        }
+        if let adapter = store.config.agentAdapters.first(where: { $0.name == target }) {
+            guard let runAdapter else { return .failed("adapters are not available") }
+            runAdapter(adapter, prompt)
+            return .ok(["ok": true, "agent": target, "launched": true])
+        }
+        let known = agents.sessions.values.contains { $0.name == target }
+        let task = agents.enqueue(prompt, for: target)
+        var result: [String: Any] = ["ok": true, "agent": target, "queued": true, "id": task.id]
+        if !known {
+            result["note"] = "no session named \"\(target)\" has connected yet; the task waits in its inbox"
+        }
+        return .ok(result)
+    }
+
+    /// "/agents/inbox?agent=x&wait=25" → ("/agents/inbox", ["agent": "x", "wait": "25"]).
+    static func splitQuery(_ raw: String) -> (path: String, query: [String: String]) {
+        guard let mark = raw.firstIndex(of: "?") else { return (raw, [:]) }
+        let path = String(raw[raw.startIndex..<mark])
+        var query: [String: String] = [:]
+        for pair in raw[raw.index(after: mark)...].split(separator: "&") {
+            let kv = pair.split(separator: "=", maxSplits: 1)
+            guard let key = String(kv[0]).removingPercentEncoding else { continue }
+            query[key] = kv.count > 1 ? (String(kv[1]).removingPercentEncoding ?? "") : ""
+        }
+        return (path, query)
+    }
 
     /// The name half of an `X-Plonk-Agent: name/version` header.
     static func agentName(fromHeader header: String?) -> String? {
@@ -306,6 +362,7 @@ final class Router {
             },
             "windows": windows.listWindows(),
             "agents": agents.describe(selected: store.config.selectedAgent),
+            "agent_adapters": store.config.agentAdapters.map(\.name),
             "agent_exclusive": store.config.agentExclusive,
         ]
         if let selected = store.config.selectedAgent { state["selected_agent"] = selected }

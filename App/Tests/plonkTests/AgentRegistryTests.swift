@@ -52,6 +52,42 @@ struct AgentRegistryTests {
         #expect(described.first { $0["name"] as? String == "claude-code" }?["selected"] as? Bool == false)
     }
 
+    @Test func enqueuedTasksDrainInOrder() {
+        let registry = AgentRegistry()
+        registry.enqueue("first", for: "claude-code")
+        registry.enqueue("second", for: "claude-code")
+        #expect(registry.drain(for: "claude-code").map(\.prompt) == ["first", "second"])
+        #expect(registry.drain(for: "claude-code").isEmpty)
+    }
+
+    @Test func waitAnswersImmediatelyWhenTasksAreQueued() {
+        let registry = AgentRegistry()
+        registry.enqueue("go", for: "cursor")
+        var received: [String]?
+        registry.wait(for: "cursor", seconds: 25) { received = $0.map(\.prompt) }
+        #expect(received == ["go"])
+    }
+
+    @Test func enqueueFlushesAParkedWaiter() {
+        let registry = AgentRegistry()
+        var received: [String]?
+        registry.wait(for: "cursor", seconds: 25) { received = $0.map(\.prompt) }
+        #expect(received == nil)
+        registry.enqueue("browser left", for: "cursor")
+        #expect(received == ["browser left"])
+        // The task went to the waiter, not the queue.
+        #expect(registry.drain(for: "cursor").isEmpty)
+    }
+
+    @Test func tasksForOneAgentDoNotLeakToAnother() {
+        let registry = AgentRegistry()
+        registry.enqueue("for claude", for: "claude-code")
+        var received: [String]?
+        registry.wait(for: "cursor", seconds: 0) { received = $0.map(\.prompt) }
+        #expect(received?.isEmpty != false || received == [])
+        #expect(registry.drain(for: "claude-code").map(\.prompt) == ["for claude"])
+    }
+
     @Test func onChangeFiresOnlyForNewSessions() {
         let registry = AgentRegistry()
         var changes = 0

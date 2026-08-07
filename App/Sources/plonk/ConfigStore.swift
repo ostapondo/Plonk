@@ -27,6 +27,13 @@ struct LayoutItemSpec: Codable {
     }
 }
 
+/// A command-line agent Plonk can start on demand — the fallback channel for
+/// clients that hold no live MCP session or cannot receive sampling requests.
+struct AgentAdapter: Codable {
+    var name: String
+    var command: String
+}
+
 struct Config: Codable {
     var hotkeysEnabled = true
     /// Action id to key spec, e.g. "leftHalf": "control+option+left". Missing
@@ -52,6 +59,10 @@ struct Config: Codable {
     // and whether only that agent may change windows and settings.
     var selectedAgent: String?
     var agentExclusive = false
+    // Agents Plonk can launch itself instead of queueing a task for a live MCP
+    // session: {prompt} in the command is replaced with the shell-escaped
+    // prompt, e.g. "claude -p {prompt}". Edited in config.json for now.
+    var agentAdapters: [AgentAdapter] = []
     var workspaces: [String: Workspace] = [:]
     var zoneSets: [String: [ZoneRect]] = [:]
     // Keyed by display UUID; configs written before that used the screen index,
@@ -79,6 +90,7 @@ struct Config: Codable {
         launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
         selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
         agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
+        agentAdapters = try c.decodeIfPresent([AgentAdapter].self, forKey: .agentAdapters) ?? []
         if let current = try c.decodeIfPresent([String: Workspace].self, forKey: .workspaces) {
             workspaces = current
         } else {

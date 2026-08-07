@@ -62,3 +62,48 @@ export function startHello(identity: AgentIdentity): () => void {
   timer.unref();
   return () => clearInterval(timer);
 }
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms).unref());
+
+/** Long-polls the app's inbox for tasks addressed to this client — the
+ * channel that lets Plonk (voice, hotkeys, other agents) reach the agent.
+ * A task is handed to the client's own model through MCP sampling; clients
+ * that never declared the sampling capability just have the task logged, and
+ * the user is better served by a CLI adapter there. Returns a stop function. */
+export function startInboxLoop(server: McpServer, identity: AgentIdentity): () => void {
+  let stopped = false;
+  const loop = async (): Promise<void> => {
+    while (!stopped) {
+      const res = await call<{ tasks?: { id: string; prompt: string }[] }>(
+        `/agents/inbox?agent=${encodeURIComponent(identity.name)}&wait=25`,
+        { timeoutMs: 30_000 }
+      );
+      if (stopped) return;
+      if ("error" in res) {
+        await sleep(5_000);
+        continue;
+      }
+      for (const task of res.tasks ?? []) {
+        if (server.server.getClientCapabilities()?.sampling) {
+          server.server
+            .createMessage({
+              messages: [{ role: "user", content: { type: "text", text: task.prompt } }],
+              maxTokens: 4_000,
+              systemPrompt:
+                "The user sent this through Plonk, the Mac window manager this agent controls over MCP. Act on it with the plonk tools where they apply.",
+            })
+            .catch((err) => console.error(`plonk-mcp: sampling failed for task ${task.id}:`, err));
+        } else {
+          console.error(
+            `plonk-mcp: task for ${identity.name} dropped — this client does not support MCP sampling. ` +
+              `Configure a CLI adapter in Plonk for this agent instead. Prompt was: ${task.prompt}`
+          );
+        }
+      }
+    }
+  };
+  void loop();
+  return () => {
+    stopped = true;
+  };
+}

@@ -332,6 +332,50 @@ struct RouterTests {
         #expect(h.send(request).status == 200)
     }
 
+    @Test func askQueuesForTheSelectedAgent() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        let response = h.post("/agents/ask", ["prompt": "browser left"])
+        #expect(response.status == 200)
+        #expect(response.json["queued"] as? Bool == true)
+        let inbox = h.send(HTTPRequest(method: "GET", path: "/agents/inbox?agent=claude-code",
+                                       headers: [:], body: [:]))
+        let tasks = inbox.json["tasks"] as? [[String: Any]]
+        #expect(tasks?.first?["prompt"] as? String == "browser left")
+    }
+
+    @Test func askWithoutATargetIsRejected() {
+        let h = Harness()
+        #expect(h.post("/agents/ask", ["prompt": "hi"]).status == 400)
+        #expect(h.post("/agents/ask", [:]).status == 400)
+    }
+
+    @Test func askRunsAConfiguredAdapterInsteadOfQueueing() {
+        let h = Harness()
+        h.store.update { $0.agentAdapters = [AgentAdapter(name: "codex-cli", command: "codex exec {prompt}")] }
+        var launched: (name: String, prompt: String)?
+        h.router.runAdapter = { adapter, prompt in launched = (adapter.name, prompt) }
+        let response = h.post("/agents/ask", ["prompt": "terminal right", "agent": "codex-cli"])
+        #expect(response.status == 200)
+        #expect(response.json["launched"] as? Bool == true)
+        #expect(launched?.name == "codex-cli")
+        #expect(launched?.prompt == "terminal right")
+        #expect(h.router.agents.drain(for: "codex-cli").isEmpty)
+    }
+
+    @Test func inboxNeedsAnAgentParameter() {
+        let h = Harness()
+        #expect(h.send(HTTPRequest(method: "GET", path: "/agents/inbox", headers: [:], body: [:])).status == 400)
+    }
+
+    @Test func queryStringsSplitCleanly() {
+        let split = Router.splitQuery("/agents/inbox?agent=claude%2Dcode&wait=25")
+        #expect(split.path == "/agents/inbox")
+        #expect(split.query["agent"] == "claude-code")
+        #expect(split.query["wait"] == "25")
+        #expect(Router.splitQuery("/state").path == "/state")
+    }
+
     @Test func agentChangesNotifyTheUI() {
         let h = Harness()
         var notifications = 0
