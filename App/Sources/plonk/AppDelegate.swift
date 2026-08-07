@@ -20,6 +20,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var previewToken = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Before anything is on screen: a second copy would add its own menu bar
+        // icon and hotkeys, and lose the race for the control server's port.
+        if let existing = Self.otherRunningInstance() {
+            existing.activate()
+            NSApp.terminate(nil)
+            return
+        }
         store.load()
         windows.promptForTrust()
 
@@ -40,6 +47,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self, selector: #selector(screensChanged),
             name: NSApplication.didChangeScreenParametersNotification, object: nil
         )
+    }
+
+    /// Another copy of this bundle, if one is already up. Nil when running
+    /// unbundled through `swift run`, where there is no identifier to match on;
+    /// the control server's port check is the backstop there.
+    static func otherRunningInstance() -> NSRunningApplication? {
+        guard let id = Bundle.main.bundleIdentifier else { return nil }
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: id)
+            .first { $0.processIdentifier != ownPID && !$0.isTerminated }
     }
 
     // MARK: - Wiring

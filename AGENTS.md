@@ -41,7 +41,7 @@ cd App && swift build          # must pass before any commit
 ./scripts/test.sh              # unit tests — must pass
 cd mcp && npm run typecheck    # must pass when mcp/ changed
 ./scripts/build.sh             # produces Plonk.app
-curl -s 127.0.0.1:43917/state  # smoke test while the app is running
+curl -s 127.0.0.1:43917/ping   # smoke test while the app is running
 ```
 
 The release number lives in `version.env`, and only there. `scripts/build.sh`

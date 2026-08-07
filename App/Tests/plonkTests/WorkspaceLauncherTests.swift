@@ -6,20 +6,27 @@ import AppKit
 // around it — the lock, and which screen an item goes back to.
 struct WorkspaceLauncherTests {
 
-    /// `cancel` used to read `isRunning`, taking the non-recursive lock twice on
-    /// the caller's thread and hanging the main queue behind the Cancel button.
-    @Test(.timeLimit(.minutes(1)))
-    func cancelReturnsWhenNothingIsLaunching() {
+    /// Off the test's own thread: `cancel` used to take the non-recursive lock
+    /// twice and block forever, which as an inline call hangs the run instead of
+    /// failing it.
+    private func expectReturns(_ body: @escaping () -> Void, _ what: Comment) {
+        let done = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            body()
+            done.signal()
+        }
+        #expect(done.wait(timeout: .now() + 5) == .success, what)
+    }
+
+    @Test func cancelReturnsWhenNothingIsLaunching() {
         let launcher = WorkspaceLauncher(windows: WindowManager())
-        launcher.cancel()
+        expectReturns({ launcher.cancel() }, "cancel deadlocked")
         #expect(launcher.isRunning == false)
     }
 
-    @Test(.timeLimit(.minutes(1)))
-    func cancelIsRepeatable() {
+    @Test func cancelIsRepeatable() {
         let launcher = WorkspaceLauncher(windows: WindowManager())
-        launcher.cancel()
-        launcher.cancel()
+        expectReturns({ launcher.cancel(); launcher.cancel() }, "cancel deadlocked on the second call")
         #expect(launcher.isRunning == false)
     }
 

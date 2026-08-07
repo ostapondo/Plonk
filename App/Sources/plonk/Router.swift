@@ -3,6 +3,7 @@ import AppKit
 // HTTP surface of the app. Kept apart from AppDelegate so routes can be
 // exercised without a status bar or windows.
 //
+//   GET  /ping              liveness, cheap: touches neither AX nor the screen
 //   GET  /state
 //   POST /awake             { on?, minutes? }
 //   POST /layout            { items: [{ app, title?, screen?, frame: {x,y,w,h} }] }
@@ -45,6 +46,9 @@ final class Router {
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
         let body = request.body
         switch (request.method, request.path) {
+        case ("GET", "/ping"):
+            respond(.ok(["ok": true, "app": "Plonk"]))
+
         case ("GET", "/state"):
             respond(.ok(state()))
 

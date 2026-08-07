@@ -2,6 +2,7 @@
 // Plonk MCP server — bridges AI agents to the Plonk menu bar app (localhost HTTP).
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { BASE, isAppReachable } from "./api.js";
 import { register as registerState } from "./tools/state.js";
 import { register as registerLayouts } from "./tools/layouts.js";
 import { register as registerWorkspaces } from "./tools/workspaces.js";
@@ -22,3 +23,9 @@ registerAnnotate(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
+
+// stdout carries the protocol, so this goes to stderr. Not fatal: the app may
+// still be starting, and every tool reports the same thing on its own.
+if (!(await isAppReachable())) {
+  console.error(`plonk-mcp: nothing is answering on ${BASE} — launch Plonk.app or its tools will fail.`);
+}
