@@ -38,9 +38,13 @@ brew install --cask ostapondo/plonk/plonk
 ```
 
 Or download [the latest release](https://github.com/ostapondo/plonk/releases/latest),
-unzip, and drop Plonk.app into Applications. The build is not notarized yet, so
-macOS will balk at the first launch — approve it under System Settings → Privacy
-& Security → Open Anyway.
+unzip, and drop Plonk.app into Applications.
+
+**First launch takes one extra click.** Plonk is code-signed, but not notarized
+by Apple, so macOS holds it the first time — whichever way you installed it.
+Open Plonk, dismiss the warning, then go to System Settings → Privacy &
+Security, scroll to Security, and click **Open Anyway**. That is once, for good.
+What it does with the access it asks for is [checkable](#check-it-yourself).
 
 Grant Accessibility when asked, then relaunch. Screen Recording is asked for
 separately, the first time you capture. Nothing else — no Full Disk Access, no
