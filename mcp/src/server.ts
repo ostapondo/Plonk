@@ -2,6 +2,7 @@
 // Plonk MCP server — bridges AI agents to the Plonk menu bar app (localhost HTTP).
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { createRequire } from "node:module";
 import { BASE, isAppReachable } from "./api.js";
 import { register as registerState } from "./tools/state.js";
 import { register as registerLayouts } from "./tools/layouts.js";
@@ -11,7 +12,8 @@ import { register as registerAwake } from "./tools/awake.js";
 import { register as registerScreenshot } from "./tools/screenshot.js";
 import { register as registerAnnotate } from "./tools/annotate.js";
 
-const server = new McpServer({ name: "plonk", version: "1.0.0" });
+const { version } = createRequire(import.meta.url)("../package.json");
+const server = new McpServer({ name: "plonk", version });
 
 registerState(server);
 registerWorkspaces(server);
