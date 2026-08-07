@@ -5,7 +5,7 @@ Rules for AI agents working in this repo.
 ## Layout
 
 - `App/` — Swift package, the menu bar app. One type per file, files stay under ~300 lines.
-- `mcp/` — TypeScript MCP server: `src/server.ts` compiled to `dist/` via `npm run build`. Keep it a thin proxy; logic belongs in the app.
+- `mcp/` — TypeScript MCP server: `src/server.ts` compiled to `dist/` via `npm run build`. Keep it a thin proxy; logic belongs in the app. Tool description rules are in `mcp/AGENTS.md`.
 - `scripts/build.sh` — the only build entry point.
 
 Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:

@@ -16,7 +16,7 @@ export function register(server: McpServer): void {
   // launch_workspace, which can carry an app's bundle id and what it opens.
   server.tool(
     "save_layout",
-    "Deprecated alias of save_workspace. Saves the named arrangement as a workspace; omit 'items' to snapshot what is on screen right now.",
+    "Save the named window arrangement as a workspace. Legacy name kept for older clients — new integrations should call save_workspace, which can also record whether running apps get moved into place. Omit 'items' to snapshot the windows exactly as they are on screen right now; pass 'items' to describe the arrangement explicitly. Saving over an existing name replaces it. Saved workspaces are listed in get_state, with their full contents.",
     {
       name: z.string().describe("Workspace name, e.g. 'work', 'focus'"),
       items: itemsSchema.optional(),
@@ -26,7 +26,7 @@ export function register(server: McpServer): void {
 
   server.tool(
     "apply_saved_layout",
-    "Deprecated alias of launch_workspace. Launches the saved workspace of that name, opening any app that is not running.",
+    "Launch a saved workspace by name. Legacy name kept for older clients — new integrations should call launch_workspace, which adds a 'screen' option to pull the whole workspace onto one monitor. Opens every app that is not running, waits for its windows, and moves them into the saved positions; macOS cannot open an app straight into a position, so windows appear first and jump into place. Returns per-app success and reports apps that never opened a window. Takes up to a minute for a large workspace.",
     { name: z.string() },
     async ({ name }) =>
       text(await call<LayoutResults>("/workspaces/launch", { method: "POST", body: { name }, timeoutMs: 90_000 }))
@@ -46,7 +46,7 @@ export function register(server: McpServer): void {
 
   server.tool(
     "delete_layout",
-    "Deprecated alias of delete_workspace. Deletes the saved workspace of that name.",
+    "Delete the saved workspace with that name, whether it was saved with save_layout or save_workspace. Legacy name kept for older clients — new integrations should call delete_workspace, which does the same. Use it to clean up saved workspaces that are no longer wanted; existing names are listed in get_state.",
     { name: z.string() },
     async ({ name }) => text(await call("/workspaces/delete", { method: "POST", body: { name } }))
   );

@@ -4,10 +4,10 @@
 <sub>To plonk is to set a thing down exactly where it belongs. This menu bar does it to your windows.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.0.1-58a6ff?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.0.3-58a6ff?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-10_tools-8957e5?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-13_tools-8957e5?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
 </p>
@@ -52,8 +52,13 @@ Remove Plonk from Privacy & Security → Accessibility and grant it again.
 To let an agent drive it (Node 18+):
 
 ```sh
-claude mcp add plonk -- npx -y plonk-mcp
+claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
+codex mcp add plonk -- npx -y plonk-mcp    # Codex CLI
 ```
+
+Any MCP client works the same way — Cursor, Windsurf, Zed, Cline: give it
+`npx -y plonk-mcp` as a stdio server. Several clients at once is fine; see
+[Agents](#for-agents) below.
 
 Or build everything from source: clone the repo, run `./scripts/build.sh`, and
 point `claude mcp add plonk -- node …/mcp/dist/server.js` at a locally built
@@ -69,6 +74,7 @@ A workspace is a desk you can put away. It remembers the apps, the frame of
 every window, the monitor each one belongs on, and what each app should open on
 the way up. Launching one opens whatever is closed, waits for the windows, and
 puts them back — from the Workspaces page, or right-click the menu bar icon.
+Rename, recapture or delete from the workspace's `⋯` menu.
 
 | | |
 | --- | --- |
@@ -132,6 +138,15 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
 | `set_awake` | Keep-awake, optionally time-limited |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back |
+| `select_agent` | Make an agent the user's active one, optionally the only one allowed to control |
+
+Several agents can be connected at once. Every client registers itself, so
+`get_state` lists who is online; the user picks an active agent from the menu
+bar or the settings — or an agent does it with `select_agent`. An optional
+strict mode locks changes to the active agent: everyone else keeps reading
+state and taking screenshots, but gets a clear 409 on anything that moves
+windows or edits config. Set `PLONK_AGENT_NAME` in a client's MCP config to
+tell two sessions of the same client apart.
 
 ## Under the hood
 
@@ -149,13 +164,19 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 
 ```sh
 cd App && swift build     # the app
-./scripts/test.sh         # 112 unit tests
+./scripts/test.sh         # 149 unit tests
 ./scripts/build.sh        # produces Plonk.app
 cd mcp && npm run build   # the MCP server
 ```
 
 `App/` is the Swift menu bar app, `mcp/` the TypeScript MCP server. Point an
 agent at [AGENTS.md](AGENTS.md) before it touches either.
+
+`build.sh` signs with a `Plonk Dev` keychain identity when one exists and
+falls back to ad-hoc. Ad-hoc signatures change every build, and macOS ties the
+Accessibility grant to the signature — so create that certificate once
+(Keychain Access → Certificate Assistant → Create a Certificate → type
+"Code Signing", name it `Plonk Dev`) and rebuilds stop resetting permissions.
 
 Releases: bump `MARKETING_VERSION` and `BUILD_NUMBER` in
 [version.env](version.env). `scripts/build.sh` reads both into `Info.plist`.
