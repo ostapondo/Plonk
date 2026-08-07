@@ -60,6 +60,15 @@ export interface AwakeDetails {
   session_ends: string;
 }
 
+export interface AgentInfo {
+  name: string;
+  version: string;
+  pid?: number;
+  online: boolean;
+  last_seen: string;
+  selected: boolean;
+}
+
 export interface State {
   awake: boolean;
   awake_details: AwakeDetails;
@@ -70,6 +79,9 @@ export interface State {
   screen_zone_sets: Record<string, string>;
   screens: Screen[];
   windows: WindowInfo[];
+  agents: AgentInfo[];
+  selected_agent?: string;
+  agent_exclusive: boolean;
 }
 
 export interface LayoutItemResult {
@@ -106,6 +118,24 @@ export type ApiResponse = Record<string, unknown>;
 const NOT_RUNNING =
   "Plonk menu bar app is not running. Ask the user to launch Plonk.app (its icon should appear in the menu bar).";
 
+// Stamped on every request so the app can attribute it to a client and, in
+// exclusive mode, gate on it. Set once the MCP handshake reveals who we serve.
+let agentHeaders: Record<string, string> = {};
+let identityName = "";
+
+export function setAgentIdentity(name: string, version: string): void {
+  identityName = name;
+  agentHeaders = {
+    "x-plonk-agent": version ? `${name}/${version}` : name,
+    "x-plonk-agent-pid": String(process.pid),
+  };
+}
+
+/** The client name this server registered with, e.g. "claude-code". */
+export function agentIdentityName(): string {
+  return identityName;
+}
+
 export interface CallOptions {
   method?: "GET" | "POST";
   body?: unknown;
@@ -124,7 +154,7 @@ export async function call<T extends object = ApiResponse>(
   try {
     res = await fetch(BASE + path, {
       method,
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...agentHeaders },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: timeout,
     });

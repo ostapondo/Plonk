@@ -157,7 +157,18 @@ struct ShotPage: View {
     }
 }
 
+private func connectRow(_ client: String, _ command: String) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+        Text(client)
+        Text(command)
+            .font(.system(.caption, design: .monospaced))
+            .textSelection(.enabled)
+            .foregroundStyle(.secondary)
+    }
+}
+
 struct AIPage: View {
+    @ObservedObject var model: AppModel
     @State private var copied: String?
 
     private static let examples = [
@@ -170,17 +181,55 @@ struct AIPage: View {
         "Screenshot the screen and circle whatever looks broken",
     ]
 
+    /// Everything the picker can offer: whoever is online, plus the current
+    /// pick even when its session is gone, so it can still be cleared.
+    private var agentChoices: [String] {
+        var names = model.connectedAgents
+        if let selected = model.selectedAgent, !names.contains(selected) { names.append(selected) }
+        return names
+    }
+
+    private var selectedAgent: Binding<String> {
+        Binding(
+            get: { model.selectedAgent ?? "" },
+            set: { model.actions?.selectAgent($0.isEmpty ? nil : $0) }
+        )
+    }
+
     var body: some View {
         Form {
-            Section("MCP") {
-                LabeledContent("Local API", value: "127.0.0.1:\(ControlServer.port)")
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Connect Claude Code:")
-                    Text("claude mcp add plonk -- node <repo>/mcp/dist/server.js")
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
+            Section {
+                if agentChoices.isEmpty {
+                    Text("No agents connected yet — anything speaking MCP shows up here once it calls a Plonk tool.")
                         .foregroundStyle(.secondary)
+                } else {
+                    Picker("Active agent", selection: selectedAgent) {
+                        Text("Any agent").tag("")
+                        Divider()
+                        ForEach(agentChoices, id: \.self) { name in
+                            Text(model.connectedAgents.contains(name) ? name : "\(name) (offline)").tag(name)
+                        }
+                    }
+                    Toggle(isOn: model.binding(\.agentExclusive, set: { $0.setAgentExclusive($1) })) {
+                        Text("Only the active agent controls")
+                        Text("Other agents can still read state and take screenshots")
+                    }
+                    .disabled(model.selectedAgent == nil)
                 }
+            } header: {
+                Text("Agents")
+            } footer: {
+                Text("Every connected MCP client appears here. The active agent is who voice and other outgoing requests will go to.")
+            }
+            Section {
+                LabeledContent("Local API", value: "127.0.0.1:\(ControlServer.port)")
+                connectRow("Claude Code", "claude mcp add plonk -- npx -y plonk-mcp")
+                connectRow("Codex CLI", "codex mcp add plonk -- npx -y plonk-mcp")
+                connectRow("Cursor, Zed, anything MCP", "command: npx, args: [\"-y\", \"plonk-mcp\"]")
+            } header: {
+                Text("MCP")
+            } footer: {
+                Text("Plonk is not tied to one assistant — any MCP client can drive it, several at once. Set PLONK_AGENT_NAME in the client's MCP config to name a session by hand.")
             }
             Section {
                 ForEach(Array(Self.examples.enumerated()), id: \.offset) { _, example in

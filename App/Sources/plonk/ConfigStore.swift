@@ -48,6 +48,10 @@ struct Config: Codable {
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
     var launchAtLogin = true
+    // Which MCP client the user picked as the active agent (by client name),
+    // and whether only that agent may change windows and settings.
+    var selectedAgent: String?
+    var agentExclusive = false
     var workspaces: [String: Workspace] = [:]
     var zoneSets: [String: [ZoneRect]] = [:]
     // Keyed by display UUID; configs written before that used the screen index,
@@ -73,6 +77,8 @@ struct Config: Codable {
         shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
         shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
         launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
+        selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
+        agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
         if let current = try c.decodeIfPresent([String: Workspace].self, forKey: .workspaces) {
             workspaces = current
         } else {

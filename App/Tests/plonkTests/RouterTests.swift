@@ -223,4 +223,121 @@ struct RouterTests {
         h.router.capture = { _, _, done in done(nil) }
         #expect(h.post("/shot/capture", ["mode": "region"]).status == 409)
     }
+
+    @Test func renamingAWorkspaceKeepsItsContentsAndBehavior() {
+        let h = Harness()
+        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem], "move_existing": false])
+        #expect(h.post("/workspaces/rename", ["from": "work", "to": "review"]).status == 200)
+        #expect(h.store.config.workspaces["work"] == nil)
+        #expect(h.store.config.workspaces["review"]?.moveExisting == false)
+        #expect(h.post("/workspaces/rename", ["from": "work", "to": "x"]).status == 404)
+    }
+
+    @Test func renamingOntoAnExistingWorkspaceIsRejected() {
+        let h = Harness()
+        _ = h.post("/workspaces/save", ["name": "a", "items": [sampleItem]])
+        _ = h.post("/workspaces/save", ["name": "b", "items": [sampleItem]])
+        #expect(h.post("/workspaces/rename", ["from": "a", "to": "b"]).status == 409)
+        #expect(h.store.config.workspaces["a"] != nil)
+        #expect(h.store.config.workspaces["b"] != nil)
+        #expect(h.post("/workspaces/rename", ["from": "a", "to": "a"]).status == 200)
+    }
+
+    @Test func renamingNeedsBothNames() {
+        let h = Harness()
+        #expect(h.post("/workspaces/rename", ["from": "a"]).status == 400)
+        #expect(h.post("/workspaces/rename", ["to": "b"]).status == 400)
+    }
+
+    // MARK: - Agents
+
+    @Test func helloRegistersTheAgent() {
+        let h = Harness()
+        let response = h.post("/agents/hello", ["name": "cursor", "version": "1.2", "pid": 7])
+        #expect(response.status == 200)
+        #expect(h.router.agents.onlineNames() == ["cursor"])
+    }
+
+    @Test func helloNeedsAName() {
+        let h = Harness()
+        #expect(h.post("/agents/hello", [:]).status == 400)
+    }
+
+    @Test func anyRequestWithTheAgentHeaderRegistersIt() {
+        let h = Harness()
+        _ = h.send(HTTPRequest(method: "GET", path: "/ping",
+                               headers: ["x-plonk-agent": "openai-test-agent/0.1"], body: [:]))
+        #expect(h.router.agents.onlineNames() == ["openai-test-agent"])
+    }
+
+    @Test func selectStoresAndClearsTheChoice() {
+        let h = Harness()
+        #expect(h.post("/agents/select", ["name": "claude-code"]).status == 200)
+        #expect(h.store.config.selectedAgent == "claude-code")
+        #expect(h.post("/agents/select", [:]).status == 200)
+        #expect(h.store.config.selectedAgent == nil)
+    }
+
+    @Test func exclusiveModeBlocksEveryOtherAgent() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+
+        let fromOther = HTTPRequest(method: "POST", path: "/workspaces/save",
+                                    headers: ["x-plonk-agent": "cursor/1.0"],
+                                    body: ["name": "work", "items": [sampleItem]])
+        #expect(h.send(fromOther).status == 409)
+        #expect(h.store.config.workspaces["work"] == nil)
+
+        let fromSelected = HTTPRequest(method: "POST", path: "/workspaces/save",
+                                       headers: ["x-plonk-agent": "claude-code/2.0"],
+                                       body: ["name": "work", "items": [sampleItem]])
+        #expect(h.send(fromSelected).status == 200)
+        #expect(h.store.config.workspaces["work"]?.items.count == 1)
+    }
+
+    @Test func exclusiveModeLeavesReadsAndHelloOpen() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+        let headers = ["x-plonk-agent": "cursor/1.0"]
+        #expect(h.send(HTTPRequest(method: "GET", path: "/ping", headers: headers, body: [:])).status == 200)
+        #expect(h.send(HTTPRequest(method: "POST", path: "/agents/hello", headers: headers,
+                                   body: ["name": "cursor"])).status == 200)
+    }
+
+    /// Handing the wheel to someone else is itself guarded, or any agent could
+    /// undo the user's choice.
+    @Test func exclusiveModeGuardsTheSelectionItself() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+        let steal = HTTPRequest(method: "POST", path: "/agents/select",
+                                headers: ["x-plonk-agent": "cursor/1.0"], body: ["name": "cursor"])
+        #expect(h.send(steal).status == 409)
+        #expect(h.store.config.selectedAgent == "claude-code")
+
+        let handOff = HTTPRequest(method: "POST", path: "/agents/select",
+                                  headers: ["x-plonk-agent": "claude-code/2.0"], body: ["name": "cursor"])
+        #expect(h.send(handOff).status == 200)
+        #expect(h.store.config.selectedAgent == "cursor")
+    }
+
+    @Test func exclusiveModeWithoutASelectionBlocksNothing() {
+        let h = Harness()
+        _ = h.post("/agents/exclusive", ["on": true])
+        let request = HTTPRequest(method: "POST", path: "/workspaces/save",
+                                  headers: ["x-plonk-agent": "cursor/1.0"],
+                                  body: ["name": "work", "items": [sampleItem]])
+        #expect(h.send(request).status == 200)
+    }
+
+    @Test func agentChangesNotifyTheUI() {
+        let h = Harness()
+        var notifications = 0
+        h.router.didChangeAgents = { notifications += 1 }
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+        #expect(notifications == 2)
+    }
 }

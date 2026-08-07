@@ -10,13 +10,20 @@ import AppKit
 //   POST /workspaces/save   { name, items?, move_existing? }  no items = snapshot the desktop
 //   POST /workspaces/launch { name, screen? }   screen pulls it onto one monitor
 //   POST /workspaces/delete { name }
-//   POST /layouts/*         aliases of the three above, kept for older clients
+//   POST /workspaces/rename { from, to }
+//   POST /layouts/*         aliases of save/launch/delete, kept for older clients
 //   POST /zones/save     { name, zones: [{x,y,w,h}], screen? }
 //   POST /zones/assign   { screen, name? }
 //   POST /zones/delete   { name }
 //   POST /shot/capture   { mode?, annotate?, path?, clipboard?, preview? }
 //   POST /shot/annotate  { path, marks: [{kind, points, color?, width?}], output?, clipboard? }
 //   POST /layout/zone    { app, zone, title?, screen? }
+//   POST /agents/hello     { name, version?, pid? }   registers/refreshes a session
+//   POST /agents/select    { name? }   no name clears the selection
+//   POST /agents/exclusive { on }      only the selected agent may change things
+//
+// Requests may carry X-Plonk-Agent: name/version (and X-Plonk-Agent-Pid) so
+// the app knows who is driving; plonk-mcp sends them on every call.
 
 final class Router {
     /// Longest side of the copy handed to agents, matching what the Claude API
@@ -26,6 +33,7 @@ final class Router {
     private let store: ConfigStore
     private let windows: WindowManager
     private let awake: AwakeManager
+    let agents: AgentRegistry
 
     /// Set by AppDelegate; the editor and permission prompts need AppKit.
     var capture: ((CaptureMode, Bool, @escaping (NSImage?) -> Void) -> Void)?
@@ -34,16 +42,30 @@ final class Router {
     var launchWorkspace: ((String, Workspace, Int?, @escaping ([[String: Any]]) -> Void) -> Void)?
     var didChangeLayouts: (() -> Void)?
     var didChangeZones: (() -> Void)?
+    var didChangeAgents: (() -> Void)?
     var didSaveShot: ((String) -> Void)?
     var announce: ((_ text: String, _ imagePath: String?) -> Void)?
 
-    init(store: ConfigStore, windows: WindowManager, awake: AwakeManager) {
+    init(store: ConfigStore, windows: WindowManager, awake: AwakeManager,
+         agents: AgentRegistry = AgentRegistry()) {
         self.store = store
         self.windows = windows
         self.awake = awake
+        self.agents = agents
     }
 
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
+        let agent = Self.agentName(fromHeader: request.headers["x-plonk-agent"])
+        agents.touch(header: request.headers["x-plonk-agent"],
+                     pid: request.headers["x-plonk-agent-pid"].flatMap(Int.init))
+        if let reason = Self.exclusiveRejection(
+            method: request.method, path: request.path, agent: agent,
+            selected: store.config.selectedAgent, exclusive: store.config.agentExclusive
+        ) {
+            respond(HTTPResponse(status: 409, json: ["error": reason]))
+            return
+        }
+
         let body = request.body
         switch (request.method, request.path) {
         case ("GET", "/ping"):
@@ -89,6 +111,28 @@ final class Router {
             store.update { $0.workspaces.removeValue(forKey: name) }
             didChangeLayouts?()
             respond(.ok(["ok": true, "deleted": name]))
+
+        case ("POST", "/workspaces/rename"):
+            guard let from = trimmedName(body["from"]), let to = trimmedName(body["to"]) else {
+                respond(.badRequest("body must include from and to"))
+                return
+            }
+            guard store.config.workspaces[from] != nil else {
+                respond(.notFound("no workspace named \"\(from)\""))
+                return
+            }
+            guard from == to || store.config.workspaces[to] == nil else {
+                respond(HTTPResponse(status: 409, json: ["error": "a workspace named \"\(to)\" already exists"]))
+                return
+            }
+            if from != to {
+                store.update {
+                    guard let workspace = $0.workspaces.removeValue(forKey: from) else { return }
+                    $0.workspaces[to] = workspace
+                }
+                didChangeLayouts?()
+            }
+            respond(.ok(["ok": true, "renamed": from, "to": to]))
 
         case ("POST", "/zones/save"):
             guard let name = trimmedName(body["name"]), let raw = body["zones"] as? [[String: Any]] else {
@@ -149,6 +193,33 @@ final class Router {
         case ("POST", "/layout/zone"):
             respond(zoneRoute(body))
 
+        case ("POST", "/agents/hello"):
+            guard let name = trimmedName(body["name"]) else {
+                respond(.badRequest("body must include name"))
+                return
+            }
+            agents.register(name: name,
+                            version: (body["version"] as? String) ?? "",
+                            pid: (body["pid"] as? NSNumber)?.intValue)
+            var result: [String: Any] = ["ok": true, "exclusive": store.config.agentExclusive]
+            if let selected = store.config.selectedAgent { result["selected_agent"] = selected }
+            respond(.ok(result))
+
+        case ("POST", "/agents/select"):
+            let name = trimmedName(body["name"])
+            store.update { $0.selectedAgent = name }
+            didChangeAgents?()
+            respond(.ok(name.map { ["ok": true, "selected_agent": $0] } ?? ["ok": true]))
+
+        case ("POST", "/agents/exclusive"):
+            guard let on = body["on"] as? Bool else {
+                respond(.badRequest("body must be {\"on\": true|false}"))
+                return
+            }
+            store.update { $0.agentExclusive = on }
+            didChangeAgents?()
+            respond(.ok(["ok": true, "exclusive": on]))
+
         case ("POST", "/shot/capture"):
             captureRoute(body, respond: respond)
 
@@ -158,6 +229,34 @@ final class Router {
         default:
             respond(.notFound("unknown route \(request.method) \(request.path)"))
         }
+    }
+
+    // MARK: - Agents
+
+    /// The name half of an `X-Plonk-Agent: name/version` header.
+    static func agentName(fromHeader header: String?) -> String? {
+        guard let name = header?.split(separator: "/", maxSplits: 1).first
+            .map({ $0.trimmingCharacters(in: .whitespaces) }), !name.isEmpty else { return nil }
+        return name
+    }
+
+    /// Everything that changes windows or config. Reads and screenshots stay
+    /// open to every agent; hello must stay open or nobody could register.
+    private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake"]
+    private static let guardedPaths: Set<String> = ["/agents/select", "/agents/exclusive"]
+
+    /// The 409 reason when "only the selected agent controls" blocks this
+    /// request, nil when it may proceed.
+    static func exclusiveRejection(method: String, path: String, agent: String?,
+                                   selected: String?, exclusive: Bool) -> String? {
+        guard exclusive, let selected, !selected.isEmpty, method == "POST" else { return nil }
+        let guarded = Self.guardedPaths.contains(path)
+            || Self.guardedPrefixes.contains { path == $0 || path.hasPrefix($0 + "/") }
+        guard guarded, agent != selected else { return nil }
+        let who = agent.map { "\"\($0)\"" } ?? "an unidentified client"
+        return "the user made \"\(selected)\" the only agent allowed to change windows and settings, "
+            + "and this request came from \(who). Reading state and taking screenshots still work; "
+            + "the user can switch agents in Plonk's menu."
     }
 
     // MARK: - State
@@ -176,7 +275,7 @@ final class Router {
             }
         }
 
-        return [
+        var state: [String: Any] = [
             "awake": awake.isOn,
             "awake_details": [
                 "requested": awake.requested,
@@ -206,7 +305,11 @@ final class Router {
                 ]
             },
             "windows": windows.listWindows(),
+            "agents": agents.describe(selected: store.config.selectedAgent),
+            "agent_exclusive": store.config.agentExclusive,
         ]
+        if let selected = store.config.selectedAgent { state["selected_agent"] = selected }
+        return state
     }
 
     // MARK: - Workspaces

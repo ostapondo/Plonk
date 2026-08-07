@@ -9,15 +9,23 @@ final class StatusMenuController: NSObject {
 
     var isAwakeRequested: () -> Bool = { false }
     var workspaceNames: [String] = []
+    /// Connected agents plus whether each one is the user's pick, queried when
+    /// the menu opens so it always reflects live presence.
+    var agentEntries: () -> [(name: String, selected: Bool)] = { [] }
+    var isExclusive: () -> Bool = { false }
+    var hasSelection: () -> Bool = { false }
 
     var onOpenWindow: (() -> Void)?
     var onCaptureRegion: (() -> Void)?
     var onToggleAwake: (() -> Void)?
     var onLaunchWorkspace: ((String) -> Void)?
     var onReportBug: (() -> Void)?
+    var onSelectAgent: ((String?) -> Void)?
+    var onToggleExclusive: (() -> Void)?
 
     private static let keepAwakeTag = 101
     private static let workspacesTag = 102
+    private static let agentsTag = 103
 
     override init() {
         super.init()
@@ -30,6 +38,12 @@ final class StatusMenuController: NSObject {
         workspaces.tag = Self.workspacesTag
         workspaces.submenu = NSMenu()
         menu.addItem(workspaces)
+
+        // Also filled in on demand: agents come and go with their MCP sessions.
+        let agents = NSMenuItem(title: "Active Agent", action: nil, keyEquivalent: "")
+        agents.tag = Self.agentsTag
+        agents.submenu = NSMenu()
+        menu.addItem(agents)
 
         menu.addItem(entry("Capture Region", #selector(captureRegion), key: "s"))
 
@@ -86,11 +100,18 @@ final class StatusMenuController: NSObject {
     @objc private func launchWorkspace(_ sender: NSMenuItem) {
         onLaunchWorkspace?(sender.title)
     }
+
+    @objc private func selectAgent(_ sender: NSMenuItem) {
+        onSelectAgent?(sender.representedObject as? String)
+    }
+
+    @objc private func toggleExclusive() { onToggleExclusive?() }
 }
 
 extension StatusMenuController: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.item(withTag: Self.keepAwakeTag)?.state = isAwakeRequested() ? .on : .off
+        refreshAgentsSubmenu(in: menu)
 
         guard let item = menu.item(withTag: Self.workspacesTag), let submenu = item.submenu else { return }
         item.isEnabled = !workspaceNames.isEmpty
@@ -106,5 +127,37 @@ extension StatusMenuController: NSMenuDelegate {
             entry.target = self
             submenu.addItem(entry)
         }
+    }
+
+    private func refreshAgentsSubmenu(in menu: NSMenu) {
+        guard let item = menu.item(withTag: Self.agentsTag), let submenu = item.submenu else { return }
+        submenu.removeAllItems()
+        let entries = agentEntries()
+        guard !entries.isEmpty else {
+            let empty = NSMenuItem(title: "No agents connected", action: nil, keyEquivalent: "")
+            empty.isEnabled = false
+            submenu.addItem(empty)
+            return
+        }
+
+        let any = NSMenuItem(title: "Any Agent", action: #selector(selectAgent(_:)), keyEquivalent: "")
+        any.target = self
+        any.state = hasSelection() ? .off : .on
+        submenu.addItem(any)
+        for (name, selected) in entries {
+            let entry = NSMenuItem(title: name, action: #selector(selectAgent(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = name
+            entry.state = selected ? .on : .off
+            submenu.addItem(entry)
+        }
+
+        submenu.addItem(.separator())
+        let exclusive = NSMenuItem(title: "Only Selected Agent Controls",
+                                   action: hasSelection() ? #selector(toggleExclusive) : nil,
+                                   keyEquivalent: "")
+        exclusive.target = self
+        exclusive.state = isExclusive() ? .on : .off
+        submenu.addItem(exclusive)
     }
 }

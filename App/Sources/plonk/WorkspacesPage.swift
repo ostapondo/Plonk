@@ -6,6 +6,9 @@ struct WorkspacesPage: View {
     @ObservedObject var model: AppModel
     @State private var newName = ""
     @State private var expanded: Set<String> = []
+    /// Workspace whose name is being edited in place, if any.
+    @State private var renaming: String?
+    @State private var renameDraft = ""
 
     var body: some View {
         Form {
@@ -55,6 +58,18 @@ struct WorkspacesPage: View {
     private func workspace(_ name: String) -> some View {
         let items = model.workspaces[name]?.items ?? []
         VStack(alignment: .leading, spacing: 8) {
+            if renaming == name {
+                HStack(spacing: 8) {
+                    TextField("Workspace name", text: $renameDraft)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { commitRename(of: name) }
+                        .onExitCommand { renaming = nil }
+                    Button("Save") { commitRename(of: name) }
+                        .disabled(renameDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Button("Cancel") { renaming = nil }
+                }
+                .padding(.vertical, 4)
+            } else {
             HStack(spacing: 10) {
                 // The chevron alone is too small to aim at, so the whole left
                 // half of the row toggles.
@@ -99,6 +114,10 @@ struct WorkspacesPage: View {
                             }
                         }
                     }
+                    Button("Rename") {
+                        renameDraft = name
+                        renaming = name
+                    }
                     Button("Recapture from Screen") { model.actions?.saveCurrentWorkspace(named: name) }
                     Toggle("Move Windows That Are Already Open",
                            isOn: Binding(
@@ -112,6 +131,7 @@ struct WorkspacesPage: View {
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 28)
+            }
             }
             if expanded.contains(name) {
                 VStack(spacing: 0) {
@@ -142,6 +162,14 @@ struct WorkspacesPage: View {
     private func monitorTitle(_ index: Int) -> String {
         let size = model.screenDescriptions.indices.contains(index) ? model.screenDescriptions[index] : ""
         return index == 0 ? "Main Display (\(size))" : "Display \(index + 1) (\(size))"
+    }
+
+    private func commitRename(of old: String) {
+        let new = renameDraft.trimmingCharacters(in: .whitespaces)
+        guard !new.isEmpty else { return }
+        guard model.actions?.renameWorkspace(old, to: new) == true else { return }
+        renaming = nil
+        if expanded.remove(old) != nil { expanded.insert(new) }
     }
 
     private func toggle(_ name: String) {

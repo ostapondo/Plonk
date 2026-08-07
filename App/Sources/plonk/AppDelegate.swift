@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = ConfigStore()
     private let windows = WindowManager()
     private let awake = AwakeManager()
+    private let agents = AgentRegistry()
     private let hotkeys = HotkeyManager()
     private let model = AppModel()
     private lazy var launcher = WorkspaceLauncher(windows: windows)
@@ -77,6 +78,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMenu.onToggleAwake = { [weak self] in self?.awake.toggle() }
         statusMenu.onLaunchWorkspace = { [weak self] name in self?.launchWorkspace(named: name, onScreen: nil) }
         statusMenu.onReportBug = { [weak self] in self?.reportBug() }
+        statusMenu.agentEntries = { [weak self] in
+            guard let self else { return [] }
+            var names = agents.onlineNames()
+            if let selected = store.config.selectedAgent, !names.contains(selected) {
+                names.append(selected)
+            }
+            return names.map { ($0, $0 == self.store.config.selectedAgent) }
+        }
+        statusMenu.isExclusive = { [weak self] in self?.store.config.agentExclusive ?? false }
+        statusMenu.hasSelection = { [weak self] in self?.store.config.selectedAgent != nil }
+        statusMenu.onSelectAgent = { [weak self] name in self?.selectAgent(name) }
+        statusMenu.onToggleExclusive = { [weak self] in
+            guard let self else { return }
+            setAgentExclusive(!store.config.agentExclusive)
+        }
         refreshStatusMenu()
     }
 
@@ -162,7 +178,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupServer() {
-        router = Router(store: store, windows: windows, awake: awake)
+        router = Router(store: store, windows: windows, awake: awake, agents: agents)
+        agents.onChange = { [weak self] in self?.refreshAgentModel() }
+        router.didChangeAgents = { [weak self] in self?.refreshAgentModel() }
         router.didChangeLayouts = { [weak self] in self?.refreshWorkspaceModel() }
         router.didChangeZones = { [weak self] in
             self?.refreshZoneModel()
@@ -235,17 +253,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsPage(id: "zones", title: "Zones", icon: "square.grid.2x2", section: "Windows") { AnyView(ZonesPage(model: $0)) },
             SettingsPage(id: "awake", title: "Keep Awake", icon: "cup.and.saucer", section: "Gadgets") { AnyView(AwakePage(model: $0)) },
             SettingsPage(id: "shot", title: "Screenshot", icon: "camera.viewfinder", section: "Gadgets") { AnyView(ShotPage(model: $0)) },
-            SettingsPage(id: "ai", title: "AI · MCP", icon: "sparkles", section: "Setup") { _ in AnyView(AIPage()) },
+            SettingsPage(id: "ai", title: "AI · MCP", icon: "sparkles", section: "Setup") { AnyView(AIPage(model: $0)) },
         ]
         refreshWorkspaceModel()
         refreshZoneModel()
         refreshHotkeyModel()
+        refreshAgentModel()
     }
 
     /// Preflight does not prompt, so it is safe to poll whenever a window opens.
     private func refreshPermissions() {
         model.accessibilityGranted = windows.isTrusted
         model.screenRecordingGranted = CGPreflightScreenCaptureAccess()
+    }
+
+    private func refreshAgentModel() {
+        model.connectedAgents = agents.onlineNames()
+        model.selectedAgent = store.config.selectedAgent
+        model.agentExclusive = store.config.agentExclusive
     }
 
     private func refreshWorkspaceModel() {
@@ -521,6 +546,17 @@ extension AppDelegate: AppActions {
         refreshWorkspaceModel()
     }
 
+    func renameWorkspace(_ old: String, to new: String) -> Bool {
+        guard old != new else { return true }
+        guard store.config.workspaces[old] != nil, store.config.workspaces[new] == nil else { return false }
+        store.update {
+            guard let workspace = $0.workspaces.removeValue(forKey: old) else { return }
+            $0.workspaces[new] = workspace
+        }
+        refreshWorkspaceModel()
+        return true
+    }
+
     func saveCurrentWorkspace(named name: String) {
         let items = router.snapshotWorkspace()
         guard !items.isEmpty else { return }
@@ -553,5 +589,15 @@ extension AppDelegate: AppActions {
 
     func cancelWorkspaceLaunch() {
         launcher.cancel()
+    }
+
+    func selectAgent(_ name: String?) {
+        store.update { $0.selectedAgent = name }
+        refreshAgentModel()
+    }
+
+    func setAgentExclusive(_ on: Bool) {
+        store.update { $0.agentExclusive = on }
+        refreshAgentModel()
     }
 }

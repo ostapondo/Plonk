@@ -37,12 +37,18 @@ protocol AppActions: AnyObject {
     /// workspace was captured on.
     func launchWorkspace(named name: String, onScreen screen: Int?)
     func deleteWorkspace(named name: String)
+    /// False when `new` is already taken, which leaves both workspaces untouched.
+    func renameWorkspace(_ old: String, to new: String) -> Bool
     /// Snapshots the desktop. Saving over an existing name replaces its items.
     func saveCurrentWorkspace(named name: String)
     func setWorkspaceMoveExisting(_ on: Bool, for name: String)
     func updateWorkspaceItem(_ index: Int, in name: String, urls: [String], args: [String])
     func removeWorkspaceItem(_ index: Int, from name: String)
     func cancelWorkspaceLaunch()
+
+    /// Nil clears the selection, so any agent may drive again.
+    func selectAgent(_ name: String?)
+    func setAgentExclusive(_ on: Bool)
 }
 
 final class AppModel: ObservableObject {
@@ -82,6 +88,9 @@ final class AppModel: ObservableObject {
     @Published var shotCopyToClipboard = true
     @Published var shotStatus = ""
     @Published var launchAtLogin = true
+    @Published var connectedAgents: [String] = []
+    @Published var selectedAgent: String?
+    @Published var agentExclusive = false
 
     weak var actions: AppActions?
 }
