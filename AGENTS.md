@@ -74,6 +74,10 @@ Put new logic there and cover it in `App/Tests/plonkTests/`.
   entirely when the user says so. Anything else that wants the network needs
   the README's privacy section rewritten first, which is the point of the rule.
 - Do not commit build artifacts (`.build/`, `Plonk.app`, `node_modules/`).
+- The claims in `README.md` and `SECURITY.md` are checkable, and have to stay
+  that way. Any change to the network, the permissions, the entitlements or the
+  update path makes one of them false — fix the document in the same commit,
+  and never widen a claim past what the code actually does.
 
 ## Agent notes
 
@@ -90,7 +94,15 @@ Things that have already cost someone an hour.
   ad-hoc signing. A grant that keeps vanishing across rebuilds is a stale entry
   from an older signature: `tccutil reset ScreenCapture dev.plonk.app`, then
   grant it once more.
-- **Releases go out through `scripts/release.sh`, never by hand.** v0.0.3 was
+- **Releases go out through the tag, never by hand.** Pushing `v<version>` runs
+  `.github/workflows/release.yml`, which builds, signs and attests on GitHub's
+  runners and publishes `plonk-mcp` with npm provenance. Building on a laptop
+  and uploading the zip breaks the one claim that ties a shipped binary to this
+  source, so `gh attestation verify` on it fails and the release is worse than
+  no release. `MARKETING_VERSION` in `version.env`, `version` in
+  `mcp/package.json` and the tag all have to agree; the workflow stops if they
+  do not.
+- **Releases are built by `scripts/release.sh`, never by hand.** v0.0.3 was
   zipped manually, went out ad-hoc signed, and reset the permissions of every
   user who installed it — and no copy can auto-update to or from it, because
   `UpdateManager` installs a build only when it satisfies the running copy's

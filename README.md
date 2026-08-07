@@ -40,11 +40,17 @@ brew install --cask ostapondo/plonk/plonk
 Or download [the latest release](https://github.com/ostapondo/plonk/releases/latest),
 unzip, and drop Plonk.app into Applications.
 
-**First launch takes one extra click.** Plonk is code-signed, but not notarized
-by Apple, so macOS holds it the first time — whichever way you installed it.
-Open Plonk, dismiss the warning, then go to System Settings → Privacy &
-Security, scroll to Security, and click **Open Anyway**. That is once, for good.
-What it does with the access it asks for is [checkable](#check-it-yourself).
+**First launch takes one extra click.** Plonk is code-signed, but with a
+self-signed certificate rather than an Apple Developer ID, and Gatekeeper does
+not trust one of those — so macOS holds the app the first time, whichever way
+you installed it. Open Plonk, dismiss the warning, then go to System Settings →
+Privacy & Security, scroll to Security, and click **Open Anyway**. That is once,
+for good.
+
+What that warning means is that macOS cannot vouch for who built this. Fair. So
+rather than ask you to take it on trust, everything below is
+[checkable](#check-it-yourself) — starting with proving the file you just
+downloaded was built from the source in this repository.
 
 Grant Accessibility when asked, then relaunch. Screen Recording is asked for
 separately, the first time you capture. Nothing else — no Full Disk Access, no
@@ -81,6 +87,24 @@ Accessibility is the only way macOS lets one app move another's windows, and
 Screen Recording is what a screenshot costs. That is a lot to hand something you
 installed a minute ago, so none of this is a promise — it is all checkable.
 
+**The binary comes from the source.** Releases are built, signed and zipped by
+[a workflow](.github/workflows/release.yml) on GitHub's runners, never on a
+laptop, and ship with a provenance attestation GitHub signs:
+
+```sh
+gh attestation verify Plonk-<version>.zip -R ostapondo/plonk
+```
+
+That prints the commit and the workflow run the archive was built by. It is the
+step that makes reading the rest of this repo worth anything — without it, the
+code here and the app on your Mac are two separate claims. (Releases up to and
+including 0.0.4 were zipped by hand and carry no attestation, so the command
+fails on those. That is the whole reason it exists now.)
+
+The MCP server is published the same way, which matters more, because `npx -y
+plonk-mcp` fetches it every time: `npm view plonk-mcp dist.attestations`, or the
+Provenance panel on [its npm page](https://www.npmjs.com/package/plonk-mcp).
+
 **One thing dials out, and you can switch it off.** Every socket the app has
 open:
 
@@ -116,6 +140,11 @@ Screenshots go where you send them. There is no account to make.
 
 The MCP server is a separate npm package that depends only on the official MCP
 SDK and zod. It speaks to `127.0.0.1:43917` and nowhere else.
+
+[SECURITY.md](SECURITY.md) has the rest: the entitlements the bundle ships with
+(none), every step the updater takes before it replaces anything, what the
+signing certificate does and does not prove, and where each of these checks
+stops being one.
 
 ## Workspaces
 
@@ -176,7 +205,7 @@ it.
 | **Keep awake** | IOKit power assertions, not a jiggler. Display-on or system-only, pause on battery, auto while charging, timed sessions, and a menu bar icon that glows while it holds |
 | **Screenshots** | Region, window or screen through the native picker, then pen, arrow, rectangle, ellipse and highlighter. Saves at native resolution |
 | **Notices** | A panel in the top-right corner, not Notification Center: no permission to ask for, nothing left in your history, and it can show the screenshot instead of describing it |
-| **Updates** | One button on the Updates page. Plonk installs a build only if it is signed with the same certificate as the copy you are running — which is the same test macOS applies, so your Accessibility and Screen Recording grants carry over instead of being asked for again. Anything that fails the check is discarded and nothing is replaced. Switch the check off and the app never looks |
+| **Updates** | One button on the Updates page. The download is checked against the checksum GitHub published for it before it is unpacked, and Plonk installs a build only if it is signed with the same certificate as the copy you are running — the same test macOS applies, so your Accessibility and Screen Recording grants carry over instead of being asked for again. Anything that fails is discarded and nothing is replaced. Switch the check off and the app never looks |
 
 ## For agents
 
@@ -218,7 +247,7 @@ tell two sessions of the same client apart.
 
 ```sh
 cd App && swift build     # the app
-./scripts/test.sh         # 149 unit tests
+./scripts/test.sh         # 191 unit tests
 ./scripts/build.sh        # produces Plonk.app
 cd mcp && npm run build   # the MCP server
 ```
@@ -243,11 +272,19 @@ tccutil reset Accessibility dev.plonk.app
 ```
 
 Releases: bump `MARKETING_VERSION` and `BUILD_NUMBER` in
-[version.env](version.env). `scripts/build.sh` reads both into `Info.plist`.
-`scripts/release.sh` then builds with a Developer ID certificate, notarizes,
-staples the ticket into the bundle and writes `Plonk-<version>.zip` with the
-sha256 the cask needs. It needs a paid Apple account and stored `notarytool`
-credentials, and says how to get both if either is missing.
+[version.env](version.env) and `version` in `mcp/package.json`, then push a
+`v<version>` tag. [The release workflow](.github/workflows/release.yml) builds,
+signs and attests the app on GitHub's runners, uploads the zip to a draft
+release, and publishes the MCP server to npm with provenance. Nothing ships from
+a laptop, which is what makes `gh attestation verify` mean anything.
+
+`scripts/release.sh` is what that workflow runs, and it works locally too. It
+holds every build to the requirement in
+[scripts/release-requirement](scripts/release-requirement) — a release signed
+with anything else cannot be updated to and takes Accessibility and Screen
+Recording away from everyone who installs it by hand. It notarizes when a
+Developer ID certificate is in the keychain and says so when there is not;
+Plonk's releases are not notarized, which costs a paid Apple account.
 
 ## License
 
