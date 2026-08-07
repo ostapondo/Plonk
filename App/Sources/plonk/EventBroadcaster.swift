@@ -28,15 +28,16 @@ final class EventBroadcaster {
             + "Connection: keep-alive\r\n\r\n"
             + "retry: 3000\n\n"
             + Self.frame(rev: rev, what: "hello")
+        // Registered before the send completes: an event bumped in that window
+        // would otherwise never reach this listener, and it would sit on a
+        // revision it believes is current.
+        connections.append(conn)
+        startKeepaliveIfNeeded()
         conn.send(content: Data(head.utf8), completion: .contentProcessed { [weak self] error in
+            guard error != nil else { return }
             DispatchQueue.main.async {
-                guard let self else { return }
-                if error != nil {
-                    conn.cancel()
-                    return
-                }
-                self.connections.append(conn)
-                self.startKeepaliveIfNeeded()
+                conn.cancel()
+                self?.forget(conn)
             }
         })
     }
@@ -46,16 +47,30 @@ final class EventBroadcaster {
     }
 
     private static func frame(rev: Int, what: String) -> String {
-        "data: {\"rev\": \(rev), \"what\": \"\(what)\"}\n\n"
+        let payload = (try? JSONSerialization.data(withJSONObject: ["rev": rev, "what": what],
+                                                   options: [.sortedKeys]))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        return "data: \(payload)\n\n"
     }
 
     /// A comment frame flushes out connections whose client is gone; without
     /// it a dead listener would linger until the next real event.
     private func startKeepaliveIfNeeded() {
         guard keepalive == nil else { return }
-        keepalive = Timer.scheduledTimer(withTimeInterval: 25, repeats: true) { [weak self] _ in
+        let timer = Timer.scheduledTimer(withTimeInterval: 25, repeats: true) { [weak self] _ in
             self?.send(Data(": ping\n\n".utf8))
         }
+        // A menu bar app should be idle when nothing is listening, so the
+        // pings coalesce and the timer dies with the last connection.
+        timer.tolerance = 5
+        keepalive = timer
+    }
+
+    private func forget(_ conn: NWConnection) {
+        connections.removeAll { $0 === conn }
+        guard connections.isEmpty else { return }
+        keepalive?.invalidate()
+        keepalive = nil
     }
 
     private func send(_ data: Data) {
@@ -64,7 +79,7 @@ final class EventBroadcaster {
                 guard error != nil else { return }
                 DispatchQueue.main.async {
                     conn.cancel()
-                    self?.connections.removeAll { $0 === conn }
+                    self?.forget(conn)
                 }
             })
         }

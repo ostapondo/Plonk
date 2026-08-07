@@ -17,6 +17,11 @@ final class VoiceManager {
     private var task: SFSpeechRecognitionTask?
     private var lastText = ""
     private var finishing = false
+    /// True only while a start is in flight: the permission callbacks are
+    /// asynchronous, so the key can come back up before there is anything to
+    /// stop, and a key repeat can ask twice. It is cleared on every path out
+    /// of `start`, so a start that fails cannot leave voice wedged.
+    private var starting = false
 
     private var listening: Bool { task != nil }
 
@@ -32,18 +37,23 @@ final class VoiceManager {
     }
 
     func beginCapture() {
-        guard !listening else { return }
+        guard !listening, !starting else { return }
+        starting = true
         requestPermissions { [weak self] granted in
             guard let self else { return }
             guard granted else {
+                starting = false
                 onError?("Voice needs Microphone and Speech Recognition access: System Settings → Privacy & Security")
                 return
             }
+            // Released while the permission prompt was up: nothing to record.
+            guard starting else { return }
             start()
         }
     }
 
     func finishCapture() {
+        starting = false
         guard listening, !finishing else { return }
         finishing = true
         engine.inputNode.removeTap(onBus: 0)
@@ -58,6 +68,8 @@ final class VoiceManager {
     }
 
     private func start() {
+        // Whatever happens below, a start is no longer in flight.
+        defer { starting = false }
         guard let recognizer = Self.recognizer() else {
             onError?("On-device speech recognition is not available for this language")
             return
@@ -71,6 +83,13 @@ final class VoiceManager {
 
         let node = engine.inputNode
         let format = node.outputFormat(forBus: 0)
+        // A Mac with no input device reports 0 Hz, and installTap answers that
+        // with an Objective-C exception Swift cannot catch.
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            self.request = nil
+            onError?("No microphone is available")
+            return
+        }
         node.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
             request.append(buffer)
         }
@@ -110,6 +129,7 @@ final class VoiceManager {
         task = nil
         request = nil
         finishing = false
+        starting = false
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             onError?("Heard nothing")

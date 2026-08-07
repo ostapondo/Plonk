@@ -106,6 +106,10 @@ final class WindowManager {
 
     var isTrusted: Bool { AXIsProcessTrusted() }
 
+    /// Fires on the main queue after any window actually moves, whoever asked —
+    /// hotkeys, drag snapping, workspace launches or the HTTP routes.
+    var onDidPlace: (() -> Void)?
+
     func promptForTrust() {
         let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         AXIsProcessTrustedWithOptions(opts)
@@ -166,7 +170,14 @@ final class WindowManager {
         let movedTo = AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, posVal)
         let resized = AXUIElementSetAttributeValue(win, kAXSizeAttribute as CFString, sizeVal)
         AXUIElementSetAttributeValue(win, kAXPositionAttribute as CFString, posVal)
-        return movedTo == .success && resized == .success
+        guard movedTo == .success && resized == .success else { return false }
+        // Placement reaches here from hotkeys, drag snapping, workspace
+        // launches and the HTTP routes alike, so this is the one place that
+        // sees every window move. Launches run off the main queue.
+        if let onDidPlace {
+            DispatchQueue.main.async(execute: onDidPlace)
+        }
+        return true
     }
 
     private func axRect(for frac: FracRect, screenIndex: Int, in all: [ScreenInfo]) -> CGRect {

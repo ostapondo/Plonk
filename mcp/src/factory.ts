@@ -67,10 +67,19 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms).u
 
 /** Long-polls the app's inbox for tasks addressed to this client — the
  * channel that lets Plonk (voice, hotkeys, other agents) reach the agent.
- * A task is handed to the client's own model through MCP sampling; clients
- * that never declared the sampling capability just have the task logged, and
- * the user is better served by a CLI adapter there. Returns a stop function. */
+ * A task is handed to the client's own model through MCP sampling, so the loop
+ * only runs for clients that declared that capability: polling drains the
+ * queue, and draining what this client cannot act on would silently throw the
+ * user's words away instead of leaving them for a CLI adapter.
+ * Returns a stop function; it is a no-op when the loop never started. */
 export function startInboxLoop(server: McpServer, identity: AgentIdentity): () => void {
+  if (!server.server.getClientCapabilities()?.sampling) {
+    console.error(
+      `plonk-mcp: ${identity.name} does not support MCP sampling, so Plonk cannot hand it spoken ` +
+        `or queued prompts. Configure a CLI adapter for it in Plonk (Settings, AI · MCP) to use voice.`
+    );
+    return () => {};
+  }
   let stopped = false;
   const loop = async (): Promise<void> => {
     while (!stopped) {
@@ -84,21 +93,14 @@ export function startInboxLoop(server: McpServer, identity: AgentIdentity): () =
         continue;
       }
       for (const task of res.tasks ?? []) {
-        if (server.server.getClientCapabilities()?.sampling) {
-          server.server
-            .createMessage({
-              messages: [{ role: "user", content: { type: "text", text: task.prompt } }],
-              maxTokens: 4_000,
-              systemPrompt:
-                "The user sent this through Plonk, the Mac window manager this agent controls over MCP. Act on it with the plonk tools where they apply.",
-            })
-            .catch((err) => console.error(`plonk-mcp: sampling failed for task ${task.id}:`, err));
-        } else {
-          console.error(
-            `plonk-mcp: task for ${identity.name} dropped — this client does not support MCP sampling. ` +
-              `Configure a CLI adapter in Plonk for this agent instead. Prompt was: ${task.prompt}`
-          );
-        }
+        server.server
+          .createMessage({
+            messages: [{ role: "user", content: { type: "text", text: task.prompt } }],
+            maxTokens: 4_000,
+            systemPrompt:
+              "The user sent this through Plonk, the Mac window manager this agent controls over MCP. Act on it with the plonk tools where they apply.",
+          })
+          .catch((err) => console.error(`plonk-mcp: sampling failed for task ${task.id}:`, err));
       }
     }
   };

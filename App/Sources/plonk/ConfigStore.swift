@@ -32,6 +32,31 @@ struct LayoutItemSpec: Codable {
 struct AgentAdapter: Codable {
     var name: String
     var command: String
+
+    /// The environment variable the prompt travels in. Substituting the text
+    /// into the command line cannot be made safe — a template that happens to
+    /// quote {prompt} would break any escaping we applied — so the shell never
+    /// sees the words at all, only the name of a variable holding them.
+    static let promptVariable = "PLONK_PROMPT"
+
+    /// The command to run for `prompt`, with the prompt supplied out of band.
+    /// `{prompt}` becomes a reference to the variable; a template without it
+    /// gets one appended. Quotes people naturally put around the placeholder
+    /// are consumed with it — the substitution already quotes itself, and
+    /// leaving theirs would either block expansion (single quotes, so the tool
+    /// would receive the literal text `$PLONK_PROMPT`) or nest pointlessly.
+    static func invocation(command: String, prompt: String) -> (command: String, environment: [String: String]) {
+        let reference = "\"$\(promptVariable)\""
+        var line = command
+        if line.contains("{prompt}") {
+            for quoted in ["'{prompt}'", "\"{prompt}\"", "{prompt}"] {
+                line = line.replacingOccurrences(of: quoted, with: reference)
+            }
+        } else {
+            line += " " + reference
+        }
+        return (line, [promptVariable: prompt])
+    }
 }
 
 struct Config: Codable {
@@ -60,8 +85,9 @@ struct Config: Codable {
     var selectedAgent: String?
     var agentExclusive = false
     // Agents Plonk can launch itself instead of queueing a task for a live MCP
-    // session: {prompt} in the command is replaced with the shell-escaped
-    // prompt, e.g. "claude -p {prompt}". Edited in config.json for now.
+    // session, e.g. "claude -p {prompt}". The prompt reaches the command
+    // through the environment, never as text in the line; see
+    // AgentAdapter.invocation. Edited in config.json for now.
     var agentAdapters: [AgentAdapter] = []
     var workspaces: [String: Workspace] = [:]
     var zoneSets: [String: [ZoneRect]] = [:]

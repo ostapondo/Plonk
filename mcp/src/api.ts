@@ -119,9 +119,12 @@ const NOT_RUNNING =
   "Plonk menu bar app is not running. Ask the user to launch Plonk.app (its icon should appear in the menu bar).";
 
 // Stamped on every request so the app can attribute it to a client and, in
-// exclusive mode, gate on it. Over stdio there is one client per process and
-// the global identity is enough; over HTTP many clients share the process, so
-// each session carries its identity through AsyncLocalStorage instead.
+// exclusive mode, gate on it. One mechanism, one shape: the identity always
+// lives in a holder. HTTP runs each request inside its session's holder; stdio
+// fills the process-wide one, because process.stdin exists before any context
+// we could enter and its callbacks never inherit one. HTTP never fills that
+// holder, so a lost context there means no identity — an unidentified client
+// the app can reject — rather than another session's name.
 import { AsyncLocalStorage } from "node:async_hooks";
 
 export interface AgentIdentity {
@@ -137,19 +140,20 @@ export interface IdentityHolder {
 }
 
 const identityStore = new AsyncLocalStorage<IdentityHolder>();
-let globalIdentity: AgentIdentity | undefined;
-
-export function setAgentIdentity(name: string, version: string): void {
-  globalIdentity = { name, version, pid: process.pid };
-}
+const processHolder: IdentityHolder = {};
 
 /** Run fn with a per-session identity; every call() inside sees it. */
 export function runWithIdentity<T>(holder: IdentityHolder, fn: () => T): T {
   return identityStore.run(holder, fn);
 }
 
+/** The holder for a transport that serves a single client per process. */
+export function processIdentityHolder(): IdentityHolder {
+  return processHolder;
+}
+
 function currentIdentity(): AgentIdentity | undefined {
-  return identityStore.getStore()?.identity ?? globalIdentity;
+  return (identityStore.getStore() ?? processHolder).identity;
 }
 
 /** The client name this session registered with, e.g. "claude-code". */

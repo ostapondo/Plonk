@@ -17,6 +17,8 @@ struct RouterTests {
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             store = ConfigStore(directory: directory)
             router = Router(store: store, windows: WindowManager(), awake: AwakeManager())
+            // Mirrors AppDelegate.setupServer, which owns this wiring.
+            store.didMutate = { [router] in router.changes.bump("config") }
         }
 
         deinit { try? FileManager.default.removeItem(at: directory) }
@@ -374,6 +376,47 @@ struct RouterTests {
         #expect(split.query["agent"] == "claude-code")
         #expect(split.query["wait"] == "25")
         #expect(Router.splitQuery("/state").path == "/state")
+    }
+
+    /// A bare "=" pair used to trap and take the whole app down with it.
+    @Test func malformedQueriesDoNotCrash() {
+        #expect(Router.splitQuery("/state?=").path == "/state")
+        #expect(Router.splitQuery("/state?a=1&=&b=2").query["b"] == "2")
+        #expect(Router.splitQuery("/state?").path == "/state")
+        #expect(Router.splitQuery("/state?flag").query["flag"] == "")
+        let h = Harness()
+        #expect(h.send(HTTPRequest(method: "GET", path: "/state?=", headers: [:], body: [:])).status != 404)
+    }
+
+    /// A prompt is a way to move windows by proxy, and can launch an adapter.
+    @Test func exclusiveModeGuardsTheAgentChannel() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+        let ask = HTTPRequest(method: "POST", path: "/agents/ask",
+                              headers: ["x-plonk-agent": "cursor/1.0"],
+                              body: ["prompt": "move everything to screen 2"])
+        #expect(h.send(ask).status == 409)
+    }
+
+    /// Who may read a queue depends on whose queue it is — not on who the
+    /// active agent happens to be. Getting that backwards both starved
+    /// everyone else of their own prompts and let the active agent take theirs.
+    @Test func anAgentMayOnlyReadItsOwnQueue() {
+        let h = Harness()
+        _ = h.post("/agents/select", ["name": "claude-code"])
+        _ = h.post("/agents/exclusive", ["on": true])
+
+        func poll(as caller: String, queue: String) -> Int {
+            h.send(HTTPRequest(method: "GET", path: "/agents/inbox?agent=\(queue)",
+                               headers: ["x-plonk-agent": "\(caller)/1.0"], body: [:])).status
+        }
+        // Its own, even though it is not the selected agent.
+        #expect(poll(as: "cursor", queue: "cursor") == 200)
+        #expect(poll(as: "claude-code", queue: "claude-code") == 200)
+        // Someone else's, even as the selected agent.
+        #expect(poll(as: "claude-code", queue: "cursor") == 409)
+        #expect(poll(as: "cursor", queue: "claude-code") == 409)
     }
 
     @Test func mutationsBumpTheRevision() {

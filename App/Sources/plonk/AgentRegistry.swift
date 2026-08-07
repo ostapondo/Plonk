@@ -26,12 +26,14 @@ final class AgentRegistry {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         let key = "\(trimmed)#\(pid.map(String.init) ?? "?")"
-        let isNew = sessions[key] == nil
-        var session = sessions[key] ?? AgentSession(name: trimmed, version: version, pid: pid, lastSeen: now)
+        let previous = sessions[key]
+        var session = previous ?? AgentSession(name: trimmed, version: version, pid: pid, lastSeen: now)
         if !version.isEmpty { session.version = version }
         session.lastSeen = now
         sessions[key] = session
-        if isNew { onChange?() }
+        // Heartbeats from a session already online change nothing anyone is
+        // watching; arriving and coming back do.
+        if previous.map({ !isOnline($0, now: now) }) ?? true { onChange?() }
     }
 
     /// Refresh from a request's `X-Plonk-Agent: name/version` header, so agents
@@ -64,25 +66,41 @@ final class AgentRegistry {
 
         var asDict: [String: Any] {
             ["id": id, "prompt": prompt,
-             "created": ISO8601DateFormatter().string(from: created)]
+             "created": AgentRegistry.iso.string(from: created)]
         }
     }
 
+    /// Building one of these is far dearer than formatting with it, and
+    /// everything here is main-queue confined.
+    static let iso = ISO8601DateFormatter()
+
+    /// Prompts an agent never came back for are worthless; keeping the newest
+    /// few bounds a queue nobody may ever drain.
+    static let maxQueuedTasks = 20
+
     private var inbox: [String: [Task]] = [:]
-    /// Long-poll responders parked until a task arrives or the timeout fires.
-    /// Everything runs on the main queue (Router.handle does), so no locking.
+    /// Long-poll responders parked per agent, waiting for a task or their
+    /// timeout. Everything runs on the main queue (Router.handle does), so no
+    /// locking. Several are allowed because one client can hold two sessions
+    /// under the same name; a task goes to the newest, which is the one most
+    /// likely still connected. Stale ones simply time out empty.
     private var waiters: [String: [(token: UUID, cancel: DispatchWorkItem, respond: ([Task]) -> Void)]] = [:]
+
+    /// Enough for a client with several windows open; beyond that the oldest
+    /// are almost certainly abandoned sockets.
+    static let maxWaiters = 8
 
     @discardableResult
     func enqueue(_ prompt: String, for agent: String) -> Task {
         let task = Task(prompt: prompt)
-        if var parked = waiters[agent], !parked.isEmpty {
-            let waiter = parked.removeFirst()
-            waiters[agent] = parked
+        if var parked = waiters[agent], let waiter = parked.popLast() {
+            waiters[agent] = parked.isEmpty ? nil : parked
             waiter.cancel.cancel()
             waiter.respond([task])
         } else {
-            inbox[agent, default: []].append(task)
+            var queued = inbox[agent] ?? []
+            queued.append(task)
+            inbox[agent] = queued.suffix(Self.maxQueuedTasks)
         }
         return task
     }
@@ -99,15 +117,29 @@ final class AgentRegistry {
             respond(queued)
             return
         }
+        // A caller that asked not to wait wants an answer, not a parked socket.
+        guard seconds > 0 else {
+            respond([])
+            return
+        }
+        var parked = waiters[agent] ?? []
+        // Past the cap the oldest is the likeliest corpse; answer it empty so
+        // its connection closes instead of holding a slot.
+        while parked.count >= Self.maxWaiters {
+            let oldest = parked.removeFirst()
+            oldest.cancel.cancel()
+            oldest.respond([])
+        }
         let token = UUID()
         let cancel = DispatchWorkItem { [weak self] in
-            guard let self, var parked = waiters[agent],
-                  let index = parked.firstIndex(where: { $0.token == token }) else { return }
-            let waiter = parked.remove(at: index)
-            waiters[agent] = parked
+            guard let self, var current = waiters[agent],
+                  let index = current.firstIndex(where: { $0.token == token }) else { return }
+            let waiter = current.remove(at: index)
+            waiters[agent] = current.isEmpty ? nil : current
             waiter.respond([])
         }
-        waiters[agent, default: []].append((token: token, cancel: cancel, respond: respond))
+        parked.append((token: token, cancel: cancel, respond: respond))
+        waiters[agent] = parked
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: cancel)
     }
 
