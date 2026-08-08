@@ -47,6 +47,26 @@ argued about what a window manager owes them, and rebuilt for the Mac:
 - **Keep-awake that ends by itself** — at a wall-clock time, or when a process
   exits: `plonk awake while npm run build`.
 - **A `plonk` CLI** over the same loopback API, for scripts and Makefiles.
+- **Grab and move** — hold a key and drag a window from anywhere inside it,
+  right-drag to resize from the nearest edge. Off by default.
+- **Zone appearance** — gap, colour, opacity, numbers, and every monitor's
+  zones shown at once. The gap is real: a snapped window keeps that space.
+- **Spanning by hovering** the line between two zones, as well as with ⌘.
+- **Zone-set shortcuts**, and windows that follow their zone number when a set
+  is edited or swapped.
+- **New windows** land where that app's last one went.
+- **Pointer tools** — find it, ring every click, crosshairs, jump between
+  screens.
+- **Pin part of the screen** above everything, live or frozen.
+- **A shortcut guide** read from the front app's own menus, so it cannot go
+  stale.
+- **Keyboard editing** in the zone editor.
+
+What is deliberately not here: pinning another app's window on top (no public
+API, and the private one is not worth the promise it would break), switching
+the system theme on a schedule (it costs an Automation permission this app
+does not ask for), and external-monitor brightness (the Apple Silicon path is
+half-private IOKit and breaks per hub).
 
 ## Voice
 
