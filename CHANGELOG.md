@@ -118,7 +118,8 @@ The release most of the app arrived in.
 
 ### Added
 
-- **Everything PowerToys' FancyZones does with a zone**, rebuilt for the Mac:
+- **The things a decade of Windows power users expect from a zone**, rebuilt
+  for the Mac:
   zones by number (`⌃⌥1`–`⌃⌥9`), put-it-back (`⌃⌥0`), spanning two zones,
   excluded apps, focus by geometry, zone appearance, and windows that return to
   their monitor after a display change.

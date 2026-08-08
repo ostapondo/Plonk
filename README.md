@@ -1,10 +1,12 @@
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>The Mac window manager your agent can drive.</strong><br>
-<sub>Snap zones, hotkeys and workspaces, like every other one — and a full MCP
-surface, like none of them. To plonk is to set a thing down exactly where it
-belongs. This menu bar does it to your windows: you drag them there, you press
-a key, or you say where.</sub></p>
+<p align="center"><strong>Ten menu bar utilities in one app, and an agent can drive
+every one of them.</strong><br>
+<sub>A window manager with zones you draw yourself, workspaces that put the desk
+back, text lifted off the screen, keep-awake, screenshots you can draw on,
+pointer tools, a shortcut guide, voice. On a Mac each of those is its own
+download. To plonk is to set a thing down exactly where it belongs: you drag it
+there, you press a key, or you say where.</sub></p>
 
 <p align="center">
   <img alt="Version" src="https://img.shields.io/badge/version-0.2.0-8b7cf6?style=flat-square">
@@ -115,6 +117,9 @@ Remove Plonk from Privacy & Security → Accessibility and grant it again.
 </details>
 
 ## What you get
+
+Ten of them. The first three are the window manager, and the rest are the ones
+that would otherwise each be another icon in the menu bar.
 
 | | |
 | --- | --- |

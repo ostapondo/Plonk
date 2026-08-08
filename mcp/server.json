@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.ostapondo/plonk",
-  "description": "Mac window manager your AI agent can drive: layouts, workspaces, snap zones, screenshots.",
+  "description": "Ten Mac menu bar utilities an agent can drive: window zones, workspaces, keep-awake, screenshots.",
   "repository": {
     "url": "https://github.com/ostapondo/plonk",
     "source": "github",

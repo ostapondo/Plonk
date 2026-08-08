@@ -1,9 +1,10 @@
 # plonk-mcp
 
 The MCP server for [Plonk](https://github.com/ostapondo/plonk), a macOS menu bar
-window manager. It lets an agent arrange your desktop: apply layouts across
-monitors, save and relaunch workspaces, snap windows into zones, keep the screen
-awake, and take and annotate screenshots.
+app that is ten utilities at once, a window manager among them. It lets an agent
+work the desk: apply layouts across monitors, save and relaunch workspaces, snap
+windows into zones, keep the screen awake, take and annotate screenshots, and
+read text off the screen without uploading a pixel.
 
 > browser on the left 60%, terminal top right, notes bottom right
 >
