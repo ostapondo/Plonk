@@ -9,7 +9,7 @@ download. To plonk is to set a thing down exactly where it belongs: you drag it
 there, you press a key, or you say where.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.2.0-8b7cf6?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.2.1-8b7cf6?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
   <img alt="MCP" src="https://img.shields.io/badge/MCP-19_tools-8957e5?style=flat-square">
@@ -89,7 +89,7 @@ Worth stating plainly, since it is a check being skipped on your behalf. Here is
 the one that replaces it, and it is stronger — run it before you open anything:
 
 ```sh
-gh attestation verify $(brew --cache)/downloads/*--Plonk-0.2.0.zip \
+gh attestation verify $(brew --cache)/downloads/*--Plonk-0.2.1.zip \
   -R ostapondo/plonk
 ```
 

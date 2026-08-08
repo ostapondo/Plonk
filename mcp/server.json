@@ -8,12 +8,12 @@
     "subfolder": "mcp"
   },
   "websiteUrl": "https://ostapondo.github.io/Plonk/",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "plonk-mcp",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       }

@@ -11,6 +11,31 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## 0.2.1 — 2026-08-09
+
+Nothing in the app changed, and if you are on 0.2.0 there is nothing here worth
+updating for. The release exists because npm and the MCP Registry only take a
+new description when a version goes out, and the old one sold one feature out
+of ten.
+
+### Changed
+
+- The README, the site and every package description now say what this is: ten
+  menu bar utilities, a window manager among them, rather than the window
+  manager alone. Anyone who wanted on-device OCR or a keep-awake that ends by
+  itself had no way to tell from the top of the page that they are in here. The
+  count is not a slogan — the feature table has ten rows and lists the same ten.
+- The update check builds its URL from `ostapondo/plonk` instead of
+  `ostapondo/Plonk`, which is the spelling every other file in the repository
+  already used. GitHub resolves either, so no installed copy notices.
+
+### Removed
+
+- `docs/reference/fancyzones-editor.png` — a screenshot of another company's
+  interface, kept as design reference while the zone picker was being drawn.
+  `docs/` is the site root, so it was being served publicly, from a repository
+  that is MIT and has no right to offer that file under it.
+
 ## 0.2.0 — 2026-08-08
 
 A theme of Plonk's own, a command palette, and a settings window that stopped
