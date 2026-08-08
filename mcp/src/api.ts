@@ -176,6 +176,46 @@ function agentHeaders(): Record<string, string> {
   };
 }
 
+// The app gates its API on a secret it writes to a file only this user can
+// read, because binding to loopback keeps the network out and does nothing
+// about the machine. Reading it is the whole handshake: anything that can read
+// the file could ask macOS for the screen directly.
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+const TOKEN_PATH = join(homedir(), "Library", "Application Support", "Plonk", "token");
+
+let cachedToken: string | undefined;
+
+/** Only a successful read is cached: a client started before the app has ever
+ * run would otherwise never see the token the app writes on first launch. */
+function apiToken(): string | undefined {
+  if (cachedToken) return cachedToken;
+  try {
+    const token = readFileSync(TOKEN_PATH, "utf8").trim();
+    if (token) cachedToken = token;
+  } catch {
+    // No app yet, or a file this user cannot read. The request goes without a
+    // token and the app's own 401 explains it better than a guess here would.
+  }
+  return cachedToken;
+}
+
+function tokenHeader(): Record<string, string> {
+  const token = apiToken();
+  return token ? { "x-plonk-token": token } : {};
+}
+
+/** Drops the cached token and reads again, true only when a different one
+ * turned up — the one case where repeating a refused request can help. */
+function refreshToken(): boolean {
+  const stale = cachedToken;
+  cachedToken = undefined;
+  const fresh = apiToken();
+  return fresh !== undefined && fresh !== stale;
+}
+
 export interface CallOptions {
   method?: "GET" | "POST";
   body?: unknown;
@@ -190,14 +230,20 @@ export async function call<T extends object = ApiResponse>(
   const { method = "GET", body, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
   const timeout = AbortSignal.timeout(timeoutMs);
 
-  let res: Response;
-  try {
-    res = await fetch(BASE + path, {
+  const send = () =>
+    fetch(BASE + path, {
       method,
-      headers: { "content-type": "application/json", ...agentHeaders() },
+      headers: { "content-type": "application/json", ...agentHeaders(), ...tokenHeader() },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: timeout,
     });
+
+  let res: Response;
+  try {
+    res = await send();
+    // A long-lived client outlives the token if the file is ever replaced.
+    // One re-read makes that a hiccup instead of a session to restart.
+    if (res.status === 401 && refreshToken()) res = await send();
   } catch (err) {
     if (timeout.aborted) {
       return { error: `Plonk did not answer within ${timeoutMs / 1000}s. It may be waiting on a dialog.` };

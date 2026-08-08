@@ -306,10 +306,10 @@ final class Router {
                 return
             }
             // Turning the check off has to mean nothing dials out, including
-            // on an agent's behalf. The API has no authentication, so anything
-            // running as the user could otherwise undo the setting silently —
-            // and the app promises a process that only listens. The button in
-            // Plonk still works: that one is the user asking.
+            // on an agent's behalf. Any client holding the token could
+            // otherwise undo the setting silently — and the app promises a
+            // process that only listens. The button in Plonk still works: that
+            // one is the user asking.
             guard store.config.updateCheckAutomatically else {
                 respond(HTTPResponse(status: 409, json: [
                     "error": "the user turned update checks off, so Plonk makes no outbound "

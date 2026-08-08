@@ -80,9 +80,16 @@ Use the bug template. The three things that decide whether a window bug is
 reproducible are the macOS version, the monitor arrangement, and which app owned
 the window, so the template asks for all three.
 
-`curl -s 127.0.0.1:43917/state` is often the fastest way to show what your desk
-looked like. It lists the title of every open window, so read it before you paste
-it.
+The fastest way to show what your desk looked like is the state route. It is
+gated on the API token like everything else, so pass it:
+
+```sh
+curl -s -H "X-Plonk-Token: $(cat ~/Library/'Application Support'/Plonk/token)" \
+  127.0.0.1:43917/state
+```
+
+It lists the title of every open window, so read it before you paste it. `plonk
+state` prints the same thing and finds the token for you.
 
 ## Security
 

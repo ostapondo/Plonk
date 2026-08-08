@@ -41,11 +41,16 @@ final class ControlServer {
     private var listener: NWListener?
     private let handle: (HTTPRequest, @escaping (HTTPResponse) -> Void) -> Void
 
+    /// The secret every request but `/ping` has to carry. Nil only when the
+    /// token file could not be read or written; see `APIToken.rejection`.
+    private let token: String?
+
     /// Called on the main queue when the port cannot be claimed, which in
     /// practice means a second Plonk is already running.
     var onUnavailable: ((String) -> Void)?
 
-    init(handle: @escaping (HTTPRequest, @escaping (HTTPResponse) -> Void) -> Void) {
+    init(token: String?, handle: @escaping (HTTPRequest, @escaping (HTTPResponse) -> Void) -> Void) {
+        self.token = token
         self.handle = handle
     }
 
@@ -85,8 +90,14 @@ final class ControlServer {
                 if isComplete { conn.cancel() } else { self.receive(on: conn, buffer: buf) }
                 return
             }
+            // Browser first, so a page that reaches the port is told it is a
+            // page rather than told to go and read a file it cannot read.
             if let reason = Self.browserRejection(for: request) {
                 self.respond(conn, HTTPResponse(status: 403, json: ["error": reason]))
+                return
+            }
+            if let reason = APIToken.rejection(for: request, token: self.token) {
+                self.respond(conn, HTTPResponse(status: 401, json: ["error": reason]))
                 return
             }
             DispatchQueue.main.async {
@@ -97,10 +108,12 @@ final class ControlServer {
         }
     }
 
-    /// The API has no authentication beyond being loopback-only, so a web page
-    /// the user happens to have open must not be able to drive it. Browsers
-    /// always attach Origin to cross-site POSTs and Sec-Fetch-Site to every
-    /// request, and neither header can be suppressed from page script.
+    /// A web page the user happens to have open must not be able to drive the
+    /// API. Browsers always attach Origin to cross-site POSTs and
+    /// Sec-Fetch-Site to every request, and neither header can be suppressed
+    /// from page script. This is kept alongside the token rather than replaced
+    /// by it: a page cannot read the token file either, but this refuses the
+    /// page for what it is, and does so before anything else is considered.
     static func browserRejection(for request: HTTPRequest) -> String? {
         guard request.headers["origin"] != nil || request.headers["sec-fetch-site"] != nil else { return nil }
         return "requests from web pages are not accepted"
@@ -151,6 +164,7 @@ final class ControlServer {
         switch status {
         case 200: return "OK"
         case 400: return "Bad Request"
+        case 401: return "Unauthorized"
         case 403: return "Forbidden"
         case 404: return "Not Found"
         case 409: return "Conflict"

@@ -292,9 +292,14 @@ plonk … TCP 127.0.0.1:43917 (LISTEN)</pre>
 curl -so /dev/null -w '%{http_code}\n' \
   -H 'Origin: https://example.com' \
   http://127.0.0.1:43917/state
-403</pre>
-        <p class="dim" style="font-size:14.5px">No account, no cloud, no analytics, no crash reporter.
-          Config is plain JSON in your Application Support folder.
+403
+<span class="c"># and nor can another program on your Mac</span>
+curl -so /dev/null -w '%{http_code}\n' \
+  http://127.0.0.1:43917/state
+401</pre>
+        <p class="dim" style="font-size:14.5px">The API is gated on a token only you can read, so a
+          script cannot borrow Plonk's Screen Recording by asking the port. No account, no cloud, no
+          analytics, no crash reporter.
           <a href="https://github.com/ostapondo/plonk/blob/main/SECURITY.md">SECURITY.md →</a></p>
       </div>
     </div>

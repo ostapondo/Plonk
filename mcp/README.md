@@ -70,5 +70,10 @@ The server talks to the app over loopback HTTP on `127.0.0.1:43917` and nowhere
 else. No account, no cloud, no telemetry. It depends only on the official MCP
 SDK and zod.
 
+The app gates that API on a token it writes to
+`~/Library/Application Support/Plonk/token`. This server reads the file itself,
+so there is nothing to configure — but it does have to run as the same user
+Plonk is running as.
+
 MIT. Source, screenshots and the rest of the documentation are in the
 [repository](https://github.com/ostapondo/plonk).

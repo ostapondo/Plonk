@@ -591,7 +591,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        let server = ControlServer { [weak self] request, respond in
+        let token = APIToken.loadOrCreate()
+        if token == nil {
+            model.apiWarning = "The token at \(APIToken.url().path) could not be read or written, so the "
+                + "local API is answering without one. Check that file's permissions and relaunch Plonk."
+        }
+        let server = ControlServer(token: token) { [weak self] request, respond in
             guard let self else { return respond(.failed("shutting down")) }
             router.handle(request, respond: respond)
         }

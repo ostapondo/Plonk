@@ -147,8 +147,8 @@ Anything that fails a step is discarded and nothing is replaced.
 
 ## The local API
 
-The HTTP API on `127.0.0.1:43917` is unauthenticated, because it is how an agent
-on your own machine drives the app. Two things keep that from being a hole:
+The HTTP API on `127.0.0.1:43917` is how an agent on your own machine drives the
+app. Three things stand in front of it:
 
 - It binds to loopback. Nothing off the machine can reach it.
 - It refuses any request carrying headers a browser cannot suppress, so an open
@@ -160,10 +160,40 @@ curl -so /dev/null -w '%{http_code}\n' -H 'Origin: https://example.com' \
 403
 ```
 
-What this does **not** protect against: any other program already running as
-your user can talk to that port. If something hostile is running locally with
-your privileges, Plonk is not the weakest thing it has access to — but it is
-fair to know the API is there.
+- Everything except `/ping` needs a token, written on first launch to
+  `~/Library/Application Support/Plonk/token` with mode `600`. The MCP server
+  and the `plonk` command read it themselves; you never handle it.
+
+```sh
+curl -so /dev/null -w '%{http_code}\n' http://127.0.0.1:43917/state
+401
+```
+
+Why a token, when the port was already unreachable from outside: Plonk holds
+Screen Recording, and `/shot/capture` and `/shot/text` turn that grant into a
+service. A local script with no Screen Recording of its own could take a
+silent, full-screen capture, or read the words off your screen, by asking the
+port. macOS hands that permission out one app at a time, and an open port
+handed Plonk's to anything running as you. `/state` was the same shape more
+quietly: it lists the title of every open window.
+
+`/ping` stays open on purpose, so a client can tell a closed app from a stale
+token. It answers whether Plonk is running and nothing else.
+
+**Where this stops.** Anything that can read the token file is already running
+as you, and could ask macOS for the screen directly instead of going through
+Plonk. The token means reaching the port is no longer enough; it is not a
+boundary against code that is already you. Two limits worth naming:
+
+- `plonk-mcp --http` holds the token and serves MCP on `127.0.0.1:43918`
+  without one of its own, so while you run that transport a local process can
+  drive Plonk through it. The stdio transport the install instructions set up
+  opens no such port.
+- The token is a file, not a keychain item. Anything running as you reads it.
+
+If something hostile is already running locally with your privileges, Plonk is
+not the weakest thing it has access to. The token is there so it is not the
+easiest, either.
 
 Optional strict mode narrows it further: only the agent you have made active can
 change anything, and everyone else gets a 409 on any call that moves a window or
