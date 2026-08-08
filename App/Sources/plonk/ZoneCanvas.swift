@@ -8,6 +8,8 @@ struct ZoneCanvas: View {
     let zones: [ZoneRect]
     var editable = false
     var fullscreen = false
+    /// Ringed while the keyboard is editing it.
+    var selected: Int?
     var onChange: (([ZoneRect]) -> Void)?
 
     private struct Edges: OptionSet {
@@ -43,6 +45,15 @@ struct ZoneCanvas: View {
                     zoneView(z, index: index, shown: shown, size: geo.size)
                         .frame(width: max(z.w * geo.size.width - 4, 8), height: max(z.h * geo.size.height - 4, 8))
                         .offset(x: z.x * geo.size.width + 2, y: z.y * geo.size.height + 2)
+                        // Sized and placed by the modifiers above, so the ring
+                        // only has to fill what it is drawn over.
+                        .overlay {
+                            if index == selected {
+                                RoundedRectangle(cornerRadius: fullscreen ? 8 : 3)
+                                    .strokeBorder(Color.accentColor, lineWidth: 3)
+                                    .allowsHitTesting(false)
+                            }
+                        }
                 }
                 if editable && fullscreen {
                     ForEach(Array(dividerHandles(in: shown, size: geo.size).enumerated()), id: \.offset) { _, handle in

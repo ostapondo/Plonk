@@ -175,6 +175,48 @@ struct BuiltinZoneSetsTests {
         #expect(ZoneGeometry.covered(thirds, by: span) == [0, 1])
     }
 
+    // MARK: - editing without a mouse
+
+    @Test func anArrowMovesAZoneByOneGridStep() {
+        let zones = [ZoneRect(0, 0, 0.5, 1)]
+        let moved = ZoneGeometry.adjust(zones, at: 0, dx: ZoneGeometry.grid, dy: 0, resizing: false)
+        #expect(moved != nil)
+        assertZone(moved![0], 0.05, 0, 0.5, 1)
+    }
+
+    /// The right column of a pair of halves has nowhere to go: sliding it right
+    /// would take it past the screen edge.
+    @Test func aZoneWithNoRoomStaysPut() {
+        let zones = [ZoneRect(0, 0, 0.5, 1), ZoneRect(0.5, 0, 0.5, 1)]
+        #expect(ZoneGeometry.adjust(zones, at: 1, dx: ZoneGeometry.grid, dy: 0, resizing: false) == nil)
+    }
+
+    @Test func shiftArrowResizesInstead() {
+        let zones = [ZoneRect(0, 0, 0.5, 1)]
+        let grown = ZoneGeometry.adjust(zones, at: 0, dx: ZoneGeometry.grid, dy: 0, resizing: true)
+        #expect(grown != nil)
+        assertZone(grown![0], 0, 0, 0.55, 1)
+    }
+
+    @Test func anEditThatWouldOverlapIsRefused() {
+        let zones = [ZoneRect(0, 0, 0.5, 1), ZoneRect(0.5, 0, 0.5, 1)]
+        #expect(ZoneGeometry.adjust(zones, at: 0, dx: ZoneGeometry.grid, dy: 0, resizing: true) == nil)
+    }
+
+    @Test func aZoneCannotBePushedOffTheScreen() {
+        let zones = [ZoneRect(0, 0, 0.5, 1)]
+        #expect(ZoneGeometry.adjust(zones, at: 0, dx: -ZoneGeometry.grid, dy: 0, resizing: false) == nil)
+    }
+
+    @Test func aZoneCannotBeShrunkBelowTheMinimum() {
+        let zones = [ZoneRect(0, 0, 0.1, 1)]
+        #expect(ZoneGeometry.adjust(zones, at: 0, dx: -ZoneGeometry.grid, dy: 0, resizing: true) == nil)
+    }
+
+    @Test func anIndexOutsideTheSetAdjustsNothing() {
+        #expect(ZoneGeometry.adjust([ZoneRect(0, 0, 1, 1)], at: 7, dx: 0.05, dy: 0, resizing: false) == nil)
+    }
+
     // MARK: - hovering a shared edge
 
     private let thirds = BuiltinZoneSets.all["Thirds"]!
