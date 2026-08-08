@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plonk — the Mac window manager your agent can drive</title>
+<meta name="description" content="A macOS menu bar window manager: snap zones you draw yourself, hotkeys, and workspaces that reopen your apps on the right monitor. Drive it yourself, or let an AI agent drive it over MCP. No cloud, no telemetry.">
+<link rel="icon" href="logo-400.png">
+<meta property="og:title" content="Plonk — the Mac window manager your agent can drive">
+<meta property="og:description" content="Snap zones you draw yourself, hotkeys, and workspaces that reopen your apps on the right monitor. Or describe the layout and let your agent build it. Everything runs on your Mac.">
+<meta property="og:image" content="https://ostapondo.github.io/Plonk/social-preview.png">
+<meta property="og:url" content="https://ostapondo.github.io/Plonk/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --bg-soft: #f6f7f9;
+    --card: #ffffff;
+    --line: #e3e6ea;
+    --ink: #14171c;
+    --dim: #5b636e;
+    --accent: #2f6fe4;
+    --amber: #d98a1f;
+    --code-bg: #14171c;
+    --code-ink: #e8eaee;
+    --shadow: 0 1px 2px rgba(16,20,28,.06), 0 8px 24px rgba(16,20,28,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f13;
+      --bg-soft: #12151b;
+      --card: #14181f;
+      --line: #232833;
+      --ink: #e9ecf1;
+      --dim: #9aa3b0;
+      --accent: #5a9bff;
+      --amber: #ffb84d;
+      --code-bg: #080a0d;
+      --code-ink: #e9ecf1;
+      --shadow: 0 1px 2px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  header {
+    position: sticky; top: 0; z-index: 5;
+    backdrop-filter: saturate(140%) blur(12px);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  header .wrap { display: flex; align-items: center; gap: 14px; height: 58px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; color: var(--ink); }
+  .brand img { width: 26px; height: 26px; border-radius: 7px; }
+  header nav { margin-left: auto; display: flex; gap: 18px; font-size: 14.5px; }
+  header nav a { color: var(--dim); }
+  header nav a:hover { color: var(--ink); text-decoration: none; }
+
+  .hero { padding: 68px 0 30px; text-align: center; }
+  .hero h1 { font-size: clamp(34px, 5.2vw, 52px); line-height: 1.08; margin: 0 0 14px; letter-spacing: -.022em; }
+  .hero p.lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--dim); max-width: 620px; margin: 0 auto 26px; }
+  .tag { display: inline-block; font-size: 13px; color: var(--dim); border: 1px solid var(--line);
+         border-radius: 999px; padding: 4px 12px; margin-bottom: 20px; background: var(--bg-soft); }
+  .tag b { color: var(--ink); font-weight: 600; }
+
+  .install { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+  .cmd {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--code-bg); color: var(--code-ink);
+    border-radius: 11px; padding: 12px 12px 12px 16px;
+    font: 14.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    box-shadow: var(--shadow);
+  }
+  .cmd .prompt { color: #7f8896; }
+  .cmd button {
+    border: 0; border-radius: 7px; padding: 7px 11px; cursor: pointer;
+    background: rgba(255,255,255,.11); color: #e9ecf1; font: 600 12.5px/1 inherit;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .cmd button:hover { background: rgba(255,255,255,.2); }
+  .ghost {
+    border: 1px solid var(--line); border-radius: 11px; padding: 13px 18px;
+    color: var(--ink); font-weight: 550; font-size: 14.5px; background: var(--card);
+  }
+  .ghost:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+  .fine { font-size: 13.5px; color: var(--dim); margin-top: 14px; }
+
+  figure.shot { margin: 34px 0 0; }
+  figure.shot img {
+    width: 100%; height: auto; border-radius: 14px;
+    border: 1px solid var(--line); box-shadow: var(--shadow); display: block;
+  }
+  figure.shot figcaption { font-size: 13.5px; color: var(--dim); text-align: center; margin-top: 12px; }
+
+  section { padding: 52px 0; border-top: 1px solid var(--line); }
+  section:first-of-type { border-top: 0; }
+  h2 { font-size: clamp(24px, 3.4vw, 31px); letter-spacing: -.018em; margin: 0 0 10px; }
+  h2 + p.sub { color: var(--dim); margin: 0 0 26px; max-width: 640px; }
+
+  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 13px;
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .card h3 { margin: 0 0 7px; font-size: 17px; }
+  .card p { margin: 0; color: var(--dim); font-size: 14.5px; }
+  kbd {
+    font: 600 12.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px;
+    padding: 3px 6px; background: var(--bg-soft); color: var(--ink);
+  }
+
+  .says { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+  .says li {
+    background: var(--bg-soft); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 9px; padding: 11px 15px; font-size: 15px; color: var(--ink);
+  }
+  .split { display: grid; gap: 26px; grid-template-columns: 1fr 1fr; align-items: start; }
+  @media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+
+  pre {
+    background: var(--code-bg); color: var(--code-ink); border-radius: 11px;
+    padding: 16px 18px; overflow-x: auto; margin: 0 0 14px;
+    font: 13.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+    box-shadow: var(--shadow);
+  }
+  pre .c { color: #7f8896; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  td { padding: 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  td:first-child { width: 190px; font-weight: 600; padding-right: 18px; }
+  tr:first-child td { border-top: 0; }
+  td.dim, .dim { color: var(--dim); }
+
+  footer { border-top: 1px solid var(--line); padding: 34px 0 60px; color: var(--dim); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  footer nav { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="./"><img src="logo-400.png" alt=""> Plonk</a>
+    <nav>
+      <a href="#zones">Zones</a>
+      <a href="#agents">For agents</a>
+      <a href="#privacy">Privacy</a>
+      <a href="https://github.com/ostapondo/plonk">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="hero">
+    <span class="tag"><b>Free and open source</b> · macOS 13+ · no account, no cloud, no telemetry</span>
+    <h1>Your desk, put back together.</h1>
+    <p class="lede">A menu bar window manager for the Mac: snap zones you draw yourself,
+      hotkeys for all of them, and workspaces that reopen your apps on the right monitor.
+      Drag a window there, press a key — or describe the whole desk and let your agent build it.</p>
+    <div class="install">
+      <div class="cmd">
+        <span class="prompt">$</span>
+        <code id="brew">brew install --cask ostapondo/plonk/plonk</code>
+        <button data-copy="#brew">Copy</button>
+      </div>
+      <a class="ghost" href="https://github.com/ostapondo/plonk/releases/latest">Download .zip</a>
+    </div>
+    <p class="fine">Signed, built and attested on GitHub's runners —
+      <a href="https://github.com/ostapondo/plonk#check-it-yourself">check the binary against the commit</a>
+      before you open it.</p>
+  </div>
+
+  <figure class="shot">
+    <img src="demo.gif" width="1200" height="750"
+         alt="A pile of eight windows is tidied into an eight-zone grid: one dragged there, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent">
+    <figcaption>Eight windows into a grid of three unequal columns — dragged, pressed, and the rest in one sentence.</figcaption>
+  </figure>
+
+  <section>
+    <h2>Three ways to put a window somewhere</h2>
+    <p class="sub">Halves and quarters your Mac already does. The point of Plonk is the layout that
+      isn't halves and quarters — and getting eight windows into it without eight drags.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>Drag it</h3>
+        <p>Zones light up as you move a window, and it drops into one. Hold <kbd>⌘</kbd> and it takes
+          two of them at once. Grab-and-move lets you pull a window from anywhere inside it.</p>
+      </div>
+      <div class="card">
+        <h3>Press a key</h3>
+        <p><kbd>⌃⌥←</kbd> for the left half, <kbd>⌃⌥1</kbd>–<kbd>⌃⌥9</kbd> for the numbered zones on
+          that screen, <kbd>⌃⌥0</kbd> to put a window back exactly where it was before Plonk touched it.</p>
+      </div>
+      <div class="card">
+        <h3>Say it</h3>
+        <p>Plonk speaks MCP, so any agent can place every window on every monitor in one call —
+          and save the result as a workspace you can launch from nothing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="agents">
+    <h2>The part no other Mac window manager has</h2>
+    <p class="sub">One line, and your agent can read the desk, rearrange it, save it, and read the
+      screen back — without a screenshot round trip for anything that is really just words.</p>
+    <div class="split">
+      <div>
+        <pre><span class="c"># Claude Code</span>
+claude mcp add plonk -- npx -y plonk-mcp
+
+<span class="c"># Codex CLI</span>
+codex mcp add plonk -- npx -y plonk-mcp</pre>
+        <p class="dim" style="font-size:14.5px">Cursor, Zed, Cline and anything else that speaks MCP
+          work the same way — several at once is fine, and Plonk shows you who is connected.
+          <a href="https://github.com/ostapondo/plonk#for-agents">All 19 tools →</a></p>
+      </div>
+      <ul class="says">
+        <li>browser left 60%, terminal top right, notes bottom right</li>
+        <li>save that as a workspace called “review”</li>
+        <li>put everything back where it was before the meeting</li>
+        <li>keep the Mac awake until this build finishes</li>
+        <li>read the error out of that dialog and tell me what it says</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="zones">
+    <h2>What you get</h2>
+    <table>
+      <tr><td>Zones</td><td class="dim">Draw any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows come back to their zone when a display is unplugged and plugged in again.</td></tr>
+      <tr><td>Workspaces</td><td class="dim">A desk you can put away: the apps, every window's frame, the monitor each belongs on, and what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself.</td></tr>
+      <tr><td>Focus that follows<br>the layout</td><td class="dim"><kbd>⌃⌥⇧←</kbd> goes to the window that is actually on the left, not the one you used last. <kbd>⌃⌥`</kbd> cycles the windows stacked in one zone.</td></tr>
+      <tr><td>Text off the screen</td><td class="dim"><kbd>⌃⌥T</kbd> selects an area and copies the words in it — from a screenshot, a paused video, a dialog that will not let you select. On-device, nothing uploaded.</td></tr>
+      <tr><td>Pin part of the screen</td><td class="dim">Float a live crop of anything above everything else: a build log, a chart, a call, visible in a corner while you work over it.</td></tr>
+      <tr><td>Keep awake</td><td class="dim">Real power assertions, not a jiggler — and a session that ends by itself: after N minutes, at a wall-clock time, or the moment a process exits.</td></tr>
+      <tr><td>Screenshots</td><td class="dim">Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution.</td></tr>
+      <tr><td>A shortcut guide</td><td class="dim">Every shortcut the app in front actually has, read from its own menus, so it is never out of date.</td></tr>
+    </table>
+  </section>
+
+  <section id="privacy">
+    <h2>Everything runs on your Mac</h2>
+    <p class="sub">Moving another app's windows costs an Accessibility grant, and a screenshot costs
+      Screen Recording. That is a lot to hand something you installed a minute ago — so none of this
+      is a promise, it is all checkable from a terminal.</p>
+    <div class="split">
+      <div>
+        <pre><span class="c"># every socket the app has open</span>
+lsof -nP -i -a -p "$(pgrep -f Plonk)"
+plonk … TCP 127.0.0.1:43917 (LISTEN)</pre>
+        <p class="dim" style="font-size:14.5px">One listener on loopback. The only outbound call is
+          the update check, which sends no identifier and can be switched off.</p>
+      </div>
+      <div>
+        <pre><span class="c"># a web page cannot drive it</span>
+curl -so /dev/null -w '%{http_code}\n' \
+  -H 'Origin: https://example.com' \
+  http://127.0.0.1:43917/state
+403</pre>
+        <p class="dim" style="font-size:14.5px">No account, no cloud, no analytics, no crash reporter.
+          Config is plain JSON in your Application Support folder.
+          <a href="https://github.com/ostapondo/plonk/blob/main/SECURITY.md">SECURITY.md →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Put it on your Mac</h2>
+    <div class="install" style="justify-content:flex-start">
+      <div class="cmd">
+        <span class="prompt">$</span>
+        <code id="brew2">brew install --cask ostapondo/plonk/plonk</code>
+        <button data-copy="#brew2">Copy</button>
+      </div>
+      <a class="ghost" href="https://github.com/ostapondo/plonk">Star it on GitHub</a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>MIT © <a href="https://github.com/ostapondo">ostapondo</a></span>
+    <nav>
+      <a href="https://github.com/ostapondo/plonk">Source</a>
+      <a href="https://github.com/ostapondo/plonk/issues">Issues</a>
+      <a href="https://github.com/ostapondo/plonk/blob/main/ROADMAP.md">Roadmap</a>
+      <a href="https://www.npmjs.com/package/plonk-mcp">plonk-mcp on npm</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  for (const button of document.querySelectorAll("button[data-copy]")) {
+    button.addEventListener("click", async () => {
+      const text = document.querySelector(button.dataset.copy).textContent.trim();
+      try { await navigator.clipboard.writeText(text); } catch { return; }
+      const was = button.textContent;
+      button.textContent = "Copied";
+      setTimeout(() => { button.textContent = was; }, 1400);
+    });
+  }
+</script>
+
+</body>
+</html>

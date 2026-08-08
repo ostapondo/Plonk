@@ -63,7 +63,16 @@ macOS 13+.
 brew install --cask ostapondo/plonk/plonk
 ```
 
-**Plonk is signed, but not notarized.** The certificate is self-signed rather
+Grant Accessibility when it asks, then relaunch. Screen Recording is asked for
+separately, the first time you capture. Nothing else — no Full Disk Access, no
+Automation, no Keychain.
+
+<details>
+<summary><strong>Installing it by hand, and why macOS holds a downloaded copy</strong></summary>
+
+<br>
+
+Plonk is signed, but **not notarized**. The certificate is self-signed rather
 than an Apple Developer ID, because notarizing one requires a paid Apple
 account and this project does not have one. So macOS cannot vouch for who built
 this, and says so: a hand-downloaded copy is held on first launch, and the cask
@@ -84,7 +93,7 @@ went through a laptop on the way. It is the first of
 [several such checks](#check-it-yourself) — none of what this README claims
 about privacy has to be taken on trust.
 
-Or download [the latest release](https://github.com/ostapondo/plonk/releases/latest),
+Without Homebrew: download [the latest release](https://github.com/ostapondo/plonk/releases/latest),
 unzip, and drop Plonk.app into Applications. Then either do the Gatekeeper
 detour once — open Plonk, dismiss the warning, then System Settings → Privacy &
 Security, scroll to Security, **Open Anyway** — or clear the flag yourself,
@@ -94,13 +103,11 @@ which is all the cask does:
 xattr -dr com.apple.quarantine /Applications/Plonk.app
 ```
 
-Grant Accessibility when asked, then relaunch. Screen Recording is asked for
-separately, the first time you capture. Nothing else — no Full Disk Access, no
-Automation, no Keychain.
-
 If you later move or rename Plonk.app (or its folder), macOS quietly ties the
 old grant to the old path: windows of newly launched apps stop being seen.
 Remove Plonk from Privacy & Security → Accessibility and grant it again.
+
+</details>
 
 To let an agent drive it (Node 18+):
 
