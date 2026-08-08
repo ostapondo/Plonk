@@ -364,15 +364,30 @@ stops being one.
 
 ## Build
 
+Three commands, and they are exactly what CI runs on every pull request. Each
+line is a subshell, so paste the block from the repository root and it works:
+
 ```sh
-cd App && swift build     # the app
-./scripts/test.sh         # 283 unit tests
-./scripts/build.sh        # produces Plonk.app
-cd mcp && npm run build   # the MCP server
+(cd App && swift build)                    # the app compiles
+./scripts/test.sh                          # 306 unit tests
+(cd mcp && npm ci && npm run typecheck)    # the MCP server
 ```
 
+None of that needs a signing certificate. Zone geometry, config decoding, HTTP
+routing, MCP tools, voice command parsing, the CLI and every document here are
+reachable from that loop, and most changes never need more.
+
 `App/` is the Swift menu bar app, `mcp/` the TypeScript MCP server. Point an
-agent at [AGENTS.md](AGENTS.md) before it touches either.
+agent at [AGENTS.md](AGENTS.md) before it touches either, and read
+[CONTRIBUTING.md](CONTRIBUTING.md) before you send a change.
+
+Producing a launchable `Plonk.app` is the one step that does need a certificate.
+Make your own once:
+
+```sh
+./scripts/make-signing-cert.sh   # creates one and prints how to trust it
+./scripts/build.sh               # produces Plonk.app
+```
 
 `build.sh` signs with a `Plonk Signing` identity and stops if it is missing.
 macOS ties Accessibility and Screen Recording to the signature, and an ad-hoc
@@ -411,6 +426,26 @@ with anything else cannot be updated to and takes Accessibility and Screen
 Recording away from everyone who installs it by hand. It notarizes when a
 Developer ID certificate is in the keychain and says so when there is not;
 Plonk's releases are not notarized, which costs a paid Apple account.
+
+## Contributing
+
+Bug reports, zone sets, client one-pagers and code are all welcome, and none of
+them need a signing certificate — the loop above is the whole requirement.
+[CONTRIBUTING.md](CONTRIBUTING.md) has the rest: what a window bug report has to
+carry to be reproducible, where a new module seams in, and the handful of
+directions this project will not take, so nobody writes a patch that was never
+going to land.
+
+The issues tagged [good first issue][gfi] are written to be picked up cold —
+each one says where the code is and how to tell it worked. Questions,
+half-formed ideas and layouts worth showing off go to
+[Discussions](https://github.com/ostapondo/plonk/discussions); a security
+problem goes through [SECURITY.md](SECURITY.md) instead of a public issue.
+
+Everyone taking part is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+[gfi]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 
 ## License
 

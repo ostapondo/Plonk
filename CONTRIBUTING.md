@@ -2,9 +2,13 @@
 
 Bug reports, zone sets, client one-pagers and code are all welcome. This page is
 the short version; [AGENTS.md](AGENTS.md) is the long one and is worth reading
-before you write anything, even though it is addressed to agents. It has the
-repo layout, the five places a new module touches, which coordinate space each
-number is in, and the mistakes that have already cost someone an hour.
+before you write anything. It is phrased as instructions to an agent because
+that is what most often reads it, but it is the engineering guide either way:
+the repo layout, the five places a new module touches, which coordinate space
+each number is in, and the mistakes that have already cost someone an hour.
+
+Everyone taking part is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## You do not need a signing certificate
 
@@ -62,6 +66,10 @@ looks built and then silently cannot move a window.
   maintainer.
 - Conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`.
   Imperative subject under 72 characters, body only when the why is not obvious.
+  The rule is about the commits on your branch. A pull request with more than
+  one of them is squashed under the pull request title, which is written as a
+  sentence — that is why `git log` on `main` has subjects with no prefix, and
+  not a sign the rule lapsed.
 - One logical change per commit, and `swift build` passes on every one of them.
 - Put new logic somewhere testable. `ZoneGeometry`, `Config`, `ImageFit`,
   `Router` and `ControlServer.parseIfComplete` exist to be reachable without a
