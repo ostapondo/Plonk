@@ -34,6 +34,11 @@ protocol AppActions: AnyObject {
     func setGrabMoveShowGeometry(_ on: Bool)
     /// Apps drag snapping and the placement shortcuts leave alone, one pattern
     /// per line. Matched against the app's name and bundle id, case-insensitively.
+    /// Double-tap Control to dim everything but a circle round the pointer.
+    func setFindCursor(_ on: Bool)
+    /// A ring on every click, for screen recordings.
+    func setHighlightClicks(_ on: Bool)
+    func setCrosshairs(_ on: Bool)
     func setExcludedApps(_ patterns: [String])
     func setRestoreZonesOnScreenChange(_ on: Bool)
     /// Send a newly opened window where that app's windows have been going.
@@ -106,6 +111,9 @@ final class AppModel: ObservableObject {
     @Published var grabMoveModifier = "option"
     @Published var grabMoveResize = true
     @Published var grabMoveShowGeometry = true
+    @Published var findCursorEnabled = true
+    @Published var highlightClicksEnabled = false
+    @Published var crosshairsEnabled = false
     @Published var excludedApps: [String] = []
     @Published var restoreZonesOnScreenChange = true
     @Published var placeNewWindows = false

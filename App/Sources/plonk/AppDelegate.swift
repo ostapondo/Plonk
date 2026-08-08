@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var dragSnap: DragSnapManager!
     private var grabMove: GrabMove!
     private var newWindows: NewWindowWatcher!
+    private let mouse = MouseTools()
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
@@ -53,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupDragSnap()
         setupGrabMove()
         setupNewWindows()
+        setupMouseTools()
         setupServer()
         setupUpdates()
         refreshModel()
@@ -202,6 +204,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             commands.cycleZone(backwards: false)
         case .cycleZoneBack:
             commands.cycleZone(backwards: true)
+        case .findCursor:
+            mouse.flashSpotlight()
+        case .jumpCursor:
+            if !mouse.jumpToNextScreen() { HUD.shared.show("Only one screen to jump between") }
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)
@@ -372,6 +378,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         newWindows.start()
     }
 
+    private func setupMouseTools() {
+        applyMouseSettings()
+        mouse.start()
+    }
+
+    private func applyMouseSettings() {
+        mouse.findEnabled = store.config.findCursorEnabled
+        mouse.highlightEnabled = store.config.highlightClicksEnabled
+        mouse.crosshairsEnabled = store.config.crosshairsEnabled
+        mouse.tint = ZoneAppearance.color(fromHex: store.config.zoneColorHex) ?? .controlAccentColor
+    }
+
     private func setupUpdates() {
         updates.onChange = { [weak self] in
             guard let self else { return }
@@ -522,6 +540,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.grabMoveModifier = store.config.grabMoveModifier
         model.grabMoveResize = store.config.grabMoveResize
         model.grabMoveShowGeometry = store.config.grabMoveShowGeometry
+        model.findCursorEnabled = store.config.findCursorEnabled
+        model.highlightClicksEnabled = store.config.highlightClicksEnabled
+        model.crosshairsEnabled = store.config.crosshairsEnabled
         model.excludedApps = store.config.excludedApps
         model.restoreZonesOnScreenChange = store.config.restoreZonesOnScreenChange
         model.placeNewWindows = store.config.placeNewWindows
@@ -537,6 +558,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsPage(id: "voice", title: "Voice", icon: "mic", section: "Gadgets") { AnyView(VoicePage(model: $0)) },
             SettingsPage(id: "awake", title: "Keep Awake", icon: "cup.and.saucer", section: "Gadgets") { AnyView(AwakePage(model: $0)) },
             SettingsPage(id: "shot", title: "Screenshot", icon: "camera.viewfinder", section: "Gadgets") { AnyView(ShotPage(model: $0)) },
+            SettingsPage(id: "mouse", title: "Pointer", icon: "cursorarrow.rays", section: "Gadgets") { AnyView(MousePage(model: $0)) },
             SettingsPage(id: "ai", title: "AI · MCP", icon: "sparkles", section: "Setup") { AnyView(AIPage(model: $0)) },
             SettingsPage(id: "update", title: "Updates", icon: "arrow.down.circle", section: "Setup") { AnyView(UpdatePage(model: $0)) },
         ]
@@ -784,6 +806,8 @@ extension AppDelegate: AppActions {
     func setZoneColor(_ hex: String?) {
         store.update { $0.zoneColorHex = hex }
         model.zoneColorHex = hex
+        // The pointer tools share the tint, so the desk stays one colour.
+        applyMouseSettings()
     }
 
     func setZoneNumbersVisible(_ on: Bool) {
@@ -825,6 +849,24 @@ extension AppDelegate: AppActions {
         store.update { $0.grabMoveShowGeometry = on }
         model.grabMoveShowGeometry = on
         applyGrabMoveSettings()
+    }
+
+    func setFindCursor(_ on: Bool) {
+        store.update { $0.findCursorEnabled = on }
+        model.findCursorEnabled = on
+        applyMouseSettings()
+    }
+
+    func setHighlightClicks(_ on: Bool) {
+        store.update { $0.highlightClicksEnabled = on }
+        model.highlightClicksEnabled = on
+        applyMouseSettings()
+    }
+
+    func setCrosshairs(_ on: Bool) {
+        store.update { $0.crosshairsEnabled = on }
+        model.crosshairsEnabled = on
+        applyMouseSettings()
     }
 
     func setExcludedApps(_ patterns: [String]) {

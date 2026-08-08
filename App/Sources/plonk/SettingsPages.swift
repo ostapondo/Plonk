@@ -429,3 +429,38 @@ struct AIPage: View {
         .formStyle(.grouped)
     }
 }
+
+struct MousePage: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle(isOn: model.binding(\.findCursorEnabled, set: { $0.setFindCursor($1) })) {
+                    Text("Find the pointer on a double-tap of ⌃")
+                    Text("Dims everything but a circle round it, briefly")
+                }
+                Toggle(isOn: model.binding(\.highlightClicksEnabled, set: { $0.setHighlightClicks($1) })) {
+                    Text("Ring every click")
+                    Text("For screen recordings, where a click is otherwise invisible")
+                }
+                Toggle(isOn: model.binding(\.crosshairsEnabled, set: { $0.setCrosshairs($1) })) {
+                    Text("Crosshairs through the pointer")
+                    Text("Full-width and full-height lines, for lining things up")
+                }
+            } header: {
+                Text("Pointer")
+            } footer: {
+                Text("These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account. They take the zone colour from the Zones page.")
+            }
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "mouse"))
+            } header: {
+                Text("Shortcuts")
+            } footer: {
+                Text("Jumping warps the pointer to the middle of the next display and flashes it there, which beats pushing a mouse across three monitors.")
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
