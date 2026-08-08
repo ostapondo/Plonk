@@ -13,33 +13,35 @@ struct ShortcutRows: View {
 
     var body: some View {
         ForEach(actions) { action in
-            LabeledContent {
-                HStack(spacing: 5) {
-                    if model.unavailableHotkeys.contains(action.rawValue) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                            .help("Another app already owns this combination")
+            // Deliberately not a LabeledContent, for the reason spelled out on
+            // PointsField: a form row splits itself into a label and a control,
+            // and it put the recorder on a line of its own whatever width the
+            // field was given. That cost every row a second line and stretched
+            // an 84pt field across the width of the window. A plain row with a
+            // Spacer in it is the whole fix.
+            HStack(spacing: 10) {
+                thumbnail(action)
+                Text(action.title)
+                Spacer(minLength: 12)
+                if model.unavailableHotkeys.contains(action.rawValue) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .help("Another app already owns this combination")
+                }
+                ShortcutField(
+                    display: model.hotkeyDisplays[action.rawValue] ?? "None",
+                    isRecording: recording == action,
+                    onStart: { recording = action },
+                    onFinish: { hotkey in
+                        recording = nil
+                        if let hotkey { model.actions?.setHotkey(action, to: hotkey) }
+                    },
+                    onClear: {
+                        recording = nil
+                        model.actions?.clearHotkey(action)
                     }
-                    ShortcutField(
-                        display: model.hotkeyDisplays[action.rawValue] ?? "None",
-                        isRecording: recording == action,
-                        onStart: { recording = action },
-                        onFinish: { hotkey in
-                            recording = nil
-                            if let hotkey { model.actions?.setHotkey(action, to: hotkey) }
-                        },
-                        onClear: {
-                            recording = nil
-                            model.actions?.clearHotkey(action)
-                        }
-                    )
-                }
-            } label: {
-                HStack(spacing: 10) {
-                    thumbnail(action)
-                    Text(action.title)
-                }
+                )
             }
             .disabled(!model.hotkeysEnabled)
         }
@@ -84,6 +86,13 @@ private struct ShortcutField: NSViewRepresentable {
         view.onClear = onClear
         view.apply(display: display, recording: isRecording)
     }
+
+    /// Answers with the field's own size whatever the row proposes, so the row
+    /// cannot stretch it. Without this a representable takes the width it is
+    /// offered, which is the whole window.
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: RecorderView, context: Context) -> CGSize? {
+        nsView.intrinsicContentSize
+    }
 }
 
 final class RecorderView: NSView {
@@ -113,11 +122,18 @@ final class RecorderView: NSView {
     required init?(coder: NSCoder) { fatalError("not used") }
 
     override var acceptsFirstResponder: Bool { true }
-    override var intrinsicContentSize: NSSize { NSSize(width: 84, height: 22) }
+
+    /// Wide enough for what it is showing, and never narrower than 84 so a
+    /// column of them lines up. "⌃⌥⇧⌘Space" is a legal binding and would be
+    /// clipped by a fixed width.
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: max(84, ceil(label.intrinsicContentSize.width) + 18), height: 22)
+    }
 
     func apply(display: String, recording: Bool) {
         self.recording = recording
         label.stringValue = recording ? "Press keys" : display
+        invalidateIntrinsicContentSize()
         label.textColor = recording ? .controlAccentColor : .labelColor
         layer?.backgroundColor = (recording ? NSColor.controlAccentColor.withAlphaComponent(0.18)
                                             : NSColor.quaternaryLabelColor).cgColor
