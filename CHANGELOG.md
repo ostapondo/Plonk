@@ -11,6 +11,26 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## 0.2.2 — 2026-08-09
+
+Nothing in the app changed. If you are on 0.2.1, there is nothing here worth
+updating for. As with 0.2.1, the release exists because npm and the MCP Registry
+only take a new description when a version goes out.
+
+### Changed
+
+- The README, the site and both package descriptions lead with the window
+  manager rather than with the agent. MCP is one of four ways into the app —
+  drag, shortcut, voice, agent — and zones, workspaces, OCR, keep-awake and
+  voice all work with the MCP server switched off, so opening on it oversold one
+  interface and undersold the other nine utilities. Nothing about the agent
+  surface is removed: `docs/agents.md`, the "For agents" section, the MCP badge
+  and both client install lines are unchanged, and the two package descriptions
+  still say plainly that this is an MCP server, because on npm and in the
+  registry that is what the thing is.
+- `docs/architecture.svg` says "MCP client" rather than naming one, since any of
+  them works.
+
 ## 0.2.1 — 2026-08-09
 
 Nothing in the app changed, and if you are on 0.2.0 there is nothing here worth
