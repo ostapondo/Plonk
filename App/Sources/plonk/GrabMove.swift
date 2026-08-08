@@ -54,6 +54,8 @@ final class GrabMove {
     var onGrabBegan: ((AXUIElement, CGRect) -> Void)?
     var onGrabMoved: (() -> Void)?
     var onGrabEnded: ((AXUIElement, CGRect) -> Void)?
+    /// A resize finishing, which the zones never saw.
+    var onGrabResized: ((AXUIElement, CGRect) -> Void)?
 
     init(windows: WindowManager) {
         self.windows = windows
@@ -130,8 +132,16 @@ final class GrabMove {
         case .leftMouseUp, .rightMouseUp:
             guard let finished = grab else { break }
             grab = nil
-            onGrabEnded?(finished.window, finished.startFrame)
-            if showGeometry { HUD.shared.hide() }
+            let resized = finished.handle != nil
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if resized {
+                    onGrabResized?(finished.window, finished.startFrame)
+                } else {
+                    onGrabEnded?(finished.window, finished.startFrame)
+                }
+                if showGeometry { HUD.shared.hide() }
+            }
             return nil
         default:
             break
@@ -151,7 +161,11 @@ final class GrabMove {
         let handle = resizing ? Self.handle(for: point, in: frame) : nil
         if resizing && handle?.isEmpty != false { return false }
         grab = Grab(window: window, startFrame: frame, startPoint: point, handle: handle)
-        onGrabBegan?(window, frame)
+        // Only a move is handed to the zones. A resize that ended over a zone
+        // would otherwise be thrown away and replaced by the zone's rect.
+        if !resizing {
+            DispatchQueue.main.async { [weak self] in self?.onGrabBegan?(window, frame) }
+        }
         return true
     }
 
@@ -160,11 +174,19 @@ final class GrabMove {
         let delta = CGVector(dx: point.x - grab.startPoint.x, dy: point.y - grab.startPoint.y)
         let frame = grab.handle.map { Self.resized(grab.startFrame, by: delta, pulling: $0) }
             ?? grab.startFrame.offsetBy(dx: delta.dx, dy: delta.dy)
-        windows.setFrame(frame, ofWindow: grab.window)
-        if showGeometry {
-            HUD.shared.showCompact("\(Int(frame.width)) × \(Int(frame.height))")
+        let resizing = grab.handle != nil
+        // Setting a frame is synchronous IPC into the other app, and drawing
+        // the readout builds a view. Neither may happen inside the tap
+        // callback: the system disables a tap that takes too long, and every
+        // drag after that would leak through to whatever is underneath.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let current = self.grab, CFEqual(current.window, grab.window) else { return }
+            windows.setFrame(frame, ofWindow: current.window)
+            if showGeometry {
+                HUD.shared.showCompact("\(Int(frame.width)) × \(Int(frame.height))")
+            }
+            if !resizing { onGrabMoved?() }
         }
-        onGrabMoved?()
     }
 
     // MARK: - Geometry

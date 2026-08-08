@@ -22,7 +22,8 @@ final class MouseTools {
     private let overlay = MouseOverlay()
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var lastControlPress: Date?
+    private var lastControlRelease: Date?
+    private var controlWasAlone = false
     private var spotlightToken = 0
 
     var findEnabled = false
@@ -116,14 +117,28 @@ final class MouseTools {
         switch type {
         case .flagsChanged:
             guard findEnabled else { return }
-            let control = NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue)).contains(.control)
-            guard control else { return }
+            // The gesture is Control pressed and released twice, on its own.
+            // Watching only for "the flags contain Control" would fire on every
+            // Control chord — which is every shortcut Plonk itself ships.
+            let flags = NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue))
+                .intersection(.deviceIndependentFlagsMask)
+            if flags == .control {
+                controlWasAlone = true
+                return
+            }
+            // Any other modifier joining in makes this a chord, not a tap.
+            guard flags.isEmpty, controlWasAlone else {
+                controlWasAlone = false
+                lastControlRelease = nil
+                return
+            }
+            controlWasAlone = false
             let now = Date()
-            if let last = lastControlPress, now.timeIntervalSince(last) < Self.doubleTapWindow {
-                lastControlPress = nil
+            if let last = lastControlRelease, now.timeIntervalSince(last) < Self.doubleTapWindow {
+                lastControlRelease = nil
                 DispatchQueue.main.async { [weak self] in self?.flashSpotlight() }
             } else {
-                lastControlPress = now
+                lastControlRelease = now
             }
         case .leftMouseDown, .rightMouseDown:
             guard highlightEnabled else { return }

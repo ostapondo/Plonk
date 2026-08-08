@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let mouse = MouseTools()
     private let crops = CropAndLock()
     private var guidePanel: ShortcutGuidePanel?
+    private var guideLoading = false
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
@@ -65,6 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.launchAtLogin = isLaunchAtLoginEnabled
 
         knownDisplays = Self.attachedDisplays()
+        watchForAccessibility()
         NotificationCenter.default.addObserver(
             self, selector: #selector(screensChanged),
             name: NSApplication.didChangeScreenParametersNotification, object: nil
@@ -323,6 +325,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.dragSnap.beginExternalDrag(window: window, startFrame: frame)
         }
         grabMove.onGrabMoved = { [weak self] in self?.dragSnap.updateExternalDrag() }
+        grabMove.onGrabResized = { [weak self] window, startFrame in
+            guard let self, let placed = windows.fraction(ofWindow: window) else { return }
+            snapMemory.record(window, wasAt: startFrame, placedAt: placed.frac,
+                              screenUUID: ScreenIdentity.uuid(forIndex: placed.screenIndex),
+                              appKey: windows.app(ofWindow: window)?.bundleIdentifier)
+            router?.changes.bump("windows")
+        }
         grabMove.onGrabEnded = { [weak self] window, startFrame in
             guard let self else { return }
             // A grab that landed in a zone is recorded by the zone drop. One
@@ -393,14 +402,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel.close()
             return
         }
+        // Reading a big app's menus takes a moment; a second press inside that
+        // window would build a second panel and orphan the first.
+        guard !guideLoading else { return }
         guard windows.isTrusted else {
             HUD.shared.show("The shortcut guide needs Accessibility")
             return
         }
         guard let app = NSWorkspace.shared.frontmostApplication else { return }
         let name = app.localizedName ?? "This app"
+        guideLoading = true
         ShortcutGuide.read(for: app) { [weak self] items in
             guard let self else { return }
+            guideLoading = false
             // The guide describes whatever was in front when it was asked for,
             // so a slow app cannot end up labelled with the wrong name.
             let panel = ShortcutGuidePanel(appName: name, items: items)
@@ -696,6 +710,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let work = DispatchWorkItem { [weak self] in self?.commands.restorePlacements() }
         screenSettleWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+    }
+
+    /// Grab-and-move, the pointer tools and the new-window watcher all need
+    /// Accessibility to arm, and on a first run it has just been asked for and
+    /// not yet given. Rather than making each of them dead until the next
+    /// launch, this waits for the grant and starts them then. Drag snapping
+    /// does not need it because it re-checks on every event.
+    private func watchForAccessibility() {
+        guard !windows.isTrusted else { return }
+        let timer = Timer(timeInterval: 2, repeats: true) { [weak self] timer in
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+            guard windows.isTrusted else { return }
+            timer.invalidate()
+            grabMove.start()
+            mouse.start()
+            newWindows.start()
+            refreshPermissions()
+        }
+        RunLoop.main.add(timer, forMode: .common)
     }
 
     private static func attachedDisplays() -> Set<String> {

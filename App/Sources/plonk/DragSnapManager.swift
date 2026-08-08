@@ -162,6 +162,8 @@ final class DragSnapManager {
     /// it, so it hands the drag over here instead. Zones behave exactly as they
     /// do for a title-bar drag, which is the point: one set of rules.
     func beginExternalDrag(window: AXUIElement, startFrame: CGRect) {
+        // "Drag to snap" is off means off, however the drag was started.
+        guard enabled else { return }
         state = .active(win: window, startFrame: startFrame)
         spanAnchor = nil
     }
