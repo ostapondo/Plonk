@@ -100,6 +100,7 @@
     width: 100%; height: auto; border-radius: 14px;
     border: 1px solid var(--line); box-shadow: var(--shadow); display: block;
   }
+  img.diagram { display: block; width: 100%; max-width: 720px; height: auto; margin: 0 auto; }
   figure.shot figcaption { font-size: 13.5px; color: var(--dim); text-align: center; margin-top: 12px; }
 
   section { padding: 52px 0; border-top: 1px solid var(--line); }
@@ -154,6 +155,7 @@
     <a class="brand" href="./"><img src="logo-400.png" alt=""> Plonk</a>
     <nav>
       <a href="#zones">Zones</a>
+      <a href="#workspaces">Workspaces</a>
       <a href="#agents">For agents</a>
       <a href="#privacy">Privacy</a>
       <a href="https://github.com/ostapondo/plonk">GitHub</a>
@@ -211,6 +213,28 @@
     </div>
   </section>
 
+  <section id="zones">
+    <h2>Draw the layout, once</h2>
+    <p class="sub">Click a zone to split it, ⇧-click to split it the other way, drag a divider to
+      resize its neighbours. Any number of zones, any size, a different set on every monitor —
+      and windows come back to their zone when a display is unplugged and plugged in again.</p>
+    <img class="diagram" src="zones.svg" width="720" height="300"
+         alt="A screen divided into three zones, with a window being dragged into the highlighted top-right zone">
+    <p class="dim" style="font-size:14.5px;margin:22px 0 10px">Five sets ship with it. Everything
+      past that you draw yourself — or describe, and let the agent build it.</p>
+    <img class="diagram" src="zone-sets.svg" width="720" height="112"
+         alt="Five built-in zone sets — Halves, Thirds, 60/40, Quarters, Priority — and a sixth, irregular one drawn by hand">
+  </section>
+
+  <section id="workspaces">
+    <h2>A desk you can put away</h2>
+    <p class="sub">A workspace remembers the apps, the frame of every window, the monitor each one
+      belongs on, and what each app should open on the way up. Launch it onto an empty desktop and
+      it rebuilds itself — opening whatever is closed, waiting for the windows, putting them back.</p>
+    <img class="diagram" src="workspaces.svg" width="720" height="172"
+         alt="A saved workspace of four apps, closed to an empty desktop, then launched back into place">
+  </section>
+
   <section id="agents">
     <h2>The part no other Mac window manager has</h2>
     <p class="sub">One line, and your agent can read the desk, rearrange it, save it, and read the
@@ -236,7 +260,7 @@ codex mcp add plonk -- npx -y plonk-mcp</pre>
     </div>
   </section>
 
-  <section id="zones">
+  <section id="features">
     <h2>What you get</h2>
     <table>
       <tr><td>Zones</td><td class="dim">Draw any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows come back to their zone when a display is unplugged and plugged in again.</td></tr>
