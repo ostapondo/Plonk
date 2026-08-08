@@ -30,6 +30,13 @@ struct ShortcutsPage: View {
                     Text("Click a shortcut to open the page where it is set.")
                 }
             }
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "shortcuts"))
+            } header: {
+                Text("Guide")
+            } footer: {
+                Text("Opens every shortcut the app in front actually has, read from its own menus — so it is never out of date, and it works for software with no documentation at all. Press it again to close.")
+            }
             ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
                 Section(group.name) {
                     ForEach(group.actions) { row($0) }
