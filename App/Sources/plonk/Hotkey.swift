@@ -157,6 +157,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     case cycleZone, cycleZoneBack
     case focusLeft, focusRight, focusUp, focusDown
     case findCursor, jumpCursor
+    case cropLive, cropStill
 
     var id: String { rawValue }
 
@@ -233,6 +234,8 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .focusDown: return "Focus the window below"
         case .findCursor: return "Find the pointer"
         case .jumpCursor: return "Jump the pointer to the next screen"
+        case .cropLive: return "Pin a live crop on top"
+        case .cropStill: return "Pin a still crop on top"
         default:
             if let number = zoneNumber { return "Zone \(number)" }
             if let number = layoutNumber { return "Zone set \(number)" }
@@ -255,6 +258,8 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .focusDown: return "arrow.down"
         case .findCursor: return "scope"
         case .jumpCursor: return "arrow.left.arrow.right"
+        case .cropLive: return "pip"
+        case .cropStill: return "photo"
         default:
             if zoneNumber != nil { return "square.grid.2x2" }
             if layoutNumber != nil { return "rectangle.3.group" }
@@ -270,6 +275,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .unsnap: return "Numbered zones"
         case .cycleZone, .cycleZoneBack, .focusLeft, .focusRight, .focusUp, .focusDown: return "Focus"
         case .findCursor, .jumpCursor: return "Pointer"
+        case .cropLive, .cropStill: return "Crop"
         default:
             if zoneNumber != nil { return "Numbered zones" }
             if layoutNumber != nil { return "Zone sets" }
@@ -280,7 +286,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     /// The settings page that owns this shortcut, matching SettingsPage ids.
     var page: String {
         switch self {
-        case .captureRegion, .captureText: return "shot"
+        case .captureRegion, .captureText, .cropLive, .cropStill: return "shot"
         case .findCursor, .jumpCursor: return "mouse"
         case .voice: return "voice"
         default: return "zones"
@@ -340,6 +346,8 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .focusDown: code = kVK_DownArrow; shift = true
         case .findCursor: code = kVK_ANSI_Slash
         case .jumpCursor: code = kVK_ANSI_Backslash
+        case .cropLive: code = kVK_ANSI_P
+        case .cropStill: code = kVK_ANSI_P; shift = true
         }
         return Hotkey(keyCode: UInt32(code), control: true, option: true, shift: shift)
     }

@@ -243,8 +243,18 @@ struct ShotPage: View {
             } footer: {
                 Text("The editor opens on the capture: draw with pen, arrow, rectangle, ellipse or highlighter, then copy or save. Needs Screen Recording access, which macOS asks for on the first capture.")
             }
-            Section("Shortcuts") {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "shot"))
+            Section {
+                ShortcutRows(model: model,
+                             actions: HotkeyAction.owned(by: "shot").filter { $0.group != "Crop" })
+            } header: {
+                Text("Shortcuts")
+            }
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "shot", group: "Crop"))
+            } header: {
+                Text("Pin Part of the Screen")
+            } footer: {
+                Text("Drag out a region and it floats above everything else. Live mirrors what is underneath — a build log, a chart, a call — so it can be watched while you work on top of it. Still freezes it, which costs nothing and works on windows a stream will not follow. Close the panel to stop it.")
             }
             Section {
                 Picker("Language", selection: language) {
