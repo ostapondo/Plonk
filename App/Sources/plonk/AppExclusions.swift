@@ -10,17 +10,6 @@ import Foundation
 // workspace — is never filtered: those name the window on purpose.
 
 enum AppExclusions {
-    /// One pattern per line, as the settings field stores them.
-    static func parse(_ text: String) -> [String] {
-        text.split(whereSeparator: \.isNewline)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-    }
-
-    static func text(from patterns: [String]) -> String {
-        patterns.joined(separator: "\n")
-    }
-
     static func matches(name: String, bundleID: String?, patterns: [String]) -> Bool {
         guard !patterns.isEmpty else { return false }
         let haystacks = [name.lowercased(), (bundleID ?? "").lowercased()].filter { !$0.isEmpty }

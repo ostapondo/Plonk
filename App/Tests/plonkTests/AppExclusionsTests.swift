@@ -3,16 +3,6 @@ import Testing
 
 struct AppExclusionsTests {
 
-    @Test func parseDropsBlankAndPaddedLines() {
-        let patterns = AppExclusions.parse("  Steam \n\n\tParsec\n   \nDaVinci Resolve")
-        #expect(patterns == ["Steam", "Parsec", "DaVinci Resolve"])
-    }
-
-    @Test func roundTripsThroughText() {
-        let patterns = ["Steam", "Parsec"]
-        #expect(AppExclusions.parse(AppExclusions.text(from: patterns)) == patterns)
-    }
-
     @Test func matchesAnywhereInTheNameRegardlessOfCase() {
         #expect(AppExclusions.matches(name: "Steam Helper", bundleID: nil, patterns: ["steam"]))
         #expect(AppExclusions.matches(name: "Parsec", bundleID: nil, patterns: ["PARSEC"]))
@@ -31,7 +21,8 @@ struct AppExclusionsTests {
         #expect(!AppExclusions.matches(name: "Steam", bundleID: "com.valvesoftware.steam", patterns: []))
     }
 
-    /// A blank line left in config.json must not turn into "matches everything".
+    /// A blank entry hand-edited into config.json must not turn into
+    /// "matches everything".
     @Test func blankPatternsAreIgnored() {
         #expect(!AppExclusions.matches(name: "Safari", bundleID: "com.apple.Safari", patterns: ["", "   "]))
     }
