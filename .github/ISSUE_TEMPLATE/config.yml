@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question about using Plonk
+    url: https://github.com/ostapondo/plonk/discussions/categories/q-a
+    about: How to set something up, or whether Plonk can do a thing at all.
+  - name: An idea, before it is a request
+    url: https://github.com/ostapondo/plonk/discussions/categories/ideas
+    about: Half-formed is fine. Ideas that hold up become issues.
+  - name: Show a zone set or a workspace
+    url: https://github.com/ostapondo/plonk/discussions/categories/show-and-tell
+    about: Post a layout you keep going back to. Good ones ship as built-ins.
+  - name: A security problem
+    url: https://github.com/ostapondo/plonk/blob/main/SECURITY.md
+    about: Do not open a public issue first. SECURITY.md has the route.
