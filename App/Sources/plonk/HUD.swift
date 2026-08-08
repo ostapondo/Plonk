@@ -49,7 +49,9 @@ final class HUD {
     /// its text changes after that; rebuilding a hosting view per frame was
     /// measurably worse than the resize it was describing.
     func showCompact(_ text: String) {
-        token += 1
+        // Deliberately does not touch `token`: that counter is the notice
+        // panel's fade-out generation, and a drag readout must not cancel a
+        // notice's dismissal and leave it on screen for good.
         let panel = compactWindow ?? makeCompactWindow()
         compactWindow = panel
         compactLabel.stringValue = text
@@ -78,8 +80,8 @@ final class HUD {
         return panel
     }
 
+    /// Hides the readout only. The notice panel dismisses itself.
     func hide() {
-        token += 1
         compactWindow?.orderOut(nil)
     }
 

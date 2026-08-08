@@ -205,12 +205,15 @@ extension CroppedPanel: NSWindowDelegate {
 @available(macOS 13.0, *)
 private final class StreamOutput: NSObject, SCStreamOutput {
     var onFrame: ((CGImage) -> Void)?
+    /// Built once. A CIContext carries GPU state and is meant to be reused;
+    /// making one per frame is thirty allocations a second for nothing.
+    private let context = CIContext()
 
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         guard type == .screen, sampleBuffer.isValid,
               let pixels = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvImageBuffer: pixels)
-        guard let image = CIContext().createCGImage(ciImage, from: ciImage.extent) else { return }
+        guard let image = context.createCGImage(ciImage, from: ciImage.extent) else { return }
         DispatchQueue.main.async { [weak self] in self?.onFrame?(image) }
     }
 }

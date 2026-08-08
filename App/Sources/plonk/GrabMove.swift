@@ -44,6 +44,11 @@ final class GrabMove {
         let startPoint: CGPoint
         /// nil while moving; the edges being pulled while resizing.
         let handle: Handle?
+        /// The swallowed press, kept until this is known to be a drag.
+        let press: CGEvent
+        /// True once the pointer has travelled far enough to be a drag rather
+        /// than a click. Nothing is moved, and nothing is reported, before it.
+        var moved: Bool
     }
 
     /// Which edges of the window the drag has hold of.
@@ -160,7 +165,14 @@ final class GrabMove {
                 state = .resolving(press: press, point: start, right: right,
                                    travelled: travelled || moved(from: start, to: point))
                 return nil
-            case .grabbing:
+            case .grabbing(var grab):
+                if !grab.moved {
+                    guard moved(from: grab.startPoint, to: point) else { return nil }
+                    grab.moved = true
+                    state = .grabbing(grab)
+                    // Only now is this a drag, and only now do the zones care.
+                    if grab.handle == nil { onGrabBegan?(grab.window, grab.startFrame) }
+                }
                 drag(to: point)
                 return nil
             default:
@@ -173,11 +185,17 @@ final class GrabMove {
                 // The lookup never finished, so nothing moved. If it was a
                 // click, hand it back.
                 state = .idle
-                if !travelled { replay(press) }
+                if !travelled { replayClick(press) }
                 return nil
             case .grabbing(let grab):
                 state = .idle
-                finish(grab, at: point)
+                if grab.moved {
+                    finish(grab)
+                } else {
+                    // The window was never touched: this was a click that
+                    // happened to be over something grabbable.
+                    replayClick(grab.press)
+                }
                 return nil
             case .passthrough:
                 state = .idle
@@ -201,10 +219,13 @@ final class GrabMove {
     /// here talks to another process and may block.
     private func resolve(at point: CGPoint, right: Bool) {
         DispatchQueue.main.async { [weak self] in
-            guard let self, case .resolving(let press, _, _, _) = state else { return }
+            guard let self, case .resolving(let press, _, _, let travelled) = state else { return }
+            // Nothing to grab. The press was swallowed to keep the callback
+            // cheap, so it is posted again and the rest of the gesture — the
+            // drags and the release — is left to travel normally.
             let hand: (CGEvent) -> Void = { [weak self] press in
                 self?.state = .passthrough
-                self?.replay(press)
+                self?.replayPress(press)
             }
             guard let window = windows.window(at: point), let frame = windows.frame(ofWindow: window) else {
                 hand(press)
@@ -219,8 +240,10 @@ final class GrabMove {
                 hand(press)
                 return
             }
-            state = .grabbing(Grab(window: window, startFrame: frame, startPoint: point, handle: handle))
-            if !right { onGrabBegan?(window, frame) }
+            state = .grabbing(Grab(window: window, startFrame: frame, startPoint: point,
+                                   handle: handle, press: press, moved: travelled))
+            // A drag that outran the lookup is already a drag.
+            if travelled, !right { onGrabBegan?(window, frame) }
         }
     }
 
@@ -238,10 +261,7 @@ final class GrabMove {
         }
     }
 
-    /// A grab that never travelled is a click, and the app underneath should
-    /// still get it. The window has not been moved in that case — no drag
-    /// event ever arrived — so nothing has to be undone.
-    private func finish(_ grab: Grab, at point: CGPoint) {
+    private func finish(_ grab: Grab) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             if showGeometry { HUD.shared.hide() }
@@ -259,10 +279,18 @@ final class GrabMove {
             ?? grab.startFrame.offsetBy(dx: delta.dx, dy: delta.dy)
     }
 
-    /// Posts a swallowed press back as the click it turned out to be, marked so
-    /// the tap lets it through. The release is synthesized: the real one was
-    /// consumed on the way here.
-    private func replay(_ press: CGEvent) {
+    /// Posts a swallowed press back while the button is still down, so the
+    /// gesture carries on where it belongs. Marked, or the tap would catch it
+    /// again.
+    private func replayPress(_ press: CGEvent) {
+        press.setIntegerValueField(.eventSourceUserData, value: Self.replayMarker)
+        press.post(tap: .cgSessionEventTap)
+    }
+
+    /// Posts a swallowed press back as the whole click it turned out to be.
+    /// The release is synthesized because the real one was consumed on the way
+    /// here — this is only ever called from the mouse-up handler.
+    private func replayClick(_ press: CGEvent) {
         guard let release = press.copy() else { return }
         release.type = press.type == .rightMouseDown ? .rightMouseUp : .leftMouseUp
         for event in [press, release] {

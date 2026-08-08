@@ -75,6 +75,22 @@ final class MouseTools {
     /// What this has on screen, so a capture can get it out of the way.
     var visibleWindows: [NSWindow] { overlay.visibleWindows }
 
+    /// Held while a capture is in flight. Ordering the overlay out is not
+    /// enough on its own: the next mouse move would draw it straight back,
+    /// into the photograph.
+    private var suspended = false
+
+    /// Stops drawing until `resume`, and takes down whatever is showing.
+    func suspend() {
+        suspended = true
+        overlay.hide()
+    }
+
+    func resume() {
+        suspended = false
+        refreshPersistent()
+    }
+
     // MARK: - Jump
 
     /// Warps the pointer to the middle of the next screen, wrapping round.
@@ -115,6 +131,7 @@ final class MouseTools {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return
         }
+        guard !suspended else { return }
         switch type {
         case .leftMouseDown, .rightMouseDown:
             guard highlightEnabled else { return }
@@ -138,6 +155,7 @@ final class MouseTools {
 
     /// Back to whatever should be on screen when nothing transient is showing.
     private func refreshPersistent() {
+        guard !suspended else { return }
         if crosshairsEnabled {
             overlay.show(.crosshairs, at: NSEvent.mouseLocation, tint: tint)
         } else {
