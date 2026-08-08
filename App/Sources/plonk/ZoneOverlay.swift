@@ -97,9 +97,10 @@ final class ZoneOverlay {
         // A single zone is the edge-snap preview; there is nothing to tell apart.
         let numbered = appearance.showNumbers && zones.count > 1
         // The gap is drawn as well as applied, so the overlay is a preview of
-        // where the window will actually land. Five points is the inset the
-        // rounded corners need to read as separate tiles at all.
-        let inset = max(5, appearance.gap)
+        // where the window will actually land — which means it is clamped the
+        // same way, or a wide gap on a narrow zone draws a rect that no window
+        // will ever be given. Five points is the inset the rounded corners need
+        // to read as separate tiles at all.
 
         for (index, z) in zones.enumerated() {
             let rect = NSRect(
@@ -107,9 +108,10 @@ final class ZoneOverlay {
                 y: visible.height - (z.y + z.h) * visible.height,
                 width: z.w * visible.width,
                 height: z.h * visible.height
-            ).insetBy(dx: inset, dy: inset)
+            ).insetBy(dx: 5, dy: 5)
+            let gapped = WindowManager.inset(rect, by: appearance.gap)
 
-            let view = NSView(frame: rect)
+            let view = NSView(frame: gapped)
             view.wantsLayer = true
             view.layer?.cornerRadius = 10
             window.contentView?.addSubview(view)
@@ -117,11 +119,11 @@ final class ZoneOverlay {
 
             guard numbered else { continue }
             let label = NSTextField(labelWithString: "\(index + 1)")
-            label.font = .systemFont(ofSize: numberSize(in: rect), weight: .bold)
+            label.font = .systemFont(ofSize: numberSize(in: gapped), weight: .bold)
             label.alignment = .center
             label.sizeToFit()
-            label.frame = NSRect(x: 0, y: (rect.height - label.frame.height) / 2,
-                                 width: rect.width, height: label.frame.height)
+            label.frame = NSRect(x: 0, y: (gapped.height - label.frame.height) / 2,
+                                 width: gapped.width, height: label.frame.height)
             label.autoresizingMask = [.width]
             view.addSubview(label)
             numbers.append(label)

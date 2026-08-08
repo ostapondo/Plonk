@@ -11,7 +11,9 @@ struct ShortcutsPage: View {
     private var groups: [(name: String, actions: [HotkeyAction])] {
         var order: [String] = []
         var byGroup: [String: [HotkeyAction]] = [:]
-        for action in HotkeyAction.allCases {
+        // The Guide has its own editable section above; listing it again here
+        // would show the same row twice.
+        for action in HotkeyAction.allCases where action.page != "shortcuts" {
             if !order.contains(action.group) { order.append(action.group) }
             byGroup[action.group, default: []].append(action)
         }

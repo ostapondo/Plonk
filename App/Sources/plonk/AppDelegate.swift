@@ -317,7 +317,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupGrabMove() {
         grabMove = GrabMove(windows: windows)
-        applyGrabMoveSettings()
         grabMove.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
         // A grab is a drag as far as zones are concerned, so it goes through
         // the same overlay and the same drop rules.
@@ -344,14 +343,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             router?.changes.bump("windows")
         }
-        grabMove.start()
+        applyGrabMoveSettings()
     }
 
+    /// An event tap that can swallow clicks has no business existing while the
+    /// feature is off, so the tap follows the setting rather than the launch.
     private func applyGrabMoveSettings() {
         grabMove.enabled = store.config.grabMoveEnabled
         grabMove.modifierFlag = Self.modifierFlag(store.config.grabMoveModifier)
         grabMove.allowResize = store.config.grabMoveResize
         grabMove.showGeometry = store.config.grabMoveShowGeometry
+        if store.config.grabMoveEnabled {
+            grabMove.start()
+        } else {
+            grabMove.stop()
+        }
     }
 
     /// Which numbered zone a dropped fraction corresponds to, so editing the
@@ -447,13 +453,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupMouseTools() {
         applyMouseSettings()
-        mouse.start()
     }
 
+    /// Same rule as grab-and-move: no tap unless something needs one. Finding
+    /// the pointer is a shortcut and draws without watching anything.
     private func applyMouseSettings() {
         mouse.highlightEnabled = store.config.highlightClicksEnabled
         mouse.crosshairsEnabled = store.config.crosshairsEnabled
         mouse.tint = ZoneAppearance.color(fromHex: store.config.zoneColorHex) ?? .controlAccentColor
+        if store.config.highlightClicksEnabled || store.config.crosshairsEnabled {
+            mouse.start()
+        } else {
+            mouse.stop()
+        }
     }
 
     private func setupUpdates() {
@@ -723,8 +735,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             guard windows.isTrusted else { return }
             timer.invalidate()
-            grabMove.start()
-            mouse.start()
+            applyGrabMoveSettings()
+            applyMouseSettings()
             newWindows.start()
             refreshPermissions()
         }
@@ -739,6 +751,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch name {
         case "option": return .option
         case "control": return .control
+        case "command": return .command
         default: return .shift
         }
     }
@@ -780,7 +793,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// crop, which are floating over exactly the area being photographed.
     private func hideOwnWindows() -> [NSWindow] {
         mouse.suspend()
-        let hidden = (presenter.visible + crops.visibleWindows).filter { $0.isVisible }
+        let hidden = (presenter.visible + crops.visibleWindows + [guidePanel].compactMap { $0 })
+            .filter { $0.isVisible }
         hidden.forEach { $0.orderOut(nil) }
         return hidden
     }
