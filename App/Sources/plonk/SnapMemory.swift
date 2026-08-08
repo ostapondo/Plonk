@@ -46,14 +46,21 @@ final class SnapMemory {
     private static let capacity = 64
 
     private var entries: [WindowKey: Entry] = [:]
+    /// Where an app's windows have been going, by bundle id — the habit rather
+    /// than the window. Not written to disk: it would mean a config write on
+    /// every drop, and the habit is cheap to form again.
+    private var byApp: [String: (frac: FracRect, screenUUID: String?, zoneIndex: Int?)] = [:]
     private var counter = 0
 
     /// Records a placement. The original frame is kept from the first call for
     /// a window: snapping left and then right should still restore what the
     /// window looked like before any of it.
     func record(_ window: AXUIElement, wasAt original: CGRect, placedAt frac: FracRect,
-                screenUUID: String?, zoneIndex: Int? = nil) {
+                screenUUID: String?, zoneIndex: Int? = nil, appKey: String? = nil) {
         counter += 1
+        if let appKey, !appKey.isEmpty {
+            byApp[appKey] = (frac, screenUUID, zoneIndex)
+        }
         let key = WindowKey(element: window)
         if var existing = entries[key] {
             existing.frac = frac
@@ -83,6 +90,11 @@ final class SnapMemory {
         entries
             .sorted { $0.value.stamp < $1.value.stamp }
             .map { ($0.key.element, $0.value.frac, $0.value.screenUUID, $0.value.zoneIndex) }
+    }
+
+    /// Where this app's windows have been going, if anywhere.
+    func habit(ofApp key: String) -> (frac: FracRect, screenUUID: String?, zoneIndex: Int?)? {
+        byApp[key]
     }
 
     var count: Int { entries.count }

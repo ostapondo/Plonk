@@ -36,6 +36,8 @@ protocol AppActions: AnyObject {
     /// per line. Matched against the app's name and bundle id, case-insensitively.
     func setExcludedApps(_ patterns: [String])
     func setRestoreZonesOnScreenChange(_ on: Bool)
+    /// Send a newly opened window where that app's windows have been going.
+    func setPlaceNewWindows(_ on: Bool)
     /// BCP-47 tags for text recognition; empty lets Vision choose.
     func setTextLanguages(_ tags: [String])
     func setLaunchAtLogin(_ on: Bool)
@@ -106,6 +108,7 @@ final class AppModel: ObservableObject {
     @Published var grabMoveShowGeometry = true
     @Published var excludedApps: [String] = []
     @Published var restoreZonesOnScreenChange = true
+    @Published var placeNewWindows = false
     @Published var textLanguages: [String] = []
     @Published var supportedTextLanguages: [String] = []
     @Published var workspaceNames: [String] = []

@@ -94,6 +94,9 @@ struct Config: Codable {
     // Whether windows Plonk placed are put back where they were after a
     // display is plugged in or unplugged.
     var restoreZonesOnScreenChange = true
+    // Whether a newly opened window goes where that app's windows have been
+    // going. Off by default: it moves windows nobody asked it to.
+    var placeNewWindows = false
     // BCP-47 tags for text recognition, e.g. ["uk-UA", "en-US"]. Empty lets
     // Vision pick, which follows the system language.
     var textLanguages: [String] = []
@@ -148,6 +151,7 @@ struct Config: Codable {
         grabMoveShowGeometry = try c.decodeIfPresent(Bool.self, forKey: .grabMoveShowGeometry) ?? true
         excludedApps = try c.decodeIfPresent([String].self, forKey: .excludedApps) ?? []
         restoreZonesOnScreenChange = try c.decodeIfPresent(Bool.self, forKey: .restoreZonesOnScreenChange) ?? true
+        placeNewWindows = try c.decodeIfPresent(Bool.self, forKey: .placeNewWindows) ?? false
         textLanguages = try c.decodeIfPresent([String].self, forKey: .textLanguages) ?? []
         awakeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .awakeAllowOnBattery) ?? true
         awakeAutoWhileCharging = try c.decodeIfPresent(Bool.self, forKey: .awakeAutoWhileCharging) ?? false

@@ -134,6 +134,10 @@ struct ZonesPage: View {
                     Text("Put windows back after a display change")
                     Text("Windows Plonk placed return to the same spot on the same monitor when one is plugged in or unplugged")
                 }
+                Toggle(isOn: model.binding(\.placeNewWindows, set: { $0.setPlaceNewWindows($1) })) {
+                    Text("Send new windows where that app's last one went")
+                    Text("Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits")
+                }
             }
             Section {
                 TextEditor(text: $exclusionsDraft)
