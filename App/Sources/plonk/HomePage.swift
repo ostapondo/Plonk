@@ -1,10 +1,15 @@
 import SwiftUI
 
-// Where a first-time user lands. Leads with what to say to an agent, because
-// that is the part nobody guesses on their own; permissions and gadgets follow.
+// Where a first-time user lands.
+//
+// Leads with the thing the app is for, drawn rather than described: the zone
+// set that is actually on the main screen, with the shortcut that fills it.
+// Permissions used to open this page as three chips that were green every day;
+// they live in the top bar now and only take room when one of them is not.
 
 struct HomePage: View {
     @ObservedObject var model: AppModel
+    @Environment(\.colorScheme) private var scheme
 
     private var guide: GettingStarted {
         GettingStarted(accessibilityGranted: model.accessibilityGranted,
@@ -14,8 +19,7 @@ struct HomePage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
+            VStack(alignment: .leading, spacing: 16) {
                 if let warning = model.configWarning {
                     Label(warning, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
@@ -26,251 +30,263 @@ struct HomePage: View {
                         .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.10)))
                         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.orange.opacity(0.35)))
                 }
-                // Above the readiness chips while it lasts: a chip says what is
-                // wrong, this says what to do next, and a new user needs the
-                // second one first.
                 if GettingStarted.isVisible(hidden: model.gettingStartedHidden, complete: guide.isComplete) {
                     GettingStartedCard(model: model)
                 }
-                readiness
+                hero
+                SectionHead(title: "Quick actions")
                 quickActions
-                section("Startup") { startup }
-                section("Gadgets") { gadgets }
-                footer
+                SectionHead(title: "What is on")
+                switches
+                HomeStatus(model: model)
+                Text("Everything runs on this Mac. No account, no cloud, no telemetry.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(20)
         }
     }
 
-    // MARK: - Header
+    // MARK: - Hero
 
-    private var header: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "cube")
-                .font(.system(size: 26, weight: .light))
-                .foregroundStyle(Color.accentColor)
-                .frame(width: 54, height: 54)
-                .background(
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .fill(Color.accentColor.opacity(0.13))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(Color.accentColor.opacity(0.22))
-                )
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 7) {
-                    Text("Plonk").font(.title2.bold())
-                    if !model.appVersion.isEmpty {
-                        Text(model.appVersion)
-                            .font(.caption2.weight(.medium).monospacedDigit())
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.primary.opacity(0.07)))
-                            .overlay(Capsule().strokeBorder(Color.primary.opacity(0.12)))
-                            .help("Version \(model.appVersion)")
-                    }
-                }
-                Text("Menu bar gadgets, and an agent that can use them")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
+    // The picture is the first thing to go when the window is narrow: the
+    // sentence and the button still say what the app does, and a squeezed
+    // preview says nothing at all.
+    private var hero: some View {
+        ViewThatFits(in: .horizontal) {
+            heroBody(preview: true)
+            heroBody(preview: false)
         }
-    }
-
-    // MARK: - Readiness
-
-    private var readiness: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 8, alignment: .leading)],
-                  alignment: .leading, spacing: 8) {
-            chip("Accessibility", ok: model.accessibilityGranted,
-                 detail: "Needed to move and resize windows", fix: openAccessibilitySettings)
-            chip("Screen Recording", ok: model.screenRecordingGranted,
-                 detail: "Needed for screenshots", fix: openScreenRecordingSettings)
-            chip("Local API", ok: model.apiWarning == nil,
-                 detail: model.apiWarning ?? "127.0.0.1:\(ControlServer.port), reachable by the MCP tools", fix: nil)
-        }
-    }
-
-    private func chip(_ title: String, ok: Bool, detail: String, fix: (() -> Void)?) -> some View {
-        HStack(spacing: 7) {
-            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .font(.system(size: 12))
-                .foregroundStyle(ok ? Color.green : Color.orange)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.caption.weight(.medium))
-                if !ok {
-                    Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-                }
-            }
-            if !ok, let fix {
-                Spacer(minLength: 4)
-                Button("Grant", action: fix)
-                    .buttonStyle(.link)
-                    .font(.caption)
-            }
-        }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 7)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(22)
         .background(
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(ok ? Color.gray.opacity(0.09) : Color.orange.opacity(0.10))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Ink.card(scheme))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(RadialGradient(colors: [model.accent.opacity(0.14), .clear],
+                                             center: .topTrailing, startRadius: 0, endRadius: 460))
+                )
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .strokeBorder(ok ? Color.gray.opacity(0.20) : Color.orange.opacity(0.35))
-        )
-        .help(detail)
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(Ink.gradient(model.accent), lineWidth: 1.2))
+        .shadow(color: model.accent.opacity(scheme == .dark ? 0.18 : 0.10), radius: 18, y: 6)
+    }
+
+    private func heroBody(preview: Bool) -> some View {
+        HStack(alignment: .center, spacing: 22) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Circle().fill(Color.green).frame(width: 5, height: 5)
+                    Text("EVERYTHING READY")
+                        .font(.system(size: 10, weight: .bold))
+                        .kerning(1)
+                        .foregroundStyle(model.accent)
+                }
+                .opacity(ready ? 1 : 0)
+                Text("Ten windows,\none keystroke.")
+                    .font(.system(size: 26, weight: .bold))
+                    .kerning(-0.4)
+                    .padding(.top, 9)
+                Text("Snap, save and restore layouts — from the keyboard, the menu bar, "
+                     + "or an agent talking to the local API.")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 7)
+                HStack(spacing: 9) {
+                    Button { model.actions?.flashZones() } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "square.grid.2x2").font(.system(size: 12))
+                            Text("Show zones").font(.system(size: 12.5, weight: .medium))
+                            KeyCaps(parts: keys(.showZones))
+                        }
+                        .fixedSize()
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 13)
+                        .frame(height: 32)
+                        .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .fill(Ink.gradient(model.accent)))
+                        .shadow(color: model.accent.opacity(0.45), radius: 10, y: 3)
+                    }
+                    .buttonStyle(.plain)
+                    Button("Edit zones…") { model.actions?.openZonePicker() }
+                        .controlSize(.large)
+                        .fixedSize()
+                }
+                .padding(.top, 15)
+            }
+            // Fixed beside the picture, free without it. Left to itself the
+            // sentence asks for one long line, and ViewThatFits would never
+            // find room for the wide arrangement at any window size.
+            .frame(width: preview ? 320 : nil, alignment: .leading)
+            .frame(maxWidth: preview ? nil : .infinity, alignment: .leading)
+            if preview {
+                Spacer(minLength: 0)
+                ZonePreview(zones: previewZones, accent: model.accent)
+                    .frame(width: 288, height: 172)
+            }
+        }
+    }
+
+    /// The set assigned to the main screen, so the picture is of this Mac and
+    /// not of a layout nobody chose. Empty means edge snapping, which has no
+    /// zones to draw.
+    private var previewZones: [ZoneRect] {
+        guard let name = model.screenAssignments[0] else {
+            return model.zoneSets[BuiltinZoneSets.defaultName] ?? []
+        }
+        return name.isEmpty ? [] : model.zoneSets[name] ?? []
+    }
+
+    /// The same three facts the top bar's pill reports, so the badge cannot
+    /// claim everything is ready while the bar says a permission is missing.
+    private var ready: Bool {
+        model.accessibilityGranted && model.screenRecordingGranted && model.apiWarning == nil
+    }
+
+    private func keys(_ action: HotkeyAction) -> [String] {
+        model.hotkeyParts[action.rawValue] ?? []
     }
 
     // MARK: - Quick actions
 
-    // The status item opens this window rather than a menu, so the things that
-    // used to be one click away in the menu bar have to live here.
     private var quickActions: some View {
         HStack(spacing: 10) {
-            tile("Capture Region", "camera.viewfinder") { model.actions?.capture(.region) }
-            tile("Show Zones", "square.grid.2x2") { model.actions?.flashZones() }
-            tile("Edit Zones", "pencil.and.outline") { model.actions?.openZonePicker() }
-            tile(model.awakeRequested ? "Awake: On" : "Keep Awake", "cup.and.saucer") {
+            tile("Capture region", "camera.viewfinder", keys: keys(.captureRegion)) {
+                model.actions?.capture(.region)
+            }
+            tile("Show zones", "square.grid.2x2", keys: keys(.showZones)) {
+                model.actions?.flashZones()
+            }
+            tile("Edit zones", "pencil.and.outline", keys: []) {
+                model.actions?.openZonePicker()
+            }
+            tile(model.awakeRequested ? "Awake: on" : "Keep awake", "cup.and.saucer", keys: []) {
                 model.actions?.setAwake(!model.awakeRequested)
             }
         }
     }
 
-    private func tile(_ title: String, _ icon: String, action: @escaping () -> Void) -> some View {
+    private func tile(_ title: String, _ icon: String, keys: [String],
+                      action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 7) {
-                Image(systemName: icon).font(.title2).foregroundStyle(Color.accentColor)
-                Text(title).font(.caption).lineLimit(1)
+            VStack(alignment: .leading, spacing: 9) {
+                HStack {
+                    Image(systemName: icon).font(.system(size: 16)).foregroundStyle(model.accent)
+                    Spacer(minLength: 6)
+                    KeyCaps(parts: keys)
+                }
+                Text(title).font(.system(size: 12.5, weight: .medium)).lineLimit(1)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .cardBackground()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .card()
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Gadgets
+    // MARK: - Switches
 
-    private var gadgets: some View {
+    // Only what can be turned on and off. Everything that needs a choice rather
+    // than a switch lives on its own page, so this list has one job.
+    private var switches: some View {
         VStack(spacing: 0) {
-            gadgetRow("Hotkeys", "keyboard", page: "zones",
+            switchRow("Hotkeys", "keyboard",
                       detail: model.unavailableHotkeys.isEmpty
                           ? "⌃⌥ with an arrow, a letter or Return"
                           : "Taken by another app: \(model.unavailableHotkeys.joined(separator: ", "))",
                       toggle: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
             Divider()
-            gadgetRow("Drag to snap", "rectangle.3.group", page: "zones",
+            switchRow("Drag to snap", "rectangle.3.group",
                       detail: "Drop windows into zones or screen edges",
                       toggle: model.binding(\.dragSnapEnabled, set: { $0.setDragSnap($1) }))
             Divider()
-            gadgetRow("Keep awake", "cup.and.saucer", page: "awake",
+            switchRow("Keep awake", "cup.and.saucer",
                       detail: model.awakeRequested && !model.awakeOn
                           ? "Paused: on battery" : "Holds a power assertion",
                       toggle: model.binding(\.awakeRequested, set: { $0.setAwake($1) }))
             Divider()
-            gadgetRow("Screenshots", "camera.viewfinder", page: "shot",
-                      detail: "Saved to \(model.shotFolder)", toggle: nil)
-            Divider()
-            gadgetRow("AI control", "sparkles", page: "ai",
-                      detail: "\(model.workspaceNames.count) workspaces · \(model.zoneSetNames.count) zone sets",
-                      toggle: nil)
+            switchRow("Launch at login", "power",
+                      detail: "Plonk starts automatically when you log in",
+                      toggle: model.binding(\.launchAtLogin, set: { $0.setLaunchAtLogin($1) }))
         }
-        .cardBackground()
+        .card()
     }
 
-    private func gadgetRow(_ title: String, _ icon: String, page: String,
-                           detail: String, toggle: Binding<Bool>?) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .frame(width: 20)
-                .foregroundStyle(.secondary)
+    private func switchRow(_ title: String, _ icon: String, detail: String,
+                           toggle: Binding<Bool>) -> some View {
+        HStack(spacing: 11) {
+            Image(systemName: icon).frame(width: 20).foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.callout.weight(.medium))
+                Text(title).font(.system(size: 12.5, weight: .medium))
                 Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
-            if let toggle {
-                Toggle("", isOn: toggle).labelsHidden().toggleStyle(.switch).controlSize(.small)
-            }
-            Button {
-                model.selectedPage = page
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .help("Open \(title) settings")
+            Toggle("", isOn: toggle).labelsHidden().toggleStyle(.switch).controlSize(.small)
         }
         .padding(11)
-    }
-
-    // MARK: - Startup
-
-    private var startup: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "power")
-                .frame(width: 20)
-                .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Launch at login").font(.callout.weight(.medium))
-                Text("Plonk starts automatically when you log in")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Toggle("", isOn: model.binding(\.launchAtLogin, set: { $0.setLaunchAtLogin($1) }))
-                .labelsHidden().toggleStyle(.switch).controlSize(.small)
-        }
-        .padding(11)
-        .cardBackground()
-    }
-
-    // MARK: - Footer
-
-    // Report a Bug lives in the sidebar, where it is reachable from every page.
-    private var footer: some View {
-        Text("Everything runs on this Mac. No account, no cloud, no telemetry.")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-    }
-
-    private func section<Content: View>(_ title: String, note: String? = nil,
-                                        @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                Text(title).font(.subheadline.bold()).foregroundStyle(.secondary)
-                Spacer()
-                if let note {
-                    Text(note).font(.caption2).foregroundStyle(.secondary)
-                }
-            }
-            content()
-        }
-    }
-
-    private func openAccessibilitySettings() {
-        open("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-    }
-
-    private func openScreenRecordingSettings() {
-        open("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
-    }
-
-    private func open(_ string: String) {
-        guard let url = URL(string: string) else { return }
-        NSWorkspace.shared.open(url)
     }
 }
 
-private extension View {
-    func cardBackground() -> some View {
-        background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.09)))
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gray.opacity(0.22)))
+/// The main screen with its zones on it, at the size of a postcard. Drawn from
+/// the same fractions the overlay uses, so it is a picture of the real layout.
+struct ZonePreview: View {
+    let zones: [ZoneRect]
+    let accent: Color
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 4) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Circle().fill(Color.secondary.opacity(0.4)).frame(width: 4, height: 4)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 8)
+            .frame(height: 15)
+            .background(Ink.raised(scheme))
+            GeometryReader { geo in
+                ZStack(alignment: .topLeading) {
+                    ForEach(Array(zones.enumerated()), id: \.offset) { index, zone in
+                        tile(index: index, zone: zone, in: geo.size)
+                    }
+                    if zones.isEmpty {
+                        Text("Edge snapping")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+            }
+            .padding(6)
+        }
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Ink.raised(scheme).opacity(0.5)))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Ink.stroke(scheme)))
+    }
+
+    /// Zone two is drawn as the drop target, so the picture shows what the
+    /// overlay looks like mid-drag rather than a set of empty boxes.
+    private func tile(index: Int, zone: ZoneRect, in size: CGSize) -> some View {
+        let lit = index == 1
+        let width = max(size.width * zone.w - 5, 1)
+        let height = max(size.height * zone.h - 5, 1)
+        let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+        return shape
+            .fill(lit ? accent.opacity(0.26) : Ink.card(scheme))
+            .overlay(shape.strokeBorder(lit ? accent : Ink.stroke(scheme), lineWidth: lit ? 1.5 : 1))
+            .overlay(number(index + 1, lit: lit))
+            .frame(width: width, height: height)
+            .offset(x: size.width * zone.x + 2.5, y: size.height * zone.y + 2.5)
+    }
+
+    private func number(_ value: Int, lit: Bool) -> some View {
+        Text("\(value)")
+            .font(.system(size: 11, weight: .medium).monospacedDigit())
+            .foregroundStyle(lit ? accent : Color.secondary)
     }
 }

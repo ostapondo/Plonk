@@ -15,6 +15,28 @@ one of those.
 
 ### Added
 
+- A theme of Plonk's own: light, dark, or whatever macOS is using, plus an
+  accent colour, under Settings, Appearance. Both reach further than the
+  window — the zone overlay and the pointer tools take the accent unless they
+  have been given a colour of their own, and the theme applies to every panel
+  the app puts on screen. Stored under a new `appearance` key in `config.json`;
+  files written before this keep working and start on "system".
+- A command palette on ⌘K, listing every shortcut, workspace, zone set and
+  settings page by name. It is built from the same lists the rest of the app
+  uses, so it cannot fall out of step with what the app can do. A placement
+  command hides Plonk first, because otherwise the window it would move is
+  Plonk's own.
+- Opening Plonk while it is already running now shows its window, the way a
+  Dock click does. It used to do nothing at all.
+
+### Changed
+
+- The settings window was redrawn. Eleven flat sidebar entries became five
+  destinations that unfold into their pages, the permission chips moved to a
+  strip in the title bar that only takes room when something is wrong, and the
+  Zones page now opens on the set that is actually on your screen instead of a
+  pop-up menu of names. Shortcuts are printed on the rows that own them.
+
 - `zone-sets/` — a gallery of layouts as JSON the app's own `/zones/save` route
   accepts unmodified, so trying one is a single command and no build. Adding
   one is the smallest useful change this repo takes, and

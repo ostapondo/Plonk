@@ -74,6 +74,14 @@ protocol AppActions: AnyObject {
     func removeWorkspaceItem(_ index: Int, from name: String)
     func cancelWorkspaceLaunch()
 
+    /// "system", "light" or "dark". Anything else reads as "system".
+    func setTheme(_ name: String)
+    /// "#RRGGBB", or nil to follow the system accent colour.
+    func setAccent(_ hex: String?)
+    /// Everything the palette can run, in the order it should be offered.
+    func paletteCommands() -> [PlonkCommand]
+    func openCommandPalette()
+
     /// Nil clears the selection, so any agent may drive again.
     func selectAgent(_ name: String?)
     func setAgentExclusive(_ on: Bool)
@@ -135,7 +143,9 @@ final class AppModel: ObservableObject {
     @Published var apiWarning: String?
     @Published var configWarning: String?
     @Published var settingsPages: [SettingsPage] = []
+    @Published var settingsGroups: [SettingsGroup] = []
     @Published var selectedPage: String?
+    @Published var appearance = AppearanceSettings()
     @Published var appVersion = ""
     @Published var shotFolder = "~/Desktop"
     @Published var shotCopyToClipboard = true
@@ -159,18 +169,29 @@ final class AppModel: ObservableObject {
     weak var actions: AppActions?
 }
 
-// One entry per module in the settings sidebar. A new module registers its page
-// in AppDelegate instead of editing SettingsView.
+// One entry per page in the settings sidebar. A new module registers its page
+// in SettingsPages instead of editing the sidebar.
 struct SettingsPage: Identifiable {
     let id: String
     let title: String
     let icon: String
-    /// Sidebar group heading; nil pins the page above the first one.
-    var section: String?
+    /// The destination it belongs to, by SettingsGroup id.
+    var parent: String?
     let make: (AppModel) -> AnyView
 }
 
+/// A sidebar destination. Its pages are the ones naming it as their parent, and
+/// it expands into them only while it is the one being looked at.
+struct SettingsGroup: Identifiable {
+    let id: String
+    let title: String
+    let icon: String
+}
+
 extension AppModel {
+    /// The colour the app draws itself with, ready to hand to SwiftUI.
+    var accent: Color { Color(nsColor: appearance.accent) }
+
     /// Reads published state, writes through AppActions.
     func binding<Value>(_ keyPath: KeyPath<AppModel, Value>,
                         set: @escaping (AppActions, Value) -> Void) -> Binding<Value> {

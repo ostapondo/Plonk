@@ -13,6 +13,7 @@ final class WindowPresenter: NSObject {
     private var fullscreenEditor: NSWindow?
     private var shotEditor: NSWindow?
     private var workspaceLaunch: NSPanel?
+    private var palette: EditorWindow?
 
     var shotFolder: () -> String = { "~/Desktop" }
     var onCancelWorkspaceLaunch: (() -> Void)?
@@ -36,11 +37,57 @@ final class WindowPresenter: NSObject {
     func showMainWindow() {
         if main == nil {
             let window = panel(title: "Plonk",
-                               size: NSSize(width: 860, height: 620),
+                               size: NSSize(width: 1000, height: 700),
+                               unified: true,
                                content: MainWindowView(model: model))
             main = window
         }
         present(main)
+    }
+
+    /// ⌘K. Rebuilt on every open rather than kept around, because the commands
+    /// it lists change with the workspaces, the zone sets and the bindings.
+    func showCommandPalette(commands: [PlonkCommand]) {
+        closeCommandPalette()
+        let window = EditorWindow(contentRect: .zero, styleMask: .borderless,
+                                  backing: .buffered, defer: false)
+        window.onEscape = { [weak self] in self?.closeCommandPalette() }
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.level = .floating
+        window.isReleasedWhenClosed = false
+        window.hasShadow = true
+        // Clicking anywhere else dismisses it, the way Spotlight does. Without
+        // this it stays on top of whatever you switched to, and its key monitor
+        // keeps eating the arrow keys.
+        window.delegate = self
+        window.contentViewController = NSHostingController(
+            rootView: CommandPaletteView(commands: commands) { [weak self] in
+                self?.closeCommandPalette()
+            }
+        )
+        window.setContentSize(window.contentViewController?.view.fittingSize
+                              ?? NSSize(width: 560, height: 420))
+        palette = window
+        // A third of the way down rather than centred: a list that grows
+        // downwards should not start in the middle of the screen.
+        if let screen = NSScreen.main {
+            let frame = window.frame
+            window.setFrameOrigin(NSPoint(x: screen.frame.midX - frame.width / 2,
+                                          y: screen.visibleFrame.maxY - frame.height - 140))
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    /// Closed rather than ordered out: the hosting view has to be torn down so
+    /// its key monitor is removed. An ordered-out window keeps its view alive,
+    /// and a live monitor would swallow the arrow keys of every other app.
+    func closeCommandPalette() {
+        guard let window = palette else { return }
+        palette = nil
+        window.delegate = nil
+        window.close()
     }
 
     func showZonePicker() {
@@ -147,13 +194,25 @@ final class WindowPresenter: NSObject {
         shotEditor = nil
     }
 
-    private func panel<Content: View>(title: String, size: NSSize, content: Content) -> NSWindow {
+    /// `unified` runs the content up under the title bar, so the sidebar and
+    /// the page's own bar reach the top edge and the window has one header
+    /// instead of a system one sitting on top of ours. The traffic lights stay
+    /// where macOS puts them; the sidebar leaves room for them.
+    private func panel<Content: View>(title: String, size: NSSize, unified: Bool = false,
+                                      content: Content) -> NSWindow {
+        var style: NSWindow.StyleMask = [.titled, .closable, .miniaturizable, .resizable]
+        if unified { style.insert(.fullSizeContentView) }
         let window = NSWindow(
             contentRect: .zero,
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: style,
             backing: .buffered, defer: false
         )
         window.title = title
+        if unified {
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.isMovableByWindowBackground = true
+        }
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(rootView: content)
         // Size before centering: the hosting view starts at zero and would
@@ -174,6 +233,11 @@ extension WindowPresenter: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         guard (notification.object as? NSWindow) === zonePicker else { return }
         onZonePickerClosed?()
+    }
+
+    func windowDidResignKey(_ notification: Notification) {
+        guard (notification.object as? NSWindow) === palette else { return }
+        closeCommandPalette()
     }
 }
 

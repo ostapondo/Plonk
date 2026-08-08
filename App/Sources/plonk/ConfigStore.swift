@@ -136,6 +136,8 @@ struct Config: Codable {
     // through the environment, never as text in the line; see
     // AgentAdapter.invocation. Edited in config.json for now.
     var agentAdapters: [AgentAdapter] = []
+    /// Theme and accent; see AppearanceSettings.
+    var appearance = AppearanceSettings()
     var workspaces: [String: Workspace] = [:]
     var zoneSets: [String: [ZoneRect]] = [:]
     // Keyed by display UUID; configs written before that used the screen index,
@@ -185,6 +187,7 @@ struct Config: Codable {
         sawFirstAgent = try c.decodeIfPresent(Bool.self, forKey: .sawFirstAgent) ?? false
         gettingStartedHidden = try c.decodeIfPresent(Bool.self, forKey: .gettingStartedHidden) ?? false
         agentAdapters = try c.decodeIfPresent([AgentAdapter].self, forKey: .agentAdapters) ?? []
+        appearance = try c.decodeIfPresent(AppearanceSettings.self, forKey: .appearance) ?? AppearanceSettings()
         if let current = try c.decodeIfPresent([String: Workspace].self, forKey: .workspaces) {
             workspaces = current
         } else {

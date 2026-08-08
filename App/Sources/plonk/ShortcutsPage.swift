@@ -65,7 +65,7 @@ struct ShortcutsPage: View {
                         .foregroundStyle(.orange)
                         .help("Another app already owns this combination")
                 }
-                keyCaps(model.hotkeyParts[action.rawValue] ?? [])
+                KeyCaps(parts: model.hotkeyParts[action.rawValue] ?? [], showsNone: true)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.tertiary)
@@ -76,20 +76,4 @@ struct ShortcutsPage: View {
         .help("Set on the \(pageTitle(action.page)) page")
     }
 
-    private func keyCaps(_ parts: [String]) -> some View {
-        HStack(spacing: 3) {
-            if parts.isEmpty {
-                Text("None").font(.caption).foregroundStyle(.tertiary)
-            }
-            ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
-                Text(part)
-                    .font(.system(size: 11, weight: .medium))
-                    .frame(minWidth: 13)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(0.07)))
-                    .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Color.primary.opacity(0.13)))
-            }
-        }
-    }
 }
