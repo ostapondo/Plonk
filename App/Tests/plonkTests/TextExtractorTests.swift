@@ -48,4 +48,29 @@ struct TextExtractorTests {
     @Test func nothingReadIsAnEmptyString() {
         #expect(TextExtractor.joined([]).isEmpty)
     }
+
+    /// Rows are grouped before anything inside them is sorted. Asking "are
+    /// these two within a band of each other" pairwise is not a consistent
+    /// ordering — it can hold for A,B and B,C but not A,C — and sorting on
+    /// that scrambles the very text it is meant to straighten out.
+    ///
+    /// Here five ragged lines fall into three rows, each anchored on its own
+    /// first line: A and B share one, C and D the next, E is alone.
+    @Test func raggedLinesGroupIntoRowsBeforeSorting() {
+        let lines = [
+            line("A", 0.30, 0.100), line("B", 0.05, 0.107), line("C", 0.60, 0.114),
+            line("D", 0.10, 0.121), line("E", 0.02, 0.128),
+        ]
+        #expect(TextExtractor.joined(lines) == "B\nA\nD\nC\nE")
+    }
+
+    @Test func everyLineComesBackExactlyOnce() {
+        let lines = (0..<40).map { line("w\($0)", Double($0 % 7) / 7, Double($0) * 0.004) }
+        #expect(TextExtractor.joined(lines).split(separator: "\n").count == 40)
+    }
+
+    @Test func farApartLinesNeverShareARow() {
+        let lines = [line("bottom", 0.9, 0.8), line("top", 0.1, 0.1)]
+        #expect(TextExtractor.joined(lines) == "top\nbottom")
+    }
 }

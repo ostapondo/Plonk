@@ -45,9 +45,18 @@ function options(argv: string[]): { flags: Record<string, string>; rest: string[
   return { flags, rest };
 }
 
+/** Unwinds to the top instead of calling process.exit, which on a pipe cuts
+ * stdout off mid-write: `plonk state --json | jq` would get invalid JSON.
+ * Letting the process end on its own flushes first. */
+class Exit extends Error {
+  constructor(readonly code: number) {
+    super(`exit ${code}`);
+  }
+}
+
 function fail(message: string): never {
   console.error(`plonk: ${message}`);
-  process.exit(1);
+  throw new Exit(1);
 }
 
 function number(raw: string | undefined, what: string): number | undefined {
@@ -58,13 +67,13 @@ function number(raw: string | undefined, what: string): number | undefined {
 }
 
 /** Prints the reply and exits non-zero when the app refused. */
-function report(result: object, quiet = false): never {
+function report(result: object): never {
   if ("error" in result) {
     console.error(`plonk: ${(result as { error: string }).error}`);
-    process.exit(1);
+    throw new Exit(1);
   }
-  if (!quiet) console.log(JSON.stringify(result, null, 2));
-  process.exit(0);
+  console.log(JSON.stringify(result, null, 2));
+  throw new Exit(0);
 }
 
 async function summarize(): Promise<never> {
@@ -86,7 +95,7 @@ async function summarize(): Promise<never> {
     lines.push(`  ${window.app}${window.title ? ` — ${window.title}` : ""} [screen ${window.screen}]`);
   }
   console.log(lines.join("\n"));
-  process.exit(0);
+  throw new Exit(0);
 }
 
 /** Runs a command with its output passed through, holding keep-awake for
@@ -117,7 +126,7 @@ async function awakeWhile(argv: string[]): Promise<never> {
   }
   // Plonk drops the assertion itself when the process goes; waiting here only
   // makes the shell finish at the same moment.
-  process.exit(await finished);
+  throw new Exit(await finished);
 }
 
 async function main(): Promise<void> {
@@ -227,4 +236,9 @@ async function main(): Promise<void> {
 // Named so the app can attribute the calls, and so "only the active agent
 // controls" can be pointed at the shell like anything else.
 processIdentityHolder().identity = { name: "plonk-cli", version: "", pid: process.pid };
-await main();
+try {
+  await main();
+} catch (err) {
+  if (!(err instanceof Exit)) throw err;
+  process.exitCode = err.code;
+}
