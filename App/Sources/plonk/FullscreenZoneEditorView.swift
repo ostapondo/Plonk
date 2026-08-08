@@ -164,7 +164,7 @@ struct ZoneKeyCatcher: NSViewRepresentable {
             case 124: onKey?(.arrow(dx: 1, dy: 0, resizing: shift))
             case 126: onKey?(.arrow(dx: 0, dy: -1, resizing: shift))
             case 125: onKey?(.arrow(dx: 0, dy: 1, resizing: shift))
-            case 1: onKey?(.split(vertical: !shift))
+            case 1: onKey?(.split(vertical: shift))
             case 51, 117: onKey?(.delete)
             default: super.keyDown(with: event)
             }

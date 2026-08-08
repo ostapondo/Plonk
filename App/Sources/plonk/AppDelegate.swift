@@ -433,8 +433,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // Plonk's own windows would otherwise be in the shot, and the picker
         // has to be the only thing on top.
-        let hidden = presenter.visible
-        hidden.forEach { $0.orderOut(nil) }
+        let hidden = hideOwnWindows()
         let finish: (Result<String, Error>) -> Void = { result in
             hidden.forEach { $0.orderFront(nil) }
             report(result)
@@ -452,7 +451,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func applyMouseSettings() {
-        mouse.findEnabled = store.config.findCursorEnabled
         mouse.highlightEnabled = store.config.highlightClicksEnabled
         mouse.crosshairsEnabled = store.config.crosshairsEnabled
         mouse.tint = ZoneAppearance.color(fromHex: store.config.zoneColorHex) ?? .controlAccentColor
@@ -608,7 +606,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.grabMoveModifier = store.config.grabMoveModifier
         model.grabMoveResize = store.config.grabMoveResize
         model.grabMoveShowGeometry = store.config.grabMoveShowGeometry
-        model.findCursorEnabled = store.config.findCursorEnabled
         model.highlightClicksEnabled = store.config.highlightClicksEnabled
         model.crosshairsEnabled = store.config.crosshairsEnabled
         model.excludedApps = store.config.excludedApps
@@ -770,14 +767,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func runCapture(_ mode: CaptureMode, openEditor: Bool,
                             completion: @escaping (NSImage?) -> Void = { _ in }) {
-        // Hide our own windows so they do not end up in the shot.
-        let hidden = presenter.visible
-        hidden.forEach { $0.orderOut(nil) }
+        let hidden = hideOwnWindows()
         ScreenshotManager.capture(mode) { [weak self] image in
             hidden.forEach { $0.orderFront(nil) }
             if let image, openEditor { self?.presenter.showShotEditor(image: image) }
             completion(image)
         }
+    }
+
+    /// Everything Plonk has on screen, ordered out so it cannot end up in a
+    /// capture: settings and editors, but also the crosshairs and any pinned
+    /// crop, which are floating over exactly the area being photographed.
+    private func hideOwnWindows() -> [NSWindow] {
+        let hidden = (presenter.visible + mouse.visibleWindows + crops.visibleWindows)
+            .filter { $0.isVisible }
+        hidden.forEach { $0.orderOut(nil) }
+        return hidden
     }
 
     private func finishShot(copied: Bool, path: String?) {
@@ -939,12 +944,6 @@ extension AppDelegate: AppActions {
         store.update { $0.grabMoveShowGeometry = on }
         model.grabMoveShowGeometry = on
         applyGrabMoveSettings()
-    }
-
-    func setFindCursor(_ on: Bool) {
-        store.update { $0.findCursorEnabled = on }
-        model.findCursorEnabled = on
-        applyMouseSettings()
     }
 
     func setHighlightClicks(_ on: Bool) {

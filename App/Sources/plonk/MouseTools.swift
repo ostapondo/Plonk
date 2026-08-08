@@ -3,8 +3,11 @@ import AppKit
 // Four small things for the cursor, all of them a transparent click-through
 // window and an event tap that only ever reads.
 //
-// - Find it: tap Control twice and everything but a circle around the pointer
-//   dims, so a cursor lost on a wide desk is found without waggling the mouse.
+// - Find it: a shortcut dims everything but a circle around the pointer, so a
+//   cursor lost on a wide desk is found without waggling the mouse. PowerToys
+//   offers a double-tap of Control as well; that cannot be told apart from a
+//   Control chord without watching every keystroke the user types, which is
+//   not a capability this app is going to take for a convenience.
 // - Highlight clicks: a coloured ring on every press. This is for anyone
 //   recording a demo — a click is invisible in a screen recording otherwise.
 // - Crosshairs: full-width and full-height lines through the pointer, for
@@ -14,19 +17,15 @@ import AppKit
 //   beats shoving a mouse across three monitors.
 
 final class MouseTools {
-    /// Two Control presses inside this window count as the summon gesture.
-    private static let doubleTapWindow: TimeInterval = 0.4
     private static let spotlightRadius: CGFloat = 110
     private static let clickRadius: CGFloat = 34
 
     private let overlay = MouseOverlay()
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var lastControlRelease: Date?
-    private var controlWasAlone = false
     private var spotlightToken = 0
+    private var lastCrosshair: NSPoint?
 
-    var findEnabled = false
     var highlightEnabled = false
     var crosshairsEnabled = false {
         didSet { refreshPersistent() }
@@ -36,7 +35,6 @@ final class MouseTools {
     func start() {
         guard tap == nil else { return }
         let mask: CGEventMask =
-            (1 << CGEventType.flagsChanged.rawValue) |
             (1 << CGEventType.leftMouseDown.rawValue) |
             (1 << CGEventType.rightMouseDown.rawValue) |
             (1 << CGEventType.mouseMoved.rawValue) |
@@ -73,6 +71,9 @@ final class MouseTools {
         tap = nil
         overlay.hide()
     }
+
+    /// What this has on screen, so a capture can get it out of the way.
+    var visibleWindows: [NSWindow] { overlay.visibleWindows }
 
     // MARK: - Jump
 
@@ -115,31 +116,6 @@ final class MouseTools {
             return
         }
         switch type {
-        case .flagsChanged:
-            guard findEnabled else { return }
-            // The gesture is Control pressed and released twice, on its own.
-            // Watching only for "the flags contain Control" would fire on every
-            // Control chord — which is every shortcut Plonk itself ships.
-            let flags = NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue))
-                .intersection(.deviceIndependentFlagsMask)
-            if flags == .control {
-                controlWasAlone = true
-                return
-            }
-            // Any other modifier joining in makes this a chord, not a tap.
-            guard flags.isEmpty, controlWasAlone else {
-                controlWasAlone = false
-                lastControlRelease = nil
-                return
-            }
-            controlWasAlone = false
-            let now = Date()
-            if let last = lastControlRelease, now.timeIntervalSince(last) < Self.doubleTapWindow {
-                lastControlRelease = nil
-                DispatchQueue.main.async { [weak self] in self?.flashSpotlight() }
-            } else {
-                lastControlRelease = now
-            }
         case .leftMouseDown, .rightMouseDown:
             guard highlightEnabled else { return }
             let point = event.unflippedLocation

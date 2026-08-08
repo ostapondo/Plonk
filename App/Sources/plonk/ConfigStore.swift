@@ -89,7 +89,7 @@ struct Config: Codable {
     var grabMoveResize = true
     var grabMoveShowGeometry = true
     // The pointer tools. Each is independent and each is off until asked for.
-    var findCursorEnabled = true
+    // Finding the pointer is a shortcut rather than a toggle, so it has none.
     var highlightClicksEnabled = false
     var crosshairsEnabled = false
     // Apps drag snapping and the placement hotkeys leave alone; see
@@ -153,7 +153,6 @@ struct Config: Codable {
         grabMoveModifier = try c.decodeIfPresent(String.self, forKey: .grabMoveModifier) ?? "option"
         grabMoveResize = try c.decodeIfPresent(Bool.self, forKey: .grabMoveResize) ?? true
         grabMoveShowGeometry = try c.decodeIfPresent(Bool.self, forKey: .grabMoveShowGeometry) ?? true
-        findCursorEnabled = try c.decodeIfPresent(Bool.self, forKey: .findCursorEnabled) ?? true
         highlightClicksEnabled = try c.decodeIfPresent(Bool.self, forKey: .highlightClicksEnabled) ?? false
         crosshairsEnabled = try c.decodeIfPresent(Bool.self, forKey: .crosshairsEnabled) ?? false
         excludedApps = try c.decodeIfPresent([String].self, forKey: .excludedApps) ?? []

@@ -360,7 +360,17 @@ final class WindowManager {
     /// space left around the zone, in points, so a snapped window can breathe.
     func apply(frac: FracRect, toWindow win: AXUIElement, screenIndex: Int, gap: CGFloat = 0) {
         let rect = axRect(for: frac, screenIndex: screenIndex, in: screens())
-        setFrame(win, gap > 0 ? rect.insetBy(dx: gap, dy: gap) : rect)
+        setFrame(win, Self.inset(rect, by: gap))
+    }
+
+    /// Insets a rect by the zone gap without ever turning it inside out: a
+    /// wide gap on a narrow zone would otherwise produce a null rect, and the
+    /// window would be sent to an infinite origin.
+    static func inset(_ rect: CGRect, by gap: CGFloat) -> CGRect {
+        guard gap > 0, rect.width > 0, rect.height > 0 else { return rect }
+        let minimumSide: CGFloat = 120
+        let room = min(gap, max((rect.width - minimumSide) / 2, 0), max((rect.height - minimumSide) / 2, 0))
+        return room > 0 ? rect.insetBy(dx: room, dy: room) : rect
     }
 
     /// Which screen a window sits on, by the screen its centre falls in.

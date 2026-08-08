@@ -67,6 +67,10 @@ final class CropAndLock: NSObject {
 
     var count: Int { panels.count }
 
+    /// Pinned crops float over the desk, so a capture has to hide them or it
+    /// photographs its own output.
+    var visibleWindows: [NSWindow] { panels }
+
     func closeAll() {
         panels.forEach { $0.close() }
         panels.removeAll()

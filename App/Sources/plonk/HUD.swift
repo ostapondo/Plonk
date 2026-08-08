@@ -9,6 +9,10 @@ final class HUD {
     static let shared = HUD()
 
     private var window: NSWindow?
+    /// Separate from `window`: the readout is up while a drag is, and a notice
+    /// arriving in the middle of one must not replace it.
+    private var compactWindow: NSWindow?
+    private let compactLabel = NSTextField(labelWithString: "")
     private var token = 0
 
     private init() {}
@@ -40,20 +44,43 @@ final class HUD {
     /// A small readout that stays up until something hides it — the size of a
     /// window while it is being resized, where the checkmark and the fade of
     /// `show` would both be wrong.
+    ///
+    /// This runs on every event of a drag, so the view is built once and only
+    /// its text changes after that; rebuilding a hosting view per frame was
+    /// measurably worse than the resize it was describing.
     func showCompact(_ text: String) {
         token += 1
-        let panel = window ?? makeWindow()
-        window = panel
-        panel.contentView = NSHostingView(rootView: CompactHUDView(text: text))
-        panel.setContentSize(panel.contentView?.fittingSize ?? NSSize(width: 120, height: 40))
+        let panel = compactWindow ?? makeCompactWindow()
+        compactWindow = panel
+        compactLabel.stringValue = text
+        compactLabel.sizeToFit()
+        panel.setContentSize(NSSize(width: compactLabel.frame.width + 28,
+                                    height: compactLabel.frame.height + 18))
+        compactLabel.frame = panel.contentView?.bounds.insetBy(dx: 14, dy: 9) ?? compactLabel.frame
         HUD.placeInCorner(panel)
         panel.alphaValue = 1
-        panel.orderFrontRegardless()
+        if !panel.isVisible { panel.orderFrontRegardless() }
+    }
+
+    private func makeCompactWindow() -> NSWindow {
+        let panel = makeWindow()
+        let effect = NSVisualEffectView()
+        effect.material = .hudWindow
+        effect.state = .active
+        effect.wantsLayer = true
+        effect.layer?.cornerRadius = 10
+        effect.layer?.masksToBounds = true
+        compactLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+        compactLabel.alignment = .center
+        compactLabel.autoresizingMask = [.width, .height]
+        effect.addSubview(compactLabel)
+        panel.contentView = effect
+        return panel
     }
 
     func hide() {
         token += 1
-        window?.orderOut(nil)
+        compactWindow?.orderOut(nil)
     }
 
     private func makeWindow() -> NSWindow {
@@ -80,19 +107,6 @@ final class HUD {
         let size = panel.frame.size
         panel.setFrameOrigin(NSPoint(x: frame.maxX - size.width - margin,
                                      y: frame.maxY - size.height - margin))
-    }
-}
-
-private struct CompactHUDView: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(.system(.callout, design: .monospaced).weight(.medium))
-            .monospacedDigit()
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
