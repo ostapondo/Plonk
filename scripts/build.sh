@@ -13,14 +13,19 @@ cd "$(dirname "$0")/.."
 # time, which silently revokes both — refuse to produce a bundle like that
 # rather than let it look built and then fail at the first window move. Checked
 # before anything is written, so a missing identity leaves the working app alone.
-IDENTITY=${PLONK_SIGN_IDENTITY:-Plonk Dev}
+IDENTITY=${PLONK_SIGN_IDENTITY:-Plonk Signing}
 if ! security find-identity -v -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
 	cat >&2 <<MSG
 error: code-signing identity "$IDENTITY" is not in the keychain.
 
-Create it once, then re-run this script:
-  Keychain Access > Certificate Assistant > Create a Certificate...
-  Name: $IDENTITY   Identity Type: Self Signed Root   Type: Code Signing
+If you have the .p12, import it and trust it as a root — an untrusted one is
+not a *valid* identity and will not be found:
+  security import plonk-signing.p12 -k ~/Library/Keychains/login.keychain-db -T /usr/bin/codesign
+  sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain cert.pem
+
+If no identity exists yet, ./scripts/make-signing-cert.sh creates one. Do not
+run it to work around this message: a different certificate is a different
+identity, and switching resets Accessibility and Screen Recording for everyone.
 
 Set PLONK_SIGN_IDENTITY to build with a different one.
 MSG

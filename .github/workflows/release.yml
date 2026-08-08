@@ -8,13 +8,15 @@ name: Release
 #
 # Secrets, set once under Settings > Secrets and variables > Actions:
 #
-#   PLONK_SIGN_CERT_P12       the "Plonk Dev" certificate and its key, base64
+#   PLONK_SIGN_CERT_P12       the "Plonk Signing" certificate and its key, base64
 #   PLONK_SIGN_CERT_PASSWORD  the password used when exporting it
 #   NPM_TOKEN                 an npm automation token that can publish plonk-mcp
 #
-# To produce the first two: Keychain Access > login > My Certificates, right
-# click "Plonk Dev" > Export, save a .p12 with a password, then
-#   base64 -i Plonk-Dev.p12 | pbcopy
+# The first two come from ./scripts/make-signing-cert.sh, which prints both.
+# The certificate is deliberately generated as a file rather than in the
+# keychain: macOS will not export a private key that was born there except
+# through the Keychain Access window, and a release pipeline cannot depend on
+# someone clicking through it.
 #
 # That key is worth guarding. It is not a Gatekeeper identity and proves
 # nothing to Apple, but every installed copy of Plonk will install an update
@@ -72,13 +74,13 @@ jobs:
           security import "$P12_FILE" -k "$KEYCHAIN" -P "$P12_PASSWORD" \
             -T /usr/bin/codesign -T /usr/bin/security
 
-          # "Plonk Dev" is a self-signed root, so nothing on a fresh runner
+          # "Plonk Signing" is a self-signed root, so nothing on a fresh runner
           # vouches for it and `find-identity -v` — which build.sh checks —
           # leaves it out until the system keychain is told to trust it. The
           # certificate is read back out of the keychain rather than out of the
           # .p12, which would need an openssl new enough for -legacy and the
           # one on the runner is not it.
-          security find-certificate -c "Plonk Dev" -p "$KEYCHAIN" > "$CERT_FILE"
+          security find-certificate -c "Plonk Signing" -p "$KEYCHAIN" > "$CERT_FILE"
           sudo security add-trusted-cert -d -r trustRoot \
             -k /Library/Keychains/System.keychain "$CERT_FILE"
 
@@ -90,8 +92,8 @@ jobs:
             $(security list-keychains -d user | tr -d '"')
           rm -f "$P12_FILE" "$CERT_FILE"
 
-          if ! security find-identity -v -p codesigning | grep -q "Plonk Dev"; then
-            echo "::error::the imported certificate is not a valid codesigning identity named \"Plonk Dev\""
+          if ! security find-identity -v -p codesigning | grep -q "Plonk Signing"; then
+            echo "::error::the imported certificate is not a valid codesigning identity named \"Plonk Signing\""
             security find-identity -v -p codesigning
             exit 1
           fi
@@ -101,7 +103,7 @@ jobs:
 
       - name: Build, sign and package
         env:
-          PLONK_SIGN_IDENTITY: Plonk Dev
+          PLONK_SIGN_IDENTITY: Plonk Signing
         run: ./scripts/release.sh
 
       # What ties Plonk-<version>.zip to this repository, this commit and this
