@@ -85,7 +85,7 @@ attestation of its own; verify the zip if you want the stronger statement.
 
 ## The signing certificate, and what it is not
 
-Plonk is signed with a self-signed certificate called `Plonk Dev`. It is **not**
+Plonk is signed with a self-signed certificate called `Plonk Signing`. It is **not**
 an Apple Developer ID and proves nothing about who wrote the app — Gatekeeper
 does not trust it, which is why first launch needs one trip through System
 Settings > Privacy & Security > **Open Anyway**.
@@ -99,6 +99,14 @@ requirement every release has to satisfy is committed to this repo, in
 [scripts/release-requirement](scripts/release-requirement), and
 [scripts/release.sh](scripts/release.sh) refuses to ship a build that does not
 match it.
+
+That requirement changed once, at 0.0.5. Releases up to 0.0.4 were signed with
+a key that lived only in one Mac's keychain and could not be got back out of
+it, which made building releases anywhere else impossible. Anyone who installed
+0.0.4 or earlier has to install 0.0.5 by hand and grant Accessibility and
+Screen Recording once more; updates carry across from there on. It is the kind
+of change that costs every user something, so it was made while there was
+almost nobody to charge.
 
 The private key lives in GitHub Actions secrets. Its worst case is worth stating
 plainly: someone holding that key could sign a build that installed copies of

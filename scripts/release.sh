@@ -28,7 +28,7 @@ case "$IDENTITY" in
 "Developer ID Application:"*) ;;
 *)
 	NOTARIZE=no
-	IDENTITY=${PLONK_SIGN_IDENTITY:-Plonk Dev}
+	IDENTITY=${PLONK_SIGN_IDENTITY:-Plonk Signing}
 	cat >&2 <<MSG
 warning: no "Developer ID Application" certificate found, so this release will
 not be notarized and first launch will need System Settings > Open Anyway.

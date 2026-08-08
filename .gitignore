@@ -4,3 +4,4 @@ Plonk.app/
 mcp/node_modules/
 mcp/dist/
 Plonk-*.zip
+*.p12

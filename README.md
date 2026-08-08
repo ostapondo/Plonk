@@ -255,12 +255,19 @@ cd mcp && npm run build   # the MCP server
 `App/` is the Swift menu bar app, `mcp/` the TypeScript MCP server. Point an
 agent at [AGENTS.md](AGENTS.md) before it touches either.
 
-`build.sh` signs with a `Plonk Dev` keychain identity and stops if it is
-missing. macOS ties Accessibility and Screen Recording to the signature, and an
-ad-hoc one changes every build, so create that certificate once (Keychain
-Access → Certificate Assistant → Create a Certificate → type "Code Signing",
-name it `Plonk Dev`) and rebuilds stop resetting permissions. Set
-`PLONK_SIGN_IDENTITY` to sign with a different one.
+`build.sh` signs with a `Plonk Signing` identity and stops if it is missing.
+macOS ties Accessibility and Screen Recording to the signature, and an ad-hoc
+one changes every build, so a stable certificate is what stops rebuilds from
+resetting permissions. [scripts/make-signing-cert.sh](scripts/make-signing-cert.sh)
+creates one and prints how to import and trust it; set `PLONK_SIGN_IDENTITY` to
+sign with a different one.
+
+It writes a `.p12` rather than adding a certificate to the keychain directly,
+which looks like the long way round until you need the key somewhere else: a
+key created by Certificate Assistant cannot be exported except through the
+Keychain Access window, and the release workflow needs it as a file it can put
+in a secret. Keep that `.p12` somewhere safe. Every installed copy accepts an
+update only if it is signed with that key, and there is nobody to reissue it.
 
 If a permission was first granted while the app was ad-hoc signed, the old
 grant is pinned to a signature that no longer exists and every rebuild looks

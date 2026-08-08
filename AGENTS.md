@@ -90,7 +90,7 @@ Things that have already cost someone an hour.
 - **Permissions are pinned to the code signature, not to the app.** TCC stores
   the designated requirement, so any change to it drops Accessibility and
   Screen Recording at once. `scripts/build.sh` refuses to build without the
-  `Plonk Dev` identity for exactly this reason — never work around it by
+  `Plonk Signing` identity for exactly this reason — never work around it by
   ad-hoc signing. A grant that keeps vanishing across rebuilds is a stale entry
   from an older signature: `tccutil reset ScreenCapture dev.plonk.app`, then
   grant it once more.
