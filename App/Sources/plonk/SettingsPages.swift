@@ -1,10 +1,16 @@
 import SwiftUI
 
+// Ordered by what has to be true before the next thing means anything: which
+// set is on which screen and the editor that makes them, then the two ways a
+// window gets into one (dragging, shortcuts), then looks, then the neighbouring
+// features. Appearance and Grab and Move used to sit above the editor, which
+// put the page's only real action last.
+
 struct ZonesPage: View {
     @ObservedObject var model: AppModel
     @State private var opacityDraft = 1.0
 
-    /// Everything on this page that is not one of the two grouped sections below.
+    /// Everything on this page that is not one of the three grouped sections.
     private var presetActions: [HotkeyAction] {
         let grouped: Set<String> = ["Numbered zones", "Zone sets", "Focus"]
         return HotkeyAction.owned(by: "zones").filter { !grouped.contains($0.group) }
@@ -21,13 +27,31 @@ struct ZonesPage: View {
 
     var body: some View {
         Form {
+            // First, because nothing else on this page means anything until a
+            // screen has a set on it, and the editor is where sets come from.
+            Section {
+                ForEach(0..<model.screenCount, id: \.self) { screen in
+                    Picker(screen == 0 ? "Screen 1 (primary)" : "Screen \(screen + 1)",
+                           selection: assignment(for: screen)) {
+                        Text("Edge snapping").tag("edge")
+                        Divider()
+                        ForEach(model.zoneSetNames, id: \.self) { Text($0).tag($0) }
+                    }
+                }
+                // Ellipsis because it opens a window of its own.
+                Button { model.actions?.openZonePicker() } label: {
+                    Label("Edit Zones…", systemImage: "square.grid.2x2")
+                }
+            } header: {
+                Text("Zone Sets")
+            } footer: {
+                Text("Each screen gets its own set, or edge snapping. The editor is where sets are drawn, previewed and duplicated; an agent can make freeform ones for you. Overlaps are allowed; the smallest zone under the cursor wins.")
+            }
             Section {
                 Toggle(isOn: model.binding(\.dragSnapEnabled, set: { $0.setDragSnap($1) })) {
                     Text("Drag to snap")
                     Text("Drop windows into zones or screen edges while dragging")
                 }
-            }
-            Section {
                 Picker("Show zones", selection: model.binding(\.zonesRequireModifier,
                                                               set: { $0.setZonesRequireModifier($1) })) {
                     Text("While dragging").tag(false)
@@ -39,55 +63,36 @@ struct ZonesPage: View {
                     Text("⌃ Control").tag("control")
                 }
                 .pickerStyle(.segmented)
+            } header: {
+                Text("Dragging")
             } footer: {
                 Text("Holding the modifier while dragging inverts the mode, so the other behavior is always available. Hold ⌘ as well and the zone you started over and the one under the cursor are dropped into as one.")
-            }
-            Section {
-                Toggle(isOn: model.binding(\.grabMoveEnabled, set: { $0.setGrabMove($1) })) {
-                    Text("Grab windows anywhere")
-                    Text("Hold the key and drag from any point inside a window, instead of aiming for the title bar")
-                }
-                Picker("Hold", selection: model.binding(\.grabMoveModifier, set: { $0.setGrabMoveModifier($1) })) {
-                    Text("⌥ Option").tag("option")
-                    Text("⌘ Command").tag("command")
-                    Text("⌃ Control").tag("control")
-                }
-                .pickerStyle(.segmented)
-                .disabled(!model.grabMoveEnabled)
-                Toggle(isOn: model.binding(\.grabMoveResize, set: { $0.setGrabMoveResize($1) })) {
-                    Text("Right-drag resizes")
-                    Text("Pulls the edge or corner nearest where the drag started")
-                }
-                .disabled(!model.grabMoveEnabled)
-                Toggle(isOn: model.binding(\.grabMoveShowGeometry, set: { $0.setGrabMoveShowGeometry($1) })) {
-                    Text("Show the size while dragging")
-                }
-                .disabled(!model.grabMoveEnabled)
-            } header: {
-                Text("Grab and Move")
-            } footer: {
-                Text("Off by default, because option-drag already means something inside plenty of Mac apps — duplicating a layer, copying a file. Anything in the exception list below is never grabbed. Add the zones modifier while dragging and the zones appear as usual.")
-            }
-            Section {
-                ShortcutRows(model: model, actions: presetActions)
-            } header: {
-                Text("Shortcuts")
-            } footer: {
-                Text("Click a key field and press the combination. Esc cancels, Delete unbinds.")
             }
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Numbered zones"))
             } header: {
                 Text("Numbered Zones")
             } footer: {
-                Text("The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it.")
+                Text("The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it. Click a key field and press the combination; Esc cancels, Delete unbinds.")
+            }
+            Section {
+                ShortcutRows(model: model, actions: presetActions)
+            } header: {
+                Text("Halves, Quarters and the Rest")
             }
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Zone sets"))
             } header: {
                 Text("Switch Zone Sets")
             } footer: {
-                Text("Applies the set at that place in the list below, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set.")
+                Text("Applies the set at that place in the list of zone sets, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set.")
+            }
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Focus"))
+            } header: {
+                Text("Move Between Windows")
+            } footer: {
+                Text("Focus follows the layout instead of the order things were last used: step to the window that is actually to the left, or cycle through the ones stacked in a zone.")
             }
             Section {
                 PointsField(title: "Gap", help: "Empty space kept around every snapped window",
@@ -119,11 +124,30 @@ struct ZonesPage: View {
                 Text("The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything; zero switches it off.")
             }
             Section {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Focus"))
+                Toggle(isOn: model.binding(\.grabMoveEnabled, set: { $0.setGrabMove($1) })) {
+                    Text("Grab windows anywhere")
+                    Text("Hold the key and drag from any point inside a window, instead of aiming for the title bar")
+                }
+                Picker("Hold", selection: model.binding(\.grabMoveModifier, set: { $0.setGrabMoveModifier($1) })) {
+                    Text("⌥ Option").tag("option")
+                    Text("⌘ Command").tag("command")
+                    Text("⌃ Control").tag("control")
+                }
+                .pickerStyle(.segmented)
+                .disabled(!model.grabMoveEnabled)
+                Toggle(isOn: model.binding(\.grabMoveResize, set: { $0.setGrabMoveResize($1) })) {
+                    Text("Right-drag resizes")
+                    Text("Pulls the edge or corner nearest where the drag started")
+                }
+                .disabled(!model.grabMoveEnabled)
+                Toggle(isOn: model.binding(\.grabMoveShowGeometry, set: { $0.setGrabMoveShowGeometry($1) })) {
+                    Text("Show the size while dragging")
+                }
+                .disabled(!model.grabMoveEnabled)
             } header: {
-                Text("Move Between Windows")
+                Text("Grab and Move")
             } footer: {
-                Text("Focus follows the layout instead of the order things were last used: step to the window that is actually to the left, or cycle through the ones stacked in a zone.")
+                Text("Off by default, because option-drag already means something inside plenty of Mac apps — duplicating a layer, copying a file. Anything in the exception list below is never grabbed. Add the zones modifier while dragging and the zones appear as usual.")
             }
             Section {
                 Toggle(isOn: model.binding(\.restoreZonesOnScreenChange,
@@ -135,6 +159,8 @@ struct ZonesPage: View {
                     Text("Send new windows where that app's last one went")
                     Text("Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits")
                 }
+            } header: {
+                Text("When Displays and Windows Change")
             }
             Section {
                 ExcludedApps(model: model)
@@ -142,21 +168,6 @@ struct ZonesPage: View {
                 Text("Leave These Alone")
             } footer: {
                 Text("Dragging and the shortcuts skip these — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works, because that names the window on purpose.")
-            }
-            Section("Per Monitor") {
-                ForEach(0..<model.screenCount, id: \.self) { screen in
-                    Picker(screen == 0 ? "Screen 1 (primary)" : "Screen \(screen + 1)",
-                           selection: assignment(for: screen)) {
-                        Text("Edge snapping").tag("edge")
-                        Divider()
-                        ForEach(model.zoneSetNames, id: \.self) { Text($0).tag($0) }
-                    }
-                }
-            }
-            Section {
-                Button("Edit Zones") { model.actions?.openZonePicker() }
-            } footer: {
-                Text("Create and draw zone sets in the editor, or ask Claude for freeform ones. Overlaps are allowed; the smallest zone under the cursor wins.")
             }
         }
         .formStyle(.grouped)
@@ -381,63 +392,86 @@ struct AIPage: View {
 
     var body: some View {
         Form {
-            Section {
-                if agentChoices.isEmpty {
-                    Text("No agents connected yet — anything speaking MCP shows up here once it calls a Plonk tool.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    Picker("Active agent", selection: selectedAgent) {
-                        Text("Any agent").tag("")
-                        Divider()
-                        ForEach(agentChoices, id: \.self) { name in
-                            Text(model.connectedAgents.contains(name) ? name : "\(name) (offline)").tag(name)
-                        }
-                    }
-                    Toggle(isOn: model.binding(\.agentExclusive, set: { $0.setAgentExclusive($1) })) {
-                        Text("Only the active agent controls")
-                        Text("Other agents can still read state and take screenshots")
-                    }
-                    .disabled(model.selectedAgent == nil)
-                }
-            } header: {
-                Text("Agents")
-            } footer: {
-                Text("Every connected MCP client appears here. The active agent is who voice and other outgoing requests will go to.")
+            // With nothing connected there is no picker worth showing, and the
+            // useful row is the command that connects something — so that goes
+            // first until it has been run.
+            if agentChoices.isEmpty {
+                mcpSection
+                agentsSection
+            } else {
+                agentsSection
+                mcpSection
             }
-            Section {
-                LabeledContent("Local API", value: "127.0.0.1:\(ControlServer.port)")
-                connectRow("Claude Code", "claude mcp add plonk -- npx -y plonk-mcp")
-                connectRow("Codex CLI", "codex mcp add plonk -- npx -y plonk-mcp")
-                connectRow("Cursor, Zed, anything MCP", "command: npx, args: [\"-y\", \"plonk-mcp\"]")
-            } header: {
-                Text("MCP")
-            } footer: {
-                Text("Plonk is not tied to one assistant — any MCP client can drive it, several at once. Set PLONK_AGENT_NAME in the client's MCP config to name a session by hand.")
-            }
-            Section {
-                ForEach(Array(Self.examples.enumerated()), id: \.offset) { _, example in
-                    Button {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(example, forType: .string)
-                        copied = example
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "quote.bubble").foregroundStyle(Color.accentColor)
-                            Text(example)
-                            Spacer()
-                            Image(systemName: "doc.on.doc").font(.caption).foregroundStyle(.secondary)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            } header: {
-                Text("Try Saying")
-            } footer: {
-                Text(copied == nil ? "Click one to copy it." : "Copied to clipboard.")
-            }
+            examplesSection
         }
         .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var agentsSection: some View {
+        Section {
+            if agentChoices.isEmpty {
+                Text("No agents connected yet — anything speaking MCP shows up here once it calls a Plonk tool.")
+                    .foregroundStyle(.secondary)
+            } else {
+                Picker("Active agent", selection: selectedAgent) {
+                    Text("Any agent").tag("")
+                    Divider()
+                    ForEach(agentChoices, id: \.self) { name in
+                        Text(model.connectedAgents.contains(name) ? name : "\(name) (offline)").tag(name)
+                    }
+                }
+                Toggle(isOn: model.binding(\.agentExclusive, set: { $0.setAgentExclusive($1) })) {
+                    Text("Only the active agent controls")
+                    Text("Other agents can still read state and take screenshots")
+                }
+                .disabled(model.selectedAgent == nil)
+            }
+        } header: {
+            Text("Agents")
+        } footer: {
+            Text("Every connected MCP client appears here. The active agent is who voice and other outgoing requests will go to.")
+        }
+    }
+
+    @ViewBuilder
+    private var mcpSection: some View {
+        Section {
+            LabeledContent("Local API", value: "127.0.0.1:\(ControlServer.port)")
+            connectRow("Claude Code", "claude mcp add plonk -- npx -y plonk-mcp")
+            connectRow("Codex CLI", "codex mcp add plonk -- npx -y plonk-mcp")
+            connectRow("Cursor, Zed, anything MCP", "command: npx, args: [\"-y\", \"plonk-mcp\"]")
+        } header: {
+            Text("Connect an Agent")
+        } footer: {
+            Text("Run one of these once, in the client. Plonk is not tied to one assistant — any MCP client can drive it, several at once. Set PLONK_AGENT_NAME in the client's MCP config to name a session by hand.")
+        }
+    }
+
+    @ViewBuilder
+    private var examplesSection: some View {
+        Section {
+            ForEach(Array(Self.examples.enumerated()), id: \.offset) { _, example in
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(example, forType: .string)
+                    copied = example
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "quote.bubble").foregroundStyle(Color.accentColor)
+                        Text(example)
+                        Spacer()
+                        Image(systemName: "doc.on.doc").font(.caption).foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        } header: {
+            Text("Try Saying")
+        } footer: {
+            Text(copied == nil ? "Click one to copy it." : "Copied to clipboard.")
+        }
     }
 }
 
