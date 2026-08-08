@@ -95,21 +95,39 @@ async function summarize(): Promise<never> {
 async function awakeWhile(argv: string[]): Promise<never> {
   if (argv.length === 0) fail("awake while needs a command to run");
   const child = spawn(argv[0], argv.slice(1), { stdio: "inherit" });
-  child.on("error", (err) => fail(`could not run ${argv[0]}: ${err.message}`));
 
-  const started = await call("/awake", { method: "POST", body: { on: true, pid: child.pid } });
-  if ("error" in started) console.error(`plonk: keep-awake not held — ${(started as { error: string }).error}`);
-
-  child.on("exit", (code, signal) => {
-    // Plonk drops the assertion itself when the process goes; this only makes
-    // the shell wait for the same moment.
-    process.exit(signal ? 1 : (code ?? 0));
+  // Both listeners go on before the round trip below: a command that finishes
+  // inside it — `plonk awake while echo hi` — would otherwise fire exit into
+  // an empty room and hang here forever.
+  const finished = new Promise<number>((resolve) => {
+    child.on("error", (err) => {
+      console.error(`plonk: could not run ${argv[0]}: ${err.message}`);
+      resolve(1);
+    });
+    child.on("exit", (code, signal) => resolve(signal ? 1 : (code ?? 0)));
   });
-  return new Promise<never>(() => {});
+
+  // No pid means the spawn failed outright. Asking for keep-awake without one
+  // would hold an assertion nothing ever releases.
+  if (child.pid !== undefined) {
+    const started = await call("/awake", { method: "POST", body: { on: true, pid: child.pid } });
+    if ("error" in started) {
+      console.error(`plonk: keep-awake not held — ${(started as { error: string }).error}`);
+    }
+  }
+  // Plonk drops the assertion itself when the process goes; waiting here only
+  // makes the shell finish at the same moment.
+  process.exit(await finished);
 }
 
 async function main(): Promise<void> {
-  const { flags, rest } = options(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  // Everything after `awake while` belongs to the command being run, flags
+  // included, so it is taken verbatim rather than parsed for plonk's own.
+  // Otherwise `plonk awake while cargo build --release` builds in debug.
+  if (argv[0] === "awake" && argv[1] === "while") await awakeWhile(argv.slice(2));
+
+  const { flags, rest } = options(argv);
   const [command, ...args] = rest;
   const screen = number(flags.screen, "--screen");
 
@@ -167,7 +185,7 @@ async function main(): Promise<void> {
       break;
 
     case "awake": {
-      if (args[0] === "while") await awakeWhile(args.slice(1));
+      // `while` is handled before flags are parsed; anything else must be on/off.
       if (args[0] !== "on" && args[0] !== "off") fail("awake needs 'on', 'off' or 'while <command>'");
       report(await call("/awake", {
         method: "POST",
