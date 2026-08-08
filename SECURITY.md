@@ -75,6 +75,11 @@ npm view plonk-mcp dist.attestations
 npmjs.com shows the same thing as a "Provenance" panel on the package page,
 naming the commit and the workflow run the tarball was built by.
 
+There is no publish token for `plonk-mcp` anywhere — not in a secret, not on a
+laptop. npm is told to trust this repository's release workflow directly and
+authenticates it by the identity GitHub mints for each run, so the credential
+that would let someone else publish under that name does not exist.
+
 **What this does not cover.** Attestations say where a binary came from, not
 that its source is harmless — that part is still reading the code, and there is
 not much of it: ~7,600 lines of Swift and ~530 of TypeScript, with no
