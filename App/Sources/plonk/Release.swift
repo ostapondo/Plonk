@@ -112,7 +112,7 @@ struct Release {
         )
     }
 
-    static let repository = "ostapondo/Plonk"
+    static let repository = "ostapondo/plonk"
     static let latestURL = URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!
     static let releasesPageURL = URL(string: "https://github.com/\(repository)/releases/latest")!
 
