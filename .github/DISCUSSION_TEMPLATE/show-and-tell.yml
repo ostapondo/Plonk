@@ -1,0 +1,49 @@
+# The filename has to match the category slug. Rename the category and this
+# file stops being used until it is renamed to match.
+title: "[Zone set] "
+labels: ["zone-set"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Layouts are the one thing nobody can design for someone else's desk. Post
+        one you keep going back to. Sets that hold up for more than one person
+        are how the built-ins get chosen.
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: What the layout is for
+      description: >
+        The work it suits, and why the shape is what it is. A narrow rail for
+        chat next to a wide split is a different answer from three equal columns,
+        and the reason is the useful part.
+    validations:
+      required: true
+
+  - type: textarea
+    id: zones
+    attributes:
+      label: The set itself
+      description: >
+        The entry for it under `zoneSets` in
+        `~/Library/Application Support/Plonk/config.json`. Each zone is x, y, w
+        and h as fractions of the screen, origin top left.
+      render: json
+    validations:
+      required: true
+
+  - type: input
+    id: monitor
+    attributes:
+      label: The monitor you drew it on
+      description: Size and aspect ratio. A set drawn for 32:9 rarely survives 16:10.
+      placeholder: "34 inch ultrawide, 3440x1440"
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: A screenshot
+      description: Optional, and the thing most people will actually look at.

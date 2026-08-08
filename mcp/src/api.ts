@@ -176,6 +176,68 @@ function agentHeaders(): Record<string, string> {
   };
 }
 
+// The app gates its API on a secret it writes to a file only this user can
+// read, because binding to loopback keeps the network out and does nothing
+// about the machine. Reading it is the whole handshake: anything that can read
+// the file could ask macOS for the screen directly.
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+const TOKEN_PATH = join(homedir(), "Library", "Application Support", "Plonk", "token");
+
+let cachedToken: string | undefined;
+
+function readTokenFile(): string | undefined {
+  try {
+    return readFileSync(TOKEN_PATH, "utf8").trim() || undefined;
+  } catch {
+    // No app yet, or a file this user cannot read. The request goes without a
+    // token and the app's own 401 explains it better than a guess here would.
+    return undefined;
+  }
+}
+
+/** Only a successful read is cached: a client started before the app has ever
+ * run would otherwise never see the token the app writes on first launch. */
+function apiToken(): string | undefined {
+  if (cachedToken) return cachedToken;
+  cachedToken = readTokenFile();
+  return cachedToken;
+}
+
+/** The token the HTTP transport gates its own callers on, read from disk every
+ * time rather than from the cache above.
+ *
+ * A cache here would be a gate on a secret the app may already have replaced:
+ * it would keep accepting the token a restored backup leaked — the exact one
+ * the app rotated away from — and keep refusing the current one, until this
+ * process was restarted. Nothing else could fix it, because the retry that
+ * refreshes the cache lives on the far side of this check and never runs when
+ * no session gets in. It is one small read per request on a transport that
+ * handles few. */
+export function localApiToken(): string | undefined {
+  const fresh = readTokenFile();
+  // Outgoing calls may as well learn about a rotation from the same read.
+  if (fresh !== undefined && fresh !== cachedToken) cachedToken = fresh;
+  return fresh;
+}
+
+/** Drops the cache and reads again, true only when the file now holds
+ * something other than what this request actually sent — the one case where
+ * repeating a refused request can help.
+ *
+ * `sent` rather than the cache, because the cache is shared: the hello
+ * heartbeat and the inbox long-poll are always in flight beside a tool call,
+ * so after a rotation the first 401 refreshes the cache and every other
+ * request in the air would find it already fresh and give up, handing the
+ * model a token error for a token that had just been fixed. */
+function refreshToken(sent: string | undefined): boolean {
+  cachedToken = undefined;
+  const fresh = apiToken();
+  return fresh !== undefined && fresh !== sent;
+}
+
 export interface CallOptions {
   method?: "GET" | "POST";
   body?: unknown;
@@ -190,14 +252,29 @@ export async function call<T extends object = ApiResponse>(
   const { method = "GET", body, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
   const timeout = AbortSignal.timeout(timeoutMs);
 
-  let res: Response;
-  try {
-    res = await fetch(BASE + path, {
+  // Captured per attempt, so the retry can tell "the token changed" from
+  // "somebody else refreshed the cache while this request was in the air".
+  let sent: string | undefined;
+  const send = () => {
+    sent = apiToken();
+    return fetch(BASE + path, {
       method,
-      headers: { "content-type": "application/json", ...agentHeaders() },
+      headers: {
+        "content-type": "application/json",
+        ...agentHeaders(),
+        ...(sent ? { "x-plonk-token": sent } : {}),
+      },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: timeout,
     });
+  };
+
+  let res: Response;
+  try {
+    res = await send();
+    // A long-lived client outlives the token if the file is ever replaced.
+    // One re-read makes that a hiccup instead of a session to restart.
+    if (res.status === 401 && refreshToken(sent)) res = await send();
   } catch (err) {
     if (timeout.aborted) {
       return { error: `Plonk did not answer within ${timeoutMs / 1000}s. It may be waiting on a dialog.` };

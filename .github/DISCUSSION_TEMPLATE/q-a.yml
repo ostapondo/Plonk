@@ -1,0 +1,32 @@
+# The filename has to match the category slug. Rename the category and this
+# file stops being used until it is renamed to match.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For how to set something up, or whether Plonk can do a thing at all.
+        If it is something Plonk does wrong, an issue is the better place.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What are you trying to do
+      description: >
+        The result you want, not only the setting you were looking for. Half the
+        answers here turn out to be a different feature than the one asked about.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you have tried
+      description: Optional, but it saves a round trip.
+
+  - type: input
+    id: setup
+    attributes:
+      label: Plonk and macOS versions
+      description: >
+        Add the MCP client too if the question involves an agent.
+      placeholder: "Plonk 0.1.0, macOS 15.5, Claude Code"

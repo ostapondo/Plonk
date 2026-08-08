@@ -40,7 +40,10 @@ server. One-pagers for
 
 A client that cannot spawn a process connects over HTTP instead:
 `npx -y plonk-mcp --http` serves Streamable HTTP at
-`http://127.0.0.1:43918/mcp` (loopback only, `--port` to change).
+`http://127.0.0.1:43918/mcp` (loopback only, `--port` to change). Requests to
+it carry the same token as the app's own API — send the contents of
+`~/Library/Application Support/Plonk/token` as an `X-Plonk-Token` header. The
+stdio transport reads that file itself and needs no configuration.
 
 Several clients may be connected at once. Set `PLONK_AGENT_NAME` in a client's
 config to tell two sessions of the same client apart.
@@ -69,6 +72,11 @@ top left, so the left 60% is `{x: 0, y: 0, w: 0.6, h: 1}`.
 The server talks to the app over loopback HTTP on `127.0.0.1:43917` and nowhere
 else. No account, no cloud, no telemetry. It depends only on the official MCP
 SDK and zod.
+
+The app gates that API on a token it writes to
+`~/Library/Application Support/Plonk/token`. This server reads the file itself,
+so there is nothing to configure — but it does have to run as the same user
+Plonk is running as.
 
 MIT. Source, screenshots and the rest of the documentation are in the
 [repository](https://github.com/ostapondo/plonk).

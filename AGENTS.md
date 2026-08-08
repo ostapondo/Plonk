@@ -64,8 +64,12 @@ Put new logic there and cover it in `App/Tests/plonkTests/`.
 ## Boundaries
 
 - The HTTP API binds to loopback only. Never expose it on other interfaces.
-- It has no authentication, so it must keep rejecting browser-originated
-  requests (`ControlServer.browserRejection`). Do not add CORS headers.
+- It must keep rejecting browser-originated requests
+  (`ControlServer.browserRejection`). Do not add CORS headers.
+- Every route but `/ping` is gated on the token in `APIToken`, and the check
+  lives in the transport so a new route is covered without doing anything.
+  Do not add exemptions. `/ping` is the only one, so a client can tell a closed
+  app from a stale token, and it has to stay free of anything worth reading.
 - Nothing on the main thread may wait on another process or on the user.
   `screencapture` runs asynchronously for exactly this reason.
 - No telemetry, no analytics, no crash reporting, and no third-party Swift

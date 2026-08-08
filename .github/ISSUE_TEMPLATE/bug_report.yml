@@ -1,0 +1,108 @@
+name: Bug report
+description: Something Plonk does that it should not, or does not do that it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Window bugs depend on hardware nobody else has, so the questions below
+        are the ones that decide whether this can be reproduced at all.
+
+        If what you have found is exploitable, close this and read SECURITY.md
+        instead.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+      placeholder: |
+        Dragged a Safari window into zone 2 on the right-hand monitor.
+        Expected it to fill the zone. It landed a few points short at the top
+        and kept the gap on the left.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: From a freshly launched Plonk, if you can get there.
+      placeholder: |
+        1. Assign the three-column set to the second monitor
+        2. Drag any window into the middle column
+        3. Look at the top edge
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Plonk version
+      description: The Updates page shows it.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "15.5, Apple silicon"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How it was installed
+      options:
+        - Homebrew cask
+        - Downloaded release zip
+        - Built from source
+    validations:
+      required: true
+
+  - type: textarea
+    id: displays
+    attributes:
+      label: Monitors
+      description: >
+        How many, their arrangement, and their scale factors if you know them.
+        A mixed-scale setup or a display to the left of the primary one is the
+        cause of a surprising share of placement bugs.
+      placeholder: |
+        Built-in 14" at 2x, plus a 27" 4K at 1x positioned above and to the left.
+    validations:
+      required: true
+
+  - type: input
+    id: app
+    attributes:
+      label: Which app owned the window
+      description: >
+        Leave blank if it happens with every app. Some apps refuse to be resized
+        or manage their own geometry, which is what the excluded-apps list is for.
+      placeholder: "Safari"
+
+  - type: textarea
+    id: state
+    attributes:
+      label: Output of the state route
+      description: >
+        Optional, and often the fastest way to show what the desk looked like -
+        run this while Plonk is running. It lists the title of every open
+        window, so read it before pasting it.
+
+        curl -s -H "X-Plonk-Token: $(cat ~/Library/'Application Support'/Plonk/token)" 127.0.0.1:43917/state
+      render: json
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I am on the latest release, or I have said above why I am not
+          required: true
+        - label: It still happens after quitting and relaunching Plonk
+          required: false

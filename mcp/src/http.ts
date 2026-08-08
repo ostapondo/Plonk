@@ -3,9 +3,9 @@
 // threat model as the app's own API: a web page must never be able to drive
 // the desktop, and a DNS-rebinding page must not reach the port by Host games.
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { runWithIdentity, type IdentityHolder } from "./api.js";
+import { localApiToken, runWithIdentity, type IdentityHolder } from "./api.js";
 import { createPlonkServer, startHello, startInboxLoop, watchClientInfo } from "./factory.js";
 
 interface Session {
@@ -18,6 +18,17 @@ interface Session {
 // The app's registry tells sessions apart by (name, pid). Every HTTP client
 // shares this process, so each session gets a synthetic pid instead.
 let syntheticPid = 100_000 + (process.pid % 1_000) * 100;
+
+function headerToken(req: IncomingMessage): string {
+  const value = req.headers["x-plonk-token"];
+  return (Array.isArray(value) ? value[0] : value) ?? "";
+}
+
+/** Length is not the secret; which byte differed would be. */
+function timingSafeEqualString(presented: string, token: string): boolean {
+  const a = Buffer.from(presented, "utf8"), b = Buffer.from(token, "utf8");
+  return a.length === b.length && a.length > 0 && timingSafeEqual(a, b);
+}
 
 function reject(res: ServerResponse, status: number, error: string): void {
   res.writeHead(status, { "content-type": "application/json" });
@@ -41,6 +52,20 @@ export async function serveHttp(port: number): Promise<void> {
     }
     if (new URL(req.url ?? "/", `http://${host}`).pathname !== "/mcp") {
       reject(res, 404, "the MCP endpoint is /mcp");
+      return;
+    }
+    // This process holds the app's token, so without a gate of its own it is a
+    // way around the app's: anything local could call take_screenshot through
+    // it and borrow Screen Recording. Same secret, same header, same file —
+    // there is nothing extra for a client to be given.
+    const token = localApiToken();
+    if (!token) {
+      reject(res, 503, "no Plonk API token could be read, so this transport is answering nothing");
+      return;
+    }
+    if (!timingSafeEqualString(headerToken(req), token)) {
+      reject(res, 401, "this request carried no valid token; send the contents of " +
+        "~/Library/Application Support/Plonk/token as the X-Plonk-Token header");
       return;
     }
 

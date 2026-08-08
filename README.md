@@ -128,7 +128,10 @@ Several clients at once is fine; see [Agents](#for-agents) below.
 A client that cannot spawn a process connects over HTTP instead:
 `npx -y plonk-mcp --http` serves Streamable HTTP at
 `http://127.0.0.1:43918/mcp` (loopback only, many clients per process,
-`--port` to change).
+`--port` to change). That port asks for the same token the app does, so give
+the client an `X-Plonk-Token` header holding the contents of
+`~/Library/Application Support/Plonk/token` — otherwise the transport would be
+a way around the gate rather than through it.
 
 Or build everything from source: clone the repo, run `./scripts/build.sh`, and
 point `claude mcp add plonk -- node …/mcp/dist/server.js` at a locally built
@@ -304,14 +307,35 @@ that only ever listens. The URLs compiled into the app are that endpoint, the
 releases page, and the issue tracker that opens when you click Report a bug —
 [Release.swift](App/Sources/plonk/Release.swift) has all three.
 
-**A web page cannot drive it.** The API is loopback-only and unauthenticated, so
-it refuses anything carrying headers a browser cannot suppress:
+**A web page cannot drive it.** The API is loopback-only, so it refuses anything
+carrying headers a browser cannot suppress:
 
 ```sh
 curl -so /dev/null -w '%{http_code}\n' -H 'Origin: https://example.com' \
   http://127.0.0.1:43917/state
 403
 ```
+
+**Neither can another program on your Mac.** Loopback keeps the network out and
+does nothing about the machine, so the API is gated on a token Plonk writes to
+`~/Library/Application Support/Plonk/token`, readable by you and nobody else.
+The MCP server and the `plonk` command read it for themselves; you never handle
+it. Without it, a request gets a 401:
+
+```sh
+curl -so /dev/null -w '%{http_code}\n' http://127.0.0.1:43917/state
+401
+curl -so /dev/null -w '%{http_code}\n' \
+  -H "X-Plonk-Token: $(cat ~/Library/'Application Support'/Plonk/token)" \
+  http://127.0.0.1:43917/state
+200
+```
+
+This matters most for the screenshot routes. Plonk holds Screen Recording; a
+script running as you may well not, and before the token it could borrow
+Plonk's by asking the port. Where it stops: anything that can read that file
+can read your screen by asking macOS itself, so this is a fence around the
+port, not around your account.
 
 **There is not much else to hide.** [Package.swift](App/Package.swift) declares
 no third-party dependencies, so a build from source is this repo and nothing
