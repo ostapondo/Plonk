@@ -13,7 +13,7 @@ import CoreText
 // MARK: - Timeline
 
 let fps = 20.0
-let duration = 10.5
+let duration = 11.6
 let size = CGSize(width: 1200, height: 750)
 
 /// 0 at `from`, 1 at `to`, eased so movement starts and stops softly.
@@ -274,42 +274,172 @@ func drawCaption(_ line: String, _ sub: String, alpha: CGFloat, in ctx: CGContex
 let margin: CGFloat = 22
 let deskTop = size.height - 34 - margin
 let deskBottom: CGFloat = 128
-let gap: CGFloat = 12
+let desk = CGRect(x: margin, y: deskBottom, width: size.width - margin * 2, height: deskTop - deskBottom)
 
-// Eight zones, in three columns of different widths and rows of different
-// heights — a layout you draw once in the zone editor. Halves and quarters are
-// what the Mac already does on its own; this is the reason to want Plonk, so
-// the demo shows a desk full of windows landing in one, not three windows
-// landing in thirds.
-let deskLeft = margin
-let deskWidth = size.width - margin * 2
-let deskHeight = deskTop - deskBottom
-let columns = (deskWidth - gap * 2)
-let colOne = round(columns * 0.26)
-let colTwo = round(columns * 0.44)
-let colThree = columns - colOne - colTwo
-let xTwo = deskLeft + colOne + gap
-let xThree = xTwo + colTwo + gap
+/// A zone as the app stores one: a fraction of the screen, origin top-left.
+struct Frac {
+    var x: Double, y: Double, w: Double, h: Double
 
-// Left column: a tall browser over a short finder.
-let leftTopHeight = round((deskHeight - gap) * 0.56)
-let zoneBrowser = CGRect(x: deskLeft, y: deskTop - leftTopHeight, width: colOne, height: leftTopHeight)
-let zoneFiles = CGRect(x: deskLeft, y: deskBottom, width: colOne,
-                       height: deskHeight - leftTopHeight - gap)
-// Middle column: the editor, with two half-width panes beneath it.
-let editorHeight = round((deskHeight - gap) * 0.68)
-let zoneEditor = CGRect(x: xTwo, y: deskTop - editorHeight, width: colTwo, height: editorHeight)
-let underHeight = deskHeight - editorHeight - gap
-let underWidth = (colTwo - gap) / 2
-let zoneTerminal = CGRect(x: xTwo, y: deskBottom, width: underWidth, height: underHeight)
-let zoneTests = CGRect(x: xTwo + underWidth + gap, y: deskBottom, width: underWidth, height: underHeight)
-// Right column: three equal rows.
-let rightHeight = (deskHeight - gap * 2) / 3
-let zoneLogs = CGRect(x: xThree, y: deskTop - rightHeight, width: colThree, height: rightHeight)
-let zoneChat = CGRect(x: xThree, y: deskBottom + rightHeight + gap, width: colThree, height: rightHeight)
-let zoneMail = CGRect(x: xThree, y: deskBottom, width: colThree, height: rightHeight)
+    var rect: CGRect {
+        CGRect(x: desk.minX + desk.width * x, y: desk.maxY - desk.height * (y + h),
+               width: desk.width * w, height: desk.height * h)
+    }
 
-let zones = [zoneBrowser, zoneFiles, zoneEditor, zoneTerminal, zoneTests, zoneLogs, zoneChat, zoneMail]
+    func contains(_ px: Double, _ py: Double) -> Bool {
+        px > x && px < x + w && py > y && py < y + h
+    }
+}
+
+/// One click in the zone editor: where the pointer is, and whether ⇧ is down.
+/// A plain click cuts across, ⇧ cuts down the way — the same two the editor
+/// has, at the same place the pointer is, on the same 0.05 grid it snaps to.
+struct Split {
+    var at: Double
+    var x: Double
+    var y: Double
+    var vertical: Bool
+}
+
+// Seven clicks turn one full-screen zone into the eight the rest of the demo
+// uses. Written as clicks rather than as eight rectangles so the layout cannot
+// drift into one the editor could not actually produce.
+let splits = [
+    Split(at: 0.75, x: 0.25, y: 0.45, vertical: true),
+    Split(at: 1.15, x: 0.70, y: 0.40, vertical: true),
+    Split(at: 1.53, x: 0.12, y: 0.55, vertical: false),
+    Split(at: 1.91, x: 0.45, y: 0.70, vertical: false),
+    Split(at: 2.29, x: 0.50, y: 0.85, vertical: true),
+    Split(at: 2.67, x: 0.85, y: 0.35, vertical: false),
+    Split(at: 3.05, x: 0.85, y: 0.65, vertical: false),
+]
+let splitTime = 0.22
+
+/// Every state the draft passes through, plus the parent and the two children
+/// of each split, which is what the animation needs.
+struct Stage {
+    var zones: [Frac]
+    var parent: Frac
+    var first: Frac
+    var second: Frac
+}
+
+let stages: [Stage] = {
+    var zones = [Frac(x: 0, y: 0, w: 1, h: 1)]
+    var result: [Stage] = []
+    for split in splits {
+        guard let index = zones.firstIndex(where: { $0.contains(split.x, split.y) }) else { continue }
+        let parent = zones[index]
+        let first: Frac, second: Frac
+        if split.vertical {
+            let cut = split.x - parent.x
+            first = Frac(x: parent.x, y: parent.y, w: cut, h: parent.h)
+            second = Frac(x: split.x, y: parent.y, w: parent.w - cut, h: parent.h)
+        } else {
+            let cut = split.y - parent.y
+            first = Frac(x: parent.x, y: parent.y, w: parent.w, h: cut)
+            second = Frac(x: parent.x, y: split.y, w: parent.w, h: parent.h - cut)
+        }
+        zones.replaceSubrange(index...index, with: [first, second])
+        result.append(Stage(zones: zones, parent: parent, first: first, second: second))
+    }
+    return result
+}()
+
+let zones = stages.last!.zones.map(\.rect)
+
+/// The draft as it stands at `t`, with the split in progress half-done.
+func draftZones(at t: Double) -> [CGRect] {
+    guard let index = splits.lastIndex(where: { t >= $0.at }) else {
+        return [Frac(x: 0, y: 0, w: 1, h: 1).rect]
+    }
+    let stage = stages[index]
+    let progress = phase(t, from: splits[index].at, to: splits[index].at + splitTime)
+    guard progress < 1 else { return stage.zones.map(\.rect) }
+
+    // The half that keeps the origin shrinks into place; the other half grows
+    // out of the line the click drew, which is what a split looks like.
+    let sliver = splits[index].vertical
+        ? Frac(x: stage.second.x, y: stage.second.y, w: 0.001, h: stage.second.h)
+        : Frac(x: stage.second.x, y: stage.second.y, w: stage.second.w, h: 0.001)
+    return stage.zones.map { zone in
+        if zone.x == stage.first.x && zone.y == stage.first.y && zone.w == stage.first.w {
+            return lerp(stage.parent.rect, stage.first.rect, progress)
+        }
+        if zone.x == stage.second.x && zone.y == stage.second.y {
+            return lerp(sliver.rect, stage.second.rect, progress)
+        }
+        return zone.rect
+    }
+}
+
+/// The editor: the screen dimmed, the draft on top, and the panel that names
+/// the set and says what a click does.
+func drawEditor(at t: Double, alpha: CGFloat, in ctx: CGContext) {
+    guard alpha > 0.01 else { return }
+    ctx.saveGState()
+    ctx.setAlpha(alpha)
+    fill(CGRect(origin: .zero, size: size), NSColor.black.withAlphaComponent(0.42), in: ctx)
+    for zone in draftZones(at: t) {
+        fill(zone.insetBy(dx: 2, dy: 2), Ink.accent.withAlphaComponent(0.13), radius: 8, in: ctx)
+        stroke(zone.insetBy(dx: 2, dy: 2), Ink.accent.withAlphaComponent(0.75), radius: 8,
+               width: 2, in: ctx)
+    }
+
+    let panel = CGRect(x: size.width / 2 - 250, y: 30, width: 500, height: 78)
+    fill(panel, NSColor(white: 0.15, alpha: 0.97), radius: 12, in: ctx)
+    stroke(panel, NSColor(white: 1, alpha: 0.14), radius: 12, in: ctx)
+    text("Demo Grid", at: CGPoint(x: panel.minX + 20, y: panel.maxY - 30), size: 16,
+         color: Ink.text, weight: .semibold, in: ctx)
+    text("Click a zone to split it — hold ⇧ for a vertical split", at: CGPoint(x: panel.minX + 20, y: panel.minY + 20),
+         size: 13, color: Ink.dim, in: ctx)
+    let save = CGRect(x: panel.maxX - 130, y: panel.midY - 15, width: 110, height: 30)
+    fill(save, Ink.accent.withAlphaComponent(0.9), radius: 8, in: ctx)
+    text("Save & Apply", at: CGPoint(x: save.midX, y: save.midY - 5), size: 12.5,
+         color: NSColor(white: 0.08, alpha: 1), weight: .semibold, align: .centre, in: ctx)
+    ctx.restoreGState()
+}
+
+/// The ring a click leaves, so seven fast clicks read as seven clicks.
+func drawClick(at point: CGPoint, progress: Double, in ctx: CGContext) {
+    guard progress > 0, progress < 1 else { return }
+    ctx.saveGState()
+    ctx.setAlpha(CGFloat(1 - progress))
+    stroke(CGRect(x: point.x - 26 * progress, y: point.y - 26 * progress,
+                  width: 52 * progress, height: 52 * progress),
+           Ink.accent, radius: 26 * progress, width: 2.5, in: ctx)
+    ctx.restoreGState()
+}
+
+/// Where the pointer is during the editor beat: at the next click, having
+/// travelled there from the last one.
+func editorCursor(at t: Double) -> (point: CGPoint, shift: Bool) {
+    var previous = CGPoint(x: desk.midX, y: desk.midY)
+    for (index, split) in splits.enumerated() {
+        let target = CGPoint(x: desk.minX + desk.width * split.x,
+                             y: desk.maxY - desk.height * split.y)
+        if t < split.at {
+            let start = index == 0 ? 0.35 : splits[index - 1].at + splitTime
+            let travel = phase(t, from: start, to: split.at)
+            return (CGPoint(x: lerp(previous.x, target.x, travel),
+                            y: lerp(previous.y, target.y, travel)), split.vertical)
+        }
+        previous = target
+    }
+    return (previous, false)
+}
+
+/// The ⇧ badge that rides the pointer when the next click is a vertical split.
+func drawShiftBadge(at point: CGPoint, alpha: CGFloat, in ctx: CGContext) {
+    guard alpha > 0.01 else { return }
+    ctx.saveGState()
+    ctx.setAlpha(alpha)
+    let badge = CGRect(x: point.x + 22, y: point.y - 44, width: 30, height: 28)
+    fill(badge, NSColor(white: 0.16, alpha: 0.96), radius: 7, in: ctx)
+    stroke(badge, NSColor(white: 1, alpha: 0.2), radius: 7, in: ctx)
+    text("⇧", at: CGPoint(x: badge.midX, y: badge.midY - 7), size: 15, color: Ink.text,
+         weight: .semibold, align: .centre, in: ctx)
+    ctx.restoreGState()
+}
 
 /// One window: where it starts on the pile, where it belongs, and when it goes.
 struct Window {
@@ -328,40 +458,36 @@ let teal = NSColor(srgbRed: 0.30, green: 0.80, blue: 0.82, alpha: 1)
 
 // The pile: eight windows, cascaded and overlapping, a few running off the
 // edges. It is the state the app exists to end, so it is worth drawing badly
-// on purpose.
+// on purpose. Zone order is the order the splits made them in.
 let windows = [
-    // Dragged by hand, first beat.
+    // Dragged by hand, once the grid exists.
     Window(title: "Browser", hue: Ink.accent,
-           messy: CGRect(x: 96, y: 286, width: 560, height: 360), home: zoneBrowser,
-           from: 0.7, to: 2.0),
-    // Sent with a shortcut, second beat.
+           messy: CGRect(x: 96, y: 286, width: 560, height: 360), home: zones[0],
+           from: 4.1, to: 5.2),
+    // Sent with a shortcut.
     Window(title: "Editor", hue: violet,
-           messy: CGRect(x: 372, y: 214, width: 620, height: 400), home: zoneEditor,
-           from: 2.8, to: 3.5),
+           messy: CGRect(x: 372, y: 214, width: 620, height: 400), home: zones[2],
+           from: 5.7, to: 6.3),
     // The remaining six, all at once, when the sentence lands.
     Window(title: "Files", hue: teal,
-           messy: CGRect(x: 58, y: 168, width: 430, height: 270), home: zoneFiles,
-           from: 6.0, to: 6.9),
+           messy: CGRect(x: 58, y: 168, width: 430, height: 270), home: zones[1],
+           from: 8.2, to: 8.95),
     Window(title: "Terminal", hue: green,
-           messy: CGRect(x: 610, y: 150, width: 500, height: 300), home: zoneTerminal,
-           from: 6.1, to: 7.0),
+           messy: CGRect(x: 610, y: 150, width: 500, height: 300), home: zones[3],
+           from: 8.3, to: 9.05),
     Window(title: "Tests", hue: Ink.amber,
-           messy: CGRect(x: 264, y: 132, width: 470, height: 290), home: zoneTests,
-           from: 6.2, to: 7.1),
+           messy: CGRect(x: 264, y: 132, width: 470, height: 290), home: zones[4],
+           from: 8.4, to: 9.15),
     Window(title: "Logs", hue: pink,
-           messy: CGRect(x: 786, y: 330, width: 460, height: 300), home: zoneLogs,
-           from: 6.3, to: 7.2),
+           messy: CGRect(x: 786, y: 330, width: 460, height: 300), home: zones[5],
+           from: 8.5, to: 9.25),
     Window(title: "Chat", hue: Ink.accent,
-           messy: CGRect(x: 148, y: 384, width: 400, height: 300), home: zoneChat,
-           from: 6.4, to: 7.3),
+           messy: CGRect(x: 148, y: 384, width: 400, height: 300), home: zones[6],
+           from: 8.6, to: 9.35),
     Window(title: "Mail", hue: green,
-           messy: CGRect(x: 500, y: 400, width: 520, height: 290), home: zoneMail,
-           from: 6.5, to: 7.4),
+           messy: CGRect(x: 500, y: 400, width: 520, height: 290), home: zones[7],
+           from: 8.7, to: 9.45),
 ]
-
-/// Which zone each window belongs to, so the overlay can light the right one.
-let zoneOf: [String: Int] = ["Browser": 0, "Files": 1, "Editor": 2, "Terminal": 3,
-                             "Tests": 4, "Logs": 5, "Chat": 6, "Mail": 7]
 
 func frame(at t: Double) -> CGImage {
     let scale: CGFloat = 1
@@ -374,20 +500,23 @@ func frame(at t: Double) -> CGImage {
 
     drawDesk(in: ctx)
 
-    // Beat 1 (0.6-2.3s): one window dragged into its zone, by hand.
-    // Beat 2 (2.6-3.7s): the next one sent there with a shortcut.
-    // Beat 3 (4.0-7.5s): a sentence, and the other six go at once — the part
-    // no amount of dragging and no built-in tiling gets you.
-    let promptIn = phase(t, from: 4.0, to: 4.3)
-    let typing = phase(t, from: 4.4, to: 6.0)
+    // Beat 1 (0.3-3.7s): the grid gets drawn, seven clicks, over the mess it
+    // is about to sort out. Without it the layout looks like something that
+    // shipped in the app rather than something you make in a few seconds.
+    let editor = phase(t, from: 0.3, to: 0.55) - phase(t, from: 3.45, to: 3.75)
+    // Beat 2 (4.0-5.4s): one window dragged into its zone, by hand.
+    // Beat 3 (5.6-6.5s): the next one sent there with a shortcut.
+    // Beat 4 (6.7-9.5s): a sentence, and the other six go at once.
+    let promptIn = phase(t, from: 6.7, to: 6.95)
+    let typing = phase(t, from: 7.0, to: 8.2)
 
     // The overlay is drawn only while a window is being placed by hand or by
     // key, which is when the app actually draws it.
-    let zonesShown = max(phase(t, from: 0.55, to: 0.85) - phase(t, from: 2.0, to: 2.35),
-                         phase(t, from: 2.6, to: 2.8) - phase(t, from: 3.5, to: 3.8))
+    let zonesShown = max(phase(t, from: 3.95, to: 4.15) - phase(t, from: 5.2, to: 5.45),
+                         phase(t, from: 5.55, to: 5.7) - phase(t, from: 6.3, to: 6.55))
     var lit: Set<Int> = []
-    if t >= 0.55 && t < 2.35 { lit = [zoneOf["Browser"]!] }
-    if t >= 2.6 && t < 3.8 { lit = [zoneOf["Editor"]!] }
+    if t >= 3.95 && t < 5.45 { lit = [0] }
+    if t >= 5.55 && t < 6.55 { lit = [2] }
 
     // Each window sits on the pile until its moment, then eases home.
     let placed = windows.map { phase(t, from: $0.from, to: $0.to) }
@@ -405,25 +534,37 @@ func frame(at t: Double) -> CGImage {
         return layer(a) == layer(b) ? a > b : layer(a) < layer(b)
     }
     for index in order { draw(panes[index], in: ctx) }
+
+    drawEditor(at: t, alpha: CGFloat(editor), in: ctx)
     // Above the windows, exactly where the real overlay sits.
     drawZones(zones, highlighted: lit, alpha: CGFloat(zonesShown), in: ctx)
 
-    // The pointer rides the first window in, then leaves.
-    let cursorAlpha = phase(t, from: 0.3, to: 0.6) - phase(t, from: 2.1, to: 2.4)
+    // The pointer: clicking out the grid first, then dragging the first window.
+    if editor > 0.01 {
+        let (point, shift) = editorCursor(at: t)
+        for split in splits {
+            drawClick(at: CGPoint(x: desk.minX + desk.width * split.x,
+                                  y: desk.maxY - desk.height * split.y),
+                      progress: phase(t, from: split.at, to: split.at + 0.3), in: ctx)
+        }
+        drawShiftBadge(at: point, alpha: CGFloat(editor) * (shift ? 1 : 0), in: ctx)
+        drawCursor(at: point, alpha: CGFloat(editor), in: ctx)
+    }
+    let dragCursor = phase(t, from: 3.8, to: 4.0) - phase(t, from: 5.3, to: 5.5)
     let grip = panes[0].rect
-    drawCursor(at: CGPoint(x: grip.midX, y: grip.midY), alpha: CGFloat(cursorAlpha), in: ctx)
+    drawCursor(at: CGPoint(x: grip.midX, y: grip.midY), alpha: CGFloat(dragCursor), in: ctx)
 
     // The shortcut that placed the second one: zone 3 is the editor's tile.
     drawKeys(["⌃", "⌥", "3"], centeredAt: CGPoint(x: size.width / 2, y: 44),
-             alpha: CGFloat(phase(t, from: 2.6, to: 2.8) - phase(t, from: 3.5, to: 3.8)), in: ctx)
+             alpha: CGFloat(phase(t, from: 5.55, to: 5.7) - phase(t, from: 6.3, to: 6.55)), in: ctx)
 
     drawPrompt("and the rest into the grid — logs and chat on the right",
                progress: typing,
-               alpha: CGFloat(promptIn - phase(t, from: 7.6, to: 7.9)), in: ctx)
+               alpha: CGFloat(promptIn - phase(t, from: 9.5, to: 9.75)), in: ctx)
 
-    drawCaption("Eight windows. One sentence.",
-                "Plonk — draw any grid, then drag, press or say what goes where.",
-                alpha: CGFloat(phase(t, from: 8.0, to: 8.4) - phase(t, from: 10.35, to: 10.5)),
+    drawCaption("Draw the grid once. Fill it in a sentence.",
+                "Plonk — the Mac window manager your agent can drive.",
+                alpha: CGFloat(phase(t, from: 9.85, to: 10.2) - phase(t, from: 11.5, to: 11.6)),
                 in: ctx)
 
     return ctx.makeImage()!

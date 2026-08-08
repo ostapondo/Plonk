@@ -32,21 +32,24 @@ require_app() {
 }
 
 # The eight zones the drawn demo uses, so both assets show the same desk:
-# three columns of 26 / 44 / 30 %, with rows that are not halves of anything.
-# Fractions of the screen's visible area, origin top-left. They tile exactly —
-# the space between windows is the zone gap on the Zones page, which is real.
+# three columns of 25 / 45 / 30 %, with rows that are not halves of anything.
+# Fractions of the screen's visible area, origin top-left. Every edge is a
+# multiple of 0.05, which is the grid the zone editor snaps to — so this is a
+# set you could have drawn by hand, and the demo does not show one you could
+# not. They tile exactly: the space between windows is the zone gap on the
+# Zones page, which is real.
 zone_set='{
   "name": "Demo Grid",
   "screen": 0,
   "zones": [
-    {"x":0.00,"y":0.00,"w":0.26,"h":0.56},
-    {"x":0.00,"y":0.56,"w":0.26,"h":0.44},
-    {"x":0.26,"y":0.00,"w":0.44,"h":0.68},
-    {"x":0.26,"y":0.68,"w":0.22,"h":0.32},
-    {"x":0.48,"y":0.68,"w":0.22,"h":0.32},
-    {"x":0.70,"y":0.00,"w":0.30,"h":0.3333},
-    {"x":0.70,"y":0.3333,"w":0.30,"h":0.3333},
-    {"x":0.70,"y":0.6667,"w":0.30,"h":0.3333}
+    {"x":0.00,"y":0.00,"w":0.25,"h":0.55},
+    {"x":0.00,"y":0.55,"w":0.25,"h":0.45},
+    {"x":0.25,"y":0.00,"w":0.45,"h":0.70},
+    {"x":0.25,"y":0.70,"w":0.25,"h":0.30},
+    {"x":0.50,"y":0.70,"w":0.20,"h":0.30},
+    {"x":0.70,"y":0.00,"w":0.30,"h":0.35},
+    {"x":0.70,"y":0.35,"w":0.30,"h":0.30},
+    {"x":0.70,"y":0.65,"w":0.30,"h":0.35}
   ]
 }'
 
@@ -107,6 +110,9 @@ screencast: the desk is staged. The run sheet:
 
   1. Zones page → turn the gap up to about 12, numbers on. Pointer page →
      "Ring every click", so a click is visible in the recording.
+     To open on the grid being drawn, delete "Demo Grid" first and cut it live
+     in the editor: ⇧-click at 25% and 70% for the columns, then plain clicks
+     for the rows. Seven clicks, about five seconds.
   2. ⇧⌘5 → record the whole screen. Give it a second of the mess before
      touching anything.
   3. Drag one window into a zone by hand — that is the beat that proves the
