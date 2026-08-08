@@ -15,6 +15,12 @@ protocol AppActions: AnyObject {
     func setDragSnap(_ on: Bool)
     func setZonesRequireModifier(_ on: Bool)
     func setZonesModifier(_ name: String)
+    /// Move and resize a window by dragging anywhere inside it with a modifier
+    /// held, instead of aiming for the title bar or the border.
+    func setGrabMove(_ on: Bool)
+    func setGrabMoveModifier(_ name: String)
+    func setGrabMoveResize(_ on: Bool)
+    func setGrabMoveShowGeometry(_ on: Bool)
     /// Apps drag snapping and the placement shortcuts leave alone, one pattern
     /// per line. Matched against the app's name and bundle id, case-insensitively.
     func setExcludedApps(_ patterns: [String])
@@ -77,6 +83,10 @@ final class AppModel: ObservableObject {
     @Published var dragSnapEnabled = true
     @Published var zonesRequireModifier = true
     @Published var zonesModifier = "shift"
+    @Published var grabMoveEnabled = false
+    @Published var grabMoveModifier = "option"
+    @Published var grabMoveResize = true
+    @Published var grabMoveShowGeometry = true
     @Published var excludedApps: [String] = []
     @Published var restoreZonesOnScreenChange = true
     @Published var textLanguages: [String] = []

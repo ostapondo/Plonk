@@ -69,6 +69,13 @@ struct Config: Codable {
     // would silently reset the setting for everyone, so it stays.
     var zonesRequireShift = true
     var zonesModifier = "shift"  // shift | option | control
+    // Move and resize a window by dragging anywhere inside it with a modifier
+    // held. Off by default: option-drag already means something inside a lot
+    // of Mac apps, so this is a choice rather than a surprise.
+    var grabMoveEnabled = false
+    var grabMoveModifier = "option"  // option | command | control
+    var grabMoveResize = true
+    var grabMoveShowGeometry = true
     // Apps drag snapping and the placement hotkeys leave alone; see
     // AppExclusions. Explicit placement through the API is never filtered.
     var excludedApps: [String] = []
@@ -117,6 +124,10 @@ struct Config: Codable {
         dragSnapEnabled = try c.decodeIfPresent(Bool.self, forKey: .dragSnapEnabled) ?? true
         zonesRequireShift = try c.decodeIfPresent(Bool.self, forKey: .zonesRequireShift) ?? true
         zonesModifier = try c.decodeIfPresent(String.self, forKey: .zonesModifier) ?? "shift"
+        grabMoveEnabled = try c.decodeIfPresent(Bool.self, forKey: .grabMoveEnabled) ?? false
+        grabMoveModifier = try c.decodeIfPresent(String.self, forKey: .grabMoveModifier) ?? "option"
+        grabMoveResize = try c.decodeIfPresent(Bool.self, forKey: .grabMoveResize) ?? true
+        grabMoveShowGeometry = try c.decodeIfPresent(Bool.self, forKey: .grabMoveShowGeometry) ?? true
         excludedApps = try c.decodeIfPresent([String].self, forKey: .excludedApps) ?? []
         restoreZonesOnScreenChange = try c.decodeIfPresent(Bool.self, forKey: .restoreZonesOnScreenChange) ?? true
         textLanguages = try c.decodeIfPresent([String].self, forKey: .textLanguages) ?? []

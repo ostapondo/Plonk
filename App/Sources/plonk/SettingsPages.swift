@@ -34,6 +34,32 @@ struct ZonesPage: View {
                 Text("Holding the modifier while dragging inverts the mode, so the other behavior is always available. Hold ⌘ as well and the zone you started over and the one under the cursor are dropped into as one.")
             }
             Section {
+                Toggle(isOn: model.binding(\.grabMoveEnabled, set: { $0.setGrabMove($1) })) {
+                    Text("Grab windows anywhere")
+                    Text("Hold the key and drag from any point inside a window, instead of aiming for the title bar")
+                }
+                Picker("Hold", selection: model.binding(\.grabMoveModifier, set: { $0.setGrabMoveModifier($1) })) {
+                    Text("⌥ Option").tag("option")
+                    Text("⌘ Command").tag("command")
+                    Text("⌃ Control").tag("control")
+                }
+                .pickerStyle(.segmented)
+                .disabled(!model.grabMoveEnabled)
+                Toggle(isOn: model.binding(\.grabMoveResize, set: { $0.setGrabMoveResize($1) })) {
+                    Text("Right-drag resizes")
+                    Text("Pulls the edge or corner nearest where the drag started")
+                }
+                .disabled(!model.grabMoveEnabled)
+                Toggle(isOn: model.binding(\.grabMoveShowGeometry, set: { $0.setGrabMoveShowGeometry($1) })) {
+                    Text("Show the size while dragging")
+                }
+                .disabled(!model.grabMoveEnabled)
+            } header: {
+                Text("Grab and Move")
+            } footer: {
+                Text("Off by default, because option-drag already means something inside plenty of Mac apps — duplicating a layer, copying a file. Anything in the exception list below is never grabbed. Add the zones modifier while dragging and the zones appear as usual.")
+            }
+            Section {
                 ShortcutRows(model: model, actions: presetActions)
             } header: {
                 Text("Shortcuts")

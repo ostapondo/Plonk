@@ -135,13 +135,52 @@ final class DragSnapManager {
             hideAll()
         }
         guard case .active(let win, let startFrame) = state, let zone = currentZone else { return }
+        drop(win, startFrame: startFrame, into: zone)
+    }
+
+    private func drop(_ win: AXUIElement, startFrame: CGRect, into zone: (screenIndex: Int, frac: FracRect)) {
         windows.apply(frac: zone.frac, toWindow: win, screenIndex: zone.screenIndex)
         onSnap?(win, startFrame, zone.frac, zone.screenIndex)
     }
 
+    // MARK: - Drags Plonk is driving itself
+
+    /// Grab-and-move moves a window without the system ever raising a drag on
+    /// it, so it hands the drag over here instead. Zones behave exactly as they
+    /// do for a title-bar drag, which is the point: one set of rules.
+    func beginExternalDrag(window: AXUIElement, startFrame: CGRect) {
+        state = .active(win: window, startFrame: startFrame)
+        spanAnchor = nil
+    }
+
+    func updateExternalDrag() {
+        guard case .active = state else { return }
+        updateZone(NSEvent.modifierFlags)
+    }
+
+    /// Drops into the highlighted zone if there is one, and reports whether it
+    /// did — a caller that was moving the window freely needs to know whether
+    /// its own frame or the zone won.
+    @discardableResult
+    func endExternalDrag() -> Bool {
+        defer {
+            state = .idle
+            currentZone = nil
+            spanAnchor = nil
+            hideAll()
+        }
+        guard case .active(let win, let startFrame) = state, let zone = currentZone else { return false }
+        drop(win, startFrame: startFrame, into: zone)
+        return true
+    }
+
     private func updateZone(_ event: NSEvent) {
-        let modifierHeld = event.modifierFlags.contains(modifierFlag)
-        let spanHeld = event.modifierFlags.contains(Self.spanFlag)
+        updateZone(event.modifierFlags)
+    }
+
+    private func updateZone(_ flags: NSEvent.ModifierFlags) {
+        let modifierHeld = flags.contains(modifierFlag)
+        let spanHeld = flags.contains(Self.spanFlag)
         if !spanHeld { spanAnchor = nil }
 
         let p = NSEvent.mouseLocation

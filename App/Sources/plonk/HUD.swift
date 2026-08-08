@@ -37,6 +37,25 @@ final class HUD {
         }
     }
 
+    /// A small readout that stays up until something hides it — the size of a
+    /// window while it is being resized, where the checkmark and the fade of
+    /// `show` would both be wrong.
+    func showCompact(_ text: String) {
+        token += 1
+        let panel = window ?? makeWindow()
+        window = panel
+        panel.contentView = NSHostingView(rootView: CompactHUDView(text: text))
+        panel.setContentSize(panel.contentView?.fittingSize ?? NSSize(width: 120, height: 40))
+        HUD.placeInCorner(panel)
+        panel.alphaValue = 1
+        panel.orderFrontRegardless()
+    }
+
+    func hide() {
+        token += 1
+        window?.orderOut(nil)
+    }
+
     private func makeWindow() -> NSWindow {
         let panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
                             backing: .buffered, defer: false)
@@ -61,6 +80,19 @@ final class HUD {
         let size = panel.frame.size
         panel.setFrameOrigin(NSPoint(x: frame.maxX - size.width - margin,
                                      y: frame.maxY - size.height - margin))
+    }
+}
+
+private struct CompactHUDView: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.system(.callout, design: .monospaced).weight(.medium))
+            .monospacedDigit()
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
