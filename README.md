@@ -2,7 +2,7 @@
 
 <p align="center"><strong>The Mac window manager that puts your desk back together.</strong><br>
 <sub>To plonk is to set a thing down exactly where it belongs. This menu bar does it to your
-windows — you drag them there, or your agent says where.</sub></p>
+windows — you drag them there, you press a key, or your agent says where.</sub></p>
 
 <p align="center">
   <img alt="Version" src="https://img.shields.io/badge/version-0.0.5-58a6ff?style=flat-square">
@@ -14,20 +14,46 @@ windows — you drag them there, or your agent says where.</sub></p>
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="An agent is told where the windows go, arranges them, saves the setup as a workspace, and launches it back onto an empty desktop" width="720">
+  <img src="docs/demo.gif" alt="Three windows are tidied into zones: one dragged, two by shortcut, and the same layout described in a sentence to an agent" width="720">
 </p>
 
-Drag a window, the zones light up, drop it in. Or skip the dragging and say it:
+## Three ways to put a window somewhere
+
+**Drag it.** Zones light up as you move a window, and it drops into one. Hold
+`⌘` as well and it takes two of them at once. Turn on grab-and-move and you can
+pull a window from anywhere inside it, instead of aiming for the title bar.
+
+**Press a key.** `⌃⌥←` for the left half, `⌃⌥1`–`⌃⌥9` for the numbered zones on
+that screen, `⌃⌥0` to put a window back exactly where it was before Plonk ever
+touched it.
+
+**Say it.** Plonk speaks MCP, so any agent can drive the whole thing:
 
 > browser on the left 60%, terminal top right, notes bottom right
 >
 > save that as a workspace called "review"
 >
-> keep the screen awake for the next hour
+> keep the Mac awake until this build finishes
 >
-> screenshot the screen and tell me what looks off
+> read the error out of that dialog and tell me what it says
 
-Everything runs on your Mac. No account, no cloud, no telemetry.
+Everything runs on your Mac. No account, no cloud, no telemetry — and
+[none of that is a promise you have to take](#check-it-yourself), it is all
+checkable from a terminal.
+
+## What you get
+
+| | |
+| --- | --- |
+| **Zones** | Draw any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows come back to their zone when a display is unplugged and plugged in again |
+| **Workspaces** | A desk you can put away: the apps, every window's frame, the monitor each belongs on, and what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself |
+| **Focus that follows the layout** | `⌃⌥⇧←` goes to the window that is actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
+| **Text off the screen** | `⌃⌥T` selects an area and copies the words in it — from a screenshot, a paused video, a dialog that will not let you select. On-device, nothing uploaded |
+| **Pin part of the screen** | Float a live crop of anything above everything else: a build log, a chart, a call, visible in a corner while you work over it |
+| **Keep awake** | Real power assertions, not a jiggler — and a session that ends by itself: after N minutes, at a wall-clock time, or the moment a process exits |
+| **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution |
+| **A shortcut guide** | Every shortcut the app in front actually has, read from its own menus, so it is never out of date |
+| **Pointer tools** | Find the cursor, ring every click for a screen recording, crosshairs, jump to the next display |
 
 ## Install
 
@@ -67,16 +93,8 @@ claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
 codex mcp add plonk -- npx -y plonk-mcp    # Codex CLI
 ```
 
-The same package carries a `plonk` command, for the things that are neither an
-agent nor a settings window — a Makefile, a Raycast script, a shell alias:
-
-```sh
-npx -y plonk-mcp --help          # or: npm i -g plonk-mcp
-plonk state                      # screens, zone sets, workspaces, windows
-plonk launch review              # a saved workspace
-plonk awake while npm run build  # awake for exactly as long as the build
-plonk text | pbcopy              # OCR a region straight into the clipboard
-```
+The same package carries a `plonk` command for shells and scripts —
+`npm i -g plonk-mcp`, then see [For agents](#for-agents).
 
 Any MCP client works the same way — give it `npx -y plonk-mcp` as a stdio
 server. One-pagers: [Cursor](docs/clients/cursor.md) (with a one-click
@@ -91,6 +109,133 @@ A client that cannot spawn a process connects over HTTP instead:
 Or build everything from source: clone the repo, run `./scripts/build.sh`, and
 point `claude mcp add plonk -- node …/mcp/dist/server.js` at a locally built
 server (`cd mcp && npm install && npm run build`).
+
+## For agents
+
+This is the part no other Mac window manager has. Plonk exposes its whole
+surface over MCP, so an agent can read the desk, rearrange it, save the result
+and read the screen back — without a screenshot round trip for anything that is
+really just words.
+
+Frames are fractions of a monitor's visible area, origin top-left — which is why
+"left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
+
+| Tool | |
+| --- | --- |
+| `get_state` | Monitors, every open window and where it sits, zone sets, saved workspaces, awake status |
+| `apply_layout` | Place any set of windows, across any number of monitors, in one call |
+| `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops, launched from nothing |
+| `snap_window` | Drop a window into a numbered zone |
+| `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
+| `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
+| `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back |
+| `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
+| `select_agent` | Make an agent the user's active one, optionally the only one allowed to control |
+
+Several agents can be connected at once. Every client registers itself, so
+`get_state` lists who is online; the user picks an active agent from the menu
+bar or the settings — or an agent does it with `select_agent`. An optional
+strict mode locks changes to the active agent: everyone else keeps reading
+state and taking screenshots, but gets a clear 409 on anything that moves
+windows or edits config. Set `PLONK_AGENT_NAME` in a client's MCP config to
+tell two sessions of the same client apart.
+
+There is a `plonk` command too, for the things that are neither an agent nor a
+settings window — a Makefile, a Raycast script, a shell alias:
+
+```sh
+plonk state                      # screens, zone sets, workspaces, windows
+plonk launch review              # a saved workspace
+plonk awake while npm run build  # awake for exactly as long as the build
+plonk text | pbcopy              # OCR a region straight into the clipboard
+```
+
+## Zones
+
+<p align="center">
+  <img src="docs/zones.svg" alt="A screen split into three zones, with a window being dragged into the highlighted one" width="720">
+</p>
+
+<p align="center">
+  <img src="docs/zone-sets.svg" alt="Five built-in zone sets and a sixth, irregular one drawn by hand" width="720">
+</p>
+
+Five sets ship with it. Everything past that you draw yourself: any number of
+zones, any size, overlapping if you want — a narrow rail for chat, a wide middle
+split in two, a strip for the terminal. Or describe it and let the agent build
+it.
+
+| | |
+| --- | --- |
+| **Editor** | Click to split, `⇧`-click to split vertically, drag a divider to resize neighbours, `✕` to delete and let them heal over the gap |
+| **Per monitor** | Each screen gets its own set, remembered by display, not by index |
+| **Overlap** | Allowed — the smallest zone under the cursor wins |
+| **Trigger** | On drag, or only with a modifier held. Holding it inverts the mode, so a free move stays one keypress away |
+| **Span** | Hold `⌘` as well: the zone you started over and the one under the cursor become a single drop, so two columns make one wide window without editing the set |
+| **By number** | `⌃⌥1`–`⌃⌥9` drop the front window into the zone the overlay draws that number on. `⌃⌥0` gives it back the frame it had before Plonk first moved it |
+| **Or none** | Edge snapping instead: middles are halves, top is maximize, corners are quarters |
+| **Or hover the line** | Bring the cursor near the border between two zones and both light up, no modifier at all |
+| **Whole sets** | `⌃⌥⇧1`–`⌃⌥⇧9` swap the set on the screen the cursor is on. Windows already sitting in a numbered zone move to where that number is now |
+| **Looks** | Gap, colour, opacity, numbers on or off, every monitor's zones shown while dragging. The gap is real — a window keeps that much space around it |
+| **Exceptions** | A list of apps Plonk keeps its hands off — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works; that names the window on purpose |
+| **New windows** | Optionally, a window that opens goes where that app's last one went |
+
+## Workspaces
+
+<p align="center">
+  <img src="docs/workspaces.svg" alt="A workspace of four windows, saved, closed to an empty desktop, then launched back into place" width="720">
+</p>
+
+A workspace is a desk you can put away. It remembers the apps, the frame of
+every window, the monitor each one belongs on, and what each app should open on
+the way up. Launching one opens whatever is closed, waits for the windows, and
+puts them back — from the Workspaces page, or right-click the menu bar icon.
+Rename, recapture or delete from the workspace's `⋯` menu.
+
+| | |
+| --- | --- |
+| **Per app** | Files, folders or URLs to open with it: a project folder for an editor, a set of tabs for a browser |
+| **Per monitor** | Windows return to the display they were captured on, keyed by display UUID so unplugging a monitor does not scramble them. Or pull the whole workspace onto one screen |
+| **Already open** | Running apps get moved, not relaunched. Turn that off to leave them alone and only open what is missing |
+| **The catch** | macOS cannot open an app straight into a position, so windows appear first and jump a moment later. A second window of the same app cannot be conjured — give it a file to open instead |
+
+## Hotkeys
+
+<p align="center">
+  <img src="docs/hotkeys.svg" alt="Where each hotkey puts the front window" width="720">
+</p>
+
+<p align="center">
+  All on <code>⌃⌥</code>. Every one of them is rebindable, and any of them can be unbound.
+</p>
+
+| | |
+| --- | --- |
+| `⌃⌥` arrows, `U I J K`, `↩`, `C` | Halves, quarters, maximize, centre |
+| `⌃⌥1`–`⌃⌥9`, `⌃⌥0` | Into a numbered zone, or back where it was |
+| `⌃⌥⇧1`–`⌃⌥⇧9` | Swap the whole zone set on this screen |
+| `⌃⌥⇧` arrows | Focus the window that is actually in that direction |
+| `` ⌃⌥` `` | Next window in this zone |
+| `⌃⌥Z` | Flash the zones |
+| `⌃⌥S` · `⌃⌥T` | Grab a region · lift the text out of one |
+| `⌃⌥P` · `⌃⌥⇧P` | Pin a live crop on top · pin a still one |
+| `⌃⌥⇧/` | Every shortcut the front app has |
+| `⌃⌥/` · `⌃⌥\` | Find the pointer · jump it to the next screen |
+| `⌃⌥V` | Hold to talk |
+
+## And the rest
+
+| | |
+| --- | --- |
+| **Keep awake** | IOKit power assertions, not a jiggler. Display-on or system-only, pause on battery, auto while charging, and a session that ends when you say: after N minutes, at a wall-clock time, or the moment a process exits — `plonk awake while npm run build` holds the Mac up for exactly as long as the build lasts and not a second longer |
+| **Screenshots** | Region, window or screen through the native picker, then pen, arrow, rectangle, ellipse and highlighter. Saves at native resolution |
+| **Text** | `⌃⌥T` selects an area and copies the words in it, including text that is only pixels — a screenshot, a paused video, a PDF that will not let you select. Recognition is on-device; `plonk text \| grep …` works too |
+| **Pinned crops** | `⌃⌥P` drags out a region and floats it above everything, mirroring whatever is underneath. `⌃⌥⇧P` freezes it instead. Streamed, never written down |
+| **Shortcut guide** | `⌃⌥⇧/` lists every shortcut the front app has, read from its own menus rather than from a table someone has to keep up to date |
+| **Pointer** | Find the cursor, ring every click for a screen recording, crosshairs, and a key that warps the pointer to the next display |
+| **Grab and move** | Hold a key and drag a window from anywhere inside it; right-drag resizes from the nearest edge. Off by default, because option-drag already means something in plenty of apps |
+| **Notices** | A panel in the top-right corner, not Notification Center: no permission to ask for, nothing left in your history, and it can show the screenshot instead of describing it |
+| **Updates** | One button on the Updates page. The download is checked against the checksum GitHub published for it before it is unpacked, and Plonk installs a build only if it is signed with the same certificate as the copy you are running — the same test macOS applies, so your Accessibility and Screen Recording grants carry over instead of being asked for again. Anything that fails is discarded and nothing is replaced. Switch the check off and the app never looks |
 
 ## Check it yourself
 
@@ -156,101 +301,6 @@ SDK and zod. It speaks to `127.0.0.1:43917` and nowhere else.
 (none), every step the updater takes before it replaces anything, what the
 signing certificate does and does not prove, and where each of these checks
 stops being one.
-
-## Workspaces
-
-<p align="center">
-  <img src="docs/workspaces.svg" alt="A workspace of four windows, saved, closed to an empty desktop, then launched back into place" width="720">
-</p>
-
-A workspace is a desk you can put away. It remembers the apps, the frame of
-every window, the monitor each one belongs on, and what each app should open on
-the way up. Launching one opens whatever is closed, waits for the windows, and
-puts them back — from the Workspaces page, or right-click the menu bar icon.
-Rename, recapture or delete from the workspace's `⋯` menu.
-
-| | |
-| --- | --- |
-| **Per app** | Files, folders or URLs to open with it: a project folder for an editor, a set of tabs for a browser |
-| **Per monitor** | Windows return to the display they were captured on, keyed by display UUID so unplugging a monitor does not scramble them. Or pull the whole workspace onto one screen |
-| **Already open** | Running apps get moved, not relaunched. Turn that off to leave them alone and only open what is missing |
-| **The catch** | macOS cannot open an app straight into a position, so windows appear first and jump a moment later. A second window of the same app cannot be conjured — give it a file to open instead |
-
-## Zones
-
-<p align="center">
-  <img src="docs/zones.svg" alt="A screen split into three zones, with a window being dragged into the highlighted one" width="720">
-</p>
-
-<p align="center">
-  <img src="docs/zone-sets.svg" alt="Five built-in zone sets and a sixth, irregular one drawn by hand" width="720">
-</p>
-
-Five sets ship with it. Everything past that you draw yourself: any number of
-zones, any size, overlapping if you want — a narrow rail for chat, a wide middle
-split in two, a strip for the terminal. Or describe it and let the agent build
-it.
-
-| | |
-| --- | --- |
-| **Editor** | Click to split, `⇧`-click to split vertically, drag a divider to resize neighbours, `✕` to delete and let them heal over the gap |
-| **Per monitor** | Each screen gets its own set, remembered by display, not by index |
-| **Overlap** | Allowed — the smallest zone under the cursor wins |
-| **Trigger** | On drag, or only with a modifier held. Holding it inverts the mode, so a free move stays one keypress away |
-| **Span** | Hold `⌘` as well: the zone you started over and the one under the cursor become a single drop, so two columns make one wide window without editing the set |
-| **By number** | `⌃⌥1`–`⌃⌥9` drop the front window into the zone the overlay draws that number on. `⌃⌥0` gives it back the frame it had before Plonk first moved it |
-| **Or none** | Edge snapping instead: middles are halves, top is maximize, corners are quarters |
-| **Exceptions** | A list of apps Plonk keeps its hands off — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works; that names the window on purpose |
-
-## Hotkeys
-
-<p align="center">
-  <img src="docs/hotkeys.svg" alt="Where each hotkey puts the front window" width="720">
-</p>
-
-<p align="center">
-  All on <code>⌃⌥</code>. Plus <code>⌃⌥Z</code> to flash the zones, <code>⌃⌥S</code> to grab a region
-  and <code>⌃⌥T</code> to lift the text out of one.
-</p>
-
-Focus follows the layout, not the order things were last used: `⌃⌥⇧` and an
-arrow steps to the window that is actually to the left, and `` ⌃⌥` `` cycles
-through the ones stacked in the same zone. Every binding is rebindable.
-
-## And the rest
-
-| | |
-| --- | --- |
-| **Keep awake** | IOKit power assertions, not a jiggler. Display-on or system-only, pause on battery, auto while charging, and a session that ends when you say: after N minutes, at a wall-clock time, or the moment a process exits — `plonk awake while npm run build` holds the Mac up for exactly as long as the build lasts and not a second longer |
-| **Screenshots** | Region, window or screen through the native picker, then pen, arrow, rectangle, ellipse and highlighter. Saves at native resolution |
-| **Text** | `⌃⌥T` selects an area and copies the words in it, including text that is only pixels — a screenshot, a paused video, a PDF that will not let you select. Recognition is on-device; `plonk text \| grep …` works too |
-| **Notices** | A panel in the top-right corner, not Notification Center: no permission to ask for, nothing left in your history, and it can show the screenshot instead of describing it |
-| **Updates** | One button on the Updates page. The download is checked against the checksum GitHub published for it before it is unpacked, and Plonk installs a build only if it is signed with the same certificate as the copy you are running — the same test macOS applies, so your Accessibility and Screen Recording grants carry over instead of being asked for again. Anything that fails is discarded and nothing is replaced. Switch the check off and the app never looks |
-
-## For agents
-
-Frames are fractions of a monitor's visible area, origin top-left — which is why
-"left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
-
-| Tool | |
-| --- | --- |
-| `get_state` | Monitors, every open window and where it sits, zone sets, saved workspaces, awake status |
-| `apply_layout` | Place any set of windows, across any number of monitors, in one call |
-| `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops, launched from nothing |
-| `snap_window` | Drop a window into a numbered zone |
-| `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
-| `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
-| `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back |
-| `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
-| `select_agent` | Make an agent the user's active one, optionally the only one allowed to control |
-
-Several agents can be connected at once. Every client registers itself, so
-`get_state` lists who is online; the user picks an active agent from the menu
-bar or the settings — or an agent does it with `select_agent`. An optional
-strict mode locks changes to the active agent: everyone else keeps reading
-state and taking screenshots, but gets a clear 409 on anything that moves
-windows or edits config. Set `PLONK_AGENT_NAME` in a client's MCP config to
-tell two sessions of the same client apart.
 
 ## Under the hood
 
