@@ -5,7 +5,7 @@
 windows — you drag them there, you press a key, or your agent says where.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.0.5-58a6ff?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-58a6ff?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
   <img alt="MCP" src="https://img.shields.io/badge/MCP-19_tools-8957e5?style=flat-square">
@@ -63,20 +63,36 @@ macOS 13+.
 brew install --cask ostapondo/plonk/plonk
 ```
 
+**Plonk is signed, but not notarized.** The certificate is self-signed rather
+than an Apple Developer ID, because notarizing one requires a paid Apple
+account and this project does not have one. So macOS cannot vouch for who built
+this, and says so: a hand-downloaded copy is held on first launch, and the cask
+above skips that by clearing the quarantine flag for you.
+
+Worth stating plainly, since it is a check being skipped on your behalf. Here is
+the one that replaces it, and it is stronger — run it before you open anything:
+
+```sh
+gh attestation verify $(brew --cache)/downloads/*--Plonk-0.1.0.zip \
+  -R ostapondo/plonk
+```
+
+That prints the commit and the GitHub Actions run this exact archive was built
+by. Apple's stamp would tell you a build passed a malware scan; this tells you
+the binary on your Mac came from the source in this repository, and nothing
+went through a laptop on the way. It is the first of
+[several such checks](#check-it-yourself) — none of what this README claims
+about privacy has to be taken on trust.
+
 Or download [the latest release](https://github.com/ostapondo/plonk/releases/latest),
-unzip, and drop Plonk.app into Applications.
+unzip, and drop Plonk.app into Applications. Then either do the Gatekeeper
+detour once — open Plonk, dismiss the warning, then System Settings → Privacy &
+Security, scroll to Security, **Open Anyway** — or clear the flag yourself,
+which is all the cask does:
 
-**First launch takes one extra click.** Plonk is code-signed, but with a
-self-signed certificate rather than an Apple Developer ID, and Gatekeeper does
-not trust one of those — so macOS holds the app the first time, whichever way
-you installed it. Open Plonk, dismiss the warning, then go to System Settings →
-Privacy & Security, scroll to Security, and click **Open Anyway**. That is once,
-for good.
-
-What that warning means is that macOS cannot vouch for who built this. Fair. So
-rather than ask you to take it on trust, everything below is
-[checkable](#check-it-yourself) — starting with proving the file you just
-downloaded was built from the source in this repository.
+```sh
+xattr -dr com.apple.quarantine /Applications/Plonk.app
+```
 
 Grant Accessibility when asked, then relaunch. Screen Recording is asked for
 separately, the first time you capture. Nothing else — no Full Disk Access, no
@@ -318,7 +334,7 @@ stops being one.
 
 ```sh
 cd App && swift build     # the app
-./scripts/test.sh         # 191 unit tests
+./scripts/test.sh         # 264 unit tests
 ./scripts/build.sh        # produces Plonk.app
 cd mcp && npm run build   # the MCP server
 ```

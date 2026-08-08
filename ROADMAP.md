@@ -5,15 +5,16 @@ No dates, just order. Things ship when they're ready. Ideas and votes go to
 
 ## Now
 
-- **Notarized builds** — no more "Open Anyway" dance on first launch.
+- **Voice → command** — common actions ("snap this left", "keep awake an hour")
+  run directly, no agent in the loop, so they work offline and instantly. The
+  rest of the voice side is below.
 
 Auto-updates shipped, without Sparkle: the Updates page checks GitHub, and
 installing swaps in a build only when it is signed with the same certificate as
 the running copy. That check is what macOS uses for Accessibility and Screen
 Recording too, so an update keeps the permissions the user already granted. The
 check is one call to api.github.com, carries no identifier, and can be turned
-off. Notarization will change the signing certificate once, and the permissions
-along with it — the last time that happens.
+off.
 
 ## Next — any agent, not just one
 
@@ -73,12 +74,18 @@ half-private IOKit and breaks per hub).
 Push-to-talk shipped: hold `⌃⌥V` (rebindable on the Voice page), say it, let
 go. Recognition runs on the Mac — nothing leaves it — and the transcript goes
 to the active agent over the agents channel: "browser left, terminal right,
-save it as review". Still to come:
+save it as review". Still to come, after voice → command:
 
-- **Voice → command** — common actions ("snap this left", "keep awake an hour")
-  run directly, no agent in the loop, so they work offline and instantly.
 - **Spoken replies** — short confirmations back, optional and off by default.
 
 ## Not planned
 
 - Accounts, cloud sync, telemetry. Everything stays on your Mac.
+- **Notarized builds.** Notarizing needs a Developer ID certificate, and Apple
+  issues those only to paid Developer Program members. Plonk is signed with a
+  self-signed certificate instead, so macOS holds a hand-downloaded copy on
+  first launch; installing with Homebrew avoids that. What notarization buys is
+  Apple vouching for the build. What this repo offers instead is a build you
+  can check yourself, against the commit it was made from — see
+  [SECURITY.md](SECURITY.md). If that trade ever stops making sense, this entry
+  moves.
