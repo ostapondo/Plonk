@@ -10,7 +10,11 @@ name: Release
 #
 #   PLONK_SIGN_CERT_P12       the "Plonk Signing" certificate and its key, base64
 #   PLONK_SIGN_CERT_PASSWORD  the password used when exporting it
-#   NPM_TOKEN                 an npm automation token that can publish plonk-mcp
+#
+# npm needs no secret at all: plonk-mcp names this repository and this workflow
+# file as a trusted publisher (npmjs.com > the package > Settings > Trusted
+# publisher), and npm takes GitHub's OIDC token as proof. Nothing to rotate,
+# nothing to leak.
 #
 # The first two come from ./scripts/make-signing-cert.sh, which prints both.
 # The certificate is deliberately generated as a file rather than in the
@@ -165,12 +169,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # what lets npm record where this tarball came from
+      # Both halves of trusted publishing: it is what npm authenticates this
+      # workflow by, and what it records the tarball's origin from.
+      id-token: write
     steps:
       - uses: actions/checkout@v5
+      # Node 24 for npm 11, which is the first that can publish over OIDC.
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: mcp/package-lock.json
@@ -197,15 +204,18 @@ jobs:
             echo "published=no" >> "$GITHUB_OUTPUT"
           fi
 
-      # --provenance is the whole reason this is not an `npm publish` from a
-      # laptop: it puts a signed statement on the registry naming the commit
-      # and the workflow that produced the tarball, which is what `npx -y
-      # plonk-mcp` otherwise asks people to take on faith.
+      # No token. npm authenticates this workflow by the OIDC identity GitHub
+      # mints for it, against a trusted publisher configured on the package:
+      # this repository, this workflow file, nothing else. A token that can
+      # publish plonk-mcp therefore does not exist to be leaked, and npm is
+      # restricting the 2FA-bypassing tokens this used to need anyway.
+      #
+      # Provenance comes with it — a signed statement on the registry naming
+      # the commit and the run that produced the tarball, which is what
+      # `npx -y plonk-mcp` otherwise asks people to take on faith.
       - name: Publish with provenance
         if: steps.version.outputs.published == 'no'
         working-directory: mcp
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
 
       - name: Already published
