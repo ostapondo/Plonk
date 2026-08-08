@@ -11,7 +11,11 @@ Rules for AI agents working in this repo.
 Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
 
 - `Router` owns every HTTP route. `AppDelegate` owns lifecycle, windows and the
-  status menu, and nothing else.
+  status menu, and nothing else. It is over the line limit and may only shrink,
+  so anything new goes in an extension of its own — see `AppDelegate+Shell`.
+- `Ink` holds the surfaces, the radius and the accent gradient every page draws
+  with, and `SettingRows` the rows a settings card is made of. Pages compose
+  those instead of spelling out colours.
 - `AppActions` is the full list of things the UI can ask the app to do.
   `AppModel` is state only; views never reach past it.
 - `ScreenIdentity` turns a screen index into the keys config is stored under.
@@ -23,8 +27,9 @@ is a module. A new module touches five places, nothing else:
 
 1. A manager type in `App/Sources/plonk/` owning the behavior.
 2. Methods on `AppActions`, implemented in the `AppDelegate` extension.
-3. A `SettingsPage` entry registered in `AppDelegate.refreshModel` (drives the
-   sidebar) plus any status-menu items in `StatusMenuController`.
+3. A `SettingsPage` entry in `SettingsPages.all`, naming the `SettingsGroup` it
+   belongs under as its `parent` (that is what the sidebar draws), plus any
+   status-menu items in `StatusMenuController`.
 4. HTTP routes under its own path prefix in `Router.handle` (e.g. `/shot/*`).
 5. An MCP tool file `mcp/src/tools/<module>.ts` with a `register(server)`
    function, wired in `mcp/src/server.ts`.

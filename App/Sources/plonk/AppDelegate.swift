@@ -6,19 +6,19 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static let issuesURL = "https://github.com/ostapondo/plonk/issues/new"
 
-    private let store = ConfigStore()
+    let store = ConfigStore()
     private let windows = WindowManager()
-    private let awake = AwakeManager()
+    let awake = AwakeManager()
     private let agents = AgentRegistry()
     private let eventBroadcaster = EventBroadcaster()
     private let voice = VoiceManager()
     private let hotkeys = HotkeyManager()
     private let updates = UpdateManager()
-    private let model = AppModel()
+    let model = AppModel()
     private let snapMemory = SnapMemory()
     private lazy var commands = WindowCommands(windows: windows, memory: snapMemory)
     private lazy var launcher = WorkspaceLauncher(windows: windows)
-    private lazy var presenter = WindowPresenter(model: model)
+    lazy var presenter = WindowPresenter(model: model)
     private var statusMenu: StatusMenuController!
     private var dragSnap: DragSnapManager!
     private var grabMove: GrabMove!
@@ -46,6 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         store.load()
+        applyAppearance()
         windows.promptForTrust()
 
         model.actions = self
@@ -194,7 +195,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshHotkeyModel()
     }
 
-    private func perform(_ action: HotkeyAction) {
+    func perform(_ action: HotkeyAction) {
         switch action {
         case .showZones:
             dragSnap.previewZones()
@@ -340,7 +341,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var zoneAppearance: ZoneAppearance {
         ZoneAppearance(gap: CGFloat(store.config.zoneGap),
                        opacity: CGFloat(store.config.zoneOpacity),
-                       color: ZoneAppearance.color(fromHex: store.config.zoneColorHex),
+                       // Falls back to the app's accent, which itself falls back
+                       // to the system one, so the overlay is part of the theme.
+                       color: ZoneAppearance.color(fromHex: store.config.zoneColorHex)
+                           ?? ZoneAppearance.color(fromHex: store.config.appearance.accentHex),
                        showNumbers: store.config.zoneNumbersVisible)
     }
 
@@ -486,10 +490,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Same rule as grab-and-move: no tap unless something needs one. Finding
     /// the pointer is a shortcut and draws without watching anything.
-    private func applyMouseSettings() {
+    func applyMouseSettings() {
         mouse.highlightEnabled = store.config.highlightClicksEnabled
         mouse.crosshairsEnabled = store.config.crosshairsEnabled
-        mouse.tint = ZoneAppearance.color(fromHex: store.config.zoneColorHex) ?? .controlAccentColor
+        mouse.tint = zoneAppearance.tint
         if store.config.highlightClicksEnabled || store.config.crosshairsEnabled {
             mouse.start()
         } else {
@@ -635,7 +639,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
 
-    private func refreshModel() {
+    func refreshModel() {
         model.appVersion = appVersion
         model.configWarning = store.loadFailure
         refreshPermissions()
@@ -670,18 +674,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.sawFirstSnap = store.config.sawFirstSnap
         model.sawFirstAgent = store.config.sawFirstAgent
         model.gettingStartedHidden = store.config.gettingStartedHidden
-        model.settingsPages = [
-            SettingsPage(id: "home", title: "Home", icon: "house") { AnyView(HomePage(model: $0)) },
-            SettingsPage(id: "shortcuts", title: "Shortcuts", icon: "keyboard") { AnyView(ShortcutsPage(model: $0)) },
-            SettingsPage(id: "workspaces", title: "Workspaces", icon: "rectangle.3.group", section: "Windows") { AnyView(WorkspacesPage(model: $0)) },
-            SettingsPage(id: "zones", title: "Zones", icon: "square.grid.2x2", section: "Windows") { AnyView(ZonesPage(model: $0)) },
-            SettingsPage(id: "voice", title: "Voice", icon: "mic", section: "Gadgets") { AnyView(VoicePage(model: $0)) },
-            SettingsPage(id: "awake", title: "Keep Awake", icon: "cup.and.saucer", section: "Gadgets") { AnyView(AwakePage(model: $0)) },
-            SettingsPage(id: "shot", title: "Screenshot", icon: "camera.viewfinder", section: "Gadgets") { AnyView(ShotPage(model: $0)) },
-            SettingsPage(id: "mouse", title: "Pointer", icon: "cursorarrow.rays", section: "Gadgets") { AnyView(MousePage(model: $0)) },
-            SettingsPage(id: "ai", title: "AI · MCP", icon: "sparkles", section: "Setup") { AnyView(AIPage(model: $0)) },
-            SettingsPage(id: "update", title: "Updates", icon: "arrow.down.circle", section: "Setup") { AnyView(UpdatePage(model: $0)) },
-        ]
+        model.appearance = store.config.appearance
+        model.settingsGroups = SettingsPages.groups
+        model.settingsPages = SettingsPages.all
         refreshWorkspaceModel()
         refreshZoneModel()
         refreshHotkeyModel()
@@ -690,7 +685,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Preflight does not prompt, so it is safe to poll whenever a window opens.
-    private func refreshPermissions() {
+    func refreshPermissions() {
         model.accessibilityGranted = windows.isTrusted
         model.screenRecordingGranted = CGPreflightScreenCaptureAccess()
     }
@@ -880,12 +875,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.shotStatus = path.map { "Saved to \($0)" } ?? "Copied to clipboard"
     }
 
-    private func openMainWindow() {
-        refreshPermissions()
-        presenter.showMainWindow()
-    }
-
-    private func openPage(_ id: String) {
+    func openPage(_ id: String) {
         model.selectedPage = id
         openMainWindow()
     }

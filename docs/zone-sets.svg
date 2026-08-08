@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 112" width="720" height="112" role="img" aria-label="Five built-in zone sets — Halves, Thirds, 60/40, Quarters, Priority — and a sixth, irregular one drawn by hand">
   <style>
     .frame { fill: none; stroke: #8b949e; stroke-opacity: 0.45; stroke-width: 1.5; }
-    .z { fill: #58a6ff; fill-opacity: 0.18; stroke: #58a6ff; stroke-opacity: 0.7; stroke-width: 1.5; }
+    .z { fill: #8b7cf6; fill-opacity: 0.18; stroke: #8b7cf6; stroke-opacity: 0.7; stroke-width: 1.5; }
     .c { fill: #d29922; fill-opacity: 0.18; stroke: #d29922; stroke-opacity: 0.8; stroke-width: 1.5; }
     .n { font: 600 12px ui-sans-serif, -apple-system, Segoe UI, sans-serif; fill: #8b949e; text-anchor: middle; }
     .y { font: 600 12px ui-sans-serif, -apple-system, Segoe UI, sans-serif; fill: #d29922; text-anchor: middle; }

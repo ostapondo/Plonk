@@ -6,7 +6,7 @@
   </defs>
   <style>
     .box { fill: #8b949e; fill-opacity: 0.08; stroke: #8b949e; stroke-opacity: 0.6; stroke-width: 1.5; }
-    .app { fill: #58a6ff; fill-opacity: 0.14; stroke: #58a6ff; stroke-opacity: 0.85; stroke-width: 2; }
+    .app { fill: #8b7cf6; fill-opacity: 0.14; stroke: #8b7cf6; stroke-opacity: 0.85; stroke-width: 2; }
     .t { font: 600 14px ui-sans-serif, -apple-system, Segoe UI, sans-serif; fill: #8b949e; text-anchor: middle; }
     .s { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #8b949e; fill-opacity: 0.75; text-anchor: middle; }
     .l { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #8b949e; fill-opacity: 0.75; text-anchor: middle; }
