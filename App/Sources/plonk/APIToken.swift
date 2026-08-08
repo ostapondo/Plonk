@@ -38,6 +38,9 @@ enum APIToken {
     /// Nil when there is no file this user can both read and keep to
     /// themselves. That is not a token, so the API refuses to answer rather
     /// than answering to anyone — see `rejection`.
+    ///
+    /// A file that arrives readable by others is replaced, not repaired: its
+    /// contents have already been exposed for however long it sat there.
     static func loadOrCreate(in directory: URL? = nil) -> String? {
         let url = Self.url(in: directory)
         try? FileManager.default.createDirectory(
@@ -45,9 +48,9 @@ enum APIToken {
 
         if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path) {
             // Somebody else's file — one `sudo` launch leaves a root-owned one
-            // behind — cannot be tightened by this user and must not be
-            // trusted: its contents are a secret they do not control. Same for
-            // anything that is not a plain file.
+            // behind — is neither replaceable by this user nor trustworthy:
+            // its contents are a secret they do not control. Same for anything
+            // that is not a plain file.
             let owner = (attributes[.ownerAccountID] as? NSNumber)?.uint32Value
             guard owner == getuid() else {
                 NSLog("Plonk: the API token at \(url.path) belongs to another user (uid \(owner.map(String.init) ?? "unknown"))")
@@ -59,23 +62,22 @@ enum APIToken {
             }
         }
 
-        if let existing = try? String(contentsOf: url, encoding: .utf8) {
-            let token = existing.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !token.isEmpty {
-                // An earlier copy, a restored backup or a hand-edited file can
-                // be world-readable. Tighten it rather than trust it — and if
-                // it will not tighten, it is a secret the rest of the machine
-                // has already read, so it is no longer one.
-                try? FileManager.default.setAttributes(
-                    [.posixPermissions: NSNumber(value: 0o600)], ofItemAtPath: url.path)
-                let mode = (try? FileManager.default.attributesOfItem(atPath: url.path))
-                    .flatMap { ($0[.posixPermissions] as? NSNumber)?.int16Value } ?? 0
-                guard mode & 0o077 == 0 else {
-                    NSLog("Plonk: the API token at \(url.path) stayed readable by other users")
-                    return nil
-                }
-                return token
+        if let existing = try? String(contentsOf: url, encoding: .utf8),
+           !existing.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // Unknown counts as loose: a mode this cannot read is a mode this
+            // cannot vouch for, and the safe reading of "I do not know who can
+            // read this secret" is "everyone".
+            let mode = (try? FileManager.default.attributesOfItem(atPath: url.path))
+                .flatMap { ($0[.posixPermissions] as? NSNumber)?.int16Value } ?? 0o777
+            if mode & 0o077 == 0 {
+                return existing.trimmingCharacters(in: .whitespacesAndNewlines)
             }
+            // A restored backup or a copied Application Support folder arrives
+            // world-readable, and by then anything on the machine may have
+            // read it. Tightening such a file makes the permissions right and
+            // the secret no better, so it is replaced rather than kept: the
+            // clients that held the old one re-read the file on the first 401.
+            NSLog("Plonk: the API token at \(url.path) was readable by other users; replacing it")
         }
 
         // Created by open(2) rather than FileManager, which writes the file

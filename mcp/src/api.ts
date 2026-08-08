@@ -208,18 +208,19 @@ export function localApiToken(): string | undefined {
   return apiToken();
 }
 
-function tokenHeader(): Record<string, string> {
-  const token = apiToken();
-  return token ? { "x-plonk-token": token } : {};
-}
-
-/** Drops the cached token and reads again, true only when a different one
- * turned up — the one case where repeating a refused request can help. */
-function refreshToken(): boolean {
-  const stale = cachedToken;
+/** Drops the cache and reads again, true only when the file now holds
+ * something other than what this request actually sent — the one case where
+ * repeating a refused request can help.
+ *
+ * `sent` rather than the cache, because the cache is shared: the hello
+ * heartbeat and the inbox long-poll are always in flight beside a tool call,
+ * so after a rotation the first 401 refreshes the cache and every other
+ * request in the air would find it already fresh and give up, handing the
+ * model a token error for a token that had just been fixed. */
+function refreshToken(sent: string | undefined): boolean {
   cachedToken = undefined;
   const fresh = apiToken();
-  return fresh !== undefined && fresh !== stale;
+  return fresh !== undefined && fresh !== sent;
 }
 
 export interface CallOptions {
@@ -236,20 +237,29 @@ export async function call<T extends object = ApiResponse>(
   const { method = "GET", body, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
   const timeout = AbortSignal.timeout(timeoutMs);
 
-  const send = () =>
-    fetch(BASE + path, {
+  // Captured per attempt, so the retry can tell "the token changed" from
+  // "somebody else refreshed the cache while this request was in the air".
+  let sent: string | undefined;
+  const send = () => {
+    sent = apiToken();
+    return fetch(BASE + path, {
       method,
-      headers: { "content-type": "application/json", ...agentHeaders(), ...tokenHeader() },
+      headers: {
+        "content-type": "application/json",
+        ...agentHeaders(),
+        ...(sent ? { "x-plonk-token": sent } : {}),
+      },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: timeout,
     });
+  };
 
   let res: Response;
   try {
     res = await send();
     // A long-lived client outlives the token if the file is ever replaced.
     // One re-read makes that a hiccup instead of a session to restart.
-    if (res.status === 401 && refreshToken()) res = await send();
+    if (res.status === 401 && refreshToken(sent)) res = await send();
   } catch (err) {
     if (timeout.aborted) {
       return { error: `Plonk did not answer within ${timeoutMs / 1000}s. It may be waiting on a dialog.` };

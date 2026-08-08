@@ -33,8 +33,10 @@ struct APITokenFileTests {
     }
 
     /// A file restored from a backup, or copied by hand, can arrive readable by
-    /// everyone. Reading it is also the moment to fix it.
-    @Test func aLooseFileIsTightenedRatherThanTrusted() throws {
+    /// everyone — and by the time Plonk sees it, anything on the machine may
+    /// already have read it. Fixing the mode does not unread it, so the secret
+    /// itself is replaced.
+    @Test func aLooseFileIsReplacedRatherThanTightened() throws {
         let dir = temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let url = APIToken.url(in: dir)
@@ -43,10 +45,14 @@ struct APITokenFileTests {
             contents: Data("borrowed\n".utf8),
             attributes: [.posixPermissions: NSNumber(value: 0o644)])
 
-        #expect(APIToken.loadOrCreate(in: dir) == "borrowed")
+        let token = try #require(APIToken.loadOrCreate(in: dir))
+        #expect(token != "borrowed")
+        #expect(token.count == 64)
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         let mode = try #require(attributes[.posixPermissions] as? NSNumber)
         #expect(mode.int16Value == 0o600)
+        // And it stays put from then on, rather than rotating every launch.
+        #expect(APIToken.loadOrCreate(in: dir) == token)
     }
 
     @Test func anEmptyFileIsReplacedRatherThanUsed() throws {
