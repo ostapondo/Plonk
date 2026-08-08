@@ -4,9 +4,7 @@ struct ZonesPage: View {
     @ObservedObject var model: AppModel
     @State private var exclusionsDraft = ""
     @FocusState private var exclusionsFocused: Bool
-    @State private var gapDraft = 0.0
     @State private var opacityDraft = 1.0
-    @State private var edgeSpanDraft = 16.0
 
     /// Everything on this page that is not one of the two grouped sections below.
     private var presetActions: [HotkeyAction] {
@@ -94,16 +92,8 @@ struct ZonesPage: View {
                 Text("Applies the set at that place in the list below, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set.")
             }
             Section {
-                LabeledContent("Gap") {
-                    HStack {
-                        // Committed when the knob is let go, not on every tick:
-                        // each write re-encodes the whole config file and wakes
-                        // every agent listening for changes.
-                        Slider(value: $gapDraft, in: 0...40) { editing in
-                            if !editing { model.actions?.setZoneGap(gapDraft) }
-                        }
-                        Text("\(Int(gapDraft)) pt").monospacedDigit().frame(width: 46, alignment: .trailing)
-                    }
+                PointsField(title: "Gap", placeholder: "0", range: 0...40, value: model.zoneGap) {
+                    model.actions?.setZoneGap($0)
                 }
                 LabeledContent("Opacity") {
                     Slider(value: $opacityDraft, in: 0.1...1) { editing in
@@ -119,19 +109,14 @@ struct ZonesPage: View {
                 Toggle(isOn: model.binding(\.zonesOnAllMonitors, set: { $0.setZonesOnAllMonitors($1) })) {
                     Text("Show every monitor's zones while dragging")
                 }
-                LabeledContent("Edge spanning") {
-                    HStack {
-                        Slider(value: $edgeSpanDraft, in: 0...60) { editing in
-                            if !editing { model.actions?.setZoneEdgeSpan(edgeSpanDraft) }
-                        }
-                        Text(edgeSpanDraft < 1 ? "Off" : "\(Int(edgeSpanDraft)) pt")
-                            .monospacedDigit().frame(width: 46, alignment: .trailing)
-                    }
+                PointsField(title: "Edge spanning", placeholder: "16", range: 0...60,
+                            value: model.zoneEdgeSpan, zeroMeans: "off") {
+                    model.actions?.setZoneEdgeSpan($0)
                 }
             } header: {
                 Text("Appearance")
             } footer: {
-                Text("The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything.")
+                Text("The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything; zero switches it off.")
             }
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Focus"))
@@ -180,13 +165,9 @@ struct ZonesPage: View {
         .formStyle(.grouped)
         .onAppear {
             exclusionsDraft = AppExclusions.text(from: model.excludedApps)
-            gapDraft = model.zoneGap
             opacityDraft = model.zoneOpacity
-            edgeSpanDraft = model.zoneEdgeSpan
         }
-        .onChange(of: model.zoneGap) { gapDraft = $0 }
         .onChange(of: model.zoneOpacity) { opacityDraft = $0 }
-        .onChange(of: model.zoneEdgeSpan) { edgeSpanDraft = $0 }
         .onChange(of: model.excludedApps) { exclusionsDraft = AppExclusions.text(from: $0) }
         // Committed when the field is left rather than per keystroke, so a
         // half-typed name never starts excluding something.
@@ -488,5 +469,83 @@ struct MousePage: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// A whole number of points, typed rather than dragged.
+///
+/// Nothing that is not a number ever reaches config. Only digits can be typed
+/// at all, so a stray letter never lands in the field; anything that is still
+/// wrong once it is — out of range, or long enough to overflow — says so and is
+/// left in place to be corrected rather than silently rounded into something
+/// the user did not ask for. An empty field is zero, which is what "none" means
+/// for both of the things this edits.
+struct PointsField: View {
+    let title: String
+    let placeholder: String
+    let range: ClosedRange<Int>
+    let value: Double
+    /// Shown next to the field when the value is zero, e.g. "off".
+    var zeroMeans: String?
+    let commit: (Double) -> Void
+
+    @State private var draft = ""
+    @State private var error: String?
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            LabeledContent(title) {
+                HStack(spacing: 6) {
+                    TextField(placeholder, text: $draft)
+                        .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
+                        .frame(width: 58)
+                        .focused($focused)
+                        .onSubmit(commitDraft)
+                        .onChange(of: draft) { typed in
+                            let digits = typed.filter(\.isNumber)
+                            if digits != typed { draft = digits }
+                        }
+                    Text(zeroLabel).foregroundStyle(.secondary)
+                }
+            }
+            if let error {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .onAppear { draft = String(Int(value)) }
+        .onChange(of: value) { draft = String(Int($0)) }
+        // Committed when the field is left, not per keystroke: "1" on the way
+        // to "16" is a valid number, and saving it would rewrite config twice
+        // and move every snapped window through a size nobody asked for.
+        .onChange(of: focused) { if !$0 { commitDraft() } }
+    }
+
+    private var zeroLabel: String {
+        if let zeroMeans, draft == "0" || draft.isEmpty { return zeroMeans }
+        return "pt"
+    }
+
+    private func commitDraft() {
+        let trimmed = draft.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else {
+            error = nil
+            draft = "0"
+            commit(0)
+            return
+        }
+        guard let number = Int(trimmed) else {
+            error = "\(title) has to be a whole number of points."
+            return
+        }
+        guard range.contains(number) else {
+            error = "\(title) has to be between \(range.lowerBound) and \(range.upperBound)."
+            return
+        }
+        error = nil
+        commit(Double(number))
     }
 }
