@@ -143,4 +143,42 @@ struct BuiltinZoneSetsTests {
     @Test func gridClampsDegenerateInput() {
         #expect(BuiltinZoneSets.grid(columns: 0, rows: -1).count == 1)
     }
+
+    // MARK: - spanning
+
+    @Test func spanningTwoColumnsGivesTheirCombinedWidth() {
+        let thirds = BuiltinZoneSets.all["Thirds"]!
+        let span = ZoneGeometry.union(thirds[0], thirds[1])
+        assertZone(ZoneRect(span.x, span.y, span.w, span.h), 0, 0, 2.0 / 3, 1)
+    }
+
+    @Test func spanningIsOrderIndependent() {
+        let quarters = BuiltinZoneSets.all["Quarters"]!
+        let forward = ZoneGeometry.union(quarters[0], quarters[3])
+        let backward = ZoneGeometry.union(quarters[3], quarters[0])
+        #expect(forward.x == backward.x && forward.y == backward.y)
+        #expect(forward.w == backward.w && forward.h == backward.h)
+    }
+
+    /// Two diagonal quarters bound the whole screen, so the pair between them
+    /// comes along — the rect is what gets dropped into either way.
+    @Test func spanningDiagonallyTakesTheCornersWithIt() {
+        let quarters = BuiltinZoneSets.all["Quarters"]!
+        let span = ZoneGeometry.union(quarters[0], quarters[3])
+        assertZone(ZoneRect(span.x, span.y, span.w, span.h), 0, 0, 1, 1)
+        #expect(ZoneGeometry.covered(quarters, by: span) == [0, 1, 2, 3])
+    }
+
+    @Test func coveredReportsOnlyTheZonesInsideTheSpan() {
+        let thirds = BuiltinZoneSets.all["Thirds"]!
+        let span = ZoneGeometry.union(thirds[0], thirds[1])
+        #expect(ZoneGeometry.covered(thirds, by: span) == [0, 1])
+    }
+
+    @Test func spanningAZoneWithItselfChangesNothing() {
+        let thirds = BuiltinZoneSets.all["Thirds"]!
+        let span = ZoneGeometry.union(thirds[1], thirds[1])
+        assertZone(ZoneRect(span.x, span.y, span.w, span.h),
+                   thirds[1].x, thirds[1].y, thirds[1].w, thirds[1].h)
+    }
 }

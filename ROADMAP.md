@@ -28,6 +28,26 @@ long-polled inbox → MCP sampling, with CLI adapters as the fallback), and live
 state — `GET /events` streams `{"rev","what"}` server-sent events while `rev`
 rides in `/state`, so agents notice what the user and other agents just did.
 
+## Shipped since
+
+Borrowed from PowerToys, where a decade of Windows power users have already
+argued about what a window manager owes them, and rebuilt for the Mac:
+
+- **Excluded apps** — a list Plonk keeps its hands off. Every PowerToys module
+  has one; Plonk had none, which made drag snapping all-or-nothing.
+- **Zones by number** (`⌃⌥1`–`⌃⌥9`) and **put it back** (`⌃⌥0`), which restores
+  the frame a window had before Plonk first moved it.
+- **Spanning** two zones with `⌘` held during a drag.
+- **Focus by geometry** — step to the window that is actually to the left, or
+  cycle through the ones stacked in a zone, instead of alt-tabbing by recency.
+- **Windows return after a display change**, on the monitor they were placed on.
+- **Text off the screen** (`⌃⌥T`, `extract_text`, `plonk text`) — Vision,
+  on-device. The agent side hands back a box per line in the same coordinates
+  annotations are drawn in, so what was read can be pointed at.
+- **Keep-awake that ends by itself** — at a wall-clock time, or when a process
+  exits: `plonk awake while npm run build`.
+- **A `plonk` CLI** over the same loopback API, for scripts and Makefiles.
+
 ## Voice
 
 Push-to-talk shipped: hold `⌃⌥V` (rebindable on the Voice page), say it, let

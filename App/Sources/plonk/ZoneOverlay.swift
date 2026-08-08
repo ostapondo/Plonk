@@ -23,7 +23,9 @@ final class ZoneOverlay {
         window.contentView = content
     }
 
-    func show(zones: [ZoneRect], hovered: Int?, visible: NSRect) {
+    /// `highlighted` is a set rather than one index because a span covers
+    /// several zones at once and all of them have to read as the drop target.
+    func show(zones: [ZoneRect], highlighted: Set<Int>, visible: NSRect) {
         // Rebuilding subviews on every mouse move would drop frames, so the
         // geometry is only rebuilt when it actually changed.
         let key = "\(visible)|" + zones.map { "\($0.x),\($0.y),\($0.w),\($0.h)" }.joined(separator: ";")
@@ -33,7 +35,7 @@ final class ZoneOverlay {
             rebuild(zones: zones, visible: visible)
         }
         for (index, view) in zoneViews.enumerated() {
-            let isHovered = index == hovered
+            let isHovered = highlighted.contains(index)
             view.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(isHovered ? 0.28 : 0.10).cgColor
             view.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(isHovered ? 0.9 : 0.35).cgColor
             view.layer?.borderWidth = isHovered ? 2 : 1.5

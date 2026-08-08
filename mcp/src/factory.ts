@@ -10,6 +10,7 @@ import { register as registerZones } from "./tools/zones.js";
 import { register as registerAwake } from "./tools/awake.js";
 import { register as registerScreenshot } from "./tools/screenshot.js";
 import { register as registerAnnotate } from "./tools/annotate.js";
+import { register as registerText } from "./tools/text.js";
 import { register as registerAgents } from "./tools/agents.js";
 import { register as registerUpdate } from "./tools/update.js";
 
@@ -24,6 +25,7 @@ export function createPlonkServer(): McpServer {
   registerAwake(server);
   registerScreenshot(server);
   registerAnnotate(server);
+  registerText(server);
   registerAgents(server);
   registerUpdate(server);
   return server;

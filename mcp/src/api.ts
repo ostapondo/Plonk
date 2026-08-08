@@ -58,6 +58,8 @@ export interface AwakeDetails {
   auto_while_charging: boolean;
   keep_display_on: boolean;
   session_ends: string;
+  /** Non-zero while the session lasts only as long as that process does. */
+  bound_pid: number;
 }
 
 export interface AgentInfo {
@@ -73,6 +75,10 @@ export interface State {
   awake: boolean;
   awake_details: AwakeDetails;
   accessibility_granted: boolean;
+  /** Apps drag snapping and the placement shortcuts leave alone. */
+  excluded_apps: string[];
+  /** BCP-47 tags extract_text uses when none are passed; empty means automatic. */
+  text_languages: string[];
   saved_layouts: string[];
   workspaces: Record<string, Workspace>;
   zone_sets: Record<string, Frame[]>;

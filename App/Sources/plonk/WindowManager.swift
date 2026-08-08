@@ -329,11 +329,41 @@ final class WindowManager {
         setFrame(win, axRect(for: frac, screenIndex: screenIndex, in: screens()))
     }
 
-    /// Apply a preset to the focused window of the given app (hotkeys and menu).
-    func applyPreset(_ preset: Preset, to app: NSRunningApplication?) {
-        guard isTrusted, let app, let win = focusedWindow(of: app) else { return }
+    /// Which screen a window sits on, by the screen its centre falls in.
+    func screenIndex(ofWindow win: AXUIElement) -> Int {
+        screenIndex(containing: frame(ofWindow: win) ?? .zero, in: screens())
+    }
+
+    /// Put a window back at a frame it held earlier, nudged onto whichever
+    /// screen still exists. Used by unsnapping, where the size matters more
+    /// than the exact spot.
+    @discardableResult
+    func restore(frame rect: CGRect, toWindow win: AXUIElement) -> Bool {
         let all = screens()
-        let index = screenIndex(containing: frame(ofWindow: win) ?? .zero, in: all)
-        setFrame(win, axRect(for: preset.frac, screenIndex: index, in: all))
+        guard !all.isEmpty else { return false }
+        let index = screenIndex(containing: rect, in: all)
+        return setFrame(win, WindowNavigator.clamped(rect, into: all[index].visible))
+    }
+
+    /// Every window Plonk can address, with its frame, excluding Plonk's own.
+    /// One AX round trip per window, so callers should not do this per event.
+    func allWindows() -> [(app: NSRunningApplication, window: AXUIElement, frame: CGRect)] {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        var result: [(NSRunningApplication, AXUIElement, CGRect)] = []
+        for app in runningApps() where app.processIdentifier != ownPID {
+            for win in axWindows(of: app.processIdentifier) where !isMinimized(win) {
+                guard let f = frame(ofWindow: win) else { continue }
+                result.append((app, win, f))
+            }
+        }
+        return result
+    }
+
+    /// Brings a window forward and gives it focus. Raising alone leaves the
+    /// keyboard with whatever was in front, so the app is activated too.
+    func focus(_ win: AXUIElement, of app: NSRunningApplication) {
+        AXUIElementPerformAction(win, kAXRaiseAction as CFString)
+        AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
+        app.activate()
     }
 }

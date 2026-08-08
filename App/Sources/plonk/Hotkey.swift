@@ -145,8 +145,14 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     case leftHalf, rightHalf, topHalf, bottomHalf
     case topLeft, topRight, bottomLeft, bottomRight
     case maximize, center
-    case showZones, captureRegion
+    case showZones, captureRegion, captureText
     case voice
+    /// The numbered zones of the screen the window is on, as the drag overlay
+    /// draws them. Nine is where the digit row runs out.
+    case zone1, zone2, zone3, zone4, zone5, zone6, zone7, zone8, zone9
+    case unsnap
+    case cycleZone, cycleZoneBack
+    case focusLeft, focusRight, focusUp, focusDown
 
     var id: String { rawValue }
 
@@ -162,7 +168,33 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .bottomRight: return .bottomRight
         case .maximize: return .maximize
         case .center: return .center
-        case .showZones, .captureRegion, .voice: return nil
+        default: return nil
+        }
+    }
+
+    /// 1-based zone this action snaps to, nil for everything else.
+    var zoneNumber: Int? {
+        switch self {
+        case .zone1: return 1
+        case .zone2: return 2
+        case .zone3: return 3
+        case .zone4: return 4
+        case .zone5: return 5
+        case .zone6: return 6
+        case .zone7: return 7
+        case .zone8: return 8
+        case .zone9: return 9
+        default: return nil
+        }
+    }
+
+    var focusDirection: WindowNavigator.Direction? {
+        switch self {
+        case .focusLeft: return .left
+        case .focusRight: return .right
+        case .focusUp: return .up
+        case .focusDown: return .down
+        default: return nil
         }
     }
 
@@ -170,8 +202,18 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         switch self {
         case .showZones: return "Flash the zones"
         case .captureRegion: return "Capture a region"
+        case .captureText: return "Copy text from a region"
         case .voice: return "Push to talk"
-        default: return preset?.title ?? rawValue
+        case .unsnap: return "Put it back"
+        case .cycleZone: return "Next window in this zone"
+        case .cycleZoneBack: return "Previous window in this zone"
+        case .focusLeft: return "Focus the window to the left"
+        case .focusRight: return "Focus the window to the right"
+        case .focusUp: return "Focus the window above"
+        case .focusDown: return "Focus the window below"
+        default:
+            if let number = zoneNumber { return "Zone \(number)" }
+            return preset?.title ?? rawValue
         }
     }
 
@@ -180,8 +222,17 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         switch self {
         case .showZones: return "square.grid.2x2"
         case .captureRegion: return "camera.viewfinder"
+        case .captureText: return "text.viewfinder"
         case .voice: return "mic"
-        default: return "macwindow"
+        case .unsnap: return "arrow.uturn.backward"
+        case .cycleZone, .cycleZoneBack: return "arrow.triangle.2.circlepath"
+        case .focusLeft: return "arrow.left"
+        case .focusRight: return "arrow.right"
+        case .focusUp: return "arrow.up"
+        case .focusDown: return "arrow.down"
+        default:
+            if let number = zoneNumber { return "\(number).square" }
+            return "macwindow"
         }
     }
 
@@ -190,15 +241,17 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .leftHalf, .rightHalf, .topHalf, .bottomHalf: return "Halves"
         case .topLeft, .topRight, .bottomLeft, .bottomRight: return "Quarters"
         case .maximize, .center: return "Whole screen"
-        case .showZones, .captureRegion, .voice: return "Other"
+        case .unsnap: return "Numbered zones"
+        case .cycleZone, .cycleZoneBack, .focusLeft, .focusRight, .focusUp, .focusDown: return "Focus"
+        default:
+            return zoneNumber == nil ? "Other" : "Numbered zones"
         }
     }
 
     /// The settings page that owns this shortcut, matching SettingsPage ids.
     var page: String {
         switch self {
-        case .showZones: return "zones"
-        case .captureRegion: return "shot"
+        case .captureRegion, .captureText: return "shot"
         case .voice: return "voice"
         default: return "zones"
         }
@@ -208,8 +261,13 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         allCases.filter { $0.page == page }
     }
 
+    static func owned(by page: String, group: String) -> [HotkeyAction] {
+        allCases.filter { $0.page == page && $0.group == group }
+    }
+
     var defaultHotkey: Hotkey {
         let code: Int
+        var shift = false
         switch self {
         case .leftHalf: code = kVK_LeftArrow
         case .rightHalf: code = kVK_RightArrow
@@ -223,9 +281,26 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .center: code = kVK_ANSI_C
         case .showZones: code = kVK_ANSI_Z
         case .captureRegion: code = kVK_ANSI_S
+        case .captureText: code = kVK_ANSI_T
         case .voice: code = kVK_ANSI_V
+        case .zone1: code = kVK_ANSI_1
+        case .zone2: code = kVK_ANSI_2
+        case .zone3: code = kVK_ANSI_3
+        case .zone4: code = kVK_ANSI_4
+        case .zone5: code = kVK_ANSI_5
+        case .zone6: code = kVK_ANSI_6
+        case .zone7: code = kVK_ANSI_7
+        case .zone8: code = kVK_ANSI_8
+        case .zone9: code = kVK_ANSI_9
+        case .unsnap: code = kVK_ANSI_0
+        case .cycleZone: code = kVK_ANSI_Grave
+        case .cycleZoneBack: code = kVK_ANSI_Grave; shift = true
+        case .focusLeft: code = kVK_LeftArrow; shift = true
+        case .focusRight: code = kVK_RightArrow; shift = true
+        case .focusUp: code = kVK_UpArrow; shift = true
+        case .focusDown: code = kVK_DownArrow; shift = true
         }
-        return Hotkey(keyCode: UInt32(code), control: true, option: true)
+        return Hotkey(keyCode: UInt32(code), control: true, option: true, shift: shift)
     }
 
     static var defaults: [String: String] {

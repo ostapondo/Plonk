@@ -2,6 +2,13 @@ import SwiftUI
 
 struct ZonesPage: View {
     @ObservedObject var model: AppModel
+    @State private var exclusionsDraft = ""
+    @FocusState private var exclusionsFocused: Bool
+
+    /// Everything on this page that is not one of the two grouped sections below.
+    private var presetActions: [HotkeyAction] {
+        HotkeyAction.owned(by: "zones").filter { $0.group != "Numbered zones" && $0.group != "Focus" }
+    }
 
     var body: some View {
         Form {
@@ -24,14 +31,43 @@ struct ZonesPage: View {
                 }
                 .pickerStyle(.segmented)
             } footer: {
-                Text("Holding the modifier while dragging inverts the mode, so the other behavior is always available.")
+                Text("Holding the modifier while dragging inverts the mode, so the other behavior is always available. Hold ⌘ as well and the zone you started over and the one under the cursor are dropped into as one.")
             }
             Section {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones"))
+                ShortcutRows(model: model, actions: presetActions)
             } header: {
                 Text("Shortcuts")
             } footer: {
                 Text("Click a key field and press the combination. Esc cancels, Delete unbinds.")
+            }
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Numbered zones"))
+            } header: {
+                Text("Numbered Zones")
+            } footer: {
+                Text("The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it.")
+            }
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Focus"))
+            } header: {
+                Text("Move Between Windows")
+            } footer: {
+                Text("Focus follows the layout instead of the order things were last used: step to the window that is actually to the left, or cycle through the ones stacked in a zone.")
+            }
+            Section {
+                TextEditor(text: $exclusionsDraft)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minHeight: 66)
+                    .focused($exclusionsFocused)
+                Toggle(isOn: model.binding(\.restoreZonesOnScreenChange,
+                                           set: { $0.setRestoreZonesOnScreenChange($1) })) {
+                    Text("Put windows back after a display change")
+                    Text("Windows Plonk placed return to the same spot on the same monitor when one is plugged in or unplugged")
+                }
+            } header: {
+                Text("Leave These Alone")
+            } footer: {
+                Text("One app per line, matched anywhere in its name or bundle id — \"steam\" covers Steam and Steam Helper. Dragging and the shortcuts skip these; asking an agent to place a window still works, because that names the window on purpose.")
             }
             Section("Per Monitor") {
                 ForEach(0..<model.screenCount, id: \.self) { screen in
@@ -50,6 +86,18 @@ struct ZonesPage: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear { exclusionsDraft = AppExclusions.text(from: model.excludedApps) }
+        .onChange(of: model.excludedApps) { exclusionsDraft = AppExclusions.text(from: $0) }
+        // Committed when the field is left rather than per keystroke, so a
+        // half-typed name never starts excluding something.
+        .onChange(of: exclusionsFocused) { focused in if !focused { commitExclusions() } }
+        .onDisappear(perform: commitExclusions)
+    }
+
+    private func commitExclusions() {
+        let patterns = AppExclusions.parse(exclusionsDraft)
+        guard patterns != model.excludedApps else { return }
+        model.actions?.setExcludedApps(patterns)
     }
 
     private func assignment(for screen: Int) -> Binding<String> {
@@ -115,8 +163,20 @@ struct ShotPage: View {
             } footer: {
                 Text("The editor opens on the capture: draw with pen, arrow, rectangle, ellipse or highlighter, then copy or save. Needs Screen Recording access, which macOS asks for on the first capture.")
             }
-            Section("Shortcut") {
+            Section("Shortcuts") {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "shot"))
+            }
+            Section {
+                Picker("Language", selection: language) {
+                    Text("Automatic").tag("")
+                    Divider()
+                    ForEach(model.supportedTextLanguages, id: \.self) { Text($0).tag($0) }
+                }
+                .disabled(model.supportedTextLanguages.isEmpty)
+            } header: {
+                Text("Text")
+            } footer: {
+                Text("⌃⌥T selects an area and copies the words in it — including text in screenshots, videos and anything else that is only pixels. Recognition runs on this Mac; nothing is uploaded. Automatic follows the system language.")
             }
             Section("Output") {
                 Toggle(isOn: model.binding(\.shotCopyToClipboard, set: { $0.setShotCopyToClipboard($1) })) {
@@ -138,6 +198,15 @@ struct ShotPage: View {
         .onAppear { folderDraft = model.shotFolder }
         .onChange(of: model.shotFolder) { folderDraft = $0 }
         .onDisappear(perform: commitFolder)
+    }
+
+    /// One language at a time here; the API takes the full list for callers
+    /// that know they are looking at two.
+    private var language: Binding<String> {
+        Binding(
+            get: { model.textLanguages.first ?? "" },
+            set: { model.actions?.setTextLanguages($0.isEmpty ? [] : [$0]) }
+        )
     }
 
     private func commitFolder() {

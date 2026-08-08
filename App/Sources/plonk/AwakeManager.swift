@@ -3,7 +3,8 @@ import IOKit.ps
 import IOKit.pwr_mgt
 
 // Keep-awake, with rules:
-// - manual sessions, optionally time-limited
+// - manual sessions, optionally time-limited or ending at a wall-clock time
+// - or bound to a process, ending the moment that process does
 // - can be disallowed on battery (pauses until plugged back in)
 // - can engage automatically while charging
 // - holds either a display assertion or a system-only assertion
@@ -13,7 +14,10 @@ final class AwakeManager {
     private(set) var isOn = false          // assertion currently held
     private(set) var requested = false     // user/agent asked for keep-awake
     private(set) var sessionEnd: Date?
+    /// Set while the session lasts only as long as another process does.
+    private(set) var boundPID: Int?
     private var expiryTimer: Timer?
+    private var processWatch: DispatchSourceProcess?
     var onChange: (() -> Void)?
 
     var allowOnBattery = true { didSet { reevaluate() } }
@@ -30,7 +34,11 @@ final class AwakeManager {
     }
 
     var statusText: String {
-        if isOn { return requested ? "on" : "auto (charging)" }
+        if isOn {
+            guard requested else { return "auto (charging)" }
+            if let boundPID { return "on until process \(boundPID) exits" }
+            return "on"
+        }
         if requested { return "paused on battery" }
         return "off"
     }
@@ -46,25 +54,63 @@ final class AwakeManager {
         }
     }
 
-    /// Start or stop a keep-awake session. `minutes` overrides the configured
-    /// default timeout for this session; nil uses it, 0 means no limit.
-    func set(_ on: Bool, minutes: Int? = nil) {
+    /// Start or stop a keep-awake session. Returns an error string when the
+    /// request cannot be honoured, nil otherwise.
+    ///
+    /// - `minutes` overrides the configured default timeout for this session;
+    ///   nil uses it, 0 means no limit.
+    /// - `until` ends it at a wall-clock moment instead, and wins over minutes.
+    /// - `pid` ends it when that process exits, and wins over both: a build or
+    ///   a render knows when it is finished better than a guess at how long it
+    ///   will take.
+    @discardableResult
+    func set(_ on: Bool, minutes: Int? = nil, until: Date? = nil, pid: Int? = nil) -> String? {
+        guard on else {
+            begin(requested: false, sessionEnd: nil, pid: nil)
+            return nil
+        }
+        if let pid {
+            guard pid > 0, Self.isRunning(pid) else {
+                return "no process with pid \(pid) is running"
+            }
+            begin(requested: true, sessionEnd: nil, pid: pid)
+            return nil
+        }
+        if let until {
+            guard until > Date() else {
+                return "\(ISO8601DateFormatter().string(from: until)) has already passed"
+            }
+            begin(requested: true, sessionEnd: until, pid: nil)
+            return nil
+        }
         let limit = minutes ?? timeoutMinutes
-        let end = on && limit > 0 ? Date().addingTimeInterval(TimeInterval(limit) * 60) : nil
-        begin(requested: on, sessionEnd: end)
+        begin(requested: true,
+              sessionEnd: limit > 0 ? Date().addingTimeInterval(TimeInterval(limit) * 60) : nil,
+              pid: nil)
+        return nil
     }
 
     /// Pick a session back up after a relaunch. An end date already in the past
-    /// means the session ran out while the app was closed.
+    /// means the session ran out while the app was closed. Process-bound
+    /// sessions are never restored — see `AppDelegate.persistAwakeSession`.
     func restore(sessionEnd end: Date?) {
         if let end, end <= Date() { return }
-        begin(requested: true, sessionEnd: end)
+        begin(requested: true, sessionEnd: end, pid: nil)
     }
 
-    private func begin(requested on: Bool, sessionEnd end: Date?) {
+    /// Signal 0 checks for a process without touching it. EPERM means it is
+    /// alive and owned by somebody else, which is still alive.
+    private static func isRunning(_ pid: Int) -> Bool {
+        kill(pid_t(pid), 0) == 0 || errno == EPERM
+    }
+
+    private func begin(requested on: Bool, sessionEnd end: Date?, pid: Int?) {
         requested = on
         expiryTimer?.invalidate()
         expiryTimer = nil
+        processWatch?.cancel()
+        processWatch = nil
+        boundPID = pid
         sessionEnd = end
         if let end {
             let timer = Timer(fire: end, interval: 0, repeats: false) { [weak self] _ in
@@ -72,6 +118,24 @@ final class AwakeManager {
             }
             RunLoop.main.add(timer, forMode: .common)
             expiryTimer = timer
+        }
+        if let pid {
+            let source = DispatchSource.makeProcessSource(identifier: pid_t(pid), eventMask: .exit,
+                                                          queue: .main)
+            source.setEventHandler { [weak self] in
+                guard let self, boundPID == pid else { return }
+                set(false)
+            }
+            source.resume()
+            processWatch = source
+            // The process could have exited between the liveness check and the
+            // source starting, in which case .exit never arrives.
+            if !Self.isRunning(pid) {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, boundPID == pid else { return }
+                    set(false)
+                }
+            }
         }
         reevaluate()
     }
@@ -84,6 +148,9 @@ final class AwakeManager {
             sessionEnd = nil
             expiryTimer?.invalidate()
             expiryTimer = nil
+            processWatch?.cancel()
+            processWatch = nil
+            boundPID = nil
         }
         let ac = isOnAC
         let shouldHold = (requested && (ac || allowOnBattery)) || (autoWhileCharging && ac)
