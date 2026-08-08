@@ -434,8 +434,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Plonk's own windows would otherwise be in the shot, and the picker
         // has to be the only thing on top.
         let hidden = hideOwnWindows()
-        let finish: (Result<String, Error>) -> Void = { result in
-            hidden.forEach { $0.orderFront(nil) }
+        let finish: (Result<String, Error>) -> Void = { [weak self] result in
+            self?.showOwnWindows(hidden)
             report(result)
         }
         if live {
@@ -769,7 +769,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             completion: @escaping (NSImage?) -> Void = { _ in }) {
         let hidden = hideOwnWindows()
         ScreenshotManager.capture(mode) { [weak self] image in
-            hidden.forEach { $0.orderFront(nil) }
+            self?.showOwnWindows(hidden)
             if let image, openEditor { self?.presenter.showShotEditor(image: image) }
             completion(image)
         }
@@ -779,10 +779,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// capture: settings and editors, but also the crosshairs and any pinned
     /// crop, which are floating over exactly the area being photographed.
     private func hideOwnWindows() -> [NSWindow] {
-        let hidden = (presenter.visible + mouse.visibleWindows + crops.visibleWindows)
-            .filter { $0.isVisible }
+        mouse.suspend()
+        let hidden = (presenter.visible + crops.visibleWindows).filter { $0.isVisible }
         hidden.forEach { $0.orderOut(nil) }
         return hidden
+    }
+
+    private func showOwnWindows(_ hidden: [NSWindow]) {
+        hidden.forEach { $0.orderFront(nil) }
+        mouse.resume()
     }
 
     private func finishShot(copied: Bool, path: String?) {
