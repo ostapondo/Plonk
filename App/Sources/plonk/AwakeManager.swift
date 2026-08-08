@@ -17,8 +17,12 @@ final class AwakeManager {
     /// Set while the session lasts only as long as another process does.
     private(set) var boundPID: Int?
     private var expiryTimer: Timer?
-    private var processWatch: DispatchSourceProcess?
+    private var processWatch: Timer?
     var onChange: (() -> Void)?
+
+    /// How often a process-bound session checks that its process is still
+    /// there. Long enough to be free, short enough that nobody notices.
+    private static let processPollSeconds: TimeInterval = 5
 
     var allowOnBattery = true { didSet { reevaluate() } }
     var autoWhileCharging = false { didSet { reevaluate() } }
@@ -99,16 +103,18 @@ final class AwakeManager {
     }
 
     /// Signal 0 checks for a process without touching it. EPERM means it is
-    /// alive and owned by somebody else, which is still alive.
+    /// alive and owned by somebody else — a job started under sudo, say —
+    /// which is still alive.
     private static func isRunning(_ pid: Int) -> Bool {
-        kill(pid_t(pid), 0) == 0 || errno == EPERM
+        errno = 0
+        return kill(pid_t(pid), 0) == 0 || errno == EPERM
     }
 
     private func begin(requested on: Bool, sessionEnd end: Date?, pid: Int?) {
         requested = on
         expiryTimer?.invalidate()
         expiryTimer = nil
-        processWatch?.cancel()
+        processWatch?.invalidate()
         processWatch = nil
         boundPID = pid
         sessionEnd = end
@@ -120,22 +126,17 @@ final class AwakeManager {
             expiryTimer = timer
         }
         if let pid {
-            let source = DispatchSource.makeProcessSource(identifier: pid_t(pid), eventMask: .exit,
-                                                          queue: .main)
-            source.setEventHandler { [weak self] in
+            // Polled rather than watched with a kqueue process source: that
+            // cannot register on a process belonging to another user, and its
+            // failure is silent, which would leave the Mac awake for good after
+            // `sudo make`. A signal-0 probe every few seconds always works, and
+            // a handful of seconds either way is nothing to a power assertion.
+            let timer = Timer(timeInterval: Self.processPollSeconds, repeats: true) { [weak self] _ in
                 guard let self, boundPID == pid else { return }
-                set(false)
+                if !Self.isRunning(pid) { set(false) }
             }
-            source.resume()
-            processWatch = source
-            // The process could have exited between the liveness check and the
-            // source starting, in which case .exit never arrives.
-            if !Self.isRunning(pid) {
-                DispatchQueue.main.async { [weak self] in
-                    guard let self, boundPID == pid else { return }
-                    set(false)
-                }
-            }
+            RunLoop.main.add(timer, forMode: .common)
+            processWatch = timer
         }
         reevaluate()
     }
@@ -148,7 +149,7 @@ final class AwakeManager {
             sessionEnd = nil
             expiryTimer?.invalidate()
             expiryTimer = nil
-            processWatch?.cancel()
+            processWatch?.invalidate()
             processWatch = nil
             boundPID = nil
         }

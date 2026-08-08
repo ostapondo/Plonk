@@ -55,15 +55,17 @@ struct ZonesPage: View {
                 Text("Focus follows the layout instead of the order things were last used: step to the window that is actually to the left, or cycle through the ones stacked in a zone.")
             }
             Section {
-                TextEditor(text: $exclusionsDraft)
-                    .font(.system(.body, design: .monospaced))
-                    .frame(minHeight: 66)
-                    .focused($exclusionsFocused)
                 Toggle(isOn: model.binding(\.restoreZonesOnScreenChange,
                                            set: { $0.setRestoreZonesOnScreenChange($1) })) {
                     Text("Put windows back after a display change")
                     Text("Windows Plonk placed return to the same spot on the same monitor when one is plugged in or unplugged")
                 }
+            }
+            Section {
+                TextEditor(text: $exclusionsDraft)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minHeight: 66)
+                    .focused($exclusionsFocused)
             } header: {
                 Text("Leave These Alone")
             } footer: {
