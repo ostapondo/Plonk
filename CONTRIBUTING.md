@@ -14,10 +14,13 @@ on first clone. It is not: the certificate is needed only to produce and launch
 are exactly what CI runs:
 
 ```sh
-cd App && swift build                        # the app compiles
+(cd App && swift build)                      # the app compiles
 ./scripts/test.sh                            # the unit suite
-cd mcp && npm ci && npm run typecheck        # the MCP server
+(cd mcp && npm ci && npm run typecheck)      # the MCP server
 ```
+
+Each line is a subshell, so all three run from the repository root as written —
+paste the block and it works.
 
 Zone geometry, config decoding, HTTP routing, MCP tools, voice command parsing,
 the CLI and every document in the repo are all reachable from that loop, and

@@ -188,24 +188,39 @@ const TOKEN_PATH = join(homedir(), "Library", "Application Support", "Plonk", "t
 
 let cachedToken: string | undefined;
 
+function readTokenFile(): string | undefined {
+  try {
+    return readFileSync(TOKEN_PATH, "utf8").trim() || undefined;
+  } catch {
+    // No app yet, or a file this user cannot read. The request goes without a
+    // token and the app's own 401 explains it better than a guess here would.
+    return undefined;
+  }
+}
+
 /** Only a successful read is cached: a client started before the app has ever
  * run would otherwise never see the token the app writes on first launch. */
 function apiToken(): string | undefined {
   if (cachedToken) return cachedToken;
-  try {
-    const token = readFileSync(TOKEN_PATH, "utf8").trim();
-    if (token) cachedToken = token;
-  } catch {
-    // No app yet, or a file this user cannot read. The request goes without a
-    // token and the app's own 401 explains it better than a guess here would.
-  }
+  cachedToken = readTokenFile();
   return cachedToken;
 }
 
-/** The token as the HTTP transport needs it: to demand of its own callers what
- * the app demands of this process. Undefined when there is no readable file. */
+/** The token the HTTP transport gates its own callers on, read from disk every
+ * time rather than from the cache above.
+ *
+ * A cache here would be a gate on a secret the app may already have replaced:
+ * it would keep accepting the token a restored backup leaked — the exact one
+ * the app rotated away from — and keep refusing the current one, until this
+ * process was restarted. Nothing else could fix it, because the retry that
+ * refreshes the cache lives on the far side of this check and never runs when
+ * no session gets in. It is one small read per request on a transport that
+ * handles few. */
 export function localApiToken(): string | undefined {
-  return apiToken();
+  const fresh = readTokenFile();
+  // Outgoing calls may as well learn about a rotation from the same read.
+  if (fresh !== undefined && fresh !== cachedToken) cachedToken = fresh;
+  return fresh;
 }
 
 /** Drops the cache and reads again, true only when the file now holds
