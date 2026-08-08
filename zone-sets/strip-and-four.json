@@ -1,0 +1,13 @@
+{
+  "name": "Strip and Four",
+  "description": "A full-width band across the top for a log, a chart or a build, and four cells under it for the things being watched.",
+  "screen": "wide",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0, "y": 0, "w": 1, "h": 0.3 },
+    { "x": 0, "y": 0.3, "w": 0.25, "h": 0.7 },
+    { "x": 0.25, "y": 0.3, "w": 0.25, "h": 0.7 },
+    { "x": 0.5, "y": 0.3, "w": 0.25, "h": 0.7 },
+    { "x": 0.75, "y": 0.3, "w": 0.25, "h": 0.7 }
+  ]
+}

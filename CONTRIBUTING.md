@@ -14,13 +14,14 @@ Everyone taking part is expected to follow the
 
 `scripts/build.sh` refuses to run without one, which makes the repo look closed
 on first clone. It is not: the certificate is needed only to produce and launch
-`Plonk.app`. Everything else works on a plain checkout, and these three commands
+`Plonk.app`. Everything else works on a plain checkout, and these four commands
 are exactly what CI runs:
 
 ```sh
 (cd App && swift build)                      # the app compiles
 ./scripts/test.sh                            # the unit suite
 (cd mcp && npm ci && npm run typecheck)      # the MCP server
+node scripts/check-zone-sets.mjs             # the layouts in zone-sets/
 ```
 
 Each line is a subshell, so all three run from the repository root as written —
@@ -47,18 +48,48 @@ looks built and then silently cannot move a window.
 
 ## Places to start
 
+Roughly in order of how much of the repo you have to hold in your head. The
+first two need no Swift at all, and the third needs no Swift on your machine.
+
+- **A zone set.** One JSON file in [`zone-sets/`](zone-sets/), which is a
+  gallery of layouts people keep going back to. Draw it in the app, read the
+  numbers back out of `plonk state --json`, drop them in a file. CI for that
+  folder is its own job and answers in about twenty seconds. Good ones end up
+  shipping as built-ins. [`zone-sets/README.md`](zone-sets/README.md) has the
+  format and the rules.
 - **A one-pager for an MCP client.** `docs/clients/` has Cursor, Zed and Cline.
   Any client that can run a stdio server works; the page is the missing part.
-- **A zone set.** If you have drawn a layout you keep going back to, post it
-  under Show and tell. Good ones end up shipping as built-ins.
+  If you use a client that is not there, you already know the one thing this
+  repo does not.
+- **Something in `mcp/`.** The MCP server and the `plonk` CLI are TypeScript, a
+  thin proxy over the app's HTTP API, and they typecheck on any machine — Linux
+  included, without a Mac in sight. `npm ci && npm run typecheck` in `mcp/` is
+  the whole loop.
 - **A voice command.** `VoiceCommands.swift` maps spoken phrases to actions
   that run in the app, with no agent and no network. Adding a phrase is a small
-  change with a unit test next to it in `VoiceCommandTests.swift`.
+  change with a unit test next to it in `VoiceCommandTests.swift`, and the
+  parser is pure — the tests run with no desktop session.
 - **A bug with a reproduction.** Window managers break on hardware nobody else
   has: unusual monitor arrangements, mixed scale factors, apps that fight back.
   A report that says which is often worth more than a patch.
 - **A new module.** The seam is described under "Adding a module" in AGENTS.md.
   Open an issue first so two people do not build the same thing.
+
+The issues tagged [good first issue][gfi] are the same idea, written out: each
+one names the file to open, what done looks like, and the command that proves
+it. Comment on one to claim it, so nobody writes it twice.
+
+[gfi]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+
+## What happens after you send it
+
+There is one maintainer, so this is a promise about attention, not about speed:
+**a pull request gets a real answer within 48 hours**, even when the answer is
+that it needs another week of thought. A change that is declined is declined
+with the reason, and "What this project will not take" below is there so that
+happens as rarely as possible.
+
+Anyone whose change lands is listed in the release notes it ships in.
 
 ## Sending a change
 

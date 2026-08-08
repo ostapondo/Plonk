@@ -1,0 +1,11 @@
+{
+  "name": "Call and Work",
+  "description": "For the hours spent on a call while doing something else: the work fills zone 1, the call sits top right where a camera notch does not cover it, and notes take the rest of the column.",
+  "screen": "any",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0, "y": 0, "w": 0.75, "h": 1 },
+    { "x": 0.75, "y": 0, "w": 0.25, "h": 0.35 },
+    { "x": 0.75, "y": 0.35, "w": 0.25, "h": 0.65 }
+  ]
+}

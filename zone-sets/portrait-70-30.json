@@ -1,0 +1,10 @@
+{
+  "name": "Portrait 70 / 30",
+  "description": "The rotated monitor most people actually use: a tall window on top for the file being read, a terminal or a log along the bottom.",
+  "screen": "portrait",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0, "y": 0, "w": 1, "h": 0.7 },
+    { "x": 0, "y": 0.7, "w": 1, "h": 0.3 }
+  ]
+}

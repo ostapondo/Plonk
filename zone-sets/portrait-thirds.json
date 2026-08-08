@@ -1,0 +1,11 @@
+{
+  "name": "Portrait Thirds",
+  "description": "Three stacked rows for a rotated monitor, with the tall middle one for whatever is being read.",
+  "screen": "portrait",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0, "y": 0, "w": 1, "h": 0.3 },
+    { "x": 0, "y": 0.3, "w": 1, "h": 0.4 },
+    { "x": 0, "y": 0.7, "w": 1, "h": 0.3 }
+  ]
+}

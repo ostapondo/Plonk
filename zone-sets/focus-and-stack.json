@@ -1,0 +1,12 @@
+{
+  "name": "Focus and Stack",
+  "description": "Numbered main zone first: the editor is zone 1, a narrow rail for files or chat is zone 2, and zones 3 and 4 stack a terminal under a browser.",
+  "screen": "ultrawide",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0.2, "y": 0, "w": 0.5, "h": 1 },
+    { "x": 0, "y": 0, "w": 0.2, "h": 1 },
+    { "x": 0.7, "y": 0, "w": 0.3, "h": 0.5 },
+    { "x": 0.7, "y": 0.5, "w": 0.3, "h": 0.5 }
+  ]
+}

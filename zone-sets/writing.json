@@ -1,0 +1,11 @@
+{
+  "name": "Writing",
+  "description": "Numbered main zone first: a centred column at a readable line length is zone 1, and the two margins hold the notes and the sources being quoted.",
+  "screen": "wide",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0.3, "y": 0, "w": 0.4, "h": 1 },
+    { "x": 0, "y": 0, "w": 0.3, "h": 1 },
+    { "x": 0.7, "y": 0, "w": 0.3, "h": 1 }
+  ]
+}

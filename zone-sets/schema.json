@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ostapondo/plonk/blob/main/zone-sets/schema.json",
+  "title": "Plonk zone set",
+  "description": "A layout of fractional rectangles over one screen's visible area. Screen-agnostic: the same set is assigned to any monitor and stretches to it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "screen", "author", "zones"],
+  "properties": {
+    "name": {
+      "description": "What the set is called in the app, the menu and get_state. Unique across this folder and not one of the built-ins.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+    },
+    "description": {
+      "description": "One line on what the layout is for, and which zone is meant to hold what.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "screen": {
+      "description": "The shape of monitor this was drawn for. Advisory: any set works on any screen, but a 25% column is a sidebar on an ultrawide and a sliver on a laptop.",
+      "enum": ["any", "wide", "ultrawide", "portrait", "laptop"]
+    },
+    "author": {
+      "description": "GitHub handle, with the at sign.",
+      "type": "string",
+      "pattern": "^@[A-Za-z0-9][A-Za-z0-9-]{0,38}$"
+    },
+    "zones": {
+      "description": "The zones, in the order they are numbered: zone 1 is the first, and it is the one CTRL+OPT+1 fills.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["x", "y", "w", "h"],
+        "properties": {
+          "x": { "type": "number", "minimum": 0, "maximum": 0.9 },
+          "y": { "type": "number", "minimum": 0, "maximum": 0.9 },
+          "w": { "type": "number", "minimum": 0.1, "maximum": 1 },
+          "h": { "type": "number", "minimum": 0.1, "maximum": 1 }
+        }
+      }
+    }
+  }
+}

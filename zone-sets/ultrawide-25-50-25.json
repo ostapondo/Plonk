@@ -1,0 +1,11 @@
+{
+  "name": "Ultrawide 25 / 50 / 25",
+  "description": "A wide middle for the thing being worked on, with a rail either side for chat, a terminal or documentation.",
+  "screen": "ultrawide",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0, "y": 0, "w": 0.25, "h": 1 },
+    { "x": 0.25, "y": 0, "w": 0.5, "h": 1 },
+    { "x": 0.75, "y": 0, "w": 0.25, "h": 1 }
+  ]
+}
