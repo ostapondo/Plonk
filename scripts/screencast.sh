@@ -19,14 +19,29 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 api=${PLONK_API:-http://127.0.0.1:43917}
 command=${1:-stage}
 
+# Every route but /ping is gated on the token Plonk writes on first launch.
+token_file=${PLONK_TOKEN_FILE:-$HOME/Library/Application Support/Plonk/token}
+token=$(cat "$token_file" 2>/dev/null || true)
+
+# -f so a 401 or a 503 is a failure and not a silent no-op: without it this
+# script cheerfully printed the run sheet for a desk it had never staged.
 post() {
-  curl -sS -X POST "$api$1" -H 'Content-Type: application/json' -d "$2" >/dev/null
+  curl -fsS -X POST "$api$1" -H 'Content-Type: application/json' \
+    -H "X-Plonk-Token: $token" -d "$2" >/dev/null || {
+    echo "screencast: $1 was refused. Is Plonk running, and is $token_file readable?"
+    exit 1
+  }
 }
 
 require_app() {
   curl -sS -m 2 "$api/ping" >/dev/null 2>&1 || {
     echo "screencast: Plonk is not running (no answer on $api)."
     echo "            Open Plonk.app, grant Accessibility, and try again."
+    exit 1
+  }
+  [ -n "$token" ] || {
+    echo "screencast: no API token at $token_file."
+    echo "            Launch Plonk once to have it written, then try again."
     exit 1
   }
 }

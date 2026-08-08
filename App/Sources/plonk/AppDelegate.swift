@@ -593,8 +593,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let token = APIToken.loadOrCreate()
         if token == nil {
-            model.apiWarning = "The token at \(APIToken.url().path) could not be read or written, so the "
-                + "local API is answering without one. Check that file's permissions and relaunch Plonk."
+            model.apiWarning = "No usable token at \(APIToken.url().path), so the local API is "
+                + "refusing everything but /ping — agents and the plonk command will not work. It "
+                + "has to be a plain file owned by you and readable by you alone; delete it and "
+                + "relaunch Plonk to have a new one written."
         }
         let server = ControlServer(token: token) { [weak self] request, respond in
             guard let self else { return respond(.failed("shutting down")) }

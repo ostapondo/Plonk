@@ -91,8 +91,10 @@ body:
       label: Output of the state route
       description: >
         Optional, and often the fastest way to show what the desk looked like -
-        run `curl -s 127.0.0.1:43917/state` while Plonk is running. It lists the
-        title of every open window, so read it before pasting it.
+        run this while Plonk is running. It lists the title of every open
+        window, so read it before pasting it.
+
+        curl -s -H "X-Plonk-Token: $(cat ~/Library/'Application Support'/Plonk/token)" 127.0.0.1:43917/state
       render: json
 
   - type: checkboxes

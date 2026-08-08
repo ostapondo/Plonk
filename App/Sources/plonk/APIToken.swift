@@ -35,22 +35,45 @@ enum APIToken {
 
     /// The token for this install, generated on first launch.
     ///
-    /// A file that cannot be read or written leaves the app without one, and
-    /// the caller decides what that means — refusing every request would lock
-    /// the user out of their own agent over a permissions problem on a file
-    /// they never made.
+    /// Nil when there is no file this user can both read and keep to
+    /// themselves. That is not a token, so the API refuses to answer rather
+    /// than answering to anyone — see `rejection`.
     static func loadOrCreate(in directory: URL? = nil) -> String? {
         let url = Self.url(in: directory)
         try? FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path) {
+            // Somebody else's file — one `sudo` launch leaves a root-owned one
+            // behind — cannot be tightened by this user and must not be
+            // trusted: its contents are a secret they do not control. Same for
+            // anything that is not a plain file.
+            let owner = (attributes[.ownerAccountID] as? NSNumber)?.uint32Value
+            guard owner == getuid() else {
+                NSLog("Plonk: the API token at \(url.path) belongs to another user (uid \(owner.map(String.init) ?? "unknown"))")
+                return nil
+            }
+            guard attributes[.type] as? FileAttributeType == .typeRegular else {
+                NSLog("Plonk: the API token path \(url.path) is not a regular file")
+                return nil
+            }
+        }
+
         if let existing = try? String(contentsOf: url, encoding: .utf8) {
             let token = existing.trimmingCharacters(in: .whitespacesAndNewlines)
             if !token.isEmpty {
                 // An earlier copy, a restored backup or a hand-edited file can
-                // be world-readable. Tighten it rather than trust it.
+                // be world-readable. Tighten it rather than trust it — and if
+                // it will not tighten, it is a secret the rest of the machine
+                // has already read, so it is no longer one.
                 try? FileManager.default.setAttributes(
                     [.posixPermissions: NSNumber(value: 0o600)], ofItemAtPath: url.path)
+                let mode = (try? FileManager.default.attributesOfItem(atPath: url.path))
+                    .flatMap { ($0[.posixPermissions] as? NSNumber)?.int16Value } ?? 0
+                guard mode & 0o077 == 0 else {
+                    NSLog("Plonk: the API token at \(url.path) stayed readable by other users")
+                    return nil
+                }
                 return token
             }
         }
@@ -85,20 +108,41 @@ enum APIToken {
         return difference == 0
     }
 
-    /// The 401 reason, or nil when the request may proceed.
+    /// Why a request is not being answered: the caller's problem, or the app's.
+    /// They are different failures and a client can only act on the difference.
+    struct Rejection: Equatable {
+        var status: Int
+        var message: String
+    }
+
+    /// The rejection, or nil when the request may proceed.
     ///
-    /// `token` is nil when the app could not read or write the token file. The
-    /// API stays open in that case: the alternative is an app that silently
-    /// stops answering its own MCP server, which reads as a bug in everything
-    /// except the one place the problem is.
-    static func rejection(for request: HTTPRequest, token: String?) -> String? {
-        guard let token else { return nil }
-        if Self.openPaths.contains(request.path) { return nil }
+    /// A missing token fails closed. The gate exists because reaching the port
+    /// must not be enough to borrow Screen Recording, and an app that cannot
+    /// hold a secret has not stopped holding that grant — so it stops
+    /// answering instead, loudly, in a way that says which file to look at.
+    /// The cost is an agent that goes quiet until a permissions problem is
+    /// fixed; the alternative is a screenshot for anything on the machine that
+    /// opens a socket.
+    static func rejection(for request: HTTPRequest, token: String?) -> Rejection? {
+        // The router strips the query before matching a path, so this must
+        // too — otherwise "/ping?t=1" misses the one rule written to let it
+        // through, and the two disagree about what a path is.
+        let path = Router.splitQuery(request.path).path
+        if Self.openPaths.contains(path) { return nil }
+        guard let token else {
+            return Rejection(status: 503, message:
+                "Plonk has no usable API token, so it is answering nothing but /ping. The token "
+                + "lives at ~/Library/Application Support/Plonk/token and has to be a plain file "
+                + "owned by you and readable by you alone. Delete it and relaunch Plonk to have a "
+                + "new one written.")
+        }
         guard let presented = request.headers[Self.headerName], matches(presented, token) else {
-            return "this request carried no valid token. Plonk's API is gated on the token in "
+            return Rejection(status: 401, message:
+                "this request carried no valid token. Plonk's API is gated on the token in "
                 + "~/Library/Application Support/Plonk/token, which the MCP server and the plonk "
                 + "command read for themselves. A client that was started before the token changed "
-                + "has to be restarted."
+                + "has to be restarted.")
         }
         return nil
     }

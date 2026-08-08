@@ -164,6 +164,13 @@ curl -so /dev/null -w '%{http_code}\n' -H 'Origin: https://example.com' \
   `~/Library/Application Support/Plonk/token` with mode `600`. The MCP server
   and the `plonk` command read it themselves; you never handle it.
 
+- If that file is not usable as a secret — owned by another user, not a plain
+  file, or it will not stay readable by you alone — Plonk writes no token and
+  answers nothing but `/ping`, with a `503` saying which file to look at. It
+  fails closed on purpose: an app that cannot hold a secret is still holding
+  Screen Recording, so the alternative would be handing that grant to anything
+  on the machine that can open a socket. The Home page says so too.
+
 ```sh
 curl -so /dev/null -w '%{http_code}\n' http://127.0.0.1:43917/state
 401

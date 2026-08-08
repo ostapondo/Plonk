@@ -66,6 +66,32 @@ struct APITokenFileTests {
         }
         #expect(APIToken.loadOrCreate(in: a) != APIToken.loadOrCreate(in: b))
     }
+
+    /// A file this user cannot tighten is one the rest of the machine has
+    /// already read. It is not a secret any more, so it is not a token.
+    @Test func aFileThatWillNotTightenIsRefused() throws {
+        let dir = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = APIToken.url(in: dir)
+        FileManager.default.createFile(atPath: url.path, contents: Data("loose\n".utf8),
+                                       attributes: [.posixPermissions: NSNumber(value: 0o644)])
+        // Make the directory read-only so the mode cannot be changed, the way
+        // a root-owned file behaves for a normal user.
+        try FileManager.default.setAttributes([.immutable: true], ofItemAtPath: url.path)
+        defer { try? FileManager.default.setAttributes([.immutable: false], ofItemAtPath: url.path) }
+
+        #expect(APIToken.loadOrCreate(in: dir) == nil)
+    }
+
+    /// Anything that is not a plain file — a directory planted at that path
+    /// before first launch — is refused rather than worked around.
+    @Test func aDirectoryAtTheTokenPathIsRefused() throws {
+        let dir = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: APIToken.url(in: dir), withIntermediateDirectories: true)
+
+        #expect(APIToken.loadOrCreate(in: dir) == nil)
+    }
 }
 
 struct APITokenComparisonTests {
@@ -130,10 +156,28 @@ struct APITokenRejectionTests {
         #expect(APIToken.rejection(for: request("/ping"), token: token) == nil)
     }
 
-    /// Without a token the app says so in its own window rather than refusing
-    /// every request, which would look like a broken MCP server.
-    @Test func anAppWithoutATokenGatesNothing() {
-        #expect(APIToken.rejection(for: request("/shot/capture"), token: nil) == nil)
+    /// Fail closed. An app that cannot hold a secret still holds Screen
+    /// Recording, so it stops answering rather than answering to anyone.
+    @Test func anAppWithoutATokenRefusesEverythingButPing() {
+        let refused = APIToken.rejection(for: request("/shot/capture"), token: nil)
+        #expect(refused?.status == 503)
+        // Still tellable from a closed app, which is all /ping is for.
+        #expect(APIToken.rejection(for: request("/ping"), token: nil) == nil)
+    }
+
+    /// A bad token is the caller's problem and a missing one is the app's, and
+    /// a client can only tell them apart by the status.
+    @Test func theTwoFailuresAreDifferentStatuses() {
+        #expect(APIToken.rejection(for: request("/state"), token: token)?.status == 401)
+        #expect(APIToken.rejection(for: request("/state"), token: nil)?.status == 503)
+    }
+
+    /// The router matches paths with the query stripped. So must the gate, or
+    /// the only always-open route stops being open the moment anything adds a
+    /// parameter to it.
+    @Test func theQueryDoesNotHideAnOpenPath() {
+        #expect(APIToken.rejection(for: request("/ping?t=1"), token: token) == nil)
+        #expect(APIToken.rejection(for: request("/state?screen=0"), token: token)?.status == 401)
     }
 
     @Test func theHeaderSurvivesRequestParsing() throws {

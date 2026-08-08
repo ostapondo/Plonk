@@ -96,8 +96,9 @@ final class ControlServer {
                 self.respond(conn, HTTPResponse(status: 403, json: ["error": reason]))
                 return
             }
-            if let reason = APIToken.rejection(for: request, token: self.token) {
-                self.respond(conn, HTTPResponse(status: 401, json: ["error": reason]))
+            if let rejection = APIToken.rejection(for: request, token: self.token) {
+                self.respond(conn, HTTPResponse(status: rejection.status,
+                                                json: ["error": rejection.message]))
                 return
             }
             DispatchQueue.main.async {
