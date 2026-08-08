@@ -323,10 +323,27 @@ struct VoicePage: View {
                 Text("Hold the key, say it, let go — the words go to the active agent from the Agents list on the AI page. Recognition runs on this Mac and nothing is recorded; only the finished sentence reaches the agent. macOS asks for Microphone and Speech Recognition on first use.")
             }
             Section {
-                Text("\"Browser on the left, terminal right\" — the agent arranges it. \"Launch my review workspace\", \"keep the screen awake an hour\" — same. Anything you could type to the agent, you can say.")
+                Toggle(isOn: model.binding(\.voiceLocalCommands, set: { $0.setVoiceLocalCommands($1) })) {
+                    Text("Run the common ones here")
+                    Text("No agent, no round trip, works offline")
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(["snap this left", "zone three", "put it back", "next window",
+                             "keep awake for an hour", "launch my review workspace"], id: \.self) { example in
+                        Text("“\(example)”").font(.callout)
+                    }
+                }
+                .foregroundStyle(.secondary)
+            } header: {
+                Text("Straight to Plonk")
+            } footer: {
+                Text("Halves and quarters, numbered zones, put back, focus, next window in a zone, show zones, keep-awake, screenshots, and launching a workspace by name. Anything less clear-cut — two things at once, a percentage, an app by name, awake until a build finishes — goes to the agent instead, so nothing is guessed at.")
+            }
+            Section {
+                Text("\"Browser on the left, terminal right\" — the agent arranges it. \"Save this as a workspace called review\", \"screenshot the screen and circle what looks broken\" — same. Anything you could type to the agent, you can say.")
                     .foregroundStyle(.secondary)
             } header: {
-                Text("What to Say")
+                Text("What to Say to the Agent")
             }
         }
         .formStyle(.grouped)

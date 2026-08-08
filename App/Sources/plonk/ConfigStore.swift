@@ -122,6 +122,9 @@ struct Config: Codable {
     // and whether only that agent may change windows and settings.
     var selectedAgent: String?
     var agentExclusive = false
+    // Whether a spoken sentence that is plainly one of the dozen common
+    // commands runs here instead of going to an agent. See VoiceCommands.
+    var voiceLocalCommands = true
     // What the Getting Started card on the Home page has already seen happen.
     // Both latch: a step stays done once it has been done, so the card does not
     // un-tick itself the moment an agent's session ends.
@@ -177,6 +180,7 @@ struct Config: Codable {
         updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
         selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
         agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
+        voiceLocalCommands = try c.decodeIfPresent(Bool.self, forKey: .voiceLocalCommands) ?? true
         sawFirstSnap = try c.decodeIfPresent(Bool.self, forKey: .sawFirstSnap) ?? false
         sawFirstAgent = try c.decodeIfPresent(Bool.self, forKey: .sawFirstAgent) ?? false
         gettingStartedHidden = try c.decodeIfPresent(Bool.self, forKey: .gettingStartedHidden) ?? false

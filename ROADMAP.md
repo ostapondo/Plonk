@@ -5,9 +5,15 @@ No dates, just order. Things ship when they're ready. Ideas and votes go to
 
 ## Now
 
-- **Voice → command** — common actions ("snap this left", "keep awake an hour")
-  run directly, no agent in the loop, so they work offline and instantly. The
-  rest of the voice side is below.
+- **Spoken replies** — short confirmations back after a command, optional and
+  off by default. The rest of the voice side is below.
+
+Voice → command shipped: "snap this left", "zone three", "put it back", "keep
+awake for an hour", "launch my review workspace" run in the app, with no agent,
+no round trip and no network. Anything less clear-cut — two clauses, a
+percentage, an app named by hand, awake *until* a build finishes — still goes to
+the agent, because guessing at those is worse than the round trip. Off with one
+toggle on the Voice page.
 
 Auto-updates shipped, without Sparkle: the Updates page checks GitHub, and
 installing swaps in a build only when it is signed with the same certificate as
@@ -74,7 +80,8 @@ half-private IOKit and breaks per hub).
 Push-to-talk shipped: hold `⌃⌥V` (rebindable on the Voice page), say it, let
 go. Recognition runs on the Mac — nothing leaves it — and the transcript goes
 to the active agent over the agents channel: "browser left, terminal right,
-save it as review". Still to come, after voice → command:
+save it as review" — unless it is one of the common commands, which run in the
+app. Still to come:
 
 - **Spoken replies** — short confirmations back, optional and off by default.
 

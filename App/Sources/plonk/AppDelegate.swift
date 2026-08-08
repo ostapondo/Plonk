@@ -235,6 +235,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// A spoken command, run through the same calls the hotkeys use — so a
+    /// sentence cannot reach anything a key could not.
+    private func run(_ command: VoiceCommand) {
+        switch command {
+        case .preset(let preset): commands.apply(preset)
+        case .zone(let number): commands.snap(toZone: number)
+        case .putBack: commands.unsnap()
+        case .focus(let direction): commands.moveFocus(direction)
+        case .cycleZone: commands.cycleZone(backwards: false)
+        case .showZones: dragSnap.previewZones()
+        case .awake(let minutes):
+            setAwakeTimeout(minutes: minutes ?? 0)
+            setAwake(true)
+        case .awakeOff: setAwake(false)
+        case .capture(let mode): runCapture(mode, openEditor: false)
+        case .launchWorkspace(let name): launchWorkspace(named: name, onScreen: nil)
+        }
+    }
+
     /// Region capture straight into recognition: the text lands on the
     /// clipboard, and the HUD shows what was read so a bad crop is obvious
     /// without pasting it somewhere first.
@@ -266,6 +285,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voice.onError = { message in HUD.shared.show(message) }
         voice.onTranscript = { [weak self] text in
             guard let self else { return }
+            // The dozen things people say most run here, with no agent, no
+            // round trip and no network. Everything else takes the long road.
+            if store.config.voiceLocalCommands,
+               let command = VoiceCommand.parse(text, workspaces: model.workspaceNames) {
+                run(command)
+                HUD.shared.show("✓ \(command.announcement)")
+                return
+            }
             let response = router.dispatch(prompt: text)
             if let error = response.json["error"] as? String {
                 HUD.shared.show(error)
@@ -632,6 +659,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.supportedTextLanguages = TextExtractor.supportedLanguages
         model.shotFolder = store.config.shotFolder
         model.shotCopyToClipboard = store.config.shotCopyToClipboard
+        model.voiceLocalCommands = store.config.voiceLocalCommands
         model.sawFirstSnap = store.config.sawFirstSnap
         model.sawFirstAgent = store.config.sawFirstAgent
         model.gettingStartedHidden = store.config.gettingStartedHidden
@@ -1184,6 +1212,11 @@ extension AppDelegate: AppActions {
     func setAgentExclusive(_ on: Bool) {
         store.update { $0.agentExclusive = on }
         refreshAgentModel()
+    }
+
+    func setVoiceLocalCommands(_ on: Bool) {
+        store.update { $0.voiceLocalCommands = on }
+        model.voiceLocalCommands = on
     }
 
     func hideGettingStarted() {

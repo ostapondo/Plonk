@@ -54,6 +54,7 @@ checkable from a terminal.
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution |
 | **A shortcut guide** | Every shortcut the app in front actually has, read from its own menus, so it is never out of date |
 | **Pointer tools** | Find the cursor, ring every click for a screen recording, crosshairs, jump to the next display |
+| **Voice** | Hold `⌃⌥V` and say it. The common ones — "snap this left", "zone three", "keep awake for an hour", "launch my review workspace" — run in the app itself, offline and instantly; anything bigger goes to your agent. Recognition is on-device |
 
 ## Install
 
@@ -341,7 +342,7 @@ stops being one.
 
 ```sh
 cd App && swift build     # the app
-./scripts/test.sh         # 269 unit tests
+./scripts/test.sh         # 283 unit tests
 ./scripts/build.sh        # produces Plonk.app
 cd mcp && npm run build   # the MCP server
 ```

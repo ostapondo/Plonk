@@ -77,6 +77,7 @@ protocol AppActions: AnyObject {
     /// Nil clears the selection, so any agent may drive again.
     func selectAgent(_ name: String?)
     func setAgentExclusive(_ on: Bool)
+    func setVoiceLocalCommands(_ on: Bool)
     func hideGettingStarted()
 
     func setUpdateCheckAutomatically(_ on: Bool)
@@ -143,6 +144,7 @@ final class AppModel: ObservableObject {
     @Published var connectedAgents: [String] = []
     @Published var selectedAgent: String?
     @Published var agentExclusive = false
+    @Published var voiceLocalCommands = true
     @Published var sawFirstSnap = false
     @Published var sawFirstAgent = false
     @Published var gettingStartedHidden = false
