@@ -119,7 +119,8 @@ final class WindowCommands {
     func restorePlacements() {
         let gap = zoneGap?() ?? 0
         for placement in memory.placements {
-            guard let uuid = placement.screenUUID, let index = ScreenIdentity.index(forUUID: uuid) else { continue }
+            guard let uuid = placement.screenUUID, let index = ScreenIdentity.index(forUUID: uuid),
+                  mayTouch(placement.window) else { continue }
             windows.apply(frac: placement.frac, toWindow: placement.window, screenIndex: index, gap: gap)
         }
     }
@@ -134,7 +135,7 @@ final class WindowCommands {
         let gap = zoneGap?() ?? 0
         for placement in memory.placements {
             guard placement.screenUUID == uuid, let zone = placement.zoneIndex,
-                  zones.indices.contains(zone) else { continue }
+                  zones.indices.contains(zone), mayTouch(placement.window) else { continue }
             windows.apply(frac: zones[zone].frac, toWindow: placement.window,
                           screenIndex: screenIndex, gap: gap)
             memory.record(placement.window,
@@ -156,6 +157,13 @@ final class WindowCommands {
         let screen = NSScreen.screens.firstIndex { $0.frame.contains(point) } ?? 0
         assign(names[number - 1], screen)
         announce?(names[number - 1])
+    }
+
+    /// The exclusion list applies to every move Plonk makes on its own, not
+    /// just the ones a key started: a display change must not resize a game.
+    private func mayTouch(_ window: AXUIElement) -> Bool {
+        guard let app = windows.app(ofWindow: window) else { return false }
+        return isExcluded?(app) != true
     }
 
     private func remember(_ target: (app: NSRunningApplication, window: AXUIElement, frame: CGRect),

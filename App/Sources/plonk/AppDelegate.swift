@@ -27,6 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let crops = CropAndLock()
     private var guidePanel: ShortcutGuidePanel?
     private var guideLoading = false
+    /// How many captures are in flight; see hideOwnWindows.
+    private var captureDepth = 0
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
@@ -792,6 +794,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// capture: settings and editors, but also the crosshairs and any pinned
     /// crop, which are floating over exactly the area being photographed.
     private func hideOwnWindows() -> [NSWindow] {
+        // Counted, because a capture can start while a pinned crop is still
+        // choosing its region: the first one to finish must not put the
+        // overlays back into the other one's photograph.
+        captureDepth += 1
         mouse.suspend()
         let hidden = (presenter.visible + crops.visibleWindows + [guidePanel].compactMap { $0 })
             .filter { $0.isVisible }
@@ -800,7 +806,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showOwnWindows(_ hidden: [NSWindow]) {
+        captureDepth = max(0, captureDepth - 1)
         hidden.forEach { $0.orderFront(nil) }
+        guard captureDepth == 0 else { return }
         mouse.resume()
     }
 

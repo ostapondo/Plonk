@@ -90,13 +90,16 @@ final class NewWindowWatcher {
         let element = AXUIElementCreateApplication(pid)
         guard AXObserverAddNotification(observer, element, kAXWindowCreatedNotification as CFString,
                                         context) == .success else { return }
-        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
+        // .commonModes, not .defaultMode: a notification that arrives during a
+        // menu or a window drag would otherwise be held until that ends, long
+        // past the moment the new window could still be placed unnoticed.
+        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
         observers[pid] = observer
     }
 
     private func unwatch(_ pid: pid_t) {
         guard let observer = observers.removeValue(forKey: pid) else { return }
-        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
     }
 
     private func windowAppeared(_ window: AXUIElement) {

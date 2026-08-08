@@ -31,11 +31,13 @@ final class MouseOverlay {
         view.mode = mode
         view.point = point
         view.tint = tint
-        view.pulse = nil
+        // A click ring is animating on its own timer; clearing it here would
+        // mean the next pointer sample killed it, so with crosshairs on it
+        // would never be seen at all.
         // Crosshairs move with the pointer, so redrawing the whole desk on
         // every sample would be several megapixels a frame. Only the lines
         // that left and the ones that arrived are dirty.
-        if case .crosshairs = mode, let previous {
+        if case .crosshairs = mode, let previous, view.pulse == nil {
             view.invalidateCrosshairs(at: previous)
             view.invalidateCrosshairs(at: point)
         } else {

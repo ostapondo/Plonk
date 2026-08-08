@@ -59,7 +59,10 @@ final class HUD {
         panel.setContentSize(NSSize(width: compactLabel.frame.width + 28,
                                     height: compactLabel.frame.height + 18))
         compactLabel.frame = panel.contentView?.bounds.insetBy(dx: 14, dy: 9) ?? compactLabel.frame
-        HUD.placeInCorner(panel)
+        // Bottom centre, not the corner: a notice may well be up in the corner
+        // at the same time, and two panels stacked on each other read as one
+        // broken one.
+        HUD.placeAtBottom(panel)
         panel.alphaValue = 1
         if !panel.isVisible { panel.orderFrontRegardless() }
     }
@@ -99,6 +102,15 @@ final class HUD {
     }
 
     static let margin: CGFloat = 14
+
+    /// Bottom centre of whichever screen the cursor is on.
+    static func placeAtBottom(_ panel: NSWindow) {
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
+        guard let frame = screen?.visibleFrame else { return }
+        let size = panel.frame.size
+        panel.setFrameOrigin(NSPoint(x: frame.midX - size.width / 2, y: frame.minY + margin * 3))
+    }
 
     /// Top-right of whichever screen the cursor is on. `visibleFrame` already
     /// excludes the menu bar, so the margin is only breathing room.
