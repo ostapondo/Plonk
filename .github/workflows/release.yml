@@ -201,6 +201,16 @@ jobs:
             echo "::error::mcp/package.json is $PACKAGE but version.env says $MARKETING_VERSION"
             exit 1
           fi
+          # server.json carries the version twice — the server's own, and the
+          # npm package it points at — and the registry believes both. Left
+          # behind, it advertises an older release than this run is shipping,
+          # which is exactly how the listing ended up four versions stale.
+          SERVER=$(node -p "require('./mcp/server.json').version")
+          SERVER_PACKAGE=$(node -p "require('./mcp/server.json').packages[0].version")
+          if [ "$SERVER" != "$MARKETING_VERSION" ] || [ "$SERVER_PACKAGE" != "$MARKETING_VERSION" ]; then
+            echo "::error::mcp/server.json says $SERVER / $SERVER_PACKAGE but version.env says $MARKETING_VERSION"
+            exit 1
+          fi
           echo "version=$PACKAGE" >> "$GITHUB_OUTPUT"
           # Re-running the workflow for a version already on npm is not a
           # failure, it is a no-op — publishing again would be the failure.
@@ -227,3 +237,32 @@ jobs:
       - name: Already published
         if: steps.version.outputs.published == 'yes'
         run: echo "plonk-mcp@${{ steps.version.outputs.version }} is already on npm; nothing to do."
+
+      # Being on npm is not the same as being findable. The registry at
+      # registry.modelcontextprotocol.io is what MCP clients and directories
+      # read to know this server exists, and publishing to it used to be a
+      # command someone had to remember — so nobody did, and the listing sat
+      # four releases behind the code while advertising half the tools.
+      #
+      # Same trust model as the npm publish above: no secret. The registry
+      # takes GitHub's OIDC token as proof that this workflow, in this
+      # repository, owns the io.github.ostapondo namespace. Ownership of the
+      # npm package is proved separately, by the mcpName field in
+      # package.json naming the same server.
+      - name: Publish to the MCP Registry
+        run: |
+          set -eu
+          VERSION="${{ steps.version.outputs.version }}"
+          if curl -sf "https://registry.modelcontextprotocol.io/v0/servers?search=plonk" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{
+                const found=JSON.parse(d).servers.some(e =>
+                  e.server.name==='io.github.ostapondo/plonk' && e.server.version===process.argv[1]);
+                process.exit(found?0:1)})" "$VERSION"
+          then
+            echo "$VERSION is already in the registry; nothing to do."
+            exit 0
+          fi
+          curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
+            | tar xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          cd mcp && ../mcp-publisher publish
