@@ -521,7 +521,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Every source of change funnels into the bus at its own choke point,
         // so no caller has to remember to announce itself.
         store.didMutate = { [weak self] in self?.router.changes.bump("config") }
-        windows.onDidPlace = { [weak self] in self?.router.changes.bump("windows") }
+        windows.onDidPlace = { [weak self] in
+            self?.router.changes.bump("windows")
+            self?.markGettingStarted { $0.sawFirstSnap = true }
+        }
         agents.onChange = { [weak self] in
             self?.refreshAgentModel()
             self?.router.changes.bump("agents")
@@ -629,6 +632,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.supportedTextLanguages = TextExtractor.supportedLanguages
         model.shotFolder = store.config.shotFolder
         model.shotCopyToClipboard = store.config.shotCopyToClipboard
+        model.sawFirstSnap = store.config.sawFirstSnap
+        model.sawFirstAgent = store.config.sawFirstAgent
+        model.gettingStartedHidden = store.config.gettingStartedHidden
         model.settingsPages = [
             SettingsPage(id: "home", title: "Home", icon: "house") { AnyView(HomePage(model: $0)) },
             SettingsPage(id: "shortcuts", title: "Shortcuts", icon: "keyboard") { AnyView(ShortcutsPage(model: $0)) },
@@ -667,6 +673,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.connectedAgents = agents.onlineNames()
         model.selectedAgent = store.config.selectedAgent
         model.agentExclusive = store.config.agentExclusive
+        if !model.connectedAgents.isEmpty {
+            markGettingStarted { $0.sawFirstAgent = true }
+        }
+    }
+
+    /// Tick a Getting Started step, at most once. Config is written to disk on
+    /// every update, and both of these fire from paths that run constantly —
+    /// every placement, every agent poll — so the guard is the point.
+    private func markGettingStarted(_ change: @escaping (inout Config) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            var updated = self.store.config
+            change(&updated)
+            guard updated.sawFirstSnap != self.store.config.sawFirstSnap
+                || updated.sawFirstAgent != self.store.config.sawFirstAgent else { return }
+            self.store.update(change)
+            self.model.sawFirstSnap = self.store.config.sawFirstSnap
+            self.model.sawFirstAgent = self.store.config.sawFirstAgent
+        }
     }
 
     private func refreshWorkspaceModel() {
@@ -1159,6 +1184,11 @@ extension AppDelegate: AppActions {
     func setAgentExclusive(_ on: Bool) {
         store.update { $0.agentExclusive = on }
         refreshAgentModel()
+    }
+
+    func hideGettingStarted() {
+        store.update { $0.gettingStartedHidden = true }
+        model.gettingStartedHidden = true
     }
 
     func setUpdateCheckAutomatically(_ on: Bool) {

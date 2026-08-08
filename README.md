@@ -341,7 +341,7 @@ stops being one.
 
 ```sh
 cd App && swift build     # the app
-./scripts/test.sh         # 264 unit tests
+./scripts/test.sh         # 269 unit tests
 ./scripts/build.sh        # produces Plonk.app
 cd mcp && npm run build   # the MCP server
 ```

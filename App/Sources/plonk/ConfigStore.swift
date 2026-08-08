@@ -122,6 +122,12 @@ struct Config: Codable {
     // and whether only that agent may change windows and settings.
     var selectedAgent: String?
     var agentExclusive = false
+    // What the Getting Started card on the Home page has already seen happen.
+    // Both latch: a step stays done once it has been done, so the card does not
+    // un-tick itself the moment an agent's session ends.
+    var sawFirstSnap = false
+    var sawFirstAgent = false
+    var gettingStartedHidden = false
     // Agents Plonk can launch itself instead of queueing a task for a live MCP
     // session, e.g. "claude -p {prompt}". The prompt reaches the command
     // through the environment, never as text in the line; see
@@ -171,6 +177,9 @@ struct Config: Codable {
         updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
         selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
         agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
+        sawFirstSnap = try c.decodeIfPresent(Bool.self, forKey: .sawFirstSnap) ?? false
+        sawFirstAgent = try c.decodeIfPresent(Bool.self, forKey: .sawFirstAgent) ?? false
+        gettingStartedHidden = try c.decodeIfPresent(Bool.self, forKey: .gettingStartedHidden) ?? false
         agentAdapters = try c.decodeIfPresent([AgentAdapter].self, forKey: .agentAdapters) ?? []
         if let current = try c.decodeIfPresent([String: Workspace].self, forKey: .workspaces) {
             workspaces = current

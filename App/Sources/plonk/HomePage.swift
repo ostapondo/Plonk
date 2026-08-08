@@ -6,6 +6,12 @@ import SwiftUI
 struct HomePage: View {
     @ObservedObject var model: AppModel
 
+    private var guide: GettingStarted {
+        GettingStarted(accessibilityGranted: model.accessibilityGranted,
+                       snapped: model.sawFirstSnap,
+                       agentConnected: model.sawFirstAgent)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -19,6 +25,12 @@ struct HomePage: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.10)))
                         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.orange.opacity(0.35)))
+                }
+                // Above the readiness chips while it lasts: a chip says what is
+                // wrong, this says what to do next, and a new user needs the
+                // second one first.
+                if GettingStarted.isVisible(hidden: model.gettingStartedHidden, complete: guide.isComplete) {
+                    GettingStartedCard(model: model)
                 }
                 readiness
                 quickActions
