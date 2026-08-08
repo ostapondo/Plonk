@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenu: StatusMenuController!
     private var dragSnap: DragSnapManager!
     private var grabMove: GrabMove!
+    private var newWindows: NewWindowWatcher!
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
@@ -51,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupVoice()
         setupDragSnap()
         setupGrabMove()
+        setupNewWindows()
         setupServer()
         setupUpdates()
         refreshModel()
@@ -281,8 +283,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragSnap.edgeSpanPoints = store.config.zoneEdgeSpanPoints
         dragSnap.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
         dragSnap.onSnap = { [weak self] window, before, frac, screenIndex in
-            self?.snapMemory.record(window, wasAt: before, placedAt: frac,
-                                    screenUUID: ScreenIdentity.uuid(forIndex: screenIndex))
+            guard let self else { return }
+            snapMemory.record(window, wasAt: before, placedAt: frac,
+                              screenUUID: ScreenIdentity.uuid(forIndex: screenIndex),
+                              zoneIndex: zoneIndex(of: frac, onScreen: screenIndex),
+                              appKey: windows.app(ofWindow: window)?.bundleIdentifier)
         }
         dragSnap.start()
     }
@@ -324,6 +329,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         grabMove.modifierFlag = Self.modifierFlag(store.config.grabMoveModifier)
         grabMove.allowResize = store.config.grabMoveResize
         grabMove.showGeometry = store.config.grabMoveShowGeometry
+    }
+
+    /// Which numbered zone a dropped fraction corresponds to, so editing the
+    /// set later can move the window with its number. Nil for a span or an
+    /// edge snap, which match no single zone.
+    private func zoneIndex(of frac: FracRect, onScreen index: Int) -> Int? {
+        let zones = store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
+        return zones.firstIndex {
+            abs($0.x - frac.x) < 0.001 && abs($0.y - frac.y) < 0.001
+                && abs($0.w - frac.w) < 0.001 && abs($0.h - frac.h) < 0.001
+        }
+    }
+
+    private func setupNewWindows() {
+        newWindows = NewWindowWatcher(windows: windows)
+        newWindows.enabled = store.config.placeNewWindows
+        newWindows.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
+        newWindows.zoneGap = { [weak self] in CGFloat(self?.store.config.zoneGap ?? 0) }
+        newWindows.placement = { [weak self] app in
+            guard let self, let key = app.bundleIdentifier,
+                  let habit = snapMemory.habit(ofApp: key) else { return nil }
+            // The display is named by UUID, so a habit formed on a monitor that
+            // has since been unplugged simply does not apply.
+            guard let uuid = habit.screenUUID, let index = ScreenIdentity.index(forUUID: uuid) else { return nil }
+            // A numbered zone is followed by number, so the habit survives the
+            // set being edited; anything else falls back to the raw fraction.
+            let zones = store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
+            if let zone = habit.zoneIndex, zones.indices.contains(zone) {
+                return (zones[zone].frac, index)
+            }
+            return (habit.frac, index)
+        }
+        newWindows.onPlaced = { [weak self] app, window, before, frac, screenIndex in
+            guard let self else { return }
+            snapMemory.record(window, wasAt: before, placedAt: frac,
+                              screenUUID: ScreenIdentity.uuid(forIndex: screenIndex),
+                              zoneIndex: zoneIndex(of: frac, onScreen: screenIndex),
+                              appKey: app.bundleIdentifier)
+            router?.changes.bump("windows")
+        }
+        newWindows.start()
     }
 
     private func setupUpdates() {
@@ -478,6 +524,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.grabMoveShowGeometry = store.config.grabMoveShowGeometry
         model.excludedApps = store.config.excludedApps
         model.restoreZonesOnScreenChange = store.config.restoreZonesOnScreenChange
+        model.placeNewWindows = store.config.placeNewWindows
         model.textLanguages = store.config.textLanguages
         model.supportedTextLanguages = TextExtractor.supportedLanguages
         model.shotFolder = store.config.shotFolder
@@ -783,6 +830,12 @@ extension AppDelegate: AppActions {
     func setExcludedApps(_ patterns: [String]) {
         store.update { $0.excludedApps = patterns }
         model.excludedApps = patterns
+    }
+
+    func setPlaceNewWindows(_ on: Bool) {
+        store.update { $0.placeNewWindows = on }
+        model.placeNewWindows = on
+        newWindows.enabled = on
     }
 
     func setRestoreZonesOnScreenChange(_ on: Bool) {

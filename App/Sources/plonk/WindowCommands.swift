@@ -161,7 +161,8 @@ final class WindowCommands {
     private func remember(_ target: (app: NSRunningApplication, window: AXUIElement, frame: CGRect),
                           frac: FracRect, screen: Int, zoneIndex: Int? = nil) {
         memory.record(target.window, wasAt: target.frame, placedAt: frac,
-                      screenUUID: ScreenIdentity.uuid(forIndex: screen), zoneIndex: zoneIndex)
+                      screenUUID: ScreenIdentity.uuid(forIndex: screen), zoneIndex: zoneIndex,
+                      appKey: target.app.bundleIdentifier)
     }
 
     /// An order nothing Plonk does can change: the app, then the title, then
