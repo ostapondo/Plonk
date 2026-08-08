@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var grabMove: GrabMove!
     private var newWindows: NewWindowWatcher!
     private let mouse = MouseTools()
+    private let crops = CropAndLock()
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
@@ -208,6 +209,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             mouse.flashSpotlight()
         case .jumpCursor:
             if !mouse.jumpToNextScreen() { HUD.shared.show("Only one screen to jump between") }
+        case .cropLive:
+            pinCrop(live: true)
+        case .cropStill:
+            pinCrop(live: false)
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)
@@ -376,6 +381,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             router?.changes.bump("windows")
         }
         newWindows.start()
+    }
+
+    /// Drag out a region and float it above everything, live or frozen.
+    private func pinCrop(live: Bool) {
+        let report: (Result<String, Error>) -> Void = { result in
+            if case .failure(let error) = result {
+                HUD.shared.show(error.localizedDescription)
+            }
+        }
+        // Plonk's own windows would otherwise be in the shot, and the picker
+        // has to be the only thing on top.
+        let hidden = presenter.visible
+        hidden.forEach { $0.orderOut(nil) }
+        let finish: (Result<String, Error>) -> Void = { result in
+            hidden.forEach { $0.orderFront(nil) }
+            report(result)
+        }
+        if live {
+            crops.createLive(completion: finish)
+        } else {
+            crops.createStill(completion: finish)
+        }
     }
 
     private func setupMouseTools() {

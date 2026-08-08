@@ -61,6 +61,30 @@ enum ScreenshotManager {
         }
     }
 
+    /// Captures a rect given in CG coordinates — origin top-left of the primary
+    /// display — without asking the user for anything. `screencapture -R` takes
+    /// exactly that space, which is why regions are carried in it everywhere.
+    static func captureRegion(_ region: CGRect, completion: @escaping (NSImage?) -> Void) {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("plonk-region-\(UUID().uuidString).png")
+        let rect = "\(Int(region.minX)),\(Int(region.minY)),\(Int(region.width)),\(Int(region.height))"
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        task.arguments = ["-x", "-R", rect, url.path]
+        task.terminationHandler = { finished in
+            var image: NSImage?
+            if finished.terminationStatus == 0 { image = NSImage(contentsOf: url) }
+            try? FileManager.default.removeItem(at: url)
+            DispatchQueue.main.async { completion(image) }
+        }
+        do {
+            try task.run()
+        } catch {
+            NSLog("Plonk: screencapture failed to launch: \(error)")
+            DispatchQueue.main.async { completion(nil) }
+        }
+    }
+
     /// Timestamped file name, e.g. "Plonk 2026-08-07 at 14.05.12.png".
     static func fileName(for date: Date) -> String {
         let formatter = DateFormatter()
