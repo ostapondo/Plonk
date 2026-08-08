@@ -15,6 +15,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let hotkeys = HotkeyManager()
     private let updates = UpdateManager()
     private let model = AppModel()
+    private let snapMemory = SnapMemory()
+    private lazy var commands = WindowCommands(windows: windows, memory: snapMemory)
     private lazy var launcher = WorkspaceLauncher(windows: windows)
     private lazy var presenter = WindowPresenter(model: model)
     private var statusMenu: StatusMenuController!
@@ -22,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
+    private var screenSettleWork: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Before anything is on screen: a second copy would add its own menu bar
@@ -35,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windows.promptForTrust()
 
         model.actions = self
+        setupCommands()
         setupPresenter()
         setupStatusMenu()
         setupAwake()
@@ -66,6 +70,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // MARK: - Wiring
+
+    /// One place decides what Plonk will not touch, and everything that moves
+    /// a window on its own asks it.
+    private func isExcluded(_ app: NSRunningApplication) -> Bool {
+        AppExclusions.matches(name: app.localizedName ?? "", bundleID: app.bundleIdentifier,
+                              patterns: store.config.excludedApps)
+    }
+
+    private func setupCommands() {
+        commands.zonesForScreen = { [weak self] index in
+            guard let self else { return [] }
+            return store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
+        }
+        commands.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
+        commands.announce = { HUD.shared.show($0) }
+    }
 
     private func setupPresenter() {
         presenter.shotFolder = { [weak self] in self?.store.config.shotFolder ?? "~/Desktop" }
@@ -163,11 +183,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             dragSnap.previewZones()
         case .captureRegion:
             runCapture(.region, openEditor: true)
+        case .captureText:
+            captureText()
         case .voice:
             voice.beginCapture()
+        case .unsnap:
+            commands.unsnap()
+        case .cycleZone:
+            commands.cycleZone(backwards: false)
+        case .cycleZoneBack:
+            commands.cycleZone(backwards: true)
         default:
-            guard let preset = action.preset else { return }
-            windows.applyPreset(preset, to: NSWorkspace.shared.frontmostApplication)
+            if let number = action.zoneNumber {
+                commands.snap(toZone: number)
+            } else if let direction = action.focusDirection {
+                commands.moveFocus(direction)
+            } else if let preset = action.preset {
+                commands.apply(preset)
+            }
+        }
+    }
+
+    /// Region capture straight into recognition: the text lands on the
+    /// clipboard, and the HUD shows what was read so a bad crop is obvious
+    /// without pasting it somewhere first.
+    private func captureText() {
+        runCapture(.region, openEditor: false) { [weak self] image in
+            guard let self, let image else { return }
+            TextExtractor.recognize(in: image, languages: store.config.textLanguages) { result in
+                switch result {
+                case .failure(let error):
+                    HUD.shared.show(error.localizedDescription)
+                case .success(let lines):
+                    let text = TextExtractor.joined(lines)
+                    guard !text.isEmpty else {
+                        HUD.shared.show("No text found there")
+                        return
+                    }
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                    HUD.shared.show("Copied: \(text.prefix(80))\(text.count > 80 ? "…" : "")")
+                }
+            }
         }
     }
 
@@ -207,6 +264,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragSnap.zonesForScreen = { [weak self] index in
             guard let self else { return [] }
             return store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
+        }
+        dragSnap.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
+        dragSnap.onSnap = { [weak self] window, before, frac, screenIndex in
+            self?.snapMemory.record(window, wasAt: before, placedAt: frac,
+                                    screenUUID: ScreenIdentity.uuid(forIndex: screenIndex))
         }
         dragSnap.start()
     }
@@ -320,10 +382,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// outlive a relaunch. Written only when it actually changed, since
     /// onChange also fires on every power-source event.
     private func persistAwakeSession() {
+        // A pid means nothing after a relaunch — the process it named may be
+        // gone, or worse, reused — so those sessions are recorded as off and
+        // simply end when the app does.
+        let requested = awake.boundPID == nil && awake.requested
         let end = awake.sessionEnd?.timeIntervalSince1970
-        guard store.config.awakeRequested != awake.requested || store.config.awakeSessionEnd != end else { return }
+        guard store.config.awakeRequested != requested || store.config.awakeSessionEnd != end else { return }
         store.update {
-            $0.awakeRequested = awake.requested
+            $0.awakeRequested = requested
             $0.awakeSessionEnd = end
         }
     }
@@ -347,6 +413,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.awakeTimeoutMinutes = store.config.awakeTimeoutMinutes
         model.hotkeysEnabled = store.config.hotkeysEnabled
         model.dragSnapEnabled = store.config.dragSnapEnabled
+        model.excludedApps = store.config.excludedApps
+        model.restoreZonesOnScreenChange = store.config.restoreZonesOnScreenChange
+        model.textLanguages = store.config.textLanguages
+        model.supportedTextLanguages = TextExtractor.supportedLanguages
         model.shotFolder = store.config.shotFolder
         model.shotCopyToClipboard = store.config.shotCopyToClipboard
         model.settingsPages = [
@@ -425,6 +495,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragSnap.screensChanged()
         model.previewedZoneSet = nil
         refreshZoneModel()
+        guard store.config.restoreZonesOnScreenChange else { return }
+        // macOS sends this before the apps behind those windows have caught up,
+        // and several times while a display wakes. Settling first, then placing
+        // once, is the difference between windows landing and windows fighting.
+        screenSettleWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.commands.restorePlacements() }
+        screenSettleWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
 
     private static func modifierFlag(_ name: String) -> NSEvent.ModifierFlags {
@@ -570,6 +648,22 @@ extension AppDelegate: AppActions {
         dragSnap.modifierFlag = Self.modifierFlag(name)
         store.update { $0.zonesModifier = name }
         model.zonesModifier = name
+    }
+
+    func setExcludedApps(_ patterns: [String]) {
+        store.update { $0.excludedApps = patterns }
+        model.excludedApps = patterns
+    }
+
+    func setRestoreZonesOnScreenChange(_ on: Bool) {
+        store.update { $0.restoreZonesOnScreenChange = on }
+        model.restoreZonesOnScreenChange = on
+    }
+
+    func setTextLanguages(_ tags: [String]) {
+        let allowed = tags.filter { TextExtractor.supportedLanguages.contains($0) }
+        store.update { $0.textLanguages = allowed }
+        model.textLanguages = allowed
     }
 
     func setLaunchAtLogin(_ on: Bool) {

@@ -77,6 +77,26 @@ enum ZoneGeometry {
         )
     }
 
+    /// Smallest rect covering both zones, which is what dropping a window
+    /// across two of them means. Rounded up to a rectangle, so spanning an
+    /// L-shaped pair takes the corner with it.
+    static func union(_ a: ZoneRect, _ b: ZoneRect) -> FracRect {
+        let x = min(a.x, b.x)
+        let y = min(a.y, b.y)
+        return FracRect(x, y, max(a.x + a.w, b.x + b.w) - x, max(a.y + a.h, b.y + b.h) - y)
+    }
+
+    /// Which zones a spanning rect swallows, by centre point — the same test
+    /// the drag overlay uses to pick one, so what lights up is what a drop
+    /// would land on.
+    static func covered(_ zones: [ZoneRect], by rect: FracRect) -> Set<Int> {
+        Set(zones.indices.filter {
+            let cx = zones[$0].x + zones[$0].w / 2
+            let cy = zones[$0].y + zones[$0].h / 2
+            return cx >= rect.x && cx <= rect.x + rect.w && cy >= rect.y && cy <= rect.y + rect.h
+        })
+    }
+
     /// True when any zone at the given indices intersects another zone by
     /// more than a hairline (touching edges are fine).
     static func overlaps(_ zones: [ZoneRect], at indices: [Int]) -> Bool {

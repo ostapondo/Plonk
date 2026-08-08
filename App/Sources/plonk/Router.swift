@@ -6,7 +6,7 @@ import Network
 //
 //   GET  /ping              liveness, cheap: touches neither AX nor the screen
 //   GET  /state
-//   POST /awake             { on?, minutes? }
+//   POST /awake             { on?, minutes?, until?, pid? }
 //   POST /layout            { items: [{ app, title?, screen?, frame: {x,y,w,h} }] }
 //   POST /workspaces/save   { name, items?, move_existing? }  no items = snapshot the desktop
 //   POST /workspaces/launch { name, screen? }   screen pulls it onto one monitor
@@ -18,6 +18,7 @@ import Network
 //   POST /zones/delete   { name }
 //   POST /shot/capture   { mode?, annotate?, path?, clipboard?, preview? }
 //   POST /shot/annotate  { path, marks: [{kind, points, color?, width?}], output?, clipboard? }
+//   POST /shot/text      { mode?, path?, clipboard?, languages? }  on-device OCR
 //   POST /layout/zone    { app, zone, title?, screen? }
 //   POST /agents/hello     { name, version?, pid? }   registers/refreshes a session
 //   POST /agents/select    { name? }   no name clears the selection
@@ -96,7 +97,20 @@ final class Router {
 
         case ("POST", "/awake"):
             let on = (body["on"] as? Bool) ?? !awake.requested
-            awake.set(on, minutes: (body["minutes"] as? NSNumber)?.intValue)
+            var until: Date?
+            if let raw = trimmedName(body["until"]) {
+                guard let parsed = Self.parseDeadline(raw) else {
+                    respond(.badRequest("\"until\" must be a time of day like \"17:00\" or an "
+                                        + "ISO-8601 timestamp like \"2026-08-08T17:00:00Z\""))
+                    return
+                }
+                until = parsed
+            }
+            if let error = awake.set(on, minutes: (body["minutes"] as? NSNumber)?.intValue,
+                                     until: until, pid: (body["pid"] as? NSNumber)?.intValue) {
+                respond(.badRequest(error))
+                return
+            }
             respond(.ok(["ok": true, "awake": awake.isOn, "status": awake.statusText]))
 
         case ("POST", "/layout"):
@@ -280,6 +294,9 @@ final class Router {
         case ("POST", "/shot/annotate"):
             respond(annotateRoute(body))
 
+        case ("POST", "/shot/text"):
+            textRoute(body, respond: respond)
+
         case ("GET", "/update/state"):
             respond(.ok(updateState?() ?? ["error": "updates are not available"]))
 
@@ -432,8 +449,11 @@ final class Router {
                 "auto_while_charging": awake.autoWhileCharging,
                 "keep_display_on": awake.keepDisplayOn,
                 "session_ends": awake.sessionEnd.map { ISO8601DateFormatter().string(from: $0) } ?? "",
+                "bound_pid": awake.boundPID ?? 0,
             ],
             "accessibility_granted": windows.isTrusted,
+            "excluded_apps": store.config.excludedApps,
+            "text_languages": store.config.textLanguages,
             "saved_layouts": store.config.workspaces.keys.sorted(),
             "workspaces": store.config.workspaces.mapValues { workspace in
                 [
@@ -634,6 +654,90 @@ final class Router {
         if let preview = written.preview { result["preview_path"] = preview }
         announce?(copy ? "Copied to clipboard" : "Saved", written.preview ?? written.path)
         return .ok(result)
+    }
+
+    // MARK: - Text
+
+    /// Reads the text off a capture, or off a file that is already on disk.
+    /// Recognition is on-device; nothing leaves the Mac.
+    private func textRoute(_ body: [String: Any], respond: @escaping (HTTPResponse) -> Void) {
+        let languages = (body["languages"] as? [String])?.filter { !$0.isEmpty } ?? store.config.textLanguages
+        let copy = (body["clipboard"] as? Bool) ?? true
+
+        let read: (NSImage) -> Void = { image in
+            TextExtractor.recognize(in: image, languages: languages) { result in
+                switch result {
+                case .failure(let error):
+                    respond(.failed(error.localizedDescription))
+                case .success(let lines):
+                    let joined = TextExtractor.joined(lines)
+                    var payload: [String: Any] = [
+                        "ok": true,
+                        "text": joined,
+                        "lines": lines.map(\.asDict),
+                    ]
+                    if copy, !joined.isEmpty {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(joined, forType: .string)
+                        payload["clipboard"] = true
+                    }
+                    if lines.isEmpty { payload["note"] = "no text was recognized in that area" }
+                    respond(.ok(payload))
+                }
+            }
+        }
+
+        if let path = trimmedName(body["path"]) {
+            let expanded = (path as NSString).expandingTildeInPath
+            guard let image = NSImage(contentsOfFile: expanded) else {
+                respond(.notFound("no readable image at \(expanded)"))
+                return
+            }
+            read(image)
+            return
+        }
+        guard let capture else {
+            respond(.failed("capture is not available"))
+            return
+        }
+        let mode = CaptureMode(rawValue: (body["mode"] as? String) ?? "region") ?? .region
+        capture(mode, false) { image in
+            guard let image else {
+                respond(HTTPResponse(status: 409, json: [
+                    "error": "capture was cancelled, or Screen Recording permission is missing",
+                ]))
+                return
+            }
+            read(image)
+        }
+    }
+
+    /// "17:00" or "17:00:00" is the next such moment — today when it is still
+    /// ahead, tomorrow when it has passed, which is what someone setting an
+    /// alarm at midnight means. An ISO-8601 timestamp is taken as written.
+    static func parseDeadline(_ raw: String, now: Date = Date(),
+                              calendar: Calendar = .current) -> Date? {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = iso.date(from: trimmed) { return date }
+        iso.formatOptions = [.withInternetDateTime]
+        if let date = iso.date(from: trimmed) { return date }
+
+        let parts = trimmed.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+        guard (2...3).contains(parts.count) else { return nil }
+        let numbers = parts.compactMap(Int.init)
+        guard numbers.count == parts.count else { return nil }
+        let (hour, minute) = (numbers[0], numbers[1])
+        let second = numbers.count == 3 ? numbers[2] : 0
+        guard (0...23).contains(hour), (0...59).contains(minute), (0...59).contains(second) else { return nil }
+
+        var components = calendar.dateComponents([.year, .month, .day], from: now)
+        components.hour = hour
+        components.minute = minute
+        components.second = second
+        guard let today = calendar.date(from: components) else { return nil }
+        return today > now ? today : calendar.date(byAdding: .day, value: 1, to: today)
     }
 
     private static func markedPath(for path: String) -> String {

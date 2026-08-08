@@ -69,6 +69,15 @@ struct Config: Codable {
     // would silently reset the setting for everyone, so it stays.
     var zonesRequireShift = true
     var zonesModifier = "shift"  // shift | option | control
+    // Apps drag snapping and the placement hotkeys leave alone; see
+    // AppExclusions. Explicit placement through the API is never filtered.
+    var excludedApps: [String] = []
+    // Whether windows Plonk placed are put back where they were after a
+    // display is plugged in or unplugged.
+    var restoreZonesOnScreenChange = true
+    // BCP-47 tags for text recognition, e.g. ["uk-UA", "en-US"]. Empty lets
+    // Vision pick, which follows the system language.
+    var textLanguages: [String] = []
     var awakeAllowOnBattery = true
     var awakeAutoWhileCharging = false
     var awakeKeepDisplayOn = true
@@ -108,6 +117,9 @@ struct Config: Codable {
         dragSnapEnabled = try c.decodeIfPresent(Bool.self, forKey: .dragSnapEnabled) ?? true
         zonesRequireShift = try c.decodeIfPresent(Bool.self, forKey: .zonesRequireShift) ?? true
         zonesModifier = try c.decodeIfPresent(String.self, forKey: .zonesModifier) ?? "shift"
+        excludedApps = try c.decodeIfPresent([String].self, forKey: .excludedApps) ?? []
+        restoreZonesOnScreenChange = try c.decodeIfPresent(Bool.self, forKey: .restoreZonesOnScreenChange) ?? true
+        textLanguages = try c.decodeIfPresent([String].self, forKey: .textLanguages) ?? []
         awakeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .awakeAllowOnBattery) ?? true
         awakeAutoWhileCharging = try c.decodeIfPresent(Bool.self, forKey: .awakeAutoWhileCharging) ?? false
         awakeKeepDisplayOn = try c.decodeIfPresent(Bool.self, forKey: .awakeKeepDisplayOn) ?? true

@@ -7,20 +7,32 @@ import ApplicationServices
 //   the full zone rect. The configured modifier gates activation, and holding
 //   it inverts the mode (zones-on-drag <-> zones-on-modifier), so a free move
 //   is always one keypress away.
+// - holding Command as well spans: the zone the drag first hovered and the one
+//   under the cursor now are covered by a single rect, so two columns become
+//   one wide drop without editing the set.
 // - otherwise, edge snapping: cursor near a screen edge shows a single zone
 //   (edge middles = halves, top = maximize, edge ends = quarters).
 
 final class DragSnapManager {
+    /// Spanning is fixed rather than configurable: the activation modifier is
+    /// already the user's to pick, and Command is the one that cannot collide
+    /// with any of its three choices.
+    static let spanFlag: NSEvent.ModifierFlags = .command
+
     private let windows: WindowManager
     private var monitors: [Any] = []
     private var overlays: [Int: ZoneOverlay] = [:]
     private var currentZone: (screenIndex: Int, frac: FracRect)?
     private var previewGeneration = 0
+    /// One end of a span: the zone hovered when Command last went down.
+    private var spanAnchor: (screenIndex: Int, zoneIndex: Int)?
 
     private enum State {
         case idle
         case watching(win: AXUIElement, startFrame: CGRect)
-        case active(win: AXUIElement)
+        case active(win: AXUIElement, startFrame: CGRect)
+        /// The drag belongs to an excluded app, so it is left alone until it ends.
+        case ignored
     }
     private var state: State = .idle
 
@@ -28,6 +40,10 @@ final class DragSnapManager {
     var requireModifier = true
     var modifierFlag: NSEvent.ModifierFlags = .shift
     var zonesForScreen: ((Int) -> [ZoneRect])?
+    /// Apps the user told Plonk to keep its hands off.
+    var isExcluded: ((NSRunningApplication) -> Bool)?
+    /// Reports a finished snap, so the frame the window had can be given back.
+    var onSnap: ((_ window: AXUIElement, _ before: CGRect, _ frac: FracRect, _ screenIndex: Int) -> Void)?
 
     init(windows: WindowManager) {
         self.windows = windows
@@ -48,7 +64,7 @@ final class DragSnapManager {
         let screens = NSScreen.screens
         guard screens.indices.contains(screenIndex), !zones.isEmpty else { return }
         hideAll()
-        overlay(for: screenIndex).show(zones: zones, hovered: nil, visible: screens[screenIndex].visibleFrame)
+        overlay(for: screenIndex).show(zones: zones, highlighted: [], visible: screens[screenIndex].visibleFrame)
     }
 
     func hidePreviews() {
@@ -65,7 +81,7 @@ final class DragSnapManager {
             let zones = zonesForScreen?(index) ?? []
             guard !zones.isEmpty else { continue }
             shownAny = true
-            overlay(for: index).show(zones: zones, hovered: nil, visible: screen.visibleFrame)
+            overlay(for: index).show(zones: zones, highlighted: [], visible: screen.visibleFrame)
         }
         guard shownAny else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
@@ -87,9 +103,15 @@ final class DragSnapManager {
     private func handleDrag(_ event: NSEvent) {
         guard enabled, windows.isTrusted else { return }
         switch state {
+        case .ignored:
+            return
         case .idle:
-            guard let app = NSWorkspace.shared.frontmostApplication,
-                  let win = windows.focusedWindow(of: app),
+            guard let app = NSWorkspace.shared.frontmostApplication else { return }
+            guard isExcluded?(app) != true else {
+                state = .ignored
+                return
+            }
+            guard let win = windows.focusedWindow(of: app),
                   let frame = windows.frame(ofWindow: win) else { return }
             state = .watching(win: win, startFrame: frame)
         case .watching(let win, let startFrame):
@@ -97,11 +119,11 @@ final class DragSnapManager {
             let moved = abs(f.minX - startFrame.minX) > 4 || abs(f.minY - startFrame.minY) > 4
             let resized = abs(f.width - startFrame.width) > 2 || abs(f.height - startFrame.height) > 2
             if moved && !resized {
-                state = .active(win: win)
-                updateZone(modifierHeld: event.modifierFlags.contains(modifierFlag))
+                state = .active(win: win, startFrame: startFrame)
+                updateZone(event)
             }
         case .active:
-            updateZone(modifierHeld: event.modifierFlags.contains(modifierFlag))
+            updateZone(event)
         }
     }
 
@@ -109,13 +131,19 @@ final class DragSnapManager {
         defer {
             state = .idle
             currentZone = nil
+            spanAnchor = nil
             hideAll()
         }
-        guard case .active(let win) = state, let zone = currentZone else { return }
+        guard case .active(let win, let startFrame) = state, let zone = currentZone else { return }
         windows.apply(frac: zone.frac, toWindow: win, screenIndex: zone.screenIndex)
+        onSnap?(win, startFrame, zone.frac, zone.screenIndex)
     }
 
-    private func updateZone(modifierHeld: Bool) {
+    private func updateZone(_ event: NSEvent) {
+        let modifierHeld = event.modifierFlags.contains(modifierFlag)
+        let spanHeld = event.modifierFlags.contains(Self.spanFlag)
+        if !spanHeld { spanAnchor = nil }
+
         let p = NSEvent.mouseLocation
         guard let index = NSScreen.screens.firstIndex(where: { $0.frame.insetBy(dx: -1, dy: -1).contains(p) }) else {
             currentZone = nil
@@ -134,11 +162,18 @@ final class DragSnapManager {
             }
             let v = screen.visibleFrame
             let hovered = zoneIndex(at: p, in: zones, visible: v)
-            overlay(for: index).show(zones: zones, hovered: hovered, visible: v)
+            let spanned = spanHeld ? span(from: hovered, on: index, in: zones) : nil
+            overlay(for: index).show(zones: zones,
+                                     highlighted: spanned?.indices ?? Set(hovered.map { [$0] } ?? []),
+                                     visible: v)
             hideAll(except: index)
-            currentZone = hovered.map { (index, zones[$0].frac) }
+            if let spanned {
+                currentZone = (index, spanned.frac)
+            } else {
+                currentZone = hovered.map { (index, zones[$0].frac) }
+            }
         } else if let frac = edgeZone(at: p, on: screen) {
-            overlay(for: index).show(zones: [ZoneRect(frac.x, frac.y, frac.w, frac.h)], hovered: 0,
+            overlay(for: index).show(zones: [ZoneRect(frac.x, frac.y, frac.w, frac.h)], highlighted: [0],
                                      visible: screen.visibleFrame)
             hideAll(except: index)
             currentZone = (index, frac)
@@ -146,6 +181,22 @@ final class DragSnapManager {
             currentZone = nil
             hideAll()
         }
+    }
+
+    /// The rect covering the anchor zone and the hovered one, once Command has
+    /// been held over two of them. The first hovered zone becomes the anchor
+    /// and spans nothing on its own, so tapping Command never changes a drop.
+    private func span(from hovered: Int?, on screenIndex: Int,
+                      in zones: [ZoneRect]) -> (frac: FracRect, indices: Set<Int>)? {
+        guard let hovered else { return nil }
+        guard let anchor = spanAnchor, anchor.screenIndex == screenIndex,
+              zones.indices.contains(anchor.zoneIndex) else {
+            spanAnchor = (screenIndex, hovered)
+            return nil
+        }
+        guard anchor.zoneIndex != hovered else { return nil }
+        let frac = ZoneGeometry.union(zones[anchor.zoneIndex], zones[hovered])
+        return (frac, ZoneGeometry.covered(zones, by: frac))
     }
 
     /// Smallest zone under the cursor, so overlapping sets stay usable.

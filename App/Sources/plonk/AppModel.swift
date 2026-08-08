@@ -15,6 +15,12 @@ protocol AppActions: AnyObject {
     func setDragSnap(_ on: Bool)
     func setZonesRequireModifier(_ on: Bool)
     func setZonesModifier(_ name: String)
+    /// Apps drag snapping and the placement shortcuts leave alone, one pattern
+    /// per line. Matched against the app's name and bundle id, case-insensitively.
+    func setExcludedApps(_ patterns: [String])
+    func setRestoreZonesOnScreenChange(_ on: Bool)
+    /// BCP-47 tags for text recognition; empty lets Vision choose.
+    func setTextLanguages(_ tags: [String])
     func setLaunchAtLogin(_ on: Bool)
     func setShotFolder(_ folder: String)
     func setShotCopyToClipboard(_ on: Bool)
@@ -71,6 +77,10 @@ final class AppModel: ObservableObject {
     @Published var dragSnapEnabled = true
     @Published var zonesRequireModifier = true
     @Published var zonesModifier = "shift"
+    @Published var excludedApps: [String] = []
+    @Published var restoreZonesOnScreenChange = true
+    @Published var textLanguages: [String] = []
+    @Published var supportedTextLanguages: [String] = []
     @Published var workspaceNames: [String] = []
     @Published var workspaces: [String: Workspace] = [:]
     /// Non-empty only while a workspace is coming up.

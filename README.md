@@ -8,7 +8,7 @@ windows — you drag them there, or your agent says where.</sub></p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.0.5-58a6ff?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-18_tools-8957e5?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-19_tools-8957e5?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
 </p>
@@ -65,6 +65,17 @@ To let an agent drive it (Node 18+):
 ```sh
 claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
 codex mcp add plonk -- npx -y plonk-mcp    # Codex CLI
+```
+
+The same package carries a `plonk` command, for the things that are neither an
+agent nor a settings window — a Makefile, a Raycast script, a shell alias:
+
+```sh
+npx -y plonk-mcp --help          # or: npm i -g plonk-mcp
+plonk state                      # screens, zone sets, workspaces, windows
+plonk launch review              # a saved workspace
+plonk awake while npm run build  # awake for exactly as long as the build
+plonk text | pbcopy              # OCR a region straight into the clipboard
 ```
 
 Any MCP client works the same way — give it `npx -y plonk-mcp` as a stdio
@@ -186,7 +197,10 @@ it.
 | **Per monitor** | Each screen gets its own set, remembered by display, not by index |
 | **Overlap** | Allowed — the smallest zone under the cursor wins |
 | **Trigger** | On drag, or only with a modifier held. Holding it inverts the mode, so a free move stays one keypress away |
+| **Span** | Hold `⌘` as well: the zone you started over and the one under the cursor become a single drop, so two columns make one wide window without editing the set |
+| **By number** | `⌃⌥1`–`⌃⌥9` drop the front window into the zone the overlay draws that number on. `⌃⌥0` gives it back the frame it had before Plonk first moved it |
 | **Or none** | Edge snapping instead: middles are halves, top is maximize, corners are quarters |
+| **Exceptions** | A list of apps Plonk keeps its hands off — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works; that names the window on purpose |
 
 ## Hotkeys
 
@@ -195,15 +209,21 @@ it.
 </p>
 
 <p align="center">
-  All on <code>⌃⌥</code>. Plus <code>⌃⌥Z</code> to flash the zones and <code>⌃⌥S</code> to grab a region.
+  All on <code>⌃⌥</code>. Plus <code>⌃⌥Z</code> to flash the zones, <code>⌃⌥S</code> to grab a region
+  and <code>⌃⌥T</code> to lift the text out of one.
 </p>
+
+Focus follows the layout, not the order things were last used: `⌃⌥⇧` and an
+arrow steps to the window that is actually to the left, and `` ⌃⌥` `` cycles
+through the ones stacked in the same zone. Every binding is rebindable.
 
 ## And the rest
 
 | | |
 | --- | --- |
-| **Keep awake** | IOKit power assertions, not a jiggler. Display-on or system-only, pause on battery, auto while charging, timed sessions, and a menu bar icon that glows while it holds |
+| **Keep awake** | IOKit power assertions, not a jiggler. Display-on or system-only, pause on battery, auto while charging, and a session that ends when you say: after N minutes, at a wall-clock time, or the moment a process exits — `plonk awake while npm run build` holds the Mac up for exactly as long as the build lasts and not a second longer |
 | **Screenshots** | Region, window or screen through the native picker, then pen, arrow, rectangle, ellipse and highlighter. Saves at native resolution |
+| **Text** | `⌃⌥T` selects an area and copies the words in it, including text that is only pixels — a screenshot, a paused video, a PDF that will not let you select. Recognition is on-device; `plonk text \| grep …` works too |
 | **Notices** | A panel in the top-right corner, not Notification Center: no permission to ask for, nothing left in your history, and it can show the screenshot instead of describing it |
 | **Updates** | One button on the Updates page. The download is checked against the checksum GitHub published for it before it is unpacked, and Plonk installs a build only if it is signed with the same certificate as the copy you are running — the same test macOS applies, so your Accessibility and Screen Recording grants carry over instead of being asked for again. Anything that fails is discarded and nothing is replaced. Switch the check off and the app never looks |
 
@@ -219,8 +239,9 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 | `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops, launched from nothing |
 | `snap_window` | Drop a window into a numbered zone |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
-| `set_awake` | Keep-awake, optionally time-limited |
+| `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back |
+| `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
 | `select_agent` | Make an agent the user's active one, optionally the only one allowed to control |
 
 Several agents can be connected at once. Every client registers itself, so
