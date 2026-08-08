@@ -2,8 +2,6 @@ import SwiftUI
 
 struct ZonesPage: View {
     @ObservedObject var model: AppModel
-    @State private var exclusionsDraft = ""
-    @FocusState private var exclusionsFocused: Bool
     @State private var opacityDraft = 1.0
 
     /// Everything on this page that is not one of the two grouped sections below.
@@ -139,14 +137,11 @@ struct ZonesPage: View {
                 }
             }
             Section {
-                TextEditor(text: $exclusionsDraft)
-                    .font(.system(.body, design: .monospaced))
-                    .frame(minHeight: 66)
-                    .focused($exclusionsFocused)
+                ExcludedApps(model: model)
             } header: {
                 Text("Leave These Alone")
             } footer: {
-                Text("One app per line, matched anywhere in its name or bundle id — \"steam\" covers Steam and Steam Helper. Dragging and the shortcuts skip these; asking an agent to place a window still works, because that names the window on purpose.")
+                Text("Dragging and the shortcuts skip these — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works, because that names the window on purpose.")
             }
             Section("Per Monitor") {
                 ForEach(0..<model.screenCount, id: \.self) { screen in
@@ -165,22 +160,8 @@ struct ZonesPage: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear {
-            exclusionsDraft = AppExclusions.text(from: model.excludedApps)
-            opacityDraft = model.zoneOpacity
-        }
+        .onAppear { opacityDraft = model.zoneOpacity }
         .onChange(of: model.zoneOpacity) { opacityDraft = $0 }
-        .onChange(of: model.excludedApps) { exclusionsDraft = AppExclusions.text(from: $0) }
-        // Committed when the field is left rather than per keystroke, so a
-        // half-typed name never starts excluding something.
-        .onChange(of: exclusionsFocused) { focused in if !focused { commitExclusions() } }
-        .onDisappear(perform: commitExclusions)
-    }
-
-    private func commitExclusions() {
-        let patterns = AppExclusions.parse(exclusionsDraft)
-        guard patterns != model.excludedApps else { return }
-        model.actions?.setExcludedApps(patterns)
     }
 
     private func assignment(for screen: Int) -> Binding<String> {
@@ -501,37 +482,46 @@ struct PointsField: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                    Text(help).font(.caption).foregroundStyle(.secondary)
-                }
+        // Two lines rather than one: a form row splits itself into a label and
+        // a control, and a row holding a label, a slider and a field made that
+        // split guess wrong — the field wrapped onto its own line and the
+        // placeholder came out as a stray label beside it. The name and the
+        // exact value share the top line, the knob gets the width of the row,
+        // which is what the system's own sliders do.
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 10) {
+                Text(title)
                 Spacer(minLength: 12)
-                // Whole steps only: this is a count of points, and a knob that
-                // landed on 12.4 would disagree with the field beside it.
-                Slider(value: $knob, in: Double(range.lowerBound)...Double(range.upperBound),
-                       step: 1) { editing in
-                    guard !editing else { return }
-                    error = nil
-                    commit(knob)
-                }
-                .frame(width: 130)
-                TextField(placeholder, text: $draft)
+                // `prompt`, not the title argument: on macOS the title is drawn
+                // beside the box, so a placeholder passed there becomes a label.
+                TextField(text: $draft, prompt: Text(placeholder)) { EmptyView() }
+                    .labelsHidden()
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
                     .monospacedDigit()
-                    .frame(width: 66)
+                    .frame(width: 56)
                     .focused($focused)
                     .onSubmit(commitDraft)
                     .onChange(of: draft) { typed in
                         let digits = typed.filter(\.isNumber)
                         if digits != typed { draft = digits }
                     }
-                Text("pt")
-                    .foregroundStyle(.secondary)
-                    .frame(width: 18, alignment: .leading)
+                Text("pt").foregroundStyle(.secondary)
             }
+            // onEditingChanged spelled out rather than trailing, and no `step:`
+            // — that draws tick marks, and the rounding belongs to the value.
+            Slider(value: $knob,
+                   in: Double(range.lowerBound)...Double(range.upperBound),
+                   onEditingChanged: { editing in
+                       guard !editing else { return }
+                       error = nil
+                       commit(knob.rounded())
+                   })
+                .labelsHidden()
+                .controlSize(.small)
+            Text(help)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
@@ -542,7 +532,7 @@ struct PointsField: View {
         .onChange(of: value) { adopt($0) }
         // The field follows the knob as it moves, so the number being chosen is
         // always readable; nothing is written until the knob is let go.
-        .onChange(of: knob) { draft = String(Int($0)) }
+        .onChange(of: knob) { draft = String(Int($0.rounded())) }
         // Committed when the field is left or Return is pressed, not per
         // keystroke: "1" on the way to "16" is a valid number, and saving it
         // would rewrite config twice and move every snapped window through a
