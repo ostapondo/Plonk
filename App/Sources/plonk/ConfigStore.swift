@@ -88,6 +88,10 @@ struct Config: Codable {
     var grabMoveModifier = "option"  // option | command | control
     var grabMoveResize = true
     var grabMoveShowGeometry = true
+    // The pointer tools. Each is independent and each is off until asked for.
+    var findCursorEnabled = true
+    var highlightClicksEnabled = false
+    var crosshairsEnabled = false
     // Apps drag snapping and the placement hotkeys leave alone; see
     // AppExclusions. Explicit placement through the API is never filtered.
     var excludedApps: [String] = []
@@ -149,6 +153,9 @@ struct Config: Codable {
         grabMoveModifier = try c.decodeIfPresent(String.self, forKey: .grabMoveModifier) ?? "option"
         grabMoveResize = try c.decodeIfPresent(Bool.self, forKey: .grabMoveResize) ?? true
         grabMoveShowGeometry = try c.decodeIfPresent(Bool.self, forKey: .grabMoveShowGeometry) ?? true
+        findCursorEnabled = try c.decodeIfPresent(Bool.self, forKey: .findCursorEnabled) ?? true
+        highlightClicksEnabled = try c.decodeIfPresent(Bool.self, forKey: .highlightClicksEnabled) ?? false
+        crosshairsEnabled = try c.decodeIfPresent(Bool.self, forKey: .crosshairsEnabled) ?? false
         excludedApps = try c.decodeIfPresent([String].self, forKey: .excludedApps) ?? []
         restoreZonesOnScreenChange = try c.decodeIfPresent(Bool.self, forKey: .restoreZonesOnScreenChange) ?? true
         placeNewWindows = try c.decodeIfPresent(Bool.self, forKey: .placeNewWindows) ?? false
