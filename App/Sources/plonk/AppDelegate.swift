@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var presenter = WindowPresenter(model: model)
     private var statusMenu: StatusMenuController!
     private var dragSnap: DragSnapManager!
+    private var grabMove: GrabMove!
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
@@ -49,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupHotkeys()
         setupVoice()
         setupDragSnap()
+        setupGrabMove()
         setupServer()
         setupUpdates()
         refreshModel()
@@ -277,6 +279,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragSnap.start()
     }
 
+    private func setupGrabMove() {
+        grabMove = GrabMove(windows: windows)
+        applyGrabMoveSettings()
+        grabMove.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
+        // A grab is a drag as far as zones are concerned, so it goes through
+        // the same overlay and the same drop rules.
+        grabMove.onGrabBegan = { [weak self] window, frame in
+            self?.dragSnap.beginExternalDrag(window: window, startFrame: frame)
+        }
+        grabMove.onGrabMoved = { [weak self] in self?.dragSnap.updateExternalDrag() }
+        grabMove.onGrabEnded = { [weak self] window, startFrame in
+            guard let self else { return }
+            // A grab that landed in a zone is recorded by the zone drop. One
+            // that did not is still a move Plonk made, so it is remembered
+            // too — otherwise the shortcut that puts a window back would have
+            // nothing to put back after a free drag.
+            if !dragSnap.endExternalDrag(), let placed = windows.fraction(ofWindow: window) {
+                snapMemory.record(window, wasAt: startFrame, placedAt: placed.frac,
+                                  screenUUID: ScreenIdentity.uuid(forIndex: placed.screenIndex))
+            }
+            router?.changes.bump("windows")
+        }
+        grabMove.start()
+    }
+
+    private func applyGrabMoveSettings() {
+        grabMove.enabled = store.config.grabMoveEnabled
+        grabMove.modifierFlag = Self.modifierFlag(store.config.grabMoveModifier)
+        grabMove.allowResize = store.config.grabMoveResize
+        grabMove.showGeometry = store.config.grabMoveShowGeometry
+    }
+
     private func setupUpdates() {
         updates.onChange = { [weak self] in
             guard let self else { return }
@@ -417,6 +451,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.awakeTimeoutMinutes = store.config.awakeTimeoutMinutes
         model.hotkeysEnabled = store.config.hotkeysEnabled
         model.dragSnapEnabled = store.config.dragSnapEnabled
+        model.grabMoveEnabled = store.config.grabMoveEnabled
+        model.grabMoveModifier = store.config.grabMoveModifier
+        model.grabMoveResize = store.config.grabMoveResize
+        model.grabMoveShowGeometry = store.config.grabMoveShowGeometry
         model.excludedApps = store.config.excludedApps
         model.restoreZonesOnScreenChange = store.config.restoreZonesOnScreenChange
         model.textLanguages = store.config.textLanguages
@@ -663,6 +701,30 @@ extension AppDelegate: AppActions {
         dragSnap.modifierFlag = Self.modifierFlag(name)
         store.update { $0.zonesModifier = name }
         model.zonesModifier = name
+    }
+
+    func setGrabMove(_ on: Bool) {
+        store.update { $0.grabMoveEnabled = on }
+        model.grabMoveEnabled = on
+        applyGrabMoveSettings()
+    }
+
+    func setGrabMoveModifier(_ name: String) {
+        store.update { $0.grabMoveModifier = name }
+        model.grabMoveModifier = name
+        applyGrabMoveSettings()
+    }
+
+    func setGrabMoveResize(_ on: Bool) {
+        store.update { $0.grabMoveResize = on }
+        model.grabMoveResize = on
+        applyGrabMoveSettings()
+    }
+
+    func setGrabMoveShowGeometry(_ on: Bool) {
+        store.update { $0.grabMoveShowGeometry = on }
+        model.grabMoveShowGeometry = on
+        applyGrabMoveSettings()
     }
 
     func setExcludedApps(_ patterns: [String]) {

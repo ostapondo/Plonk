@@ -160,8 +160,40 @@ final class WindowManager {
         (attr(win, kAXTitleAttribute) as? String) ?? ""
     }
 
+    /// The window under a point in AX space, or nil over the desktop. Walks up
+    /// from whatever element is there — a button, a text field — to the window
+    /// containing it.
+    func window(at point: CGPoint) -> AXUIElement? {
+        let system = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(system, Self.axTimeout)
+        var element: AXUIElement?
+        guard AXUIElementCopyElementAtPosition(system, Float(point.x), Float(point.y), &element) == .success,
+              var current = element else { return nil }
+        // Ten levels is deeper than any real view hierarchy needs; the bound is
+        // there because a malformed AX tree can contain a cycle.
+        for _ in 0..<10 {
+            if (attr(current, kAXRoleAttribute) as? String) == kAXWindowRole { return current }
+            guard let parent = attr(current, kAXParentAttribute),
+                  CFGetTypeID(parent) == AXUIElementGetTypeID() else { return nil }
+            current = (parent as! AXUIElement)
+        }
+        return nil
+    }
+
+    func app(ofWindow win: AXUIElement) -> NSRunningApplication? {
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(win, &pid) == .success else { return nil }
+        return NSRunningApplication(processIdentifier: pid)
+    }
+
+    /// Placement during a live drag. Announces nothing: the change bus would
+    /// otherwise fire on every mouse event, and the drop announces once.
+    func setFrame(_ rect: CGRect, ofWindow win: AXUIElement) {
+        setFrame(win, rect, announce: false)
+    }
+
     @discardableResult
-    private func setFrame(_ win: AXUIElement, _ rect: CGRect) -> Bool {
+    private func setFrame(_ win: AXUIElement, _ rect: CGRect, announce: Bool = true) -> Bool {
         var pos = rect.origin
         var size = rect.size
         guard let posVal = AXValueCreate(.cgPoint, &pos),
@@ -174,7 +206,7 @@ final class WindowManager {
         // Placement reaches here from hotkeys, drag snapping, workspace
         // launches and the HTTP routes alike, so this is the one place that
         // sees every window move. Launches run off the main queue.
-        if let onDidPlace {
+        if announce, let onDidPlace {
             DispatchQueue.main.async(execute: onDidPlace)
         }
         return true
@@ -332,6 +364,24 @@ final class WindowManager {
     /// Which screen a window sits on, by the screen its centre falls in.
     func screenIndex(ofWindow win: AXUIElement) -> Int {
         screenIndex(containing: frame(ofWindow: win) ?? .zero, in: screens())
+    }
+
+    /// Where a window sits, as a fraction of its screen's visible area. Nil
+    /// when there is no frame or no screen to measure against.
+    ///
+    /// Clamped inside the screen: a window hanging over an edge still has to
+    /// come back as a fraction the placement path would accept.
+    func fraction(ofWindow win: AXUIElement) -> (frac: FracRect, screenIndex: Int)? {
+        let all = screens()
+        guard let f = frame(ofWindow: win), !all.isEmpty else { return nil }
+        let index = screenIndex(containing: f, in: all)
+        let v = all[index].visible
+        guard v.width > 0, v.height > 0 else { return nil }
+        let x = min(max(Double((f.minX - v.minX) / v.width), 0), 0.99)
+        let y = min(max(Double((f.minY - v.minY) / v.height), 0), 0.99)
+        let w = min(max(Double(f.width / v.width), 0.01), 1 - x)
+        let h = min(max(Double(f.height / v.height), 0.01), 1 - y)
+        return (FracRect(x, y, w, h), index)
     }
 
     /// Put a window back at a frame it held earlier, nudged onto whichever
