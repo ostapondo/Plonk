@@ -105,15 +105,28 @@ enum TextExtractor {
         min(max(Double(value), 0), 1)
     }
 
-    /// Reading order: top to bottom, then left to right within a band. Vision
+    /// Reading order: top to bottom, then left to right within a row. Vision
     /// returns observations in its own order, which is close but not reliable
     /// enough to paste.
+    ///
+    /// Rows are grouped before anything is sorted inside them. Comparing "are
+    /// these two within a band of each other" directly is not a consistent
+    /// ordering — a column of slightly ragged lines can chain A≈B, B≈C but
+    /// A≉C — and sorting on it scrambles exactly the text it is meant to
+    /// straighten out.
     static func joined(_ lines: [Line]) -> String {
         let band = 0.01
-        return lines
-            .sorted {
-                abs($0.box.y - $1.box.y) < band ? $0.box.x < $1.box.x : $0.box.y < $1.box.y
+        var rows: [[Line]] = []
+        var anchor = -Double.infinity
+        for line in lines.sorted(by: { $0.box.y < $1.box.y }) {
+            if line.box.y - anchor > band {
+                rows.append([])
+                anchor = line.box.y
             }
+            rows[rows.count - 1].append(line)
+        }
+        return rows
+            .flatMap { $0.sorted { $0.box.x < $1.box.x } }
             .map(\.text)
             .joined(separator: "\n")
     }

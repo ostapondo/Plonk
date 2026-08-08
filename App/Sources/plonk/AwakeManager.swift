@@ -74,7 +74,9 @@ final class AwakeManager {
             return nil
         }
         if let pid {
-            guard pid > 0, Self.isRunning(pid) else {
+            // pid_t is Int32, and converting anything larger traps rather than
+            // failing. The API takes whatever JSON hands it.
+            guard pid > 0, pid <= Int(Int32.max), Self.isRunning(pid) else {
                 return "no process with pid \(pid) is running"
             }
             begin(requested: true, sessionEnd: nil, pid: pid)

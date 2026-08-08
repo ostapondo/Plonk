@@ -345,15 +345,20 @@ final class WindowManager {
         return setFrame(win, WindowNavigator.clamped(rect, into: all[index].visible))
     }
 
-    /// Every window Plonk can address, with its frame, excluding Plonk's own.
-    /// One AX round trip per window, so callers should not do this per event.
-    func allWindows() -> [(app: NSRunningApplication, window: AXUIElement, frame: CGRect)] {
+    /// Every window Plonk can address, with its frame and title, excluding
+    /// Plonk's own. Several AX round trips per window, so callers should not
+    /// do this per event.
+    ///
+    /// The order is AX's, which is front-to-back and therefore changes the
+    /// moment anything is raised. Anything that walks this list more than once
+    /// has to impose its own order first.
+    func allWindows() -> [(app: NSRunningApplication, window: AXUIElement, frame: CGRect, title: String)] {
         let ownPID = ProcessInfo.processInfo.processIdentifier
-        var result: [(NSRunningApplication, AXUIElement, CGRect)] = []
+        var result: [(NSRunningApplication, AXUIElement, CGRect, String)] = []
         for app in runningApps() where app.processIdentifier != ownPID {
             for win in axWindows(of: app.processIdentifier) where !isMinimized(win) {
                 guard let f = frame(ofWindow: win) else { continue }
-                result.append((app, win, f))
+                result.append((app, win, f, title(of: win)))
             }
         }
         return result

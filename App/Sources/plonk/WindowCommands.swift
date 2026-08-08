@@ -76,7 +76,12 @@ final class WindowCommands {
         let visible = screens[screenIndex].visible
 
         let bounds = screens[screenIndex].frame
-        let all = windows.allWindows().filter { bounds.contains($0.frame.center) }
+        // Sorted, because AX hands windows back front-to-back: cycling raises
+        // one, which reorders the list, and an unsorted "next" would bounce
+        // between the top two forever without ever reaching a third.
+        let all = windows.allWindows()
+            .filter { bounds.contains($0.frame.center) }
+            .sorted(by: Self.stableOrder)
         guard let current = all.firstIndex(where: { CFEqual($0.window, target.window) }) else { return }
         // Overlapping zones resolve the same way a drop does — smallest wins —
         // and a screen with no zones counts as one, which turns this into
@@ -118,6 +123,19 @@ final class WindowCommands {
                           frac: FracRect, screen: Int) {
         memory.record(target.window, wasAt: target.frame, placedAt: frac,
                       screenUUID: ScreenIdentity.uuid(forIndex: screen))
+    }
+
+    /// An order nothing Plonk does can change: the app, then the title, then
+    /// where the window sits. Raising a window touches none of those, which is
+    /// what keeps a cycle a ring rather than a coin flip.
+    private static func stableOrder(_ a: (app: NSRunningApplication, window: AXUIElement, frame: CGRect, title: String),
+                                    _ b: (app: NSRunningApplication, window: AXUIElement, frame: CGRect, title: String)) -> Bool {
+        if a.app.processIdentifier != b.app.processIdentifier {
+            return a.app.processIdentifier < b.app.processIdentifier
+        }
+        if a.title != b.title { return a.title < b.title }
+        if a.frame.minX != b.frame.minX { return a.frame.minX < b.frame.minX }
+        return a.frame.minY < b.frame.minY
     }
 
     /// Zone rects are fractions of a screen's visible area; window frames are

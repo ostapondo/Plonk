@@ -25,6 +25,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var server: ControlServer?
     private var previewToken = 0
     private var screenSettleWork: DispatchWorkItem?
+    /// Display UUIDs seen at the last screen-parameter change, so a Dock
+    /// resize can be told apart from a monitor being plugged in.
+    private var knownDisplays: Set<String> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Before anything is on screen: a second copy would add its own menu bar
@@ -53,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         applyLaunchAtLogin(store.config.launchAtLogin)
         model.launchAtLogin = isLaunchAtLoginEnabled
 
+        knownDisplays = Self.attachedDisplays()
         NotificationCenter.default.addObserver(
             self, selector: #selector(screensChanged),
             name: NSApplication.didChangeScreenParametersNotification, object: nil
@@ -495,7 +499,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragSnap.screensChanged()
         model.previewedZoneSet = nil
         refreshZoneModel()
-        guard store.config.restoreZonesOnScreenChange else { return }
+
+        // This notification also fires for a resolution change, a display
+        // waking, and the Dock being resized or auto-hidden. Only a display
+        // actually arriving or leaving should move anybody's windows.
+        let displays = Self.attachedDisplays()
+        defer { knownDisplays = displays }
+        guard store.config.restoreZonesOnScreenChange, displays != knownDisplays else { return }
+
         // macOS sends this before the apps behind those windows have caught up,
         // and several times while a display wakes. Settling first, then placing
         // once, is the difference between windows landing and windows fighting.
@@ -503,6 +514,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let work = DispatchWorkItem { [weak self] in self?.commands.restorePlacements() }
         screenSettleWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+    }
+
+    private static func attachedDisplays() -> Set<String> {
+        Set(NSScreen.screens.indices.compactMap { ScreenIdentity.uuid(forIndex: $0) })
     }
 
     private static func modifierFlag(_ name: String) -> NSEvent.ModifierFlags {
