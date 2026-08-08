@@ -158,6 +158,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     case focusLeft, focusRight, focusUp, focusDown
     case findCursor, jumpCursor
     case cropLive, cropStill
+    case shortcutGuide
 
     var id: String { rawValue }
 
@@ -236,6 +237,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .jumpCursor: return "Jump the pointer to the next screen"
         case .cropLive: return "Pin a live crop on top"
         case .cropStill: return "Pin a still crop on top"
+        case .shortcutGuide: return "Show this app's shortcuts"
         default:
             if let number = zoneNumber { return "Zone \(number)" }
             if let number = layoutNumber { return "Zone set \(number)" }
@@ -260,6 +262,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .jumpCursor: return "arrow.left.arrow.right"
         case .cropLive: return "pip"
         case .cropStill: return "photo"
+        case .shortcutGuide: return "keyboard"
         default:
             if zoneNumber != nil { return "square.grid.2x2" }
             if layoutNumber != nil { return "rectangle.3.group" }
@@ -275,6 +278,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .unsnap: return "Numbered zones"
         case .cycleZone, .cycleZoneBack, .focusLeft, .focusRight, .focusUp, .focusDown: return "Focus"
         case .findCursor, .jumpCursor: return "Pointer"
+        case .shortcutGuide: return "Guide"
         case .cropLive, .cropStill: return "Crop"
         default:
             if zoneNumber != nil { return "Numbered zones" }
@@ -289,6 +293,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .captureRegion, .captureText, .cropLive, .cropStill: return "shot"
         case .findCursor, .jumpCursor: return "mouse"
         case .voice: return "voice"
+        case .shortcutGuide: return "shortcuts"
         default: return "zones"
         }
     }
@@ -348,6 +353,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .jumpCursor: code = kVK_ANSI_Backslash
         case .cropLive: code = kVK_ANSI_P
         case .cropStill: code = kVK_ANSI_P; shift = true
+        case .shortcutGuide: code = kVK_ANSI_Slash; shift = true
         }
         return Hotkey(keyCode: UInt32(code), control: true, option: true, shift: shift)
     }

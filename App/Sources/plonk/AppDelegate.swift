@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var newWindows: NewWindowWatcher!
     private let mouse = MouseTools()
     private let crops = CropAndLock()
+    private var guidePanel: ShortcutGuidePanel?
     private var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
@@ -213,6 +214,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pinCrop(live: true)
         case .cropStill:
             pinCrop(live: false)
+        case .shortcutGuide:
+            toggleShortcutGuide()
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)
@@ -381,6 +384,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             router?.changes.bump("windows")
         }
         newWindows.start()
+    }
+
+    /// Reads the front app's menus and floats them. Pressing the key again
+    /// closes it, which is how a reference panel should behave.
+    private func toggleShortcutGuide() {
+        if let panel = guidePanel {
+            panel.close()
+            return
+        }
+        guard windows.isTrusted else {
+            HUD.shared.show("The shortcut guide needs Accessibility")
+            return
+        }
+        guard let app = NSWorkspace.shared.frontmostApplication else { return }
+        let name = app.localizedName ?? "This app"
+        ShortcutGuide.read(for: app) { [weak self] items in
+            guard let self else { return }
+            // The guide describes whatever was in front when it was asked for,
+            // so a slow app cannot end up labelled with the wrong name.
+            let panel = ShortcutGuidePanel(appName: name, items: items)
+            panel.onClose = { [weak self] in self?.guidePanel = nil }
+            guidePanel = panel
+            panel.orderFrontRegardless()
+        }
     }
 
     /// Drag out a region and float it above everything, live or frozen.
