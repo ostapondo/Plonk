@@ -364,13 +364,14 @@ stops being one.
 
 ## Build
 
-Three commands, and they are exactly what CI runs on every pull request. Each
+Four commands, and they are exactly what CI runs on every pull request. Each
 line is a subshell, so paste the block from the repository root and it works:
 
 ```sh
 (cd App && swift build)                    # the app compiles
 ./scripts/test.sh                          # 306 unit tests
 (cd mcp && npm ci && npm run typecheck)    # the MCP server
+node scripts/check-zone-sets.mjs           # the layouts in zone-sets/
 ```
 
 None of that needs a signing certificate. Zone geometry, config decoding, HTTP
@@ -436,9 +437,17 @@ carry to be reproducible, where a new module seams in, and the handful of
 directions this project will not take, so nobody writes a patch that was never
 going to land.
 
+The smallest useful change here is one JSON file. [`zone-sets/`](zone-sets/) is
+a gallery of layouts worth copying — an ultrawide split, a rotated monitor, the
+one built around a recurring meeting. Draw it in the app, read the numbers out
+of `plonk state --json`, open a pull request; that folder has its own CI job and
+answers in about twenty seconds. Nothing to build, nothing to sign, no Swift.
+
 The issues tagged [good first issue][gfi] are written to be picked up cold —
-each one says where the code is and how to tell it worked. Questions,
-half-formed ideas and layouts worth showing off go to
+each one says where the code is and how to tell it worked, and carries a prompt
+you can hand straight to an agent, since [AGENTS.md](AGENTS.md) already tells
+one how this repo is put together. Questions, half-formed ideas and layouts
+worth showing off go to
 [Discussions](https://github.com/ostapondo/plonk/discussions); a security
 problem goes through [SECURITY.md](SECURITY.md) instead of a public issue.
 

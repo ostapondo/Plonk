@@ -1,0 +1,12 @@
+{
+  "name": "Ultrawide Quarters",
+  "description": "Four full-height columns. On a 34 inch screen each one is about the width of a laptop, so four real windows fit without overlapping.",
+  "screen": "ultrawide",
+  "author": "@ostapondo",
+  "zones": [
+    { "x": 0, "y": 0, "w": 0.25, "h": 1 },
+    { "x": 0.25, "y": 0, "w": 0.25, "h": 1 },
+    { "x": 0.5, "y": 0, "w": 0.25, "h": 1 },
+    { "x": 0.75, "y": 0, "w": 0.25, "h": 1 }
+  ]
+}
