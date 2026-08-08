@@ -16,7 +16,7 @@ a key, or you say where.</sub></p>
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="An eight-zone grid is cut out of one screen with seven clicks in the zone editor, then filled: one window dragged in, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent" width="720">
+  <img src="docs/demo.gif" alt="An eight-zone grid is cut out of one screen with seven clicks in the zone editor, then filled: one window dragged in, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent. A command palette then switches the screen to a four-zone set, and the theme changes from dark to light" width="720">
 </p>
 
 ## Three ways to put a window somewhere

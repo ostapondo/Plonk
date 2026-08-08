@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 214" width="720" height="214" role="img" aria-label="Ten mini screens showing where each hotkey puts the front window">
   <style>
     .scr { fill: none; stroke: #8b949e; stroke-opacity: 0.45; stroke-width: 1.5; }
-    .win { fill: #58a6ff; fill-opacity: 0.28; stroke: #58a6ff; stroke-opacity: 0.9; stroke-width: 1.5; }
+    .win { fill: #8b7cf6; fill-opacity: 0.28; stroke: #8b7cf6; stroke-opacity: 0.9; stroke-width: 1.5; }
     .k { font: 600 15px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #8b949e; text-anchor: middle; }
   </style>
 

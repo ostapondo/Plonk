@@ -12,40 +12,78 @@
 <meta property="og:url" content="https://ostapondo.github.io/Plonk/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
+<script>
+  // Before the first paint, so a visitor who chose dark on a light system does
+  // not get a flash of the wrong theme. The buttons are wired up at the end.
+  try {
+    var saved = localStorage.getItem('plonk-theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  } catch (e) {}
+</script>
 <style>
   :root {
     color-scheme: light dark;
     --bg: #ffffff;
-    --bg-soft: #f6f7f9;
+    --bg-soft: #f5f6f8;
     --card: #ffffff;
-    --line: #e3e6ea;
-    --ink: #14171c;
-    --dim: #5b636e;
-    --accent: #2f6fe4;
+    --line: #e4e7ec;
+    --ink: #15171f;
+    --dim: #5c6377;
+    --accent: #6d5ce0;
+    --accent-warm: #e8674c;
     --amber: #d98a1f;
     --code-bg: #14171c;
     --code-ink: #e8eaee;
     --shadow: 0 1px 2px rgba(16,20,28,.06), 0 8px 24px rgba(16,20,28,.06);
+    --glow-a: rgba(109,92,224,.16);
+    --glow-b: rgba(232,103,76,.12);
   }
+  /* The dark palette is the app's own, so the page and the product are plainly
+     the same thing. The guard lets the toggle win over the system setting. */
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0d0f13;
-      --bg-soft: #12151b;
-      --card: #14181f;
+    :root:not([data-theme="light"]) {
+      --bg: #0c0d11;
+      --bg-soft: #12141b;
+      --card: #171a21;
       --line: #232833;
       --ink: #e9ecf1;
-      --dim: #9aa3b0;
-      --accent: #5a9bff;
+      --dim: #98a0b3;
+      --accent: #8b7cf6;
+      --accent-warm: #f2795f;
       --amber: #ffb84d;
-      --code-bg: #080a0d;
+      --code-bg: #08090c;
       --code-ink: #e9ecf1;
       --shadow: 0 1px 2px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.35);
+      --glow-a: rgba(139,124,246,.20);
+      --glow-b: rgba(242,121,95,.14);
     }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c0d11;
+    --bg-soft: #12141b;
+    --card: #171a21;
+    --line: #232833;
+    --ink: #e9ecf1;
+    --dim: #98a0b3;
+    --accent: #8b7cf6;
+    --accent-warm: #f2795f;
+    --amber: #ffb84d;
+    --code-bg: #08090c;
+    --code-ink: #e9ecf1;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.35);
+    --glow-a: rgba(139,124,246,.20);
+    --glow-b: rgba(242,121,95,.14);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: var(--bg);
+    background:
+      radial-gradient(900px 560px at 82% -6%, var(--glow-a), transparent 62%),
+      radial-gradient(720px 480px at 4% 22%, var(--glow-b), transparent 58%),
+      var(--bg);
+    background-attachment: fixed;
     color: var(--ink);
     font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -65,6 +103,13 @@
   header nav { margin-left: auto; display: flex; gap: 18px; font-size: 14.5px; }
   header nav a { color: var(--dim); }
   header nav a:hover { color: var(--ink); text-decoration: none; }
+  .themes { display: flex; gap: 2px; padding: 3px; margin-left: 4px;
+            border: 1px solid var(--line); border-radius: 9px; background: var(--bg-soft); }
+  .themes button {
+    border: 0; background: none; cursor: pointer; border-radius: 6px;
+    padding: 5px 8px; line-height: 1; color: var(--dim); font: 13px/1 inherit;
+  }
+  .themes button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
 
   .hero { padding: 68px 0 30px; text-align: center; }
   .hero h1 { font-size: clamp(34px, 5.2vw, 52px); line-height: 1.08; margin: 0 0 14px; letter-spacing: -.022em; }
@@ -93,12 +138,16 @@
     color: var(--ink); font-weight: 550; font-size: 14.5px; background: var(--card);
   }
   .ghost:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+  .grad { background: linear-gradient(135deg, var(--accent-warm), var(--accent));
+          color: #fff; border: 0; box-shadow: 0 6px 20px var(--glow-a); }
+  .grad:hover { color: #fff; filter: brightness(1.06); }
   .fine { font-size: 13.5px; color: var(--dim); margin-top: 14px; }
 
   figure.shot { margin: 34px 0 0; }
   figure.shot img {
     width: 100%; height: auto; border-radius: 14px;
-    border: 1px solid var(--line); box-shadow: var(--shadow); display: block;
+    border: 1px solid var(--line); display: block;
+    box-shadow: var(--shadow), 0 24px 70px var(--glow-a);
   }
   img.diagram { display: block; width: 100%; max-width: 720px; height: auto; margin: 0 auto; }
   figure.shot figcaption { font-size: 13.5px; color: var(--dim); text-align: center; margin-top: 12px; }
@@ -155,12 +204,18 @@
   <div class="wrap">
     <a class="brand" href="./"><img src="logo-400.png" alt=""> Plonk</a>
     <nav>
+      <a href="#app">The app</a>
       <a href="#zones">Zones</a>
       <a href="#workspaces">Workspaces</a>
       <a href="#agents">For agents</a>
       <a href="#privacy">Privacy</a>
       <a href="https://github.com/ostapondo/plonk">GitHub</a>
     </nav>
+    <div class="themes" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false" title="Light">&#9728;</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false" title="Dark">&#9789;</button>
+      <button type="button" data-theme-set="system" aria-pressed="true" title="Match the system">A</button>
+    </div>
   </div>
 </header>
 
@@ -178,7 +233,7 @@
         <code id="brew">brew install --cask ostapondo/plonk/plonk</code>
         <button data-copy="#brew">Copy</button>
       </div>
-      <a class="ghost" href="https://github.com/ostapondo/plonk/releases/latest">Download .zip</a>
+      <a class="ghost grad" href="https://github.com/ostapondo/plonk/releases/latest">Download .zip</a>
     </div>
     <p class="fine">Signed, built and attested on GitHub's runners —
       <a href="https://github.com/ostapondo/plonk/blob/main/docs/verify.md">check the binary against the commit</a>
@@ -187,8 +242,8 @@
 
   <figure class="shot">
     <img src="demo.gif" width="1200" height="750"
-         alt="An eight-zone grid is cut out of one screen with seven clicks in the zone editor, then filled: one window dragged in, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent">
-    <figcaption>Seven clicks make the grid. Then one window is dragged in, one is sent with ⌃⌥3, and the other six land on a sentence.</figcaption>
+         alt="An eight-zone grid is cut out of one screen with seven clicks in the zone editor, then filled: one window dragged in, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent. A command palette then switches the screen to a four-zone set, and the theme changes from dark to light">
+    <figcaption>Seven clicks make the grid. One window is dragged in, one is sent with ⌃⌥3, and the other six land on a sentence. Then ⌘K swaps the whole set, and the theme follows.</figcaption>
   </figure>
 
   <section>
@@ -210,6 +265,41 @@
         <h3>Say it</h3>
         <p>Plonk speaks MCP, so any agent can place every window on every monitor in one call —
           and save the result as a workspace you can launch from nothing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="app">
+    <h2>The window it all lives in</h2>
+    <p class="sub">Five places to be, not eleven. Anything the app can do has a name you can type,
+      and the theme it is drawn in is yours to pick — the zone overlay and the HUD follow it.</p>
+    <div class="split">
+      <figure class="shot" style="margin:0">
+        <img src="app-home-light.png" width="1400" height="980" loading="lazy"
+             alt="Plonk's Home page in the light theme: a sidebar with Home, Layout, Capture, Automation and Settings, a card showing the zone layout of the main screen, and rows of quick actions with their shortcuts">
+        <figcaption>Home, light theme. The picture is your screen's real zone set.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <img src="app-zones-dark.png" width="1400" height="980" loading="lazy"
+             alt="Plonk's Zones page in the dark theme: a row of zone-set tabs, a large preview of the selected set, and cards for dragging behaviour and shortcuts">
+        <figcaption>Zones, dark theme. The set you are editing is the page, not a separate window.</figcaption>
+      </figure>
+    </div>
+    <div class="cards" style="margin-top:26px">
+      <div class="card">
+        <h3><kbd>⌘</kbd><kbd>K</kbd> runs anything</h3>
+        <p>Every zone, every workspace, every setting page, every shortcut — by name. The same list
+          of verbs an agent gets over MCP, with a search field in front of it.</p>
+      </div>
+      <div class="card">
+        <h3>Light, dark, or neither</h3>
+        <p>Pick a theme and an accent in Settings · Appearance. The window, the drag overlay and the
+          heads-up display all take it; leave it on System and macOS decides.</p>
+      </div>
+      <div class="card">
+        <h3>Nothing hidden behind a menu</h3>
+        <p>Shortcuts are printed on the row that owns them. Permissions only take space on the day
+          one of them is missing.</p>
       </div>
     </div>
   </section>
@@ -351,5 +441,33 @@ curl -so /dev/null -w '%{http_code}\n' \
   }
 </script>
 
+<script>
+  // Three states, the same three the app has: an explicit choice is remembered,
+  // and "system" removes the attribute so the media query decides again.
+  (function () {
+    var root = document.documentElement;
+    var buttons = document.querySelectorAll('[data-theme-set]');
+    function apply(choice) {
+      if (choice === 'system') {
+        root.removeAttribute('data-theme');
+        root.style.colorScheme = '';
+      } else {
+        root.setAttribute('data-theme', choice);
+        // Scrollbars and form controls read this, not the custom properties.
+        root.style.colorScheme = choice;
+      }
+      try { localStorage.setItem('plonk-theme', choice); } catch (e) {}
+      buttons.forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.dataset.themeSet === choice));
+      });
+    }
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () { apply(button.dataset.themeSet); });
+    });
+    var saved = 'system';
+    try { saved = localStorage.getItem('plonk-theme') || 'system'; } catch (e) {}
+    apply(saved);
+  })();
+</script>
 </body>
 </html>

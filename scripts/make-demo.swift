@@ -13,7 +13,7 @@ import CoreText
 // MARK: - Timeline
 
 let fps = 20.0
-let duration = 11.6
+let duration = 19.8
 let size = CGSize(width: 1200, height: 750)
 
 /// 0 at `from`, 1 at `to`, eased so movement starts and stops softly.
@@ -32,16 +32,42 @@ func lerp(_ a: CGRect, _ b: CGRect, _ t: Double) -> CGRect {
 
 // MARK: - Palette
 
+/// 0 while the demo is in the dark theme, 1 in the light one. Every colour is
+/// a blend of the two, so the theme beat is one number moving rather than a
+/// second copy of the drawing code.
+var themeBlend = 0.0
+
+func mix(_ dark: NSColor, _ light: NSColor, _ t: Double) -> NSColor {
+    guard t > 0 else { return dark }
+    let a = dark.usingColorSpace(.sRGB) ?? dark
+    let b = light.usingColorSpace(.sRGB) ?? light
+    return NSColor(srgbRed: a.redComponent + (b.redComponent - a.redComponent) * t,
+                   green: a.greenComponent + (b.greenComponent - a.greenComponent) * t,
+                   blue: a.blueComponent + (b.blueComponent - a.blueComponent) * t,
+                   alpha: a.alphaComponent + (b.alphaComponent - a.alphaComponent) * t)
+}
+
 enum Ink {
-    static let desk = NSColor(srgbRed: 0.07, green: 0.08, blue: 0.11, alpha: 1)
-    static let deskGlow = NSColor(srgbRed: 0.13, green: 0.15, blue: 0.22, alpha: 1)
-    static let bar = NSColor(srgbRed: 0.10, green: 0.11, blue: 0.15, alpha: 0.96)
-    static let accent = NSColor(srgbRed: 0.35, green: 0.62, blue: 1.0, alpha: 1)
+    static var desk: NSColor { mix(NSColor(srgbRed: 0.05, green: 0.055, blue: 0.075, alpha: 1),
+                                   NSColor(srgbRed: 0.90, green: 0.91, blue: 0.94, alpha: 1), themeBlend) }
+    static var deskGlow: NSColor { mix(NSColor(srgbRed: 0.13, green: 0.13, blue: 0.20, alpha: 1),
+                                       NSColor(srgbRed: 0.97, green: 0.97, blue: 1.0, alpha: 1), themeBlend) }
+    static var bar: NSColor { mix(NSColor(srgbRed: 0.07, green: 0.08, blue: 0.10, alpha: 0.96),
+                                  NSColor(srgbRed: 0.99, green: 0.99, blue: 1.0, alpha: 0.96), themeBlend) }
+    /// Plonk's own accent, and the warmer end of the gradient it draws with.
+    static let accent = NSColor(srgbRed: 0.545, green: 0.486, blue: 0.965, alpha: 1)
+    static let warm = NSColor(srgbRed: 0.949, green: 0.475, blue: 0.373, alpha: 1)
     static let amber = NSColor(srgbRed: 1.0, green: 0.72, blue: 0.30, alpha: 1)
-    static let chrome = NSColor(srgbRed: 0.17, green: 0.19, blue: 0.24, alpha: 1)
-    static let pane = NSColor(srgbRed: 0.12, green: 0.13, blue: 0.17, alpha: 1)
-    static let text = NSColor(white: 0.92, alpha: 1)
-    static let dim = NSColor(white: 0.55, alpha: 1)
+    static var chrome: NSColor { mix(NSColor(srgbRed: 0.13, green: 0.145, blue: 0.19, alpha: 1),
+                                     NSColor(srgbRed: 0.93, green: 0.935, blue: 0.95, alpha: 1), themeBlend) }
+    static var pane: NSColor { mix(NSColor(srgbRed: 0.086, green: 0.098, blue: 0.129, alpha: 1),
+                                   NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 1), themeBlend) }
+    static var panel: NSColor { mix(NSColor(srgbRed: 0.10, green: 0.11, blue: 0.145, alpha: 0.98),
+                                    NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.98), themeBlend) }
+    static var text: NSColor { mix(NSColor(white: 0.93, alpha: 1), NSColor(white: 0.09, alpha: 1), themeBlend) }
+    static var dim: NSColor { mix(NSColor(white: 0.55, alpha: 1), NSColor(white: 0.42, alpha: 1), themeBlend) }
+    static var line: NSColor { mix(NSColor(white: 1, alpha: 0.09), NSColor(white: 0, alpha: 0.10), themeBlend) }
+    static var body: NSColor { mix(NSColor(white: 1, alpha: 0.13), NSColor(white: 0, alpha: 0.13), themeBlend) }
 }
 
 // MARK: - Drawing helpers
@@ -134,7 +160,7 @@ func draw(_ pane: Pane, alpha: CGFloat = 1, in ctx: CGContext) {
                   color: NSColor.black.withAlphaComponent(0.55).cgColor)
     fill(pane.rect, Ink.pane, radius: radius, in: ctx)
     ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(pane.rect, NSColor(white: 1, alpha: 0.09), radius: radius, in: ctx)
+    stroke(pane.rect, Ink.line, radius: radius, in: ctx)
 
     let chromeHeight = round(30 * scale)
     let chrome = CGRect(x: pane.rect.minX, y: pane.rect.maxY - chromeHeight,
@@ -173,7 +199,7 @@ func draw(_ pane: Pane, alpha: CGFloat = 1, in ctx: CGContext) {
     while y > pane.rect.minY + 18 * scale {
         fill(CGRect(x: body.minX, y: y, width: body.width * widths[index % widths.count],
                     height: 5 * scale),
-             NSColor(white: 1, alpha: 0.13), radius: 2.5 * scale, in: ctx)
+             Ink.body, radius: 2.5 * scale, in: ctx)
         // A paragraph break every so often, so it reads as text and not a barcode.
         y -= ((index % 5 == 4) ? 26 : 15) * scale
         index += 1
@@ -441,6 +467,90 @@ func drawShiftBadge(at point: CGPoint, alpha: CGFloat, in ctx: CGContext) {
     ctx.restoreGState()
 }
 
+/// The set the palette switches to: one big zone and three down the side. The
+/// switch is a real Plonk feature — windows sitting in a numbered zone move to
+/// wherever that number is in the new set — so the animation is just the same
+/// windows easing to a different rectangle.
+let focusFracs = [
+    Frac(x: 0, y: 0, w: 0.62, h: 1),
+    Frac(x: 0.62, y: 0, w: 0.38, h: 0.34),
+    Frac(x: 0.62, y: 0.34, w: 0.38, h: 0.33),
+    Frac(x: 0.62, y: 0.67, w: 0.38, h: 0.33),
+]
+
+/// ⌘K, drawn the way the app draws it: a field, a few matching commands, the
+/// first one selected.
+func drawPalette(_ query: String, rows: [(String, [String])], selected: Int,
+                 typed: Double, alpha: CGFloat, in ctx: CGContext) {
+    guard alpha > 0.01 else { return }
+    ctx.saveGState()
+    ctx.setAlpha(alpha)
+    let rowHeight: CGFloat = 34
+    let height = 58 + CGFloat(rows.count) * rowHeight + 30
+    let box = CGRect(x: size.width / 2 - 290, y: size.height - 250 - height, width: 580, height: height)
+    ctx.setShadow(offset: CGSize(width: 0, height: -10), blur: 40,
+                  color: NSColor.black.withAlphaComponent(0.55).cgColor)
+    fill(box, Ink.panel, radius: 14, in: ctx)
+    ctx.setShadow(offset: .zero, blur: 0, color: nil)
+    stroke(box, Ink.line, radius: 14, width: 1, in: ctx)
+
+    let shown = String(query.prefix(Int(Double(query.count) * min(max(typed, 0), 1))))
+    text(shown, at: CGPoint(x: box.minX + 46, y: box.maxY - 36), size: 16, color: Ink.text, in: ctx)
+    // The caret, and the magnifier drawn as a circle with a tail.
+    let caretX = box.minX + 46 + width(of: shown, size: 16) + 2
+    fill(CGRect(x: caretX, y: box.maxY - 40, width: 1.5, height: 18), Ink.accent, in: ctx)
+    stroke(CGRect(x: box.minX + 20, y: box.maxY - 37, width: 13, height: 13), Ink.dim,
+           radius: 6.5, width: 1.4, in: ctx)
+    fill(CGRect(x: box.minX + 30, y: box.maxY - 42, width: 6, height: 1.4), Ink.dim, in: ctx)
+    fill(CGRect(x: box.minX, y: box.maxY - 58, width: box.width, height: 1), Ink.line, in: ctx)
+
+    for (index, row) in rows.enumerated() {
+        let top = box.maxY - 58 - CGFloat(index + 1) * rowHeight
+        let rect = CGRect(x: box.minX, y: top, width: box.width, height: rowHeight)
+        if index == selected {
+            fill(rect, Ink.accent.withAlphaComponent(0.16), in: ctx)
+            fill(CGRect(x: rect.minX, y: rect.minY, width: 2.5, height: rect.height), Ink.accent, in: ctx)
+        }
+        text(row.0, at: CGPoint(x: rect.minX + 20, y: rect.midY - 5), size: 13.5,
+             color: index == selected ? Ink.text : Ink.dim, in: ctx)
+        var x = rect.maxX - 20
+        for key in row.1.reversed() {
+            let capWidth = max(22, width(of: key, size: 11, weight: .medium) + 12)
+            let cap = CGRect(x: x - capWidth, y: rect.midY - 9, width: capWidth, height: 18)
+            fill(cap, Ink.body, radius: 4, in: ctx)
+            text(key, at: CGPoint(x: cap.midX, y: cap.midY - 4), size: 11, color: Ink.dim,
+                 weight: .medium, align: .centre, in: ctx)
+            x -= capWidth + 4
+        }
+    }
+    fill(CGRect(x: box.minX, y: box.minY + 30, width: box.width, height: 1), Ink.line, in: ctx)
+    text("Anything an agent can do, you can type",
+         at: CGPoint(x: box.midX, y: box.minY + 11), size: 11, color: Ink.dim, align: .centre, in: ctx)
+    ctx.restoreGState()
+}
+
+/// The theme switch from the sidebar footer, shown on its own while the whole
+/// picture changes behind it.
+func drawThemeSwitch(progress: Double, alpha: CGFloat, in ctx: CGContext) {
+    guard alpha > 0.01 else { return }
+    ctx.saveGState()
+    ctx.setAlpha(alpha)
+    let box = CGRect(x: size.width / 2 - 60, y: 150, width: 120, height: 40)
+    fill(box, Ink.panel, radius: 11, in: ctx)
+    stroke(box, Ink.line, radius: 11, width: 1, in: ctx)
+    let cell = (box.width - 8) / 3
+    // Glyphs are system, sun, moon: dark is the moon, light is the sun.
+    let index = progress < 0.5 ? 2.0 : 1.0
+    let knob = CGRect(x: box.minX + 4 + cell * index, y: box.minY + 4, width: cell, height: box.height - 8)
+    fill(knob, Ink.accent.withAlphaComponent(0.9), radius: 8, in: ctx)
+    for (slot, glyph) in ["A", "\u{2600}", "\u{263D}"].enumerated() {
+        let centre = CGPoint(x: box.minX + 4 + cell * (Double(slot) + 0.5), y: box.midY - 7)
+        text(glyph, at: centre, size: 15,
+             color: Double(slot) == index ? .white : Ink.dim, weight: .semibold, align: .centre, in: ctx)
+    }
+    ctx.restoreGState()
+}
+
 /// One window: where it starts on the pile, where it belongs, and when it goes.
 struct Window {
     var title: String
@@ -498,6 +608,9 @@ func frame(at t: Double) -> CGImage {
     ctx.scaleBy(x: scale, y: scale)
     ctx.setAllowsAntialiasing(true)
 
+    // Beat 6 (14.9-15.9s): the theme changes under everything already drawn.
+    themeBlend = phase(t, from: 14.9, to: 15.9)
+
     drawDesk(in: ctx)
 
     // Beat 1 (0.3-3.7s): the grid gets drawn, seven clicks, over the mess it
@@ -518,16 +631,34 @@ func frame(at t: Double) -> CGImage {
     if t >= 3.95 && t < 5.45 { lit = [0] }
     if t >= 5.55 && t < 6.55 { lit = [2] }
 
-    // Each window sits on the pile until its moment, then eases home.
+    // Beat 5 (10.0-13.1s): ⌘K, and the whole screen re-flows into another zone
+    // set. Windows sitting in a numbered zone move to wherever that number is
+    // in the new one, which is exactly what the app does.
+    let paletteIn = phase(t, from: 11.0, to: 11.25) - phase(t, from: 13.0, to: 13.2)
+    let switching = phase(t, from: 13.1, to: 14.4)
+
+    // Each window sits on the pile until its moment, then eases home; then the
+    // zone set changes and it eases again. Four zones and eight windows, so the
+    // second four stack behind the first four, offset the way the app offsets
+    // windows that share a zone.
     let placed = windows.map { phase(t, from: $0.from, to: $0.to) }
-    let panes = windows.enumerated().map { index, window in
-        Pane(title: window.title, rect: lerp(window.messy, window.home, placed[index]),
-             hue: window.hue)
+    let panes = windows.enumerated().map { index, window -> Pane in
+        var rect = lerp(window.messy, window.home, placed[index])
+        if switching > 0 {
+            let step = CGFloat(index / focusFracs.count) * 14
+            let target = focusFracs[index % focusFracs.count].rect
+                .offsetBy(dx: step, dy: -step)
+                .insetBy(dx: step / 2, dy: step / 2)
+            rect = lerp(rect, target, switching)
+        }
+        return Pane(title: window.title, rect: rect, hue: window.hue)
     }
     // Back to front: the untouched pile, then what has landed, then whatever is
-    // in flight — a moving window is the one you are meant to be watching.
+    // in flight — a moving window is the one you are meant to be watching. Once
+    // the sets swap, the stacked copies go behind the four that own a zone.
     let order = panes.indices.sorted { a, b in
         func layer(_ index: Int) -> Int {
+            if switching > 0.01 { return index < focusFracs.count ? 1 : 0 }
             if placed[index] <= 0 { return 0 }
             return placed[index] >= 1 ? 1 : 2
         }
@@ -538,6 +669,11 @@ func frame(at t: Double) -> CGImage {
     drawEditor(at: t, alpha: CGFloat(editor), in: ctx)
     // Above the windows, exactly where the real overlay sits.
     drawZones(zones, highlighted: lit, alpha: CGFloat(zonesShown), in: ctx)
+    // And once more over the new set, so the switch reads as a set and not as
+    // eight windows deciding to move.
+    drawZones(focusFracs.map(\.rect), highlighted: [],
+              alpha: CGFloat(phase(t, from: 13.1, to: 13.3) - phase(t, from: 14.2, to: 14.5)),
+              in: ctx)
 
     // The pointer: clicking out the grid first, then dragging the first window.
     if editor > 0.01 {
@@ -562,9 +698,26 @@ func frame(at t: Double) -> CGImage {
                progress: typing,
                alpha: CGFloat(promptIn - phase(t, from: 9.5, to: 9.75)), in: ctx)
 
+    drawPalette("zone set focus",
+                rows: [("Use zone set \u{201C}Focus\u{201D} on this screen", ["\u{2318}", "\u{21A9}"]),
+                       ("Edit zone sets\u{2026}", []),
+                       ("Launch workspace \u{201C}Deep work\u{201D}", ["\u{2303}", "\u{2325}", "W"])],
+                selected: 0,
+                typed: phase(t, from: 11.35, to: 12.5),
+                alpha: CGFloat(paletteIn), in: ctx)
+
+    // Beat 6: the switch itself, held on screen while the colours change.
+    drawThemeSwitch(progress: themeBlend,
+                    alpha: CGFloat(phase(t, from: 14.6, to: 14.85) - phase(t, from: 16.3, to: 16.55)),
+                    in: ctx)
+
     drawCaption("Draw the grid once. Fill it in a sentence.",
-                "Plonk — the Mac window manager your agent can drive.",
-                alpha: CGFloat(phase(t, from: 9.85, to: 10.2) - phase(t, from: 11.5, to: 11.6)),
+                "Every window, from the keyboard \u{00B7} the menu bar \u{00B7} or an agent.",
+                alpha: CGFloat(phase(t, from: 9.6, to: 9.95) - phase(t, from: 10.6, to: 10.85)),
+                in: ctx)
+    drawCaption("\u{2318}K runs anything. Light or dark, everywhere.",
+                "Plonk \u{2014} the Mac window manager your agent can drive.",
+                alpha: CGFloat(phase(t, from: 16.8, to: 17.2) - phase(t, from: 19.6, to: 19.8)),
                 in: ctx)
 
     return ctx.makeImage()!

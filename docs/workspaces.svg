@@ -6,10 +6,10 @@
   </defs>
   <style>
     .frame { fill: none; stroke: #8b949e; stroke-opacity: 0.45; stroke-width: 1.5; }
-    .w { fill: #58a6ff; fill-opacity: 0.18; stroke: #58a6ff; stroke-opacity: 0.7; stroke-width: 1.5; }
+    .w { fill: #8b7cf6; fill-opacity: 0.18; stroke: #8b7cf6; stroke-opacity: 0.7; stroke-width: 1.5; }
     .ghost { fill: none; stroke: #8b949e; stroke-opacity: 0.3; stroke-width: 1.5; stroke-dasharray: 4 4; }
     .cap { font: 600 12px ui-sans-serif, -apple-system, Segoe UI, sans-serif; fill: #8b949e; text-anchor: middle; }
-    .tag { font: 400 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #58a6ff; fill-opacity: 0.9; text-anchor: middle; }
+    .tag { font: 400 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #8b7cf6; fill-opacity: 0.9; text-anchor: middle; }
     .link { stroke: #8b949e; stroke-opacity: 0.7; stroke-width: 1.5; fill: none; }
     .lbl { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #8b949e; fill-opacity: 0.75; text-anchor: middle; }
   </style>

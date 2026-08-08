@@ -12,7 +12,11 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 frames=${TMPDIR:-/tmp}/plonk-demo-frames
 out=$root/docs/demo.gif
 width=${WIDTH:-720}
-fps=${FPS:-20}
+# What make-demo.swift renders at, and what the GIF is decimated to. They are
+# two different numbers: telling ffmpeg the input is 16fps when it is 20 does
+# not drop frames, it slows the whole thing down to 0.8x.
+source_fps=20
+fps=${FPS:-16}
 
 command -v ffmpeg >/dev/null || { echo "make-demo: ffmpeg is not installed"; exit 1; }
 
@@ -24,14 +28,14 @@ swift "$root/scripts/make-demo.swift" "$frames"
 # bands.
 palette=$frames/palette.png
 filters="fps=$fps,scale=$width:-1:flags=lanczos"
-ffmpeg -v error -y -framerate "$fps" -i "$frames/frame-%04d.png" \
+ffmpeg -v error -y -framerate "$source_fps" -i "$frames/frame-%04d.png" \
   -vf "$filters,palettegen=stats_mode=diff" "$palette"
-ffmpeg -v error -y -framerate "$fps" -i "$frames/frame-%04d.png" -i "$palette" \
+ffmpeg -v error -y -framerate "$source_fps" -i "$frames/frame-%04d.png" -i "$palette" \
   -lavfi "$filters [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
   -loop 0 "$out"
 
 # The same frames as h.264, for anywhere a GIF is the wrong shape.
-ffmpeg -v error -y -framerate "$fps" -i "$frames/frame-%04d.png" \
+ffmpeg -v error -y -framerate "$source_fps" -i "$frames/frame-%04d.png" \
   -vf "scale=1200:-2:flags=lanczos" -c:v libx264 -pix_fmt yuv420p -crf 20 \
   -movflags +faststart "$root/docs/demo.mp4"
 
