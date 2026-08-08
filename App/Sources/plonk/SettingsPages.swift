@@ -92,7 +92,8 @@ struct ZonesPage: View {
                 Text("Applies the set at that place in the list below, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set.")
             }
             Section {
-                PointsField(title: "Gap", placeholder: "0", range: 0...40, value: model.zoneGap) {
+                PointsField(title: "Gap", help: "Empty space kept around every snapped window",
+                            placeholder: "0", range: 0...40, value: model.zoneGap) {
                     model.actions?.setZoneGap($0)
                 }
                 LabeledContent("Opacity") {
@@ -109,8 +110,9 @@ struct ZonesPage: View {
                 Toggle(isOn: model.binding(\.zonesOnAllMonitors, set: { $0.setZonesOnAllMonitors($1) })) {
                     Text("Show every monitor's zones while dragging")
                 }
-                PointsField(title: "Edge spanning", placeholder: "16", range: 0...60,
-                            value: model.zoneEdgeSpan, zeroMeans: "off") {
+                PointsField(title: "Edge spanning",
+                            help: "How near the line between two zones covers both. 0 turns it off",
+                            placeholder: "16", range: 0...60, value: model.zoneEdgeSpan) {
                     model.actions?.setZoneEdgeSpan($0)
                 }
             } header: {
@@ -472,43 +474,63 @@ struct MousePage: View {
     }
 }
 
-/// A whole number of points, typed rather than dragged.
+/// A whole number of points, with a knob for the rough shape of it and a field
+/// for the exact value. Dragging is quicker when the answer is "a bit more";
+/// typing is the only way when the answer is 12.
 ///
-/// Nothing that is not a number ever reaches config. Only digits can be typed
-/// at all, so a stray letter never lands in the field; anything that is still
-/// wrong once it is — out of range, or long enough to overflow — says so and is
-/// left in place to be corrected rather than silently rounded into something
-/// the user did not ask for. An empty field is zero, which is what "none" means
-/// for both of the things this edits.
+/// Deliberately not a `LabeledContent`: that renders its content as a value
+/// rather than a control, so the field looked like static text and never took
+/// focus. A bordered box that is plainly a box is the point.
+///
+/// Nothing invalid reaches config. Only digits can be typed at all, so a stray
+/// letter never lands in the field; anything still wrong once it is — out of
+/// range, or long enough to overflow — says so and stays put to be corrected
+/// rather than silently rounded into something nobody asked for. An empty
+/// field is zero.
 struct PointsField: View {
     let title: String
+    let help: String
     let placeholder: String
     let range: ClosedRange<Int>
     let value: Double
-    /// Shown next to the field when the value is zero, e.g. "off".
-    var zeroMeans: String?
     let commit: (Double) -> Void
 
     @State private var draft = ""
+    @State private var knob = 0.0
     @State private var error: String?
     @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            LabeledContent(title) {
-                HStack(spacing: 6) {
-                    TextField(placeholder, text: $draft)
-                        .multilineTextAlignment(.trailing)
-                        .monospacedDigit()
-                        .frame(width: 58)
-                        .focused($focused)
-                        .onSubmit(commitDraft)
-                        .onChange(of: draft) { typed in
-                            let digits = typed.filter(\.isNumber)
-                            if digits != typed { draft = digits }
-                        }
-                    Text(zeroLabel).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                    Text(help).font(.caption).foregroundStyle(.secondary)
                 }
+                Spacer(minLength: 12)
+                // Whole steps only: this is a count of points, and a knob that
+                // landed on 12.4 would disagree with the field beside it.
+                Slider(value: $knob, in: Double(range.lowerBound)...Double(range.upperBound),
+                       step: 1) { editing in
+                    guard !editing else { return }
+                    error = nil
+                    commit(knob)
+                }
+                .frame(width: 130)
+                TextField(placeholder, text: $draft)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .monospacedDigit()
+                    .frame(width: 66)
+                    .focused($focused)
+                    .onSubmit(commitDraft)
+                    .onChange(of: draft) { typed in
+                        let digits = typed.filter(\.isNumber)
+                        if digits != typed { draft = digits }
+                    }
+                Text("pt")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18, alignment: .leading)
             }
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -516,24 +538,28 @@ struct PointsField: View {
                     .foregroundStyle(.orange)
             }
         }
-        .onAppear { draft = String(Int(value)) }
-        .onChange(of: value) { draft = String(Int($0)) }
-        // Committed when the field is left, not per keystroke: "1" on the way
-        // to "16" is a valid number, and saving it would rewrite config twice
-        // and move every snapped window through a size nobody asked for.
+        .onAppear { adopt(value) }
+        .onChange(of: value) { adopt($0) }
+        // The field follows the knob as it moves, so the number being chosen is
+        // always readable; nothing is written until the knob is let go.
+        .onChange(of: knob) { draft = String(Int($0)) }
+        // Committed when the field is left or Return is pressed, not per
+        // keystroke: "1" on the way to "16" is a valid number, and saving it
+        // would rewrite config twice and move every snapped window through a
+        // size nobody asked for.
         .onChange(of: focused) { if !$0 { commitDraft() } }
     }
 
-    private var zeroLabel: String {
-        if let zeroMeans, draft == "0" || draft.isEmpty { return zeroMeans }
-        return "pt"
+    private func adopt(_ number: Double) {
+        knob = min(max(number, Double(range.lowerBound)), Double(range.upperBound))
+        draft = String(Int(number))
     }
 
     private func commitDraft() {
         let trimmed = draft.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else {
             error = nil
-            draft = "0"
+            adopt(0)
             commit(0)
             return
         }
@@ -546,6 +572,7 @@ struct PointsField: View {
             return
         }
         error = nil
+        knob = Double(number)
         commit(Double(number))
     }
 }
