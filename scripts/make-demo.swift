@@ -13,7 +13,7 @@ import CoreText
 // MARK: - Timeline
 
 let fps = 20.0
-let duration = 9.0
+let duration = 10.5
 let size = CGSize(width: 1200, height: 750)
 
 /// 0 at `from`, 1 at `to`, eased so movement starts and stops softly.
@@ -121,46 +121,61 @@ struct Pane {
 }
 
 /// A window: title bar, three lights, a few lines of content.
+///
+/// Everything scales with the pane, because in the grid a window is a third of
+/// the width it had on the pile: full-size chrome on a small tile reads as a
+/// toolbar, and full-size body lines read as static.
 func draw(_ pane: Pane, alpha: CGFloat = 1, in ctx: CGContext) {
+    let scale = min(max(pane.rect.width / 560, 0.6), 1)
+    let radius: CGFloat = 10 * scale + 3
     ctx.saveGState()
     ctx.setAlpha(alpha)
-    ctx.setShadow(offset: CGSize(width: 0, height: -6), blur: 22,
+    ctx.setShadow(offset: CGSize(width: 0, height: -6 * scale), blur: 22 * scale,
                   color: NSColor.black.withAlphaComponent(0.55).cgColor)
-    fill(pane.rect, Ink.pane, radius: 10, in: ctx)
+    fill(pane.rect, Ink.pane, radius: radius, in: ctx)
     ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(pane.rect, NSColor(white: 1, alpha: 0.09), radius: 10, in: ctx)
+    stroke(pane.rect, NSColor(white: 1, alpha: 0.09), radius: radius, in: ctx)
 
-    let chrome = CGRect(x: pane.rect.minX, y: pane.rect.maxY - 30, width: pane.rect.width, height: 30)
+    let chromeHeight = round(30 * scale)
+    let chrome = CGRect(x: pane.rect.minX, y: pane.rect.maxY - chromeHeight,
+                        width: pane.rect.width, height: chromeHeight)
     ctx.saveGState()
-    ctx.addPath(CGPath(roundedRect: pane.rect, cornerWidth: 10, cornerHeight: 10, transform: nil))
+    ctx.addPath(CGPath(roundedRect: pane.rect, cornerWidth: radius, cornerHeight: radius, transform: nil))
     ctx.clip()
     fill(chrome, Ink.chrome, in: ctx)
     ctx.restoreGState()
 
+    let light = 9 * scale
     for (index, colour) in [NSColor(srgbRed: 1, green: 0.37, blue: 0.34, alpha: 1),
                             NSColor(srgbRed: 1, green: 0.74, blue: 0.18, alpha: 1),
                             NSColor(srgbRed: 0.24, green: 0.79, blue: 0.33, alpha: 1)].enumerated() {
-        fill(CGRect(x: chrome.minX + 14 + CGFloat(index) * 16, y: chrome.midY - 4.5,
-                    width: 9, height: 9), colour, radius: 4.5, in: ctx)
+        fill(CGRect(x: chrome.minX + 14 * scale + CGFloat(index) * (light + 7 * scale),
+                    y: chrome.midY - light / 2, width: light, height: light),
+             colour, radius: light / 2, in: ctx)
     }
-    text(pane.title, at: CGPoint(x: chrome.minX + 68, y: chrome.midY - 5), size: 12,
-         color: Ink.dim, weight: .medium, in: ctx)
+    let titleSize = max(9, 12 * scale)
+    let titleX = chrome.minX + 14 * scale + 3 * (light + 7 * scale) + 14 * scale
+    if titleX + width(of: pane.title, size: titleSize, weight: .medium) < chrome.maxX - 10 {
+        text(pane.title, at: CGPoint(x: titleX, y: chrome.midY - titleSize * 0.4), size: titleSize,
+             color: Ink.dim, weight: .medium, in: ctx)
+    }
 
     // Content: a coloured header rule, then grey lines that fit the width.
-    let body = pane.rect.insetBy(dx: 18, dy: 0)
-    var y = chrome.minY - 26
-    fill(CGRect(x: body.minX, y: y, width: min(body.width * 0.42, 150), height: 7),
-         pane.hue.withAlphaComponent(0.9), radius: 3.5, in: ctx)
-    y -= 20
+    let body = pane.rect.insetBy(dx: 18 * scale, dy: 0)
+    var y = chrome.minY - 26 * scale
+    fill(CGRect(x: body.minX, y: y, width: min(body.width * 0.42, 150 * scale), height: 7 * scale),
+         pane.hue.withAlphaComponent(0.9), radius: 3.5 * scale, in: ctx)
+    y -= 20 * scale
     let widths: [CGFloat] = [0.9, 0.66, 0.82, 0.5, 0.74, 0.6, 0.86, 0.44, 0.78]
     var index = 0
     // Filled to the bottom rather than to a fixed count: a window with a third
     // of its content drawn reads as a window that is still loading.
-    while y > pane.rect.minY + 18 {
-        fill(CGRect(x: body.minX, y: y, width: body.width * widths[index % widths.count], height: 5),
-             NSColor(white: 1, alpha: 0.13), radius: 2.5, in: ctx)
+    while y > pane.rect.minY + 18 * scale {
+        fill(CGRect(x: body.minX, y: y, width: body.width * widths[index % widths.count],
+                    height: 5 * scale),
+             NSColor(white: 1, alpha: 0.13), radius: 2.5 * scale, in: ctx)
         // A paragraph break every so often, so it reads as text and not a barcode.
-        y -= (index % 5 == 4) ? 26 : 15
+        y -= ((index % 5 == 4) ? 26 : 15) * scale
         index += 1
     }
     ctx.restoreGState()
@@ -176,7 +191,10 @@ func drawZones(_ zones: [CGRect], highlighted: Set<Int>, alpha: CGFloat, in ctx:
         fill(zone, Ink.accent.withAlphaComponent(lit ? 0.28 : 0.10), radius: 10, in: ctx)
         stroke(zone, Ink.accent.withAlphaComponent(lit ? 0.95 : 0.4), radius: 10,
                width: lit ? 2.5 : 1.5, in: ctx)
-        text("\(index + 1)", at: CGPoint(x: zone.midX, y: zone.midY - 20), size: 54,
+        // The number fits the tile: eight zones means some of them are small.
+        let numberSize = max(22, min(54, min(zone.width, zone.height) * 0.3))
+        text("\(index + 1)", at: CGPoint(x: zone.midX, y: zone.midY - numberSize * 0.37),
+             size: numberSize,
              color: Ink.accent.withAlphaComponent(lit ? 0.95 : 0.38), weight: .bold,
              align: .centre, in: ctx)
     }
@@ -253,27 +271,97 @@ func drawCaption(_ line: String, _ sub: String, alpha: CGFloat, in ctx: CGContex
 
 // MARK: - The scene
 
-let margin: CGFloat = 26
+let margin: CGFloat = 22
 let deskTop = size.height - 34 - margin
-let deskBottom: CGFloat = 130
+let deskBottom: CGFloat = 128
+let gap: CGFloat = 12
 
-// Three zones: a wide left, and two stacked on the right. The layout the
-// README describes as "browser on the left 60%, terminal top right, notes
-// bottom right".
-let zoneLeft = CGRect(x: margin, y: deskBottom, width: (size.width - margin * 3) * 0.6,
-                      height: deskTop - deskBottom)
-let zoneTopRight = CGRect(x: zoneLeft.maxX + margin, y: deskBottom + (deskTop - deskBottom) / 2 + margin / 2,
-                          width: size.width - zoneLeft.maxX - margin * 2,
-                          height: (deskTop - deskBottom) / 2 - margin / 2)
-let zoneBottomRight = CGRect(x: zoneTopRight.minX, y: deskBottom,
-                             width: zoneTopRight.width, height: zoneTopRight.height)
-let zones = [zoneLeft, zoneTopRight, zoneBottomRight]
+// Eight zones, in three columns of different widths and rows of different
+// heights — a layout you draw once in the zone editor. Halves and quarters are
+// what the Mac already does on its own; this is the reason to want Plonk, so
+// the demo shows a desk full of windows landing in one, not three windows
+// landing in thirds.
+let deskLeft = margin
+let deskWidth = size.width - margin * 2
+let deskHeight = deskTop - deskBottom
+let columns = (deskWidth - gap * 2)
+let colOne = round(columns * 0.26)
+let colTwo = round(columns * 0.44)
+let colThree = columns - colOne - colTwo
+let xTwo = deskLeft + colOne + gap
+let xThree = xTwo + colTwo + gap
 
-let messy = [
-    CGRect(x: 150, y: 300, width: 620, height: 380),
-    CGRect(x: 430, y: 210, width: 560, height: 330),
-    CGRect(x: 300, y: 160, width: 500, height: 300),
+// Left column: a tall browser over a short finder.
+let leftTopHeight = round((deskHeight - gap) * 0.56)
+let zoneBrowser = CGRect(x: deskLeft, y: deskTop - leftTopHeight, width: colOne, height: leftTopHeight)
+let zoneFiles = CGRect(x: deskLeft, y: deskBottom, width: colOne,
+                       height: deskHeight - leftTopHeight - gap)
+// Middle column: the editor, with two half-width panes beneath it.
+let editorHeight = round((deskHeight - gap) * 0.68)
+let zoneEditor = CGRect(x: xTwo, y: deskTop - editorHeight, width: colTwo, height: editorHeight)
+let underHeight = deskHeight - editorHeight - gap
+let underWidth = (colTwo - gap) / 2
+let zoneTerminal = CGRect(x: xTwo, y: deskBottom, width: underWidth, height: underHeight)
+let zoneTests = CGRect(x: xTwo + underWidth + gap, y: deskBottom, width: underWidth, height: underHeight)
+// Right column: three equal rows.
+let rightHeight = (deskHeight - gap * 2) / 3
+let zoneLogs = CGRect(x: xThree, y: deskTop - rightHeight, width: colThree, height: rightHeight)
+let zoneChat = CGRect(x: xThree, y: deskBottom + rightHeight + gap, width: colThree, height: rightHeight)
+let zoneMail = CGRect(x: xThree, y: deskBottom, width: colThree, height: rightHeight)
+
+let zones = [zoneBrowser, zoneFiles, zoneEditor, zoneTerminal, zoneTests, zoneLogs, zoneChat, zoneMail]
+
+/// One window: where it starts on the pile, where it belongs, and when it goes.
+struct Window {
+    var title: String
+    var hue: NSColor
+    var messy: CGRect
+    var home: CGRect
+    var from: Double
+    var to: Double
+}
+
+let green = NSColor(srgbRed: 0.36, green: 0.85, blue: 0.55, alpha: 1)
+let violet = NSColor(srgbRed: 0.68, green: 0.55, blue: 1.0, alpha: 1)
+let pink = NSColor(srgbRed: 1.0, green: 0.45, blue: 0.62, alpha: 1)
+let teal = NSColor(srgbRed: 0.30, green: 0.80, blue: 0.82, alpha: 1)
+
+// The pile: eight windows, cascaded and overlapping, a few running off the
+// edges. It is the state the app exists to end, so it is worth drawing badly
+// on purpose.
+let windows = [
+    // Dragged by hand, first beat.
+    Window(title: "Browser", hue: Ink.accent,
+           messy: CGRect(x: 96, y: 286, width: 560, height: 360), home: zoneBrowser,
+           from: 0.7, to: 2.0),
+    // Sent with a shortcut, second beat.
+    Window(title: "Editor", hue: violet,
+           messy: CGRect(x: 372, y: 214, width: 620, height: 400), home: zoneEditor,
+           from: 2.8, to: 3.5),
+    // The remaining six, all at once, when the sentence lands.
+    Window(title: "Files", hue: teal,
+           messy: CGRect(x: 58, y: 168, width: 430, height: 270), home: zoneFiles,
+           from: 6.0, to: 6.9),
+    Window(title: "Terminal", hue: green,
+           messy: CGRect(x: 610, y: 150, width: 500, height: 300), home: zoneTerminal,
+           from: 6.1, to: 7.0),
+    Window(title: "Tests", hue: Ink.amber,
+           messy: CGRect(x: 264, y: 132, width: 470, height: 290), home: zoneTests,
+           from: 6.2, to: 7.1),
+    Window(title: "Logs", hue: pink,
+           messy: CGRect(x: 786, y: 330, width: 460, height: 300), home: zoneLogs,
+           from: 6.3, to: 7.2),
+    Window(title: "Chat", hue: Ink.accent,
+           messy: CGRect(x: 148, y: 384, width: 400, height: 300), home: zoneChat,
+           from: 6.4, to: 7.3),
+    Window(title: "Mail", hue: green,
+           messy: CGRect(x: 500, y: 400, width: 520, height: 290), home: zoneMail,
+           from: 6.5, to: 7.4),
 ]
+
+/// Which zone each window belongs to, so the overlay can light the right one.
+let zoneOf: [String: Int] = ["Browser": 0, "Files": 1, "Editor": 2, "Terminal": 3,
+                             "Tests": 4, "Logs": 5, "Chat": 6, "Mail": 7]
 
 func frame(at t: Double) -> CGImage {
     let scale: CGFloat = 1
@@ -286,59 +374,57 @@ func frame(at t: Double) -> CGImage {
 
     drawDesk(in: ctx)
 
-    // Beat 1 (0.6-2.4s): the browser is dragged into the left zone.
-    let dragOne = phase(t, from: 0.8, to: 2.2)
-    // Beat 2 (2.8-3.8s): the terminal is sent to zone 2 with a shortcut.
-    let snapTwo = phase(t, from: 3.0, to: 3.7)
-    // Beat 3 (4.2-5.2s): notes to zone 3.
-    let snapThree = phase(t, from: 4.4, to: 5.1)
-    // Beat 4 (6.0-8.0s): the agent says it instead, and nothing moves because
-    // it is already there — the point being that both roads lead here.
-    let promptIn = phase(t, from: 5.9, to: 6.3)
-    let typing = phase(t, from: 6.2, to: 7.4)
+    // Beat 1 (0.6-2.3s): one window dragged into its zone, by hand.
+    // Beat 2 (2.6-3.7s): the next one sent there with a shortcut.
+    // Beat 3 (4.0-7.5s): a sentence, and the other six go at once — the part
+    // no amount of dragging and no built-in tiling gets you.
+    let promptIn = phase(t, from: 4.0, to: 4.3)
+    let typing = phase(t, from: 4.4, to: 6.0)
 
-    let zonesShown = max(
-        phase(t, from: 0.7, to: 1.0) - phase(t, from: 2.1, to: 2.4),
-        max(phase(t, from: 2.9, to: 3.1) - phase(t, from: 3.6, to: 3.9),
-            phase(t, from: 4.3, to: 4.5) - phase(t, from: 5.0, to: 5.3))
-    )
+    // The overlay is drawn only while a window is being placed by hand or by
+    // key, which is when the app actually draws it.
+    let zonesShown = max(phase(t, from: 0.55, to: 0.85) - phase(t, from: 2.0, to: 2.35),
+                         phase(t, from: 2.6, to: 2.8) - phase(t, from: 3.5, to: 3.8))
     var lit: Set<Int> = []
-    if t >= 0.7 && t < 2.4 { lit = [0] }
-    if t >= 2.9 && t < 3.9 { lit = [1] }
-    if t >= 4.3 && t < 5.3 { lit = [2] }
+    if t >= 0.55 && t < 2.35 { lit = [zoneOf["Browser"]!] }
+    if t >= 2.6 && t < 3.8 { lit = [zoneOf["Editor"]!] }
 
-    let panes = [
-        Pane(title: "Browser", rect: lerp(messy[0], zoneLeft, dragOne), hue: Ink.accent),
-        Pane(title: "Terminal", rect: lerp(messy[1], zoneTopRight, snapTwo),
-             hue: NSColor(srgbRed: 0.36, green: 0.85, blue: 0.55, alpha: 1)),
-        Pane(title: "Notes", rect: lerp(messy[2], zoneBottomRight, snapThree),
-             hue: Ink.amber),
-    ]
-    // Whatever is moving belongs in front.
-    var order = [2, 1, 0]
-    if t < 2.4 { order = [2, 1, 0] } else if t < 3.9 { order = [2, 0, 1] } else { order = [0, 1, 2] }
+    // Each window sits on the pile until its moment, then eases home.
+    let placed = windows.map { phase(t, from: $0.from, to: $0.to) }
+    let panes = windows.enumerated().map { index, window in
+        Pane(title: window.title, rect: lerp(window.messy, window.home, placed[index]),
+             hue: window.hue)
+    }
+    // Back to front: the untouched pile, then what has landed, then whatever is
+    // in flight — a moving window is the one you are meant to be watching.
+    let order = panes.indices.sorted { a, b in
+        func layer(_ index: Int) -> Int {
+            if placed[index] <= 0 { return 0 }
+            return placed[index] >= 1 ? 1 : 2
+        }
+        return layer(a) == layer(b) ? a > b : layer(a) < layer(b)
+    }
     for index in order { draw(panes[index], in: ctx) }
     // Above the windows, exactly where the real overlay sits.
     drawZones(zones, highlighted: lit, alpha: CGFloat(zonesShown), in: ctx)
 
     // The pointer rides the first window in, then leaves.
-    let cursorAlpha = phase(t, from: 0.4, to: 0.7) - phase(t, from: 2.3, to: 2.6)
-    let grip = lerp(messy[0], zoneLeft, dragOne)
+    let cursorAlpha = phase(t, from: 0.3, to: 0.6) - phase(t, from: 2.1, to: 2.4)
+    let grip = panes[0].rect
     drawCursor(at: CGPoint(x: grip.midX, y: grip.midY), alpha: CGFloat(cursorAlpha), in: ctx)
 
-    // The shortcut that did the second and third.
-    drawKeys(["⌃", "⌥", "2"], centeredAt: CGPoint(x: size.width / 2, y: 46),
-             alpha: CGFloat(phase(t, from: 2.9, to: 3.1) - phase(t, from: 3.5, to: 3.8)), in: ctx)
-    drawKeys(["⌃", "⌥", "3"], centeredAt: CGPoint(x: size.width / 2, y: 46),
-             alpha: CGFloat(phase(t, from: 4.3, to: 4.5) - phase(t, from: 4.9, to: 5.2)), in: ctx)
+    // The shortcut that placed the second one: zone 3 is the editor's tile.
+    drawKeys(["⌃", "⌥", "3"], centeredAt: CGPoint(x: size.width / 2, y: 44),
+             alpha: CGFloat(phase(t, from: 2.6, to: 2.8) - phase(t, from: 3.5, to: 3.8)), in: ctx)
 
-    drawPrompt("browser left 60%, terminal top right, notes bottom right",
+    drawPrompt("and the rest into the grid — logs and chat on the right",
                progress: typing,
-               alpha: CGFloat(promptIn - phase(t, from: 7.9, to: 8.2)), in: ctx)
+               alpha: CGFloat(promptIn - phase(t, from: 7.6, to: 7.9)), in: ctx)
 
-    drawCaption("Drag it, press it, or just say it.",
-                "Plonk — the Mac window manager your agent can drive.",
-                alpha: CGFloat(phase(t, from: 8.2, to: 8.6) - phase(t, from: 8.9, to: 9.0)), in: ctx)
+    drawCaption("Eight windows. One sentence.",
+                "Plonk — draw any grid, then drag, press or say what goes where.",
+                alpha: CGFloat(phase(t, from: 8.0, to: 8.4) - phase(t, from: 10.35, to: 10.5)),
+                in: ctx)
 
     return ctx.makeImage()!
 }

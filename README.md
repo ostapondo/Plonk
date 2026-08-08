@@ -14,7 +14,7 @@ windows — you drag them there, you press a key, or your agent says where.</sub
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Three windows are tidied into zones: one dragged, two by shortcut, and the same layout described in a sentence to an agent" width="720">
+  <img src="docs/demo.gif" alt="A pile of eight windows is tidied into an eight-zone grid: one dragged there, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent" width="720">
 </p>
 
 ## Three ways to put a window somewhere
