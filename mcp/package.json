@@ -1,6 +1,6 @@
 {
   "name": "plonk-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.ostapondo/plonk",
   "description": "MCP server for Plonk — ten Mac menu bar utilities your AI agent can drive. Window layouts and zones, workspaces, keep-awake, screenshots and on-device OCR.",
   "type": "module",
