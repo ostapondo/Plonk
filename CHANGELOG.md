@@ -11,7 +11,10 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
-## Unreleased
+## 0.2.0 — 2026-08-08
+
+A theme of Plonk's own, a command palette, and a settings window that stopped
+being a list of everything the app can do.
 
 ### Added
 
