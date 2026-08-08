@@ -1,20 +1,19 @@
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>Ten menu bar utilities in one app, and an agent can drive
-every one of them.</strong><br>
-<sub>A window manager with zones you draw yourself, workspaces that put the desk
-back, text lifted off the screen, keep-awake, screenshots you can draw on,
-pointer tools, a shortcut guide, voice. On a Mac each of those is its own
-download. To plonk is to set a thing down exactly where it belongs: you drag it
-there, you press a key, or you say where.</sub></p>
+<p align="center"><strong>A window manager with zones you draw yourself, and nine
+more menu bar utilities behind the same icon.</strong><br>
+<sub>Workspaces that put the desk back, text lifted off the screen, keep-awake,
+screenshots you can draw on, pointer tools, a shortcut guide, voice. On a Mac
+each of those is its own download. To plonk is to set a thing down exactly where
+it belongs: you drag it there, you press a key, or you say where.</sub></p>
 
 <p align="center">
   <img alt="Version" src="https://img.shields.io/badge/version-0.2.1-8b7cf6?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-19_tools-8957e5?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-19_tools-8957e5?style=flat-square">
 </p>
 
 <p align="center">
@@ -36,7 +35,9 @@ pull a window from anywhere inside it, instead of aiming for the title bar.
 that screen, `⌃⌥0` to put a window back exactly where it was before Plonk ever
 touched it.
 
-**Say it.** Plonk speaks MCP, so any agent can drive the whole thing:
+**Say it.** Hold `⌃⌥V` and name where it goes — "snap this left", "zone three".
+That runs inside the app, offline, with on-device recognition. Plonk also speaks
+MCP, so a whole desk at once can go to an agent you already have open:
 
 > browser on the left 60%, terminal top right, notes bottom right
 >
@@ -62,7 +63,7 @@ Grant Accessibility when it asks, then relaunch. Screen Recording is asked for
 separately, the first time you capture. Nothing else — no Full Disk Access, no
 Automation, no Keychain.
 
-To let an agent drive it (Node 18+):
+Optional, and only if you want the `plonk` CLI or an agent driving it (Node 18+):
 
 ```sh
 claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
