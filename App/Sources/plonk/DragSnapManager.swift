@@ -40,6 +40,15 @@ final class DragSnapManager {
     var requireModifier = true
     var modifierFlag: NSEvent.ModifierFlags = .shift
     var zonesForScreen: ((Int) -> [ZoneRect])?
+    /// Looks and spacing, read fresh on every drag so a settings change shows
+    /// up without restarting anything.
+    var appearance: (() -> ZoneAppearance)?
+    /// Draw every screen's zones during a drag, not just the one under the
+    /// cursor. Costs an overlay per display.
+    var showOnAllMonitors = false
+    /// How near the shared edge of two zones the cursor has to come, in points,
+    /// before the drop covers both. Zero switches it off.
+    var edgeSpanPoints: Double = 0
     /// Apps the user told Plonk to keep its hands off.
     var isExcluded: ((NSRunningApplication) -> Bool)?
     /// Reports a finished snap, so the frame the window had can be given back.
@@ -64,7 +73,8 @@ final class DragSnapManager {
         let screens = NSScreen.screens
         guard screens.indices.contains(screenIndex), !zones.isEmpty else { return }
         hideAll()
-        overlay(for: screenIndex).show(zones: zones, highlighted: [], visible: screens[screenIndex].visibleFrame)
+        overlay(for: screenIndex).show(zones: zones, highlighted: [],
+                                       visible: screens[screenIndex].visibleFrame, appearance: look)
     }
 
     func hidePreviews() {
@@ -81,7 +91,8 @@ final class DragSnapManager {
             let zones = zonesForScreen?(index) ?? []
             guard !zones.isEmpty else { continue }
             shownAny = true
-            overlay(for: index).show(zones: zones, highlighted: [], visible: screen.visibleFrame)
+            overlay(for: index).show(zones: zones, highlighted: [], visible: screen.visibleFrame,
+                                     appearance: look)
         }
         guard shownAny else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
@@ -139,9 +150,11 @@ final class DragSnapManager {
     }
 
     private func drop(_ win: AXUIElement, startFrame: CGRect, into zone: (screenIndex: Int, frac: FracRect)) {
-        windows.apply(frac: zone.frac, toWindow: win, screenIndex: zone.screenIndex)
+        windows.apply(frac: zone.frac, toWindow: win, screenIndex: zone.screenIndex, gap: look.gap)
         onSnap?(win, startFrame, zone.frac, zone.screenIndex)
     }
+
+    private var look: ZoneAppearance { appearance?() ?? ZoneAppearance() }
 
     // MARK: - Drags Plonk is driving itself
 
@@ -201,11 +214,13 @@ final class DragSnapManager {
             }
             let v = screen.visibleFrame
             let hovered = zoneIndex(at: p, in: zones, visible: v)
-            let spanned = spanHeld ? span(from: hovered, on: index, in: zones) : nil
+            let spanned = spanHeld
+                ? span(from: hovered, on: index, in: zones)
+                : straddle(from: hovered, at: p, in: zones, visible: v)
             overlay(for: index).show(zones: zones,
                                      highlighted: spanned?.indices ?? Set(hovered.map { [$0] } ?? []),
-                                     visible: v)
-            hideAll(except: index)
+                                     visible: v, appearance: look)
+            showOthers(except: index)
             if let spanned {
                 currentZone = (index, spanned.frac)
             } else {
@@ -213,8 +228,8 @@ final class DragSnapManager {
             }
         } else if let frac = edgeZone(at: p, on: screen) {
             overlay(for: index).show(zones: [ZoneRect(frac.x, frac.y, frac.w, frac.h)], highlighted: [0],
-                                     visible: screen.visibleFrame)
-            hideAll(except: index)
+                                     visible: screen.visibleFrame, appearance: look)
+            showOthers(except: index)
             currentZone = (index, frac)
         } else {
             currentZone = nil
@@ -236,6 +251,40 @@ final class DragSnapManager {
         guard anchor.zoneIndex != hovered else { return nil }
         let frac = ZoneGeometry.union(zones[anchor.zoneIndex], zones[hovered])
         return (frac, ZoneGeometry.covered(zones, by: frac))
+    }
+
+    /// The pair a cursor near a shared edge takes, with no modifier held —
+    /// PowerToys' other way of covering two zones at once. The tolerance is in
+    /// points, converted per axis because a fraction of a wide screen is not
+    /// the same distance as a fraction of a tall one.
+    private func straddle(from hovered: Int?, at p: NSPoint, in zones: [ZoneRect],
+                          visible v: NSRect) -> (frac: FracRect, indices: Set<Int>)? {
+        guard edgeSpanPoints > 0, let hovered, v.width > 0, v.height > 0 else { return nil }
+        let fx = Double((p.x - v.minX) / v.width)
+        let fy = Double((v.maxY - p.y) / v.height)
+        guard let other = ZoneGeometry.neighbour(zones, of: hovered, atX: fx, y: fy,
+                                                 toleranceX: edgeSpanPoints / Double(v.width),
+                                                 toleranceY: edgeSpanPoints / Double(v.height)) else { return nil }
+        let frac = ZoneGeometry.union(zones[hovered], zones[other])
+        return (frac, ZoneGeometry.covered(zones, by: frac))
+    }
+
+    /// Draws the other screens' zones without highlighting anything, or hides
+    /// them, depending on the setting.
+    private func showOthers(except screenIndex: Int) {
+        guard showOnAllMonitors else {
+            hideAll(except: screenIndex)
+            return
+        }
+        for (index, screen) in NSScreen.screens.enumerated() where index != screenIndex {
+            let zones = zonesForScreen?(index) ?? []
+            guard !zones.isEmpty else {
+                overlays[index]?.hide()
+                continue
+            }
+            overlay(for: index).show(zones: zones, highlighted: [], visible: screen.visibleFrame,
+                                     appearance: look)
+        }
     }
 
     /// Smallest zone under the cursor, so overlapping sets stay usable.

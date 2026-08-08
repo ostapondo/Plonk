@@ -69,6 +69,18 @@ struct Config: Codable {
     // would silently reset the setting for everyone, so it stays.
     var zonesRequireShift = true
     var zonesModifier = "shift"  // shift | option | control
+    // How the zone overlay looks and how much room it leaves around a snapped
+    // window. The gap is in points and applies to the placed window too, not
+    // just the drawing, so zones can be given breathing room.
+    var zoneGap: Double = 0
+    var zoneOpacity: Double = 1
+    /// "#RRGGBB", or nil for the system accent colour.
+    var zoneColorHex: String?
+    var zoneNumbersVisible = true
+    var zonesOnAllMonitors = false
+    /// How near the shared edge of two zones the cursor has to come, in points,
+    /// before a drop covers both. Zero switches it off.
+    var zoneEdgeSpanPoints: Double = 16
     // Move and resize a window by dragging anywhere inside it with a modifier
     // held. Off by default: option-drag already means something inside a lot
     // of Mac apps, so this is a choice rather than a surprise.
@@ -124,6 +136,12 @@ struct Config: Codable {
         dragSnapEnabled = try c.decodeIfPresent(Bool.self, forKey: .dragSnapEnabled) ?? true
         zonesRequireShift = try c.decodeIfPresent(Bool.self, forKey: .zonesRequireShift) ?? true
         zonesModifier = try c.decodeIfPresent(String.self, forKey: .zonesModifier) ?? "shift"
+        zoneGap = try c.decodeIfPresent(Double.self, forKey: .zoneGap) ?? 0
+        zoneOpacity = try c.decodeIfPresent(Double.self, forKey: .zoneOpacity) ?? 1
+        zoneColorHex = try c.decodeIfPresent(String.self, forKey: .zoneColorHex)
+        zoneNumbersVisible = try c.decodeIfPresent(Bool.self, forKey: .zoneNumbersVisible) ?? true
+        zonesOnAllMonitors = try c.decodeIfPresent(Bool.self, forKey: .zonesOnAllMonitors) ?? false
+        zoneEdgeSpanPoints = try c.decodeIfPresent(Double.self, forKey: .zoneEdgeSpanPoints) ?? 16
         grabMoveEnabled = try c.decodeIfPresent(Bool.self, forKey: .grabMoveEnabled) ?? false
         grabMoveModifier = try c.decodeIfPresent(String.self, forKey: .grabMoveModifier) ?? "option"
         grabMoveResize = try c.decodeIfPresent(Bool.self, forKey: .grabMoveResize) ?? true

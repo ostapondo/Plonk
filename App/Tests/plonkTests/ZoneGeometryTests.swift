@@ -175,6 +175,40 @@ struct BuiltinZoneSetsTests {
         #expect(ZoneGeometry.covered(thirds, by: span) == [0, 1])
     }
 
+    // MARK: - hovering a shared edge
+
+    private let thirds = BuiltinZoneSets.all["Thirds"]!
+
+    @Test func nearTheLineBetweenTwoColumnsPicksTheOtherOne() {
+        // Just inside the first third, a hair from the boundary at x = 1/3.
+        let neighbour = ZoneGeometry.neighbour(thirds, of: 0, atX: 0.33, y: 0.5,
+                                               toleranceX: 0.01, toleranceY: 0.01)
+        #expect(neighbour == 1)
+    }
+
+    @Test func wellInsideAZonePicksNothing() {
+        #expect(ZoneGeometry.neighbour(thirds, of: 0, atX: 0.1, y: 0.5,
+                                       toleranceX: 0.01, toleranceY: 0.01) == nil)
+    }
+
+    @Test func zeroToleranceSwitchesItOff() {
+        #expect(ZoneGeometry.neighbour(thirds, of: 0, atX: 0.333, y: 0.5,
+                                       toleranceX: 0, toleranceY: 0) == nil)
+    }
+
+    /// Between three columns the middle one is hovered and both its neighbours
+    /// are in range; the nearer edge has to win rather than the lower index.
+    @Test func theNearerNeighbourWins() {
+        let near = ZoneGeometry.neighbour(thirds, of: 1, atX: 0.66, y: 0.5,
+                                          toleranceX: 0.05, toleranceY: 0.05)
+        #expect(near == 2)
+    }
+
+    @Test func anIndexOutsideTheSetIsRefused() {
+        #expect(ZoneGeometry.neighbour(thirds, of: 9, atX: 0.5, y: 0.5,
+                                       toleranceX: 0.1, toleranceY: 0.1) == nil)
+    }
+
     @Test func spanningAZoneWithItselfChangesNothing() {
         let thirds = BuiltinZoneSets.all["Thirds"]!
         let span = ZoneGeometry.union(thirds[1], thirds[1])

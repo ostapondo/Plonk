@@ -15,6 +15,8 @@ final class WindowCommands {
     var zonesForScreen: ((Int) -> [ZoneRect])?
     var isExcluded: ((NSRunningApplication) -> Bool)?
     var announce: ((String) -> Void)?
+    /// Empty space left around a snapped window, in points.
+    var zoneGap: (() -> CGFloat)?
 
     init(windows: WindowManager, memory: SnapMemory) {
         self.windows = windows
@@ -35,6 +37,8 @@ final class WindowCommands {
         guard let target = focused() else { return }
         let screen = windows.screenIndex(ofWindow: target.window)
         remember(target, frac: preset.frac, screen: screen)
+        // Presets are halves and quarters of the screen, not zones, so the
+        // zone gap does not apply to them.
         windows.apply(frac: preset.frac, toWindow: target.window, screenIndex: screen)
     }
 
@@ -52,8 +56,8 @@ final class WindowCommands {
             return
         }
         let frac = zones[number - 1].frac
-        remember(target, frac: frac, screen: screen)
-        windows.apply(frac: frac, toWindow: target.window, screenIndex: screen)
+        remember(target, frac: frac, screen: screen, zoneIndex: number - 1)
+        windows.apply(frac: frac, toWindow: target.window, screenIndex: screen, gap: zoneGap?() ?? 0)
     }
 
     /// Give a window back the frame it had before Plonk first moved it.
@@ -113,16 +117,51 @@ final class WindowCommands {
     /// placed on. Windows whose display is gone are left alone: guessing a new
     /// screen for them would scatter a layout rather than preserve it.
     func restorePlacements() {
+        let gap = zoneGap?() ?? 0
         for placement in memory.placements {
             guard let uuid = placement.screenUUID, let index = ScreenIdentity.index(forUUID: uuid) else { continue }
-            windows.apply(frac: placement.frac, toWindow: placement.window, screenIndex: index)
+            windows.apply(frac: placement.frac, toWindow: placement.window, screenIndex: index, gap: gap)
         }
     }
 
+    /// After a screen's zone set is edited or swapped, move every window that
+    /// went into a numbered zone to wherever that number is now. A window at a
+    /// remembered fraction rather than a zone is left where it is: it was never
+    /// in the set that changed.
+    func relayout(screenIndex: Int) {
+        let zones = zonesForScreen?(screenIndex) ?? []
+        guard !zones.isEmpty, let uuid = ScreenIdentity.uuid(forIndex: screenIndex) else { return }
+        let gap = zoneGap?() ?? 0
+        for placement in memory.placements {
+            guard placement.screenUUID == uuid, let zone = placement.zoneIndex,
+                  zones.indices.contains(zone) else { continue }
+            windows.apply(frac: zones[zone].frac, toWindow: placement.window,
+                          screenIndex: screenIndex, gap: gap)
+            memory.record(placement.window,
+                          wasAt: windows.frame(ofWindow: placement.window) ?? .zero,
+                          placedAt: zones[zone].frac, screenUUID: uuid, zoneIndex: zone)
+        }
+    }
+
+    /// Apply a whole zone set to the screen under the cursor, by its position
+    /// in the list the settings show. PowerToys binds a hotkey per layout in
+    /// its editor; here the list is the binding, so a set can be swapped
+    /// without opening anything.
+    func applyZoneSet(number: Int, named names: [String], assign: (String, Int) -> Void) {
+        guard names.indices.contains(number - 1) else {
+            announce?(names.isEmpty ? "No zone sets to switch to" : "There are \(names.count) zone sets")
+            return
+        }
+        let point = NSEvent.mouseLocation
+        let screen = NSScreen.screens.firstIndex { $0.frame.contains(point) } ?? 0
+        assign(names[number - 1], screen)
+        announce?(names[number - 1])
+    }
+
     private func remember(_ target: (app: NSRunningApplication, window: AXUIElement, frame: CGRect),
-                          frac: FracRect, screen: Int) {
+                          frac: FracRect, screen: Int, zoneIndex: Int? = nil) {
         memory.record(target.window, wasAt: target.frame, placedAt: frac,
-                      screenUUID: ScreenIdentity.uuid(forIndex: screen))
+                      screenUUID: ScreenIdentity.uuid(forIndex: screen), zoneIndex: zoneIndex)
     }
 
     /// An order nothing Plonk does can change: the app, then the title, then

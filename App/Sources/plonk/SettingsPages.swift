@@ -7,7 +7,17 @@ struct ZonesPage: View {
 
     /// Everything on this page that is not one of the two grouped sections below.
     private var presetActions: [HotkeyAction] {
-        HotkeyAction.owned(by: "zones").filter { $0.group != "Numbered zones" && $0.group != "Focus" }
+        let grouped: Set<String> = ["Numbered zones", "Zone sets", "Focus"]
+        return HotkeyAction.owned(by: "zones").filter { !grouped.contains($0.group) }
+    }
+
+    /// The picker works in colours; config stores a hex string, so a
+    /// hand-edited file stays readable.
+    private var zoneColor: Binding<Color> {
+        Binding(
+            get: { Color(nsColor: ZoneAppearance.color(fromHex: model.zoneColorHex) ?? .controlAccentColor) },
+            set: { model.actions?.setZoneColor(ZoneAppearance.hex(from: NSColor($0))) }
+        )
     }
 
     var body: some View {
@@ -72,6 +82,44 @@ struct ZonesPage: View {
                 Text("Numbered Zones")
             } footer: {
                 Text("The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it.")
+            }
+            Section {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Zone sets"))
+            } header: {
+                Text("Switch Zone Sets")
+            } footer: {
+                Text("Applies the set at that place in the list below, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set.")
+            }
+            Section {
+                LabeledContent("Gap") {
+                    HStack {
+                        Slider(value: model.binding(\.zoneGap, set: { $0.setZoneGap($1) }), in: 0...40)
+                        Text("\(Int(model.zoneGap)) pt").monospacedDigit().frame(width: 46, alignment: .trailing)
+                    }
+                }
+                LabeledContent("Opacity") {
+                    Slider(value: model.binding(\.zoneOpacity, set: { $0.setZoneOpacity($1) }), in: 0.1...1)
+                }
+                ColorPicker("Colour", selection: zoneColor, supportsOpacity: false)
+                Button("Use the system accent colour") { model.actions?.setZoneColor(nil) }
+                    .disabled(model.zoneColorHex == nil)
+                Toggle(isOn: model.binding(\.zoneNumbersVisible, set: { $0.setZoneNumbersVisible($1) })) {
+                    Text("Number the zones")
+                }
+                Toggle(isOn: model.binding(\.zonesOnAllMonitors, set: { $0.setZonesOnAllMonitors($1) })) {
+                    Text("Show every monitor's zones while dragging")
+                }
+                LabeledContent("Edge spanning") {
+                    HStack {
+                        Slider(value: model.binding(\.zoneEdgeSpan, set: { $0.setZoneEdgeSpan($1) }), in: 0...60)
+                        Text(model.zoneEdgeSpan < 1 ? "Off" : "\(Int(model.zoneEdgeSpan)) pt")
+                            .monospacedDigit().frame(width: 46, alignment: .trailing)
+                    }
+                }
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything.")
             }
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Focus"))

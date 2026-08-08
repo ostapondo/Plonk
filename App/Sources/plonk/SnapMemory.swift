@@ -36,6 +36,10 @@ final class SnapMemory {
         var frac: FracRect
         /// The display it was put on, so a re-plug can find it again.
         var screenUUID: String?
+        /// Which numbered zone, when it went into one. Editing a set can then
+        /// move the window to where that zone is now, rather than leaving it
+        /// at a fraction that no longer means anything.
+        var zoneIndex: Int?
         var stamp: Int
     }
 
@@ -47,16 +51,19 @@ final class SnapMemory {
     /// Records a placement. The original frame is kept from the first call for
     /// a window: snapping left and then right should still restore what the
     /// window looked like before any of it.
-    func record(_ window: AXUIElement, wasAt original: CGRect, placedAt frac: FracRect, screenUUID: String?) {
+    func record(_ window: AXUIElement, wasAt original: CGRect, placedAt frac: FracRect,
+                screenUUID: String?, zoneIndex: Int? = nil) {
         counter += 1
         let key = WindowKey(element: window)
         if var existing = entries[key] {
             existing.frac = frac
             existing.screenUUID = screenUUID
+            existing.zoneIndex = zoneIndex
             existing.stamp = counter
             entries[key] = existing
         } else {
-            entries[key] = Entry(original: original, frac: frac, screenUUID: screenUUID, stamp: counter)
+            entries[key] = Entry(original: original, frac: frac, screenUUID: screenUUID,
+                                 zoneIndex: zoneIndex, stamp: counter)
         }
         prune()
     }
@@ -72,10 +79,10 @@ final class SnapMemory {
     }
 
     /// Every remembered placement, newest last.
-    var placements: [(window: AXUIElement, frac: FracRect, screenUUID: String?)] {
+    var placements: [(window: AXUIElement, frac: FracRect, screenUUID: String?, zoneIndex: Int?)] {
         entries
             .sorted { $0.value.stamp < $1.value.stamp }
-            .map { ($0.key.element, $0.value.frac, $0.value.screenUUID) }
+            .map { ($0.key.element, $0.value.frac, $0.value.screenUUID, $0.value.zoneIndex) }
     }
 
     var count: Int { entries.count }

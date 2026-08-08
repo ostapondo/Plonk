@@ -91,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         commands.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
         commands.announce = { HUD.shared.show($0) }
+        commands.zoneGap = { [weak self] in CGFloat(self?.store.config.zoneGap ?? 0) }
     }
 
     private func setupPresenter() {
@@ -202,6 +203,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)
+            } else if let number = action.layoutNumber {
+                commands.applyZoneSet(number: number, named: model.zoneSetNames) { [weak self] name, screen in
+                    self?.assignZoneSet(name, toScreen: screen)
+                }
             } else if let direction = action.focusDirection {
                 commands.moveFocus(direction)
             } else if let preset = action.preset {
@@ -271,12 +276,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return [] }
             return store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
         }
+        dragSnap.appearance = { [weak self] in self?.zoneAppearance ?? ZoneAppearance() }
+        dragSnap.showOnAllMonitors = store.config.zonesOnAllMonitors
+        dragSnap.edgeSpanPoints = store.config.zoneEdgeSpanPoints
         dragSnap.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
         dragSnap.onSnap = { [weak self] window, before, frac, screenIndex in
             self?.snapMemory.record(window, wasAt: before, placedAt: frac,
                                     screenUUID: ScreenIdentity.uuid(forIndex: screenIndex))
         }
         dragSnap.start()
+    }
+
+    private var zoneAppearance: ZoneAppearance {
+        ZoneAppearance(gap: CGFloat(store.config.zoneGap),
+                       opacity: CGFloat(store.config.zoneOpacity),
+                       color: ZoneAppearance.color(fromHex: store.config.zoneColorHex),
+                       showNumbers: store.config.zoneNumbersVisible)
     }
 
     private func setupGrabMove() {
@@ -451,6 +466,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.awakeTimeoutMinutes = store.config.awakeTimeoutMinutes
         model.hotkeysEnabled = store.config.hotkeysEnabled
         model.dragSnapEnabled = store.config.dragSnapEnabled
+        model.zoneGap = store.config.zoneGap
+        model.zoneOpacity = store.config.zoneOpacity
+        model.zoneColorHex = store.config.zoneColorHex
+        model.zoneNumbersVisible = store.config.zoneNumbersVisible
+        model.zonesOnAllMonitors = store.config.zonesOnAllMonitors
+        model.zoneEdgeSpan = store.config.zoneEdgeSpanPoints
         model.grabMoveEnabled = store.config.grabMoveEnabled
         model.grabMoveModifier = store.config.grabMoveModifier
         model.grabMoveResize = store.config.grabMoveResize
@@ -703,6 +724,38 @@ extension AppDelegate: AppActions {
         model.zonesModifier = name
     }
 
+    func setZoneGap(_ points: Double) {
+        store.update { $0.zoneGap = max(0, min(points, 40)) }
+        model.zoneGap = store.config.zoneGap
+    }
+
+    func setZoneOpacity(_ value: Double) {
+        store.update { $0.zoneOpacity = max(0.1, min(value, 1)) }
+        model.zoneOpacity = store.config.zoneOpacity
+    }
+
+    func setZoneColor(_ hex: String?) {
+        store.update { $0.zoneColorHex = hex }
+        model.zoneColorHex = hex
+    }
+
+    func setZoneNumbersVisible(_ on: Bool) {
+        store.update { $0.zoneNumbersVisible = on }
+        model.zoneNumbersVisible = on
+    }
+
+    func setZonesOnAllMonitors(_ on: Bool) {
+        store.update { $0.zonesOnAllMonitors = on }
+        model.zonesOnAllMonitors = on
+        dragSnap.showOnAllMonitors = on
+    }
+
+    func setZoneEdgeSpan(_ points: Double) {
+        store.update { $0.zoneEdgeSpanPoints = max(0, min(points, 60)) }
+        model.zoneEdgeSpan = store.config.zoneEdgeSpanPoints
+        dragSnap.edgeSpanPoints = store.config.zoneEdgeSpanPoints
+    }
+
     func setGrabMove(_ on: Bool) {
         store.update { $0.grabMoveEnabled = on }
         model.grabMoveEnabled = on
@@ -775,11 +828,16 @@ extension AppDelegate: AppActions {
     func assignZoneSet(_ name: String?, toScreen index: Int) {
         store.update { $0.assignZoneSet(name, forKeys: ScreenIdentity.keys(forIndex: index)) }
         refreshZoneModel()
+        commands.relayout(screenIndex: index)
     }
 
     func updateZoneSet(_ name: String, zones: [ZoneRect]) {
         store.update { $0.zoneSets[name] = zones }
         refreshZoneModel()
+        for index in NSScreen.screens.indices
+        where store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: index)) == name {
+            commands.relayout(screenIndex: index)
+        }
         if !presenter.isFullscreenEditorVisible {
             dragSnap.previewZones()
         }
