@@ -77,8 +77,14 @@ final class Router {
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
         let (path, query) = Self.splitQuery(request.path)
         let agent = Self.agentName(fromHeader: request.headers["x-plonk-agent"])
-        agents.touch(header: request.headers["x-plonk-agent"],
-                     pid: request.headers["x-plonk-agent-pid"].flatMap(Int.init))
+        // Not from a route that answers without a token: /ping is open so a
+        // client can tell a closed app from a stale token, and that is all it
+        // is for. Registering from it would let anything on the machine invent
+        // agents that appear in the menu bar and in /state.
+        if !APIToken.openPaths.contains(path) {
+            agents.touch(header: request.headers["x-plonk-agent"],
+                         pid: request.headers["x-plonk-agent-pid"].flatMap(Int.init))
+        }
         if let reason = Self.exclusiveRejection(
             method: request.method, path: path, agent: agent,
             selected: store.config.selectedAgent, exclusive: store.config.agentExclusive

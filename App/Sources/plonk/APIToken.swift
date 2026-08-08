@@ -78,13 +78,28 @@ enum APIToken {
             }
         }
 
+        // Created by open(2) rather than FileManager, which writes the file
+        // first and applies `.posixPermissions` after: on this machine a stat
+        // loop caught the new token at mode 0644, secret already inside, three
+        // times in four thousand samples. That window belongs to exactly the
+        // process this file exists to keep out. O_EXCL means we never write
+        // into something already there, and O_NOFOLLOW means never through a
+        // symlink someone planted.
         let token = generate()
-        let created = FileManager.default.createFile(
-            atPath: url.path,
-            contents: Data(token.utf8),
-            attributes: [.posixPermissions: NSNumber(value: 0o600)])
-        guard created else {
-            NSLog("Plonk: could not write the API token to \(url.path)")
+        // Only a blank or unreadable file reaches here; a usable one returned
+        // above, and one that is not ours was refused.
+        try? FileManager.default.removeItem(at: url)
+        let descriptor = open(url.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600)
+        guard descriptor >= 0 else {
+            NSLog("Plonk: could not create the API token at \(url.path) (errno \(errno))")
+            return nil
+        }
+        defer { close(descriptor) }
+        let bytes = Array(token.utf8)
+        let written = bytes.withUnsafeBufferPointer { write(descriptor, $0.baseAddress, $0.count) }
+        guard written == bytes.count else {
+            NSLog("Plonk: could not write the API token to \(url.path) (errno \(errno))")
+            try? FileManager.default.removeItem(at: url)
             return nil
         }
         return token

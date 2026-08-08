@@ -169,6 +169,7 @@ final class ControlServer {
         case 403: return "Forbidden"
         case 404: return "Not Found"
         case 409: return "Conflict"
+        case 503: return "Service Unavailable"
         default: return "Internal Server Error"
         }
     }

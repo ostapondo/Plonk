@@ -265,11 +265,21 @@ struct RouterTests {
         #expect(h.post("/agents/hello", [:]).status == 400)
     }
 
-    @Test func anyRequestWithTheAgentHeaderRegistersIt() {
+    @Test func anyTokenedRequestWithTheAgentHeaderRegistersIt() {
         let h = Harness()
-        _ = h.send(HTTPRequest(method: "GET", path: "/ping",
+        _ = h.send(HTTPRequest(method: "GET", path: "/state",
                                headers: ["x-plonk-agent": "openai-test-agent/0.1"], body: [:]))
         #expect(h.router.agents.onlineNames() == ["openai-test-agent"])
+    }
+
+    /// `/ping` answers without a token, so it must not be able to write to the
+    /// registry: otherwise anything on the machine can invent agents that show
+    /// up in the menu bar selector and in `/state`, and the list only grows.
+    @Test func pingCannotInventAnAgent() {
+        let h = Harness()
+        _ = h.send(HTTPRequest(method: "GET", path: "/ping",
+                               headers: ["x-plonk-agent": "not-an-agent/0.1"], body: [:]))
+        #expect(h.router.agents.onlineNames().isEmpty)
     }
 
     @Test func selectStoresAndClearsTheChoice() {

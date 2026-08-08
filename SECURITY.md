@@ -190,13 +190,15 @@ token. It answers whether Plonk is running and nothing else.
 **Where this stops.** Anything that can read the token file is already running
 as you, and could ask macOS for the screen directly instead of going through
 Plonk. The token means reaching the port is no longer enough; it is not a
-boundary against code that is already you. Two limits worth naming:
+boundary against code that is already you. One limit worth naming:
 
-- `plonk-mcp --http` holds the token and serves MCP on `127.0.0.1:43918`
-  without one of its own, so while you run that transport a local process can
-  drive Plonk through it. The stdio transport the install instructions set up
-  opens no such port.
 - The token is a file, not a keychain item. Anything running as you reads it.
+
+`plonk-mcp --http` holds that token, so it asks its own callers for it too:
+`127.0.0.1:43918` refuses anything without the same `X-Plonk-Token` header, and
+answers nothing at all when the file cannot be read. Otherwise running that
+transport would have handed every local process the gate it had just been
+given. The stdio transport the install instructions set up opens no port.
 
 If something hostile is already running locally with your privileges, Plonk is
 not the weakest thing it has access to. The token is there so it is not the

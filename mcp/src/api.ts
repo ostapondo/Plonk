@@ -202,6 +202,12 @@ function apiToken(): string | undefined {
   return cachedToken;
 }
 
+/** The token as the HTTP transport needs it: to demand of its own callers what
+ * the app demands of this process. Undefined when there is no readable file. */
+export function localApiToken(): string | undefined {
+  return apiToken();
+}
+
 function tokenHeader(): Record<string, string> {
   const token = apiToken();
   return token ? { "x-plonk-token": token } : {};

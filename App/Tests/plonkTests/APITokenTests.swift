@@ -83,6 +83,20 @@ struct APITokenFileTests {
         #expect(APIToken.loadOrCreate(in: dir) == nil)
     }
 
+    /// A symlink at that path would have the token written wherever it points,
+    /// with this user's hand on the pen. Refused twice over: the attributes of
+    /// a link are the link's, and the create is O_NOFOLLOW.
+    @Test func aSymlinkAtTheTokenPathIsRefused() throws {
+        let dir = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let target = dir.appendingPathComponent("elsewhere")
+        FileManager.default.createFile(atPath: target.path, contents: Data())
+        try FileManager.default.createSymbolicLink(at: APIToken.url(in: dir), withDestinationURL: target)
+
+        #expect(APIToken.loadOrCreate(in: dir) == nil)
+        #expect(try String(contentsOf: target, encoding: .utf8).isEmpty)
+    }
+
     /// Anything that is not a plain file — a directory planted at that path
     /// before first launch — is refused rather than worked around.
     @Test func aDirectoryAtTheTokenPathIsRefused() throws {
