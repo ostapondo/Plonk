@@ -153,6 +153,31 @@ enum ZoneGeometry {
         return result
     }
 
+    /// Move or resize one zone by a step, for editing without a mouse.
+    /// `resizing` grows the zone from its right and bottom edges instead of
+    /// moving it. Returns nil when the result would leave the screen, fall
+    /// under the minimum size, or land on top of another zone — the same rules
+    /// the mouse is held to.
+    static func adjust(_ zones: [ZoneRect], at index: Int, dx: Double, dy: Double,
+                       resizing: Bool) -> [ZoneRect]? {
+        guard zones.indices.contains(index) else { return nil }
+        let z = zones[index]
+        var result = zones
+        if resizing {
+            let w = snapValue(z.w + dx)
+            let h = snapValue(z.h + dy)
+            guard w >= minSide, h >= minSide, z.x + w <= 1.0001, z.y + h <= 1.0001 else { return nil }
+            result[index] = ZoneRect(z.x, z.y, w, h)
+        } else {
+            let x = snapValue(z.x + dx)
+            let y = snapValue(z.y + dy)
+            guard x >= -0.0001, y >= -0.0001, x + z.w <= 1.0001, y + z.h <= 1.0001 else { return nil }
+            result[index] = ZoneRect(max(x, 0), max(y, 0), z.w, z.h)
+        }
+        guard !overlaps(result, at: [index]) else { return nil }
+        return result
+    }
+
     /// Remove a zone and let cleanly abutting neighbors absorb the freed
     /// space (single neighbor or a full row/column of them). Falls back to
     /// leaving a gap when no clean fill exists.
