@@ -155,7 +155,13 @@ final class MouseTools {
 
     /// Back to whatever should be on screen when nothing transient is showing.
     private func refreshPersistent() {
-        guard !suspended else { return }
+        // Only ever draws behind a live tap. Without one the crosshairs could
+        // never follow the pointer, and painting them anyway would freeze a
+        // cross across every display with nothing to move it.
+        guard !suspended, tap != nil else {
+            overlay.hide()
+            return
+        }
         if crosshairsEnabled {
             overlay.show(.crosshairs, at: NSEvent.mouseLocation, tint: tint)
         } else {
