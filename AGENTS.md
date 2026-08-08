@@ -5,7 +5,7 @@ Rules for AI agents working in this repo.
 ## Layout
 
 - `App/` — Swift package, the menu bar app. One type per file, files stay under ~300 lines.
-- `mcp/` — TypeScript MCP server: `src/server.ts` compiled to `dist/` via `npm run build`. Keep it a thin proxy; logic belongs in the app. Tool description rules are in `mcp/AGENTS.md`.
+- `mcp/` — TypeScript MCP server: `src/server.ts` compiled to `dist/` via `npm run build`. Keep it a thin proxy; logic belongs in the app. Tests are `mcp/test/*.test.js`, run against `dist/` on the Node test runner with no extra dependencies. Tool description rules are in `mcp/AGENTS.md`.
 - `scripts/build.sh` — the only build entry point.
 
 Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
@@ -41,14 +41,27 @@ Each line is a subshell, so the block runs as written from the repository root:
 ```sh
 (cd App && swift build)          # must pass before any commit
 ./scripts/test.sh                # unit tests — must pass
-(cd mcp && npm run typecheck)    # must pass when mcp/ changed
+./scripts/lint.sh                # style rules — must pass
+(cd mcp && npm test)             # must pass when mcp/ changed
+node scripts/check-zone-sets.mjs # must pass when zone-sets/ changed
 ./scripts/build.sh               # produces Plonk.app; needs a signing identity
 curl -s 127.0.0.1:43917/ping     # smoke test while the app is running
 ```
 
-The first three need no signing certificate. `build.sh` does, and refuses
+The first four need no signing certificate. `build.sh` does, and refuses
 rather than produce a bundle that cannot hold its permissions; see
 [CONTRIBUTING.md](CONTRIBUTING.md) for why and how to make one.
+
+`scripts/lint.sh` enforces the file-length rule above, plus no emoji, no
+trailing whitespace and a final newline. Files already over 300 lines are
+recorded in `scripts/line-limit-baseline` with the length they had that day:
+they may shrink, never grow, and a new file has to come in under the limit
+outright. Shortening one means lowering its number in the same commit.
+
+Anything that decides where a window lands is checked by hand, because none of
+it is reachable from the unit suite. `scripts/testbench.sh up 4` opens
+throwaway TextEdit windows, `state` prints where each landed as fractions, and
+`down` clears them away. Use it instead of moving the user's real windows.
 
 The release number lives in `version.env`, and only there. `scripts/build.sh`
 reads `MARKETING_VERSION` and `BUILD_NUMBER` into `Info.plist`. Bump them to cut
@@ -84,10 +97,12 @@ Put new logic there and cover it in `App/Tests/plonkTests/`.
   entirely when the user says so. Anything else that wants the network needs
   the README's privacy section rewritten first, which is the point of the rule.
 - Do not commit build artifacts (`.build/`, `Plonk.app`, `node_modules/`).
-- The claims in `README.md` and `SECURITY.md` are checkable, and have to stay
-  that way. Any change to the network, the permissions, the entitlements or the
-  update path makes one of them false — fix the document in the same commit,
-  and never widen a claim past what the code actually does.
+- The claims in `README.md`, `docs/verify.md` and `SECURITY.md` are checkable,
+  and have to stay that way. Any change to the network, the permissions, the
+  entitlements or the update path makes one of them false — fix the document in
+  the same commit, and never widen a claim past what the code actually does.
+- Anything a user would notice goes in `CHANGELOG.md` under Unreleased, in the
+  same commit that changes it.
 
 ## Agent notes
 
@@ -146,6 +161,9 @@ Things that have already cost someone an hour.
 - Imperative subject under 72 chars, body only when the why is not obvious.
 - One logical change per commit. `swift build` must pass on every commit.
 - A PR states what changed and why, plus the commands you ran. Screenshots for
-  anything visual.
+  anything visual, and the geometry checklist in the PR template filled in for
+  anything that moves a window.
 - Never push directly to `main`; branch and open a PR.
 - No generated marketing prose in PR descriptions: state what changed and why, in plain language.
+- Never push to somebody else's branch. Review asks for changes; it does not
+  make them. CONTRIBUTING.md promises this, so it is a rule, not a courtesy.

@@ -1,8 +1,10 @@
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>The Mac window manager that puts your desk back together.</strong><br>
-<sub>To plonk is to set a thing down exactly where it belongs. This menu bar does it to your
-windows — you drag them there, you press a key, or your agent says where.</sub></p>
+<p align="center"><strong>The Mac window manager your agent can drive.</strong><br>
+<sub>Snap zones, hotkeys and workspaces, like every other one — and a full MCP
+surface, like none of them. To plonk is to set a thing down exactly where it
+belongs. This menu bar does it to your windows: you drag them there, you press
+a key, or you say where.</sub></p>
 
 <p align="center">
   <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-58a6ff?style=flat-square">
@@ -38,23 +40,8 @@ touched it.
 > read the error out of that dialog and tell me what it says
 
 Everything runs on your Mac. No account, no cloud, no telemetry — and
-[none of that is a promise you have to take](#check-it-yourself), it is all
+[none of that is a promise you have to take](docs/verify.md), it is all
 checkable from a terminal.
-
-## What you get
-
-| | |
-| --- | --- |
-| **Zones** | Draw any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows come back to their zone when a display is unplugged and plugged in again |
-| **Workspaces** | A desk you can put away: the apps, every window's frame, the monitor each belongs on, and what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself |
-| **Focus that follows the layout** | `⌃⌥⇧←` goes to the window that is actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
-| **Text off the screen** | `⌃⌥T` selects an area and copies the words in it — from a screenshot, a paused video, a dialog that will not let you select. On-device, nothing uploaded |
-| **Pin part of the screen** | Float a live crop of anything above everything else: a build log, a chart, a call, visible in a corner while you work over it |
-| **Keep awake** | Real power assertions, not a jiggler — and a session that ends by itself: after N minutes, at a wall-clock time, or the moment a process exits |
-| **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution |
-| **A shortcut guide** | Every shortcut the app in front actually has, read from its own menus, so it is never out of date |
-| **Pointer tools** | Find the cursor, ring every click for a screen recording, crosshairs, jump to the next display |
-| **Voice** | Hold `⌃⌥V` and say it. The common ones — "snap this left", "zone three", "keep awake for an hour", "launch my review workspace" — run in the app itself, offline and instantly; anything bigger goes to your agent. Recognition is on-device |
 
 ## Install
 
@@ -67,6 +54,18 @@ brew install --cask ostapondo/plonk/plonk
 Grant Accessibility when it asks, then relaunch. Screen Recording is asked for
 separately, the first time you capture. Nothing else — no Full Disk Access, no
 Automation, no Keychain.
+
+To let an agent drive it (Node 18+):
+
+```sh
+claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
+codex mcp add plonk -- npx -y plonk-mcp    # Codex CLI
+```
+
+Any MCP client works the same way, over stdio or HTTP.
+[For agents](docs/agents.md) has the rest, plus one-pagers for
+[Cursor](docs/clients/cursor.md), [Zed](docs/clients/zed.md) and
+[Cline](docs/clients/cline.md).
 
 <details>
 <summary><strong>Installing it by hand, and why macOS holds a downloaded copy</strong></summary>
@@ -91,8 +90,8 @@ That prints the commit and the GitHub Actions run this exact archive was built
 by. Apple's stamp would tell you a build passed a malware scan; this tells you
 the binary on your Mac came from the source in this repository, and nothing
 went through a laptop on the way. It is the first of
-[several such checks](#check-it-yourself) — none of what this README claims
-about privacy has to be taken on trust.
+[several such checks](docs/verify.md) — none of what this README claims about
+privacy has to be taken on trust.
 
 Without Homebrew: download [the latest release](https://github.com/ostapondo/plonk/releases/latest),
 unzip, and drop Plonk.app into Applications. Then either do the Gatekeeper
@@ -110,65 +109,38 @@ Remove Plonk from Privacy & Security → Accessibility and grant it again.
 
 </details>
 
-To let an agent drive it (Node 18+):
+## What you get
 
-```sh
-claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
-codex mcp add plonk -- npx -y plonk-mcp    # Codex CLI
-```
+| | |
+| --- | --- |
+| **[Zones](docs/zones.md)** | Draw any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows come back to their zone when a display is unplugged and plugged in again |
+| **[Workspaces](docs/workspaces.md)** | A desk you can put away: the apps, every window's frame, the monitor each belongs on, and what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself |
+| **Focus that follows the layout** | `⌃⌥⇧←` goes to the window that is actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
+| **Text off the screen** | `⌃⌥T` selects an area and copies the words in it — from a screenshot, a paused video, a dialog that will not let you select. On-device, nothing uploaded |
+| **Pin part of the screen** | Float a live crop of anything above everything else: a build log, a chart, a call, visible in a corner while you work over it |
+| **Keep awake** | Real power assertions, not a jiggler — and a session that ends by itself: after N minutes, at a wall-clock time, or the moment a process exits |
+| **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution |
+| **A shortcut guide** | Every shortcut the app in front actually has, read from its own menus, so it is never out of date |
+| **Pointer tools** | Find the cursor, ring every click for a screen recording, crosshairs, jump to the next display |
+| **Voice** | Hold `⌃⌥V` and say it. The common ones — "snap this left", "zone three", "keep awake for an hour", "launch my review workspace" — run in the app itself, offline and instantly; anything bigger goes to your agent. Recognition is on-device |
 
-The same package carries a `plonk` command for shells and scripts —
-`npm i -g plonk-mcp`, then see [For agents](#for-agents).
-
-Any MCP client works the same way — give it `npx -y plonk-mcp` as a stdio
-server. One-pagers: [Cursor](docs/clients/cursor.md) (with a one-click
-install button), [Zed](docs/clients/zed.md), [Cline](docs/clients/cline.md).
-Several clients at once is fine; see [Agents](#for-agents) below.
-
-A client that cannot spawn a process connects over HTTP instead:
-`npx -y plonk-mcp --http` serves Streamable HTTP at
-`http://127.0.0.1:43918/mcp` (loopback only, many clients per process,
-`--port` to change). That port asks for the same token the app does, so give
-the client an `X-Plonk-Token` header holding the contents of
-`~/Library/Application Support/Plonk/token` — otherwise the transport would be
-a way around the gate rather than through it.
-
-Or build everything from source: clone the repo, run `./scripts/build.sh`, and
-point `claude mcp add plonk -- node …/mcp/dist/server.js` at a locally built
-server (`cd mcp && npm install && npm run build`).
+The long version: [Zones](docs/zones.md) · [Workspaces](docs/workspaces.md) ·
+[Hotkeys](docs/hotkeys.md) · [Everything else](docs/features.md)
 
 ## For agents
 
 This is the part no other Mac window manager has. Plonk exposes its whole
 surface over MCP, so an agent can read the desk, rearrange it, save the result
 and read the screen back — without a screenshot round trip for anything that is
-really just words.
+really just words. Frames are fractions of a monitor's visible area, origin
+top-left, which is why "left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
 
-Frames are fractions of a monitor's visible area, origin top-left — which is why
-"left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
+Nineteen tools, across state, layouts, workspaces, zones, keep-awake,
+screenshots and on-device OCR. Several agents can be connected at once, each
+registering itself, with an optional mode that locks changes to the active one.
 
-| Tool | |
-| --- | --- |
-| `get_state` | Monitors, every open window and where it sits, zone sets, saved workspaces, awake status |
-| `apply_layout` | Place any set of windows, across any number of monitors, in one call |
-| `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops, launched from nothing |
-| `snap_window` | Drop a window into a numbered zone |
-| `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
-| `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
-| `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back |
-| `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
-| `select_agent` | Make an agent the user's active one, optionally the only one allowed to control |
-
-Several agents can be connected at once. Every client registers itself, so
-`get_state` lists who is online; the user picks an active agent from the menu
-bar or the settings — or an agent does it with `select_agent`. An optional
-strict mode locks changes to the active agent: everyone else keeps reading
-state and taking screenshots, but gets a clear 409 on anything that moves
-windows or edits config. Set `PLONK_AGENT_NAME` in a client's MCP config to
-tell two sessions of the same client apart.
-
-There is a `plonk` command too, for the things that are neither an agent nor a
-settings window — a Makefile, a Raycast script, a shell alias:
+The same package carries a `plonk` command, for the things that are neither an
+agent nor a settings window — a Makefile, a Raycast script, a shell alias:
 
 ```sh
 plonk state                      # screens, zone sets, workspaces, windows
@@ -177,178 +149,25 @@ plonk awake while npm run build  # awake for exactly as long as the build
 plonk text | pbcopy              # OCR a region straight into the clipboard
 ```
 
-## Zones
+**[For agents](docs/agents.md)** has every tool, the multi-agent rules, the HTTP
+transport and the rest of the CLI.
 
-<p align="center">
-  <img src="docs/zones.svg" alt="A screen split into three zones, with a window being dragged into the highlighted one" width="720">
-</p>
+## Privacy
 
-<p align="center">
-  <img src="docs/zone-sets.svg" alt="Five built-in zone sets and a sixth, irregular one drawn by hand" width="720">
-</p>
-
-Five sets ship with it. Everything past that you draw yourself: any number of
-zones, any size, overlapping if you want — a narrow rail for chat, a wide middle
-split in two, a strip for the terminal. Or describe it and let the agent build
-it.
-
-| | |
-| --- | --- |
-| **Editor** | Click to split, `⇧`-click to split vertically, drag a divider to resize neighbours, `✕` to delete and let them heal over the gap |
-| **Per monitor** | Each screen gets its own set, remembered by display, not by index |
-| **Overlap** | Allowed — the smallest zone under the cursor wins |
-| **Trigger** | On drag, or only with a modifier held. Holding it inverts the mode, so a free move stays one keypress away |
-| **Span** | Hold `⌘` as well: the zone you started over and the one under the cursor become a single drop, so two columns make one wide window without editing the set |
-| **By number** | `⌃⌥1`–`⌃⌥9` drop the front window into the zone the overlay draws that number on. `⌃⌥0` gives it back the frame it had before Plonk first moved it |
-| **Or none** | Edge snapping instead: middles are halves, top is maximize, corners are quarters |
-| **Or hover the line** | Bring the cursor near the border between two zones and both light up, no modifier at all |
-| **Whole sets** | `⌃⌥⇧1`–`⌃⌥⇧9` swap the set on the screen the cursor is on. Windows already sitting in a numbered zone move to where that number is now |
-| **Looks** | Gap, colour, opacity, numbers on or off, every monitor's zones shown while dragging. The gap is real — a window keeps that much space around it |
-| **Exceptions** | A list of apps Plonk keeps its hands off — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works; that names the window on purpose |
-| **New windows** | Optionally, a window that opens goes where that app's last one went |
-
-## Workspaces
-
-<p align="center">
-  <img src="docs/workspaces.svg" alt="A workspace of four windows, saved, closed to an empty desktop, then launched back into place" width="720">
-</p>
-
-A workspace is a desk you can put away. It remembers the apps, the frame of
-every window, the monitor each one belongs on, and what each app should open on
-the way up. Launching one opens whatever is closed, waits for the windows, and
-puts them back — from the Workspaces page, or right-click the menu bar icon.
-Rename, recapture or delete from the workspace's `⋯` menu.
-
-| | |
-| --- | --- |
-| **Per app** | Files, folders or URLs to open with it: a project folder for an editor, a set of tabs for a browser |
-| **Per monitor** | Windows return to the display they were captured on, keyed by display UUID so unplugging a monitor does not scramble them. Or pull the whole workspace onto one screen |
-| **Already open** | Running apps get moved, not relaunched. Turn that off to leave them alone and only open what is missing |
-| **The catch** | macOS cannot open an app straight into a position, so windows appear first and jump a moment later. A second window of the same app cannot be conjured — give it a file to open instead |
-
-## Hotkeys
-
-<p align="center">
-  <img src="docs/hotkeys.svg" alt="Where each hotkey puts the front window" width="720">
-</p>
-
-<p align="center">
-  All on <code>⌃⌥</code>. Every one of them is rebindable, and any of them can be unbound.
-</p>
-
-| | |
-| --- | --- |
-| `⌃⌥` arrows, `U I J K`, `↩`, `C` | Halves, quarters, maximize, centre |
-| `⌃⌥1`–`⌃⌥9`, `⌃⌥0` | Into a numbered zone, or back where it was |
-| `⌃⌥⇧1`–`⌃⌥⇧9` | Swap the whole zone set on this screen |
-| `⌃⌥⇧` arrows | Focus the window that is actually in that direction |
-| `` ⌃⌥` `` | Next window in this zone |
-| `⌃⌥Z` | Flash the zones |
-| `⌃⌥S` · `⌃⌥T` | Grab a region · lift the text out of one |
-| `⌃⌥P` · `⌃⌥⇧P` | Pin a live crop on top · pin a still one |
-| `⌃⌥⇧/` | Every shortcut the front app has |
-| `⌃⌥/` · `⌃⌥\` | Find the pointer · jump it to the next screen |
-| `⌃⌥V` | Hold to talk |
-
-## And the rest
-
-| | |
-| --- | --- |
-| **Keep awake** | IOKit power assertions, not a jiggler. Display-on or system-only, pause on battery, auto while charging, and a session that ends when you say: after N minutes, at a wall-clock time, or the moment a process exits — `plonk awake while npm run build` holds the Mac up for exactly as long as the build lasts and not a second longer |
-| **Screenshots** | Region, window or screen through the native picker, then pen, arrow, rectangle, ellipse and highlighter. Saves at native resolution |
-| **Text** | `⌃⌥T` selects an area and copies the words in it, including text that is only pixels — a screenshot, a paused video, a PDF that will not let you select. Recognition is on-device; `plonk text \| grep …` works too |
-| **Pinned crops** | `⌃⌥P` drags out a region and floats it above everything, mirroring whatever is underneath. `⌃⌥⇧P` freezes it instead. Streamed, never written down |
-| **Shortcut guide** | `⌃⌥⇧/` lists every shortcut the front app has, read from its own menus rather than from a table someone has to keep up to date |
-| **Pointer** | Find the cursor, ring every click for a screen recording, crosshairs, and a key that warps the pointer to the next display |
-| **Grab and move** | Hold a key and drag a window from anywhere inside it; right-drag resizes from the nearest edge. Off by default, because option-drag already means something in plenty of apps |
-| **Notices** | A panel in the top-right corner, not Notification Center: no permission to ask for, nothing left in your history, and it can show the screenshot instead of describing it |
-| **Updates** | One button on the Updates page. The download is checked against the checksum GitHub published for it before it is unpacked, and Plonk installs a build only if it is signed with the same certificate as the copy you are running — the same test macOS applies, so your Accessibility and Screen Recording grants carry over instead of being asked for again. Anything that fails is discarded and nothing is replaced. Switch the check off and the app never looks |
-
-## Check it yourself
-
-Accessibility is the only way macOS lets one app move another's windows, and
-Screen Recording is what a screenshot costs. That is a lot to hand something you
-installed a minute ago, so none of this is a promise — it is all checkable.
-
-**The binary comes from the source.** Releases are built, signed and zipped by
-[a workflow](.github/workflows/release.yml) on GitHub's runners, never on a
-laptop, and ship with a provenance attestation GitHub signs:
+Everything runs on your Mac, and none of it is a promise you have to take. The
+API binds to `127.0.0.1`, refuses anything carrying headers a browser cannot
+suppress, and is gated on a token only you can read. The one outbound connection
+is the update check, which carries no identifier and can be switched off.
+Releases are built and signed on GitHub's runners and ship with an attestation,
+so the binary on your Mac can be tied to the commit it came from:
 
 ```sh
 gh attestation verify Plonk-<version>.zip -R ostapondo/plonk
 ```
 
-That prints the commit and the workflow run the archive was built by. It is the
-step that makes reading the rest of this repo worth anything — without it, the
-code here and the app on your Mac are two separate claims. (Releases up to and
-including 0.0.4 were zipped by hand and carry no attestation, so the command
-fails on those. That is the whole reason it exists now.)
-
-The MCP server is published the same way, which matters more, because `npx -y
-plonk-mcp` fetches it every time: `npm view plonk-mcp dist.attestations`, or the
-Provenance panel on [its npm page](https://www.npmjs.com/package/plonk-mcp).
-
-**One thing dials out, and you can switch it off.** Every socket the app has
-open:
-
-```sh
-lsof -nP -i -a -p "$(pgrep -f 'Plonk.app/Contents/MacOS/plonk')"
-plonk  …  TCP 127.0.0.1:43917 (LISTEN)
-```
-
-One listener on loopback. The only outbound connection Plonk makes is the
-update check: on launch and once a day it asks `api.github.com` for the latest
-release, and sends nothing but a User-Agent naming the app and its version — no
-identifier, no account, no analytics, no crash reporter. Turn it off under
-Updates and it stops happening — including for agents, which get a 409 rather
-than a connection made on your behalf, so the buttons on that page are the only
-thing that can trigger one. `nettop` or Little Snitch will then show a process
-that only ever listens. The URLs compiled into the app are that endpoint, the
-releases page, and the issue tracker that opens when you click Report a bug —
-[Release.swift](App/Sources/plonk/Release.swift) has all three.
-
-**A web page cannot drive it.** The API is loopback-only, so it refuses anything
-carrying headers a browser cannot suppress:
-
-```sh
-curl -so /dev/null -w '%{http_code}\n' -H 'Origin: https://example.com' \
-  http://127.0.0.1:43917/state
-403
-```
-
-**Neither can another program on your Mac.** Loopback keeps the network out and
-does nothing about the machine, so the API is gated on a token Plonk writes to
-`~/Library/Application Support/Plonk/token`, readable by you and nobody else.
-The MCP server and the `plonk` command read it for themselves; you never handle
-it. Without it, a request gets a 401:
-
-```sh
-curl -so /dev/null -w '%{http_code}\n' http://127.0.0.1:43917/state
-401
-curl -so /dev/null -w '%{http_code}\n' \
-  -H "X-Plonk-Token: $(cat ~/Library/'Application Support'/Plonk/token)" \
-  http://127.0.0.1:43917/state
-200
-```
-
-This matters most for the screenshot routes. Plonk holds Screen Recording; a
-script running as you may well not, and before the token it could borrow
-Plonk's by asking the port. Where it stops: anything that can read that file
-can read your screen by asking macOS itself, so this is a fence around the
-port, not around your account.
-
-**There is not much else to hide.** [Package.swift](App/Package.swift) declares
-no third-party dependencies, so a build from source is this repo and nothing
-else. Config is plain JSON at `~/Library/Application Support/Plonk/config.json`.
-Screenshots go where you send them. There is no account to make.
-
-The MCP server is a separate npm package that depends only on the official MCP
-SDK and zod. It speaks to `127.0.0.1:43917` and nowhere else.
-
-[SECURITY.md](SECURITY.md) has the rest: the entitlements the bundle ships with
-(none), every step the updater takes before it replaces anything, what the
-signing certificate does and does not prove, and where each of these checks
-stops being one.
+**[Check it yourself](docs/verify.md)** is every one of those claims with the
+command that tests it, and [SECURITY.md](SECURITY.md) is where each of them
+stops.
 
 ## Under the hood
 
@@ -357,20 +176,19 @@ stops being one.
 </p>
 
 - The app is the single source of truth; the MCP server is a stateless bridge.
-- The API binds to `127.0.0.1` and refuses anything carrying browser headers, so
-  an open web page cannot drive your desktop — see
-  [Check it yourself](#check-it-yourself).
+- `App/` is the Swift menu bar app, `mcp/` the TypeScript MCP server.
 - Config is plain JSON at `~/Library/Application Support/Plonk/config.json`.
 
 ## Build
 
-Four commands, and they are exactly what CI runs on every pull request. Each
+Five commands, and they are exactly what CI runs on every pull request. Each
 line is a subshell, so paste the block from the repository root and it works:
 
 ```sh
 (cd App && swift build)                    # the app compiles
-./scripts/test.sh                          # 306 unit tests
-(cd mcp && npm ci && npm run typecheck)    # the MCP server
+./scripts/test.sh                          # the unit suite
+./scripts/lint.sh                          # style rules, no dependencies
+(cd mcp && npm ci && npm test)             # the MCP server
 node scripts/check-zone-sets.mjs           # the layouts in zone-sets/
 ```
 
@@ -378,64 +196,20 @@ None of that needs a signing certificate. Zone geometry, config decoding, HTTP
 routing, MCP tools, voice command parsing, the CLI and every document here are
 reachable from that loop, and most changes never need more.
 
-`App/` is the Swift menu bar app, `mcp/` the TypeScript MCP server. Point an
-agent at [AGENTS.md](AGENTS.md) before it touches either, and read
-[CONTRIBUTING.md](CONTRIBUTING.md) before you send a change.
-
-Producing a launchable `Plonk.app` is the one step that does need a certificate.
-Make your own once:
-
-```sh
-./scripts/make-signing-cert.sh   # creates one and prints how to trust it
-./scripts/build.sh               # produces Plonk.app
-```
-
-`build.sh` signs with a `Plonk Signing` identity and stops if it is missing.
-macOS ties Accessibility and Screen Recording to the signature, and an ad-hoc
-one changes every build, so a stable certificate is what stops rebuilds from
-resetting permissions. [scripts/make-signing-cert.sh](scripts/make-signing-cert.sh)
-creates one and prints how to import and trust it; set `PLONK_SIGN_IDENTITY` to
-sign with a different one.
-
-It writes a `.p12` rather than adding a certificate to the keychain directly,
-which looks like the long way round until you need the key somewhere else: a
-key created by Certificate Assistant cannot be exported except through the
-Keychain Access window, and the release workflow needs it as a file it can put
-in a secret. Keep that `.p12` somewhere safe. Every installed copy accepts an
-update only if it is signed with that key, and there is nobody to reissue it.
-
-If a permission was first granted while the app was ad-hoc signed, the old
-grant is pinned to a signature that no longer exists and every rebuild looks
-like a reset. Clear it once and grant again:
-
-```sh
-tccutil reset ScreenCapture dev.plonk.app
-tccutil reset Accessibility dev.plonk.app
-```
-
-Releases: bump `MARKETING_VERSION` and `BUILD_NUMBER` in
-[version.env](version.env) and `version` in `mcp/package.json`, then push a
-`v<version>` tag. [The release workflow](.github/workflows/release.yml) builds,
-signs and attests the app on GitHub's runners, uploads the zip to a draft
-release, and publishes the MCP server to npm with provenance. Nothing ships from
-a laptop, which is what makes `gh attestation verify` mean anything.
-
-`scripts/release.sh` is what that workflow runs, and it works locally too. It
-holds every build to the requirement in
-[scripts/release-requirement](scripts/release-requirement) — a release signed
-with anything else cannot be updated to and takes Accessibility and Screen
-Recording away from everyone who installs it by hand. It notarizes when a
-Developer ID certificate is in the keychain and says so when there is not;
-Plonk's releases are not notarized, which costs a paid Apple account.
+Producing a launchable `Plonk.app` is the one step that does need one. Make your
+own once with `./scripts/make-signing-cert.sh`, then `./scripts/build.sh`. macOS
+ties Accessibility and Screen Recording to the code signature, and an ad-hoc one
+changes every build, so a stable certificate is what stops rebuilds from
+resetting permissions. [CONTRIBUTING.md](CONTRIBUTING.md) has the details;
+[AGENTS.md](AGENTS.md) has the release process, which runs on GitHub's runners
+and never from a laptop.
 
 ## Contributing
 
 Bug reports, zone sets, client one-pagers and code are all welcome, and none of
 them need a signing certificate — the loop above is the whole requirement.
-[CONTRIBUTING.md](CONTRIBUTING.md) has the rest: what a window bug report has to
-carry to be reproducible, where a new module seams in, and the handful of
-directions this project will not take, so nobody writes a patch that was never
-going to land.
+[CONTRIBUTING.md](CONTRIBUTING.md) opens with a first change you can send in
+about fifteen minutes, and says how long a review takes.
 
 The smallest useful change here is one JSON file. [`zone-sets/`](zone-sets/) is
 a gallery of layouts worth copying — an ultrawide split, a rotated monitor, the
@@ -446,15 +220,19 @@ answers in about twenty seconds. Nothing to build, nothing to sign, no Swift.
 The issues tagged [good first issue][gfi] are written to be picked up cold —
 each one says where the code is and how to tell it worked, and carries a prompt
 you can hand straight to an agent, since [AGENTS.md](AGENTS.md) already tells
-one how this repo is put together. Questions, half-formed ideas and layouts
-worth showing off go to
+one how this repo is put together. The ones tagged [needs-hardware][hw] need
+neither Swift nor a certificate, and are the most useful thing anyone can send:
+a window manager breaks on arrangements the author cannot see, and a report
+from three monitors or an ultrawide is worth more than a patch.
+
+Questions, half-formed ideas and layouts worth showing off go to
 [Discussions](https://github.com/ostapondo/plonk/discussions); a security
 problem goes through [SECURITY.md](SECURITY.md) instead of a public issue.
-
 Everyone taking part is expected to follow the
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
 [gfi]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+[hw]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3Aneeds-hardware
 
 ## License
 
