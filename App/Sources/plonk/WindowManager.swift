@@ -356,9 +356,11 @@ final class WindowManager {
         return screenIndex(containing: f, in: screens())
     }
 
-    /// Place a specific window (used by drag snapping).
-    func apply(frac: FracRect, toWindow win: AXUIElement, screenIndex: Int) {
-        setFrame(win, axRect(for: frac, screenIndex: screenIndex, in: screens()))
+    /// Place a specific window (used by drag snapping). `gap` is the empty
+    /// space left around the zone, in points, so a snapped window can breathe.
+    func apply(frac: FracRect, toWindow win: AXUIElement, screenIndex: Int, gap: CGFloat = 0) {
+        let rect = axRect(for: frac, screenIndex: screenIndex, in: screens())
+        setFrame(win, gap > 0 ? rect.insetBy(dx: gap, dy: gap) : rect)
     }
 
     /// Which screen a window sits on, by the screen its centre falls in.

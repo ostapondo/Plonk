@@ -150,6 +150,9 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     /// The numbered zones of the screen the window is on, as the drag overlay
     /// draws them. Nine is where the digit row runs out.
     case zone1, zone2, zone3, zone4, zone5, zone6, zone7, zone8, zone9
+    /// Swap the whole zone set on the screen under the cursor, by its place in
+    /// the list the Zones page shows.
+    case layout1, layout2, layout3, layout4, layout5, layout6, layout7, layout8, layout9
     case unsnap
     case cycleZone, cycleZoneBack
     case focusLeft, focusRight, focusUp, focusDown
@@ -188,6 +191,22 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         }
     }
 
+    /// 1-based zone set this action switches to, nil for everything else.
+    var layoutNumber: Int? {
+        switch self {
+        case .layout1: return 1
+        case .layout2: return 2
+        case .layout3: return 3
+        case .layout4: return 4
+        case .layout5: return 5
+        case .layout6: return 6
+        case .layout7: return 7
+        case .layout8: return 8
+        case .layout9: return 9
+        default: return nil
+        }
+    }
+
     var focusDirection: WindowNavigator.Direction? {
         switch self {
         case .focusLeft: return .left
@@ -213,6 +232,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .focusDown: return "Focus the window below"
         default:
             if let number = zoneNumber { return "Zone \(number)" }
+            if let number = layoutNumber { return "Zone set \(number)" }
             return preset?.title ?? rawValue
         }
     }
@@ -231,7 +251,8 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .focusUp: return "arrow.up"
         case .focusDown: return "arrow.down"
         default:
-            if let number = zoneNumber { return "\(number).square" }
+            if zoneNumber != nil { return "square.grid.2x2" }
+            if layoutNumber != nil { return "rectangle.3.group" }
             return "macwindow"
         }
     }
@@ -244,7 +265,9 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .unsnap: return "Numbered zones"
         case .cycleZone, .cycleZoneBack, .focusLeft, .focusRight, .focusUp, .focusDown: return "Focus"
         default:
-            return zoneNumber == nil ? "Other" : "Numbered zones"
+            if zoneNumber != nil { return "Numbered zones" }
+            if layoutNumber != nil { return "Zone sets" }
+            return "Other"
         }
     }
 
@@ -292,6 +315,15 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .zone7: code = kVK_ANSI_7
         case .zone8: code = kVK_ANSI_8
         case .zone9: code = kVK_ANSI_9
+        case .layout1: code = kVK_ANSI_1; shift = true
+        case .layout2: code = kVK_ANSI_2; shift = true
+        case .layout3: code = kVK_ANSI_3; shift = true
+        case .layout4: code = kVK_ANSI_4; shift = true
+        case .layout5: code = kVK_ANSI_5; shift = true
+        case .layout6: code = kVK_ANSI_6; shift = true
+        case .layout7: code = kVK_ANSI_7; shift = true
+        case .layout8: code = kVK_ANSI_8; shift = true
+        case .layout9: code = kVK_ANSI_9; shift = true
         case .unsnap: code = kVK_ANSI_0
         case .cycleZone: code = kVK_ANSI_Grave
         case .cycleZoneBack: code = kVK_ANSI_Grave; shift = true

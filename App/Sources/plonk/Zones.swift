@@ -86,6 +86,29 @@ enum ZoneGeometry {
         return FracRect(x, y, max(a.x + a.w, b.x + b.w) - x, max(a.y + a.h, b.y + b.h) - y)
     }
 
+    /// The zone whose shared edge the cursor is hovering, so a drop can cover
+    /// both without any modifier — the other way PowerToys lets two zones be
+    /// taken at once.
+    ///
+    /// Tolerances are per axis because a fraction of a wide screen is not the
+    /// same distance as a fraction of a tall one; the caller converts points
+    /// into both. Nil when nothing else is close enough, which is the common
+    /// case: this runs on every mouse event of a drag.
+    static func neighbour(_ zones: [ZoneRect], of hovered: Int, atX x: Double, y: Double,
+                          toleranceX: Double, toleranceY: Double) -> Int? {
+        guard zones.indices.contains(hovered), toleranceX > 0 || toleranceY > 0 else { return nil }
+        var best: (index: Int, distance: Double)?
+        for (index, zone) in zones.enumerated() where index != hovered {
+            let dx = max(zone.x - x, x - (zone.x + zone.w), 0)
+            let dy = max(zone.y - y, y - (zone.y + zone.h), 0)
+            guard dx <= toleranceX, dy <= toleranceY else { continue }
+            // Normalized so the two axes can be compared at all.
+            let distance = (toleranceX > 0 ? dx / toleranceX : 0) + (toleranceY > 0 ? dy / toleranceY : 0)
+            if best == nil || distance < best!.distance { best = (index, distance) }
+        }
+        return best?.index
+    }
+
     /// Which zones a spanning rect swallows, by centre point — the same test
     /// the drag overlay uses to pick one, so what lights up is what a drop
     /// would land on.

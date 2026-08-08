@@ -15,6 +15,17 @@ protocol AppActions: AnyObject {
     func setDragSnap(_ on: Bool)
     func setZonesRequireModifier(_ on: Bool)
     func setZonesModifier(_ name: String)
+    /// Empty space left around each zone, in points — in the overlay and in
+    /// the window that lands there.
+    func setZoneGap(_ points: Double)
+    func setZoneOpacity(_ value: Double)
+    /// "#RRGGBB", or nil to follow the system accent colour.
+    func setZoneColor(_ hex: String?)
+    func setZoneNumbersVisible(_ on: Bool)
+    func setZonesOnAllMonitors(_ on: Bool)
+    /// How near the shared edge of two zones the cursor has to come before a
+    /// drop covers both, in points. Zero switches it off.
+    func setZoneEdgeSpan(_ points: Double)
     /// Move and resize a window by dragging anywhere inside it with a modifier
     /// held, instead of aiming for the title bar or the border.
     func setGrabMove(_ on: Bool)
@@ -83,6 +94,12 @@ final class AppModel: ObservableObject {
     @Published var dragSnapEnabled = true
     @Published var zonesRequireModifier = true
     @Published var zonesModifier = "shift"
+    @Published var zoneGap = 0.0
+    @Published var zoneOpacity = 1.0
+    @Published var zoneColorHex: String?
+    @Published var zoneNumbersVisible = true
+    @Published var zonesOnAllMonitors = false
+    @Published var zoneEdgeSpan = 16.0
     @Published var grabMoveEnabled = false
     @Published var grabMoveModifier = "option"
     @Published var grabMoveResize = true
