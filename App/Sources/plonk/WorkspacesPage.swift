@@ -19,19 +19,9 @@ struct WorkspacesPage: View {
                         .foregroundStyle(.orange)
                 }
             }
-            Section {
-                if model.workspaceNames.isEmpty {
-                    Text("No workspaces yet. Open the apps you want, arrange them, and save. Launching a workspace opens whatever is missing and puts every window back.")
-                        .foregroundStyle(.secondary)
-                }
-                ForEach(model.workspaceNames, id: \.self) { name in
-                    workspace(name)
-                }
-            } header: {
-                Text("Workspaces")
-            } footer: {
-                Text("Apps cannot be opened straight into position, so windows appear first and are moved a moment later.")
-            }
+            // Above the list: it is how a workspace comes to exist, and it is
+            // the same one row whether there are none saved or twenty. Below,
+            // it walked further down the page with every workspace added.
             Section {
                 HStack(spacing: 8) {
                     Image(systemName: "plus.rectangle.on.rectangle")
@@ -47,6 +37,19 @@ struct WorkspacesPage: View {
                 Text("Save What Is On Screen")
             } footer: {
                 Text("Type a name and press Save. Every open window is captured with the app it belongs to and the monitor it sits on.")
+            }
+            Section {
+                if model.workspaceNames.isEmpty {
+                    Text("No workspaces yet. Open the apps you want, arrange them, and save above. Launching a workspace opens whatever is missing and puts every window back.")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(model.workspaceNames, id: \.self) { name in
+                    workspace(name)
+                }
+            } header: {
+                Text("Workspaces")
+            } footer: {
+                Text("Apps cannot be opened straight into position, so windows appear first and are moved a moment later.")
             }
         }
         .formStyle(.grouped)
