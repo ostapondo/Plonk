@@ -4,6 +4,9 @@ struct ZonesPage: View {
     @ObservedObject var model: AppModel
     @State private var exclusionsDraft = ""
     @FocusState private var exclusionsFocused: Bool
+    @State private var gapDraft = 0.0
+    @State private var opacityDraft = 1.0
+    @State private var edgeSpanDraft = 16.0
 
     /// Everything on this page that is not one of the two grouped sections below.
     private var presetActions: [HotkeyAction] {
@@ -93,12 +96,19 @@ struct ZonesPage: View {
             Section {
                 LabeledContent("Gap") {
                     HStack {
-                        Slider(value: model.binding(\.zoneGap, set: { $0.setZoneGap($1) }), in: 0...40)
-                        Text("\(Int(model.zoneGap)) pt").monospacedDigit().frame(width: 46, alignment: .trailing)
+                        // Committed when the knob is let go, not on every tick:
+                        // each write re-encodes the whole config file and wakes
+                        // every agent listening for changes.
+                        Slider(value: $gapDraft, in: 0...40) { editing in
+                            if !editing { model.actions?.setZoneGap(gapDraft) }
+                        }
+                        Text("\(Int(gapDraft)) pt").monospacedDigit().frame(width: 46, alignment: .trailing)
                     }
                 }
                 LabeledContent("Opacity") {
-                    Slider(value: model.binding(\.zoneOpacity, set: { $0.setZoneOpacity($1) }), in: 0.1...1)
+                    Slider(value: $opacityDraft, in: 0.1...1) { editing in
+                        if !editing { model.actions?.setZoneOpacity(opacityDraft) }
+                    }
                 }
                 ColorPicker("Colour", selection: zoneColor, supportsOpacity: false)
                 Button("Use the system accent colour") { model.actions?.setZoneColor(nil) }
@@ -111,8 +121,10 @@ struct ZonesPage: View {
                 }
                 LabeledContent("Edge spanning") {
                     HStack {
-                        Slider(value: model.binding(\.zoneEdgeSpan, set: { $0.setZoneEdgeSpan($1) }), in: 0...60)
-                        Text(model.zoneEdgeSpan < 1 ? "Off" : "\(Int(model.zoneEdgeSpan)) pt")
+                        Slider(value: $edgeSpanDraft, in: 0...60) { editing in
+                            if !editing { model.actions?.setZoneEdgeSpan(edgeSpanDraft) }
+                        }
+                        Text(edgeSpanDraft < 1 ? "Off" : "\(Int(edgeSpanDraft)) pt")
                             .monospacedDigit().frame(width: 46, alignment: .trailing)
                     }
                 }
@@ -166,7 +178,15 @@ struct ZonesPage: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear { exclusionsDraft = AppExclusions.text(from: model.excludedApps) }
+        .onAppear {
+            exclusionsDraft = AppExclusions.text(from: model.excludedApps)
+            gapDraft = model.zoneGap
+            opacityDraft = model.zoneOpacity
+            edgeSpanDraft = model.zoneEdgeSpan
+        }
+        .onChange(of: model.zoneGap) { gapDraft = $0 }
+        .onChange(of: model.zoneOpacity) { opacityDraft = $0 }
+        .onChange(of: model.zoneEdgeSpan) { edgeSpanDraft = $0 }
         .onChange(of: model.excludedApps) { exclusionsDraft = AppExclusions.text(from: $0) }
         // Committed when the field is left rather than per keystroke, so a
         // half-typed name never starts excluding something.
@@ -446,10 +466,6 @@ struct MousePage: View {
     var body: some View {
         Form {
             Section {
-                Toggle(isOn: model.binding(\.findCursorEnabled, set: { $0.setFindCursor($1) })) {
-                    Text("Find the pointer on a double-tap of ⌃")
-                    Text("Dims everything but a circle round it, briefly")
-                }
                 Toggle(isOn: model.binding(\.highlightClicksEnabled, set: { $0.setHighlightClicks($1) })) {
                     Text("Ring every click")
                     Text("For screen recordings, where a click is otherwise invisible")
@@ -461,14 +477,14 @@ struct MousePage: View {
             } header: {
                 Text("Pointer")
             } footer: {
-                Text("These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account. They take the zone colour from the Zones page.")
+                Text("These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account, and no keystroke is watched at all. They take the zone colour from the Zones page.")
             }
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "mouse"))
             } header: {
                 Text("Shortcuts")
             } footer: {
-                Text("Jumping warps the pointer to the middle of the next display and flashes it there, which beats pushing a mouse across three monitors.")
+                Text("Finding the pointer dims everything but a circle round it, briefly. Jumping warps it to the middle of the next display and flashes it there, which beats pushing a mouse across three monitors.")
             }
         }
         .formStyle(.grouped)

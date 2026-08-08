@@ -36,8 +36,14 @@ final class NewWindowWatcher {
         self.windows = windows
     }
 
+    /// Safe to call again: watching an app twice is a no-op, and a second call
+    /// is how apps that were already running pick up an observer once
+    /// Accessibility is finally granted.
     func start() {
-        guard workspaceTokens.isEmpty else { return }
+        guard workspaceTokens.isEmpty else {
+            attachToRunningApps()
+            return
+        }
         let center = NSWorkspace.shared.notificationCenter
         workspaceTokens.append(center.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main
@@ -51,6 +57,10 @@ final class NewWindowWatcher {
             guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
             self?.unwatch(app.processIdentifier)
         })
+        attachToRunningApps()
+    }
+
+    private func attachToRunningApps() {
         for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
             watch(app)
         }

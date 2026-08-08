@@ -27,11 +27,20 @@ final class MouseOverlay {
         window = panel
         panel.setFrame(Self.desktopFrame(), display: false)
         view.frame = panel.contentLayoutRect
+        let previous = view.mode == mode ? view.point : nil
         view.mode = mode
         view.point = point
         view.tint = tint
         view.pulse = nil
-        view.needsDisplay = true
+        // Crosshairs move with the pointer, so redrawing the whole desk on
+        // every sample would be several megapixels a frame. Only the lines
+        // that left and the ones that arrived are dirty.
+        if case .crosshairs = mode, let previous {
+            view.invalidateCrosshairs(at: previous)
+            view.invalidateCrosshairs(at: point)
+        } else {
+            view.needsDisplay = true
+        }
         if !panel.isVisible { panel.orderFrontRegardless() }
     }
 
@@ -69,6 +78,8 @@ final class MouseOverlay {
             self?.animatePulse(generation: generation, step: step + 1, radius: radius)
         }
     }
+
+    var visibleWindows: [NSWindow] { [window].compactMap { $0 } }
 
     func hide() {
         view.mode = nil
@@ -110,6 +121,17 @@ final class MouseOverlayView: NSView {
     var pulse: Pulse?
 
     override var isFlipped: Bool { false }
+
+    /// Marks only the two bands a crosshair at this point occupies.
+    func invalidateCrosshairs(at point: NSPoint) {
+        let origin = window?.frame.origin ?? .zero
+        let centre = NSPoint(x: point.x - origin.x, y: point.y - origin.y)
+        let thickness: CGFloat = 4
+        setNeedsDisplay(NSRect(x: bounds.minX, y: centre.y - thickness,
+                               width: bounds.width, height: thickness * 2))
+        setNeedsDisplay(NSRect(x: centre.x - thickness, y: bounds.minY,
+                               width: thickness * 2, height: bounds.height))
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let context = NSGraphicsContext.current?.cgContext else { return }

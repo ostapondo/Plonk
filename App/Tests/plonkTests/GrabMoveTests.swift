@@ -77,3 +77,31 @@ struct GrabMoveHandleTests {
         #expect(GrabMove.resized(frame, by: CGVector(dx: 40, dy: 40), pulling: GrabMove.Handle()) == frame)
     }
 }
+
+struct ZoneGapTests {
+
+    @Test func aGapShrinksTheRectOnEverySide() {
+        let inset = WindowManager.inset(CGRect(x: 0, y: 0, width: 800, height: 600), by: 10)
+        #expect(inset == CGRect(x: 10, y: 10, width: 780, height: 580))
+    }
+
+    @Test func noGapChangesNothing() {
+        let rect = CGRect(x: 0, y: 0, width: 800, height: 600)
+        #expect(WindowManager.inset(rect, by: 0) == rect)
+    }
+
+    /// A wide gap on a narrow zone would otherwise produce a null rect, and a
+    /// window set to a null rect goes to an infinite origin.
+    @Test func aGapWiderThanTheZoneIsClampedRatherThanInverting() {
+        let narrow = CGRect(x: 0, y: 0, width: 130, height: 130)
+        let inset = WindowManager.inset(narrow, by: 40)
+        #expect(inset.width > 0 && inset.height > 0)
+        #expect(!inset.isNull && !inset.isInfinite)
+        #expect(inset.width <= narrow.width && inset.height <= narrow.height)
+    }
+
+    @Test func aZoneAtTheMinimumIsLeftAlone() {
+        let tiny = CGRect(x: 0, y: 0, width: 100, height: 90)
+        #expect(WindowManager.inset(tiny, by: 40) == tiny)
+    }
+}
