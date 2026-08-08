@@ -1,4 +1,9 @@
 .build/
+# Swift writes these beside Package.swift when a build is interrupted.
+App/*.d
+App/*.dia
+App/*.swiftdeps
+App/*.swiftmodule
 .DS_Store
 .vscode/
 Plonk.app/
