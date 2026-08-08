@@ -6,6 +6,7 @@
 // every subcommand is one HTTP call to 127.0.0.1, and nothing here holds state.
 import { spawn } from "node:child_process";
 import { BASE, call, processIdentityHolder, type State } from "./api.js";
+import { options } from "./args.js";
 
 const USAGE = `plonk — drive the Plonk menu bar app from a shell
 
@@ -22,28 +23,6 @@ const USAGE = `plonk — drive the Plonk menu bar app from a shell
   plonk shot [--mode region|window|screen] [--path FILE]
 
 Everything talks to ${BASE}; Plonk.app has to be running.`;
-
-/** Pulls "--name value" out of argv and returns what is left. */
-function options(argv: string[]): { flags: Record<string, string>; rest: string[] } {
-  const flags: Record<string, string> = {};
-  const rest: string[] = [];
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg.startsWith("--")) {
-      const key = arg.slice(2);
-      const next = argv[i + 1];
-      if (next === undefined || next.startsWith("--")) {
-        flags[key] = "true";
-      } else {
-        flags[key] = next;
-        i++;
-      }
-    } else {
-      rest.push(arg);
-    }
-  }
-  return { flags, rest };
-}
 
 /** Unwinds to the top instead of calling process.exit, which on a pipe cuts
  * stdout off mid-write: `plonk state --json | jq` would get invalid JSON.
