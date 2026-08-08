@@ -36,13 +36,19 @@ when a display is unplugged.
 
 ## Build & verify
 
+Each line is a subshell, so the block runs as written from the repository root:
+
 ```sh
-cd App && swift build          # must pass before any commit
-./scripts/test.sh              # unit tests — must pass
-cd mcp && npm run typecheck    # must pass when mcp/ changed
-./scripts/build.sh             # produces Plonk.app
-curl -s 127.0.0.1:43917/ping   # smoke test while the app is running
+(cd App && swift build)          # must pass before any commit
+./scripts/test.sh                # unit tests — must pass
+(cd mcp && npm run typecheck)    # must pass when mcp/ changed
+./scripts/build.sh               # produces Plonk.app; needs a signing identity
+curl -s 127.0.0.1:43917/ping     # smoke test while the app is running
 ```
+
+The first three need no signing certificate. `build.sh` does, and refuses
+rather than produce a bundle that cannot hold its permissions; see
+[CONTRIBUTING.md](CONTRIBUTING.md) for why and how to make one.
 
 The release number lives in `version.env`, and only there. `scripts/build.sh`
 reads `MARKETING_VERSION` and `BUILD_NUMBER` into `Info.plist`. Bump them to cut

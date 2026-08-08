@@ -107,6 +107,7 @@
   section:first-of-type { border-top: 0; }
   h2 { font-size: clamp(24px, 3.4vw, 31px); letter-spacing: -.018em; margin: 0 0 10px; }
   h2 + p.sub { color: var(--dim); margin: 0 0 26px; max-width: 640px; }
+  p.note { color: var(--dim); font-size: 14.5px; margin: 22px 0 0; max-width: 640px; }
 
   .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
   .card {
@@ -315,6 +316,12 @@ curl -so /dev/null -w '%{http_code}\n' \
       </div>
       <a class="ghost" href="https://github.com/ostapondo/plonk">Star it on GitHub</a>
     </div>
+    <p class="note">Or help build it. It compiles and tests on a plain checkout
+      with no signing certificate and no account —
+      <a href="https://github.com/ostapondo/plonk/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>
+      is three commands long, and the
+      <a href="https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">good first issues</a>
+      each say where the code is and how to tell it worked.</p>
   </section>
 
 </div>
@@ -325,6 +332,7 @@ curl -so /dev/null -w '%{http_code}\n' \
     <nav>
       <a href="https://github.com/ostapondo/plonk">Source</a>
       <a href="https://github.com/ostapondo/plonk/issues">Issues</a>
+      <a href="https://github.com/ostapondo/plonk/blob/main/CONTRIBUTING.md">Contributing</a>
       <a href="https://github.com/ostapondo/plonk/blob/main/ROADMAP.md">Roadmap</a>
       <a href="https://www.npmjs.com/package/plonk-mcp">plonk-mcp on npm</a>
     </nav>
