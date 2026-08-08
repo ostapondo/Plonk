@@ -175,10 +175,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       # Node 24 for npm 11, which is the first that can publish over OIDC.
+      #
+      # No registry-url on purpose. Given one, setup-node writes an .npmrc with
+      # an auth line and fills it with a placeholder when no token is passed —
+      # npm then authenticates with "XXXXX-XXXXX-XXXXX-XXXXX", gets a 404, and
+      # never tries OIDC at all, because OIDC is what it falls back to only
+      # when nothing else claims to be a credential. The default registry is
+      # registry.npmjs.org anyway.
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: mcp/package-lock.json
 
