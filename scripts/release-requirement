@@ -1,1 +1,1 @@
-identifier "dev.plonk.app" and certificate leaf = H"b8efe1c89e46815b26633abd275352e713ef8021"
+identifier "dev.plonk.app" and certificate root = H"b8efe1c89e46815b26633abd275352e713ef8021"
