@@ -43,6 +43,7 @@ Each line is a subshell, so the block runs as written from the repository root:
 ./scripts/test.sh                # unit tests — must pass
 ./scripts/lint.sh                # style rules — must pass
 (cd mcp && npm test)             # must pass when mcp/ changed
+node scripts/check-zone-sets.mjs # must pass when zone-sets/ changed
 ./scripts/build.sh               # produces Plonk.app; needs a signing identity
 curl -s 127.0.0.1:43917/ping     # smoke test while the app is running
 ```

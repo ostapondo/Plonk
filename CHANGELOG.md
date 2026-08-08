@@ -15,6 +15,10 @@ one of those.
 
 ### Added
 
+- `zone-sets/` — a gallery of layouts as JSON the app's own `/zones/save` route
+  accepts unmodified, so trying one is a single command and no build. Adding
+  one is the smallest useful change this repo takes, and
+  `scripts/check-zone-sets.mjs` validates the folder in its own CI job.
 - `scripts/lint.sh` — checks the rules AGENTS.md states and nothing enforced:
   file length, no emoji, no trailing whitespace, a newline at the end of every
   file. No dependencies; it runs on a plain checkout.

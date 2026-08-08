@@ -181,7 +181,7 @@ stops.
 
 ## Build
 
-Four commands, and they are exactly what CI runs on every pull request. Each
+Five commands, and they are exactly what CI runs on every pull request. Each
 line is a subshell, so paste the block from the repository root and it works:
 
 ```sh
@@ -189,6 +189,7 @@ line is a subshell, so paste the block from the repository root and it works:
 ./scripts/test.sh                          # the unit suite
 ./scripts/lint.sh                          # style rules, no dependencies
 (cd mcp && npm ci && npm test)             # the MCP server
+node scripts/check-zone-sets.mjs           # the layouts in zone-sets/
 ```
 
 None of that needs a signing certificate. Zone geometry, config decoding, HTTP
@@ -210,12 +211,19 @@ them need a signing certificate — the loop above is the whole requirement.
 [CONTRIBUTING.md](CONTRIBUTING.md) opens with a first change you can send in
 about fifteen minutes, and says how long a review takes.
 
+The smallest useful change here is one JSON file. [`zone-sets/`](zone-sets/) is
+a gallery of layouts worth copying — an ultrawide split, a rotated monitor, the
+one built around a recurring meeting. Draw it in the app, read the numbers out
+of `plonk state --json`, open a pull request; that folder has its own CI job and
+answers in about twenty seconds. Nothing to build, nothing to sign, no Swift.
+
 The issues tagged [good first issue][gfi] are written to be picked up cold —
-each one says where the code is and how to tell it worked. The ones tagged
-[needs-hardware][hw] need neither Swift nor a certificate, and are the most
-useful thing anyone can send: a window manager breaks on arrangements the author
-cannot see, and a report from three monitors or an ultrawide is worth more than
-a patch.
+each one says where the code is and how to tell it worked, and carries a prompt
+you can hand straight to an agent, since [AGENTS.md](AGENTS.md) already tells
+one how this repo is put together. The ones tagged [needs-hardware][hw] need
+neither Swift nor a certificate, and are the most useful thing anyone can send:
+a window manager breaks on arrangements the author cannot see, and a report
+from three monitors or an ultrawide is worth more than a patch.
 
 Questions, half-formed ideas and layouts worth showing off go to
 [Discussions](https://github.com/ostapondo/plonk/discussions); a security

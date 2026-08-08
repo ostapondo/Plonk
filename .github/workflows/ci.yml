@@ -40,3 +40,15 @@ jobs:
         working-directory: mcp
       - run: npm test
         working-directory: mcp
+
+  # Deliberately the cheapest job in the file: a pull request that adds one
+  # layout to zone-sets/ gets an answer in seconds, on a runner that is not
+  # queueing behind a Swift build it did not touch.
+  zone-sets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - run: node scripts/check-zone-sets.mjs

@@ -5,9 +5,14 @@ Bug reports, zone sets, client one-pagers and code are all welcome.
 Two things worth saying before anything else, because both are usually left to
 be guessed at:
 
-**You will get an answer within three days.** If a pull request sits longer than
-that, it is an oversight rather than a verdict — say so on the thread. A change
-that is not going to land will be told so quickly, and why.
+**A pull request gets a real answer within 48 hours**, even when the answer is
+that it needs another week of thought. There is one maintainer, so that is a
+promise about attention rather than about speed. If something sits longer, it is
+an oversight rather than a verdict — say so on the thread. A change that is
+declined is declined with the reason, and "What this project will not take"
+below exists so that happens as rarely as possible.
+
+Anyone whose change lands is listed in the release notes it ships in.
 
 **Your branch is yours.** Review comments will ask for changes rather than push
 them. If a pull request is nearly there and you would rather it were finished
@@ -27,6 +32,7 @@ git clone https://github.com/ostapondo/plonk && cd plonk
 ./scripts/test.sh                          # the unit suite
 ./scripts/lint.sh                          # style rules, no dependencies
 (cd mcp && npm ci && npm test)             # the MCP server
+node scripts/check-zone-sets.mjs           # the layouts in zone-sets/
 ```
 
 Each line is a subshell, so the block runs as written from the repository root.
@@ -44,27 +50,43 @@ That is the shape of most of the work here: one file, one seam, one test.
 
 ## Where the work is
 
-- **[good first issue][gfi]** — written to be picked up cold. Each says where
-  the code is and how to tell it worked.
-- **[reserved][res]** — issues deliberately left alone. If one is labelled
-  `reserved-for-contributors`, the maintainer is not working on it and will not
-  start; it is yours if you say so on the thread. Nothing here moves fast enough
-  to be worth racing.
+Roughly in order of how much of the repo you have to hold in your head. The
+first two need no Swift at all, and the third needs no Swift on your machine.
+
+- **A zone set.** One JSON file in [`zone-sets/`](zone-sets/), which is a
+  gallery of layouts people keep going back to. Draw it in the app, read the
+  numbers back out of `plonk state --json`, drop them in a file. CI for that
+  folder is its own job and answers in about twenty seconds. Good ones end up
+  shipping as built-ins. [`zone-sets/README.md`](zone-sets/README.md) has the
+  format and the rules.
 - **[needs-hardware][hw]** — see below. The single most useful thing you can
   send, and it needs neither Swift nor a certificate.
+- **Something in `mcp/`.** The MCP server and the `plonk` CLI are TypeScript, a
+  thin proxy over the app's HTTP API, and they build and test on any machine —
+  Linux included, without a Mac in sight. `npm ci && npm test` in `mcp/` is the
+  whole loop.
 - **A one-pager for an MCP client.** `docs/clients/` has Cursor, Zed and Cline.
   Any client that can run a stdio server works; the page is the missing part.
-- **A zone set.** If you have drawn a layout you keep going back to, post it
-  under Show and tell. Good ones end up shipping as built-ins.
+  If you use a client that is not there, you already know the one thing this
+  repo does not.
 - **A voice command.** `VoiceCommands.swift` maps spoken phrases to actions that
   run in the app, with no agent and no network. Adding a phrase is a small
-  change with a unit test next to it in `VoiceCommandTests.swift`.
+  change with a unit test next to it in `VoiceCommandTests.swift`, and the
+  parser is pure — the tests run with no desktop session.
 - **A file off `scripts/line-limit-baseline`.** Every line in that file is a
   type waiting to be lifted out of something too big. [Issue #17][17] is the
   first one, and it comes with tests that cannot be written until it moves.
 - **A new module.** The seam is described under "Adding a module" in
   [AGENTS.md](AGENTS.md). Open an issue first so two people do not build the
   same thing.
+
+The issues tagged **[good first issue][gfi]** are the same idea, written out:
+each one names the file to open, what done looks like, and the command that
+proves it. Comment on one to claim it, so nobody writes it twice.
+
+The ones tagged **[reserved][res]** are deliberately left alone: the maintainer
+is not working on them and will not start, so they are yours if you say so on
+the thread. Nothing here moves fast enough to be worth racing.
 
 [gfi]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [res]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3Areserved-for-contributors
