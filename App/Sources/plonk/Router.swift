@@ -17,6 +17,8 @@ import Network
 //   POST /zones/assign   { screen, name? }
 //   POST /zones/delete   { name }
 //   POST /shot/capture   { mode?, annotate?, path?, clipboard?, preview? }
+//                        mode "app" also takes { app?, title_contains? } and
+//                        photographs that window even when it is buried
 //   POST /shot/annotate  { path, marks: [{kind, points, color?, width?}], output?, clipboard? }
 //   POST /shot/text      { mode?, path?, clipboard?, languages? }  on-device OCR
 //   POST /layout/zone    { app, zone, title?, screen? }
@@ -34,18 +36,15 @@ import Network
 // the app knows who is driving; plonk-mcp sends them on every call.
 
 final class Router {
-    /// Longest side of the copy handed to agents, matching what the Claude API
-    /// accepts without resampling.
-    static let previewMaxDimension: CGFloat = 1568
-
     private let store: ConfigStore
     private let windows: WindowManager
     private let awake: AwakeManager
     let agents: AgentRegistry
     let changes: ChangeBus
+    /// The `/shot` routes, which answer after the request has been left behind.
+    /// AppDelegate wires its capture closures onto this.
+    let shots: ShotRoutes
 
-    /// Set by AppDelegate; the editor and permission prompts need AppKit.
-    var capture: ((CaptureMode, Bool, @escaping (NSImage?) -> Void) -> Void)?
     /// Set by AppDelegate. Launching shows a panel and outlives the request, so
     /// it stays out of Router the same way capture does.
     var launchWorkspace: ((String, Workspace, Int?, @escaping ([[String: Any]]) -> Void) -> Void)?
@@ -62,8 +61,6 @@ final class Router {
     var didChangeLayouts: (() -> Void)?
     var didChangeZones: (() -> Void)?
     var didChangeAgents: (() -> Void)?
-    var didSaveShot: ((String) -> Void)?
-    var announce: ((_ text: String, _ imagePath: String?) -> Void)?
 
     init(store: ConfigStore, windows: WindowManager, awake: AwakeManager,
          agents: AgentRegistry = AgentRegistry(), changes: ChangeBus = ChangeBus()) {
@@ -72,6 +69,7 @@ final class Router {
         self.awake = awake
         self.agents = agents
         self.changes = changes
+        self.shots = ShotRoutes(store: store)
     }
 
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
@@ -295,13 +293,13 @@ final class Router {
             }
 
         case ("POST", "/shot/capture"):
-            captureRoute(body, respond: respond)
+            shots.captureRoute(body, respond: respond)
 
         case ("POST", "/shot/annotate"):
-            respond(annotateRoute(body))
+            respond(shots.annotateRoute(body))
 
         case ("POST", "/shot/text"):
-            textRoute(body, respond: respond)
+            shots.textRoute(body, respond: respond)
 
         case ("GET", "/update/state"):
             respond(.ok(updateState?() ?? ["error": "updates are not available"]))
@@ -583,141 +581,6 @@ final class Router {
         return .ok(["ok": true, "app": app, "screen": screen, "zone": number, "zones": zones.count])
     }
 
-    // MARK: - Screenshot
-
-    private func captureRoute(_ body: [String: Any], respond: @escaping (HTTPResponse) -> Void) {
-        guard let capture else {
-            respond(.failed("capture is not available"))
-            return
-        }
-        let mode = CaptureMode(rawValue: (body["mode"] as? String) ?? "screen") ?? .screen
-        let annotate = (body["annotate"] as? Bool) ?? false
-
-        capture(mode, annotate) { [weak self] image in
-            guard let self else { return }
-            guard let image else {
-                respond(HTTPResponse(status: 409, json: [
-                    "error": "capture was cancelled, or Screen Recording permission is missing",
-                ]))
-                return
-            }
-            if annotate {
-                respond(.ok(["ok": true, "editor_open": true]))
-                return
-            }
-
-            let destination: ScreenshotManager.Destination = (body["path"] as? String)
-                .map { .path($0) } ?? .folder(self.store.config.shotFolder)
-            guard let path = ScreenshotManager.save(image, to: destination) else {
-                respond(.failed("could not write \(destination.url.path)"))
-                return
-            }
-
-            var result: [String: Any] = ["ok": true, "path": path]
-            if (body["clipboard"] as? Bool) ?? self.store.config.shotCopyToClipboard {
-                ScreenshotManager.copyToClipboard(image)
-                result["clipboard"] = true
-            }
-            if (body["preview"] as? Bool) == true,
-               let preview = ScreenshotManager.writePreview(image, maxDimension: Self.previewMaxDimension) {
-                result["preview_path"] = preview
-            }
-            self.didSaveShot?(path)
-            respond(.ok(result))
-        }
-    }
-
-    /// Burns agent-supplied marks into an existing capture.
-    private func annotateRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let path = trimmedName(body["path"]), let raw = body["marks"] as? [[String: Any]], !raw.isEmpty else {
-            return .badRequest("body must be {\"path\", \"marks\": [{kind, points:[{x,y}], color?, width?}]}")
-        }
-        let marks = raw.compactMap { Annotation(dict: $0) }
-        guard marks.count == raw.count else {
-            let kinds = Annotation.Kind.allCases.map(\.rawValue).joined(separator: ", ")
-            return .badRequest("every mark needs a kind (\(kinds)) and at least two points in 0..1")
-        }
-        let expanded = (path as NSString).expandingTildeInPath
-        guard let image = NSImage(contentsOfFile: expanded) else {
-            return .notFound("no readable image at \(expanded)")
-        }
-        let destination: ScreenshotManager.Destination = (body["output"] as? String)
-            .map { .path($0) } ?? .path(Self.markedPath(for: expanded))
-        let copy = (body["clipboard"] as? Bool) ?? true
-
-        // Rendering is main-actor work; keeping the image inside the hop means
-        // only plain strings cross back out.
-        let written: (path: String, preview: String?)? = MainActor.assumeIsolated {
-            guard let marked = image.annotated(with: marks),
-                  let saved = ScreenshotManager.save(marked, to: destination) else { return nil }
-            if copy { ScreenshotManager.copyToClipboard(marked) }
-            return (saved, ScreenshotManager.writePreview(marked, maxDimension: Self.previewMaxDimension))
-        }
-        guard let written else { return .failed("could not render or write \(destination.url.path)") }
-
-        var result: [String: Any] = ["ok": true, "path": written.path, "marks": marks.count]
-        if copy { result["clipboard"] = true }
-        if let preview = written.preview { result["preview_path"] = preview }
-        announce?(copy ? "Copied to clipboard" : "Saved", written.preview ?? written.path)
-        return .ok(result)
-    }
-
-    // MARK: - Text
-
-    /// Reads the text off a capture, or off a file that is already on disk.
-    /// Recognition is on-device; nothing leaves the Mac.
-    private func textRoute(_ body: [String: Any], respond: @escaping (HTTPResponse) -> Void) {
-        let languages = (body["languages"] as? [String])?.filter { !$0.isEmpty } ?? store.config.textLanguages
-        let copy = (body["clipboard"] as? Bool) ?? true
-
-        let read: (NSImage) -> Void = { image in
-            TextExtractor.recognize(in: image, languages: languages) { result in
-                switch result {
-                case .failure(let error):
-                    respond(.failed(error.localizedDescription))
-                case .success(let lines):
-                    let joined = TextExtractor.joined(lines)
-                    var payload: [String: Any] = [
-                        "ok": true,
-                        "text": joined,
-                        "lines": lines.map(\.asDict),
-                    ]
-                    if copy, !joined.isEmpty {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(joined, forType: .string)
-                        payload["clipboard"] = true
-                    }
-                    if lines.isEmpty { payload["note"] = "no text was recognized in that area" }
-                    respond(.ok(payload))
-                }
-            }
-        }
-
-        if let path = trimmedName(body["path"]) {
-            let expanded = (path as NSString).expandingTildeInPath
-            guard let image = NSImage(contentsOfFile: expanded) else {
-                respond(.notFound("no readable image at \(expanded)"))
-                return
-            }
-            read(image)
-            return
-        }
-        guard let capture else {
-            respond(.failed("capture is not available"))
-            return
-        }
-        let mode = CaptureMode(rawValue: (body["mode"] as? String) ?? "region") ?? .region
-        capture(mode, false) { image in
-            guard let image else {
-                respond(HTTPResponse(status: 409, json: [
-                    "error": "capture was cancelled, or Screen Recording permission is missing",
-                ]))
-                return
-            }
-            read(image)
-        }
-    }
-
     /// "17:00" or "17:00:00" is the next such moment — today when it is still
     /// ahead, tomorrow when it has passed, which is what someone setting an
     /// alarm at midnight means. An ISO-8601 timestamp is taken as written.
@@ -744,12 +607,6 @@ final class Router {
         components.second = second
         guard let today = calendar.date(from: components) else { return nil }
         return today > now ? today : calendar.date(byAdding: .day, value: 1, to: today)
-    }
-
-    private static func markedPath(for path: String) -> String {
-        let url = URL(fileURLWithPath: path)
-        let stem = url.deletingPathExtension().lastPathComponent
-        return url.deletingLastPathComponent().appendingPathComponent("\(stem) marked.png").path
     }
 
     private func trimmedName(_ value: Any?) -> String? {

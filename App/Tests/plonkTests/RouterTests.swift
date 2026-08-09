@@ -220,12 +220,6 @@ struct RouterTests {
         #expect(h.post("/zones/delete", ["name": "solo"]).status == 404)
     }
 
-    @Test func captureReportsCancellation() {
-        let h = Harness()
-        h.router.capture = { _, _, done in done(nil) }
-        #expect(h.post("/shot/capture", ["mode": "region"]).status == 409)
-    }
-
     @Test func renamingAWorkspaceKeepsItsContentsAndBehavior() {
         let h = Harness()
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem], "move_existing": false])

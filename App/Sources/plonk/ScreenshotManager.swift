@@ -85,6 +85,32 @@ enum ScreenshotManager {
         }
     }
 
+    /// Photographs one window by id, whatever is stacked on top of it, and
+    /// without raising it or taking focus. `-l` asks the window server for that
+    /// window's own image rather than for the pixels standing where it is, and
+    /// `-o` leaves the drop shadow off. WindowCapture finds the id.
+    static func captureWindow(_ id: CGWindowID, completion: @escaping (NSImage?) -> Void) {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("plonk-window-\(UUID().uuidString).png")
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        task.arguments = ["-x", "-o", "-l", String(id), url.path]
+        task.terminationHandler = { finished in
+            var image: NSImage?
+            // A minimized window exits 0 and writes nothing, so the file is
+            // what says whether this worked, not the status.
+            if finished.terminationStatus == 0 { image = NSImage(contentsOf: url) }
+            try? FileManager.default.removeItem(at: url)
+            DispatchQueue.main.async { completion(image) }
+        }
+        do {
+            try task.run()
+        } catch {
+            NSLog("Plonk: screencapture failed to launch: \(error)")
+            DispatchQueue.main.async { completion(nil) }
+        }
+    }
+
     /// Timestamped file name, e.g. "Plonk 2026-08-07 at 14.05.12.png".
     static func fileName(for date: Date) -> String {
         let formatter = DateFormatter()

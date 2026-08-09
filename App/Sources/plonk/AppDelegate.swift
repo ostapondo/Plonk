@@ -549,14 +549,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.refreshZoneModel()
             self?.dragSnap.previewZones()
         }
-        router.didSaveShot = { [weak self] path in self?.model.shotStatus = "Saved to \(path)" }
-        router.announce = { text, path in
-            HUD.shared.show(text, image: path.flatMap { NSImage(contentsOfFile: $0) })
-        }
-        router.capture = { [weak self] mode, annotate, done in
-            guard let self else { return done(nil) }
-            runCapture(mode, openEditor: annotate, completion: done)
-        }
+        setupShotRoutes()
         router.launchWorkspace = { [weak self] name, workspace, screen, done in
             guard let self else { return done([["ok": false, "error": "shutting down"]]) }
             launcher.launch(workspace, named: name, onScreen: screen, completion: done)
