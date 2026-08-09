@@ -42,8 +42,153 @@ extension AppDelegate {
         store.config.appearance.apply(to: NSApp)
     }
 
+    /// A spoken command, run through the same calls the hotkeys use — so a
+    /// sentence cannot reach anything a key could not.
+    func run(_ command: VoiceCommand) {
+        switch command {
+        case .preset(let preset): commands.apply(preset)
+        case .zone(let number): commands.snap(toZone: number)
+        case .putBack: commands.unsnap()
+        case .focus(let direction): commands.moveFocus(direction)
+        case .cycleZone: commands.cycleZone(backwards: false)
+        case .showZones: dragSnap.previewZones()
+        case .awake(let minutes):
+            setAwakeTimeout(minutes: minutes ?? 0)
+            setAwake(true)
+        case .awakeOff: setAwake(false)
+        case .capture(let mode): runCapture(mode, openEditor: false)
+        case .launchWorkspace(let name): launchWorkspace(named: name, onScreen: nil)
+        }
+    }
+
     func openCommandPalette() {
-        presenter.showCommandPalette(commands: paletteCommands())
+        // The same key closes it. Reopening instead would rebuild the window
+        // with an empty field, throwing away a half-typed sentence for anyone
+        // who pressed it twice wondering whether it had registered.
+        if presenter.isCommandPaletteOpen {
+            presenter.closeCommandPalette()
+            return
+        }
+        presenter.showCommandPalette(commands: paletteCommands(),
+                                     agent: store.config.selectedAgent) { [weak self] prompt in
+            self?.askAgent(prompt)
+        }
+    }
+
+    /// Runs a CLI adapter for a prompt, and says on screen how it went.
+    ///
+    /// The process can take the better part of a minute, so "it started" and
+    /// "it worked" are different pieces of news and both have to be delivered.
+    /// Before this only the first one was, for two seconds, and a failure was
+    /// an NSLog nobody reads — which from the palette looked exactly like a
+    /// window closing and nothing happening.
+    func launchAdapter(_ adapter: AgentAdapter, prompt: String) {
+        let invocation = AgentAdapter.invocation(command: adapter.command, prompt: prompt)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-lc", invocation.command]
+        process.environment = ProcessInfo.processInfo.environment
+            .merging(invocation.environment) { _, prompt in prompt }
+
+        // A file, not a pipe. A pipe nobody is reading fills at about 64 KB and
+        // the adapter blocks on the write for ever — and `claude -p` printing
+        // its answer clears that easily, so attaching one and reading it only
+        // after exit produces exactly the hang this is supposed to report.
+        // Draining it concurrently would work and needs a lock and a reader;
+        // a file cannot block, and the tail is all the HUD ever shows.
+        let errorLog = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plonk-adapter-\(UUID().uuidString).log")
+        FileManager.default.createFile(atPath: errorLog.path, contents: nil)
+        let errors = try? FileHandle(forWritingTo: errorLog)
+        process.standardError = errors ?? FileHandle.nullDevice
+        // Discarded outright: nothing reads it, and that is the same trap.
+        process.standardOutput = FileHandle.nullDevice
+
+        // A ticking HUD for as long as it runs. The agent takes tens of seconds
+        // and moves nothing until it has decided what to move, so without this
+        // the whole middle of the job looks identical to nothing happening —
+        // which is exactly what it was mistaken for. The count is what makes it
+        // readable as progress rather than as a stuck label.
+        let started = Date()
+        var ticks = 0
+        var progress: Timer?
+        // Belt and braces. Both halves are queued on the main thread and the
+        // start is queued first, so FIFO already orders them; this is here so
+        // that stays true if either one ever moves.
+        var done = false
+        let beat = {
+            ticks += 1
+            let dots = String(repeating: "·", count: 1 + ticks % 3)
+            let seconds = Int(Date().timeIntervalSince(started).rounded())
+            // Longer than the interval, so the panel never blinks out between
+            // beats, and short enough to clear itself if this stops ticking.
+            HUD.shared.show("\(adapter.name) is working \(dots)  \(seconds)s", duration: 3)
+        }
+        let stop = {
+            done = true
+            progress?.invalidate()
+            progress = nil
+        }
+
+        DispatchQueue.main.async {
+            guard !done else { return }
+            beat()
+            progress = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { _ in beat() }
+        }
+
+        process.terminationHandler = { finished in
+            try? errors?.close()
+            let complaint = (try? String(contentsOf: errorLog, encoding: .utf8)) ?? ""
+            try? FileManager.default.removeItem(at: errorLog)
+            let last = complaint.split(separator: "\n").last.map(String.init) ?? ""
+            let seconds = Int(Date().timeIntervalSince(started).rounded())
+            DispatchQueue.main.async {
+                stop()
+                if finished.terminationStatus == 0 {
+                    HUD.shared.show("✓ \(adapter.name) finished in \(seconds)s")
+                } else {
+                    HUD.shared.show("✗ \(adapter.name) failed (\(finished.terminationStatus))"
+                                    + (last.isEmpty ? "" : ": \(last.prefix(70))"))
+                }
+            }
+        }
+
+        // Adapters may run for minutes, so they never touch the main thread.
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try process.run()
+            } catch {
+                // terminationHandler never runs for a process that never ran,
+                // so the ticking has to be stopped from here or it ticks for ever.
+                DispatchQueue.main.async {
+                    stop()
+                    HUD.shared.show("\(adapter.name) would not start: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    /// Whatever was typed into the palette that was not a command. It takes the
+    /// same call the voice path makes, so a sentence typed and a sentence spoken
+    /// reach the agent by one road and fail in one way.
+    func askAgent(_ prompt: String) {
+        let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        let response = router.dispatch(prompt: text)
+        let agent = (response.json["agent"] as? String) ?? "agent"
+        if response.json["error"] != nil {
+            // Router answers an API caller, and tells it to pass an "agent"
+            // field. There is no field here — there is a menu.
+            HUD.shared.show(store.config.selectedAgent == nil
+                            ? "No active agent. Pick one from the menu bar first."
+                            : (response.json["error"] as? String ?? "That did not go anywhere"))
+        } else if let note = response.json["note"] as? String {
+            // Queued for a session that has never connected. Saying "→ agent"
+            // here would be the silent success this was meant to stop.
+            HUD.shared.show("Waiting for \(agent) to connect: \(note)")
+        } else {
+            HUD.shared.show("→ \(agent): \(text)")
+        }
     }
 
     /// Every shortcut acts on whatever window is in front, and while the palette
@@ -64,7 +209,10 @@ extension AppDelegate {
     func paletteCommands() -> [PlonkCommand] {
         var result: [PlonkCommand] = []
 
-        for action in HotkeyAction.allCases {
+        // Every action but the one that opened this. Running it would hide the
+        // window to reach the front app and then reopen the palette on top of
+        // nothing, which is a loop with a side effect.
+        for action in HotkeyAction.allCases where action != .commandPalette {
             result.append(PlonkCommand(id: "hotkey.\(action.rawValue)",
                                        title: action.title,
                                        group: action.group,
