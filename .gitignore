@@ -9,5 +9,9 @@ App/*.swiftmodule
 Plonk.app/
 mcp/node_modules/
 mcp/dist/
+# Build products of scripts/build-mcpb.sh: the staging tree it vendors
+# dependencies into, and the bundle it packs from it.
+mcp/.mcpb-build/
+mcp/*.mcpb
 Plonk-*.zip
 *.p12

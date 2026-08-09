@@ -266,3 +266,48 @@ jobs:
             | tar xz mcp-publisher
           ./mcp-publisher login github-oidc
           cd mcp && ../mcp-publisher publish
+
+  # The .mcpb bundle is how Claude Desktop installs an MCP server: open the
+  # file, confirm, done — no config file to find, no command to paste, which is
+  # where most people give up. It is built here rather than on a laptop for the
+  # same reason the zip is: it carries the compiled server and a vendored copy
+  # of its dependencies, so a bundle packed from a dirty checkout would ship
+  # whatever happened to be lying around, signed by nothing.
+  bundle:
+    runs-on: ubuntu-latest
+    # The draft release this uploads to is created by the app job.
+    needs: app
+    permissions:
+      contents: write # upload the bundle to the release
+      id-token: write # sign the attestation
+      attestations: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+
+      - run: npm ci
+        working-directory: mcp
+
+      - name: Read the version
+        id: version
+        run: |
+          set -eu
+          . ./version.env
+          echo "version=$MARKETING_VERSION" >> "$GITHUB_OUTPUT"
+
+      - run: ./scripts/build-mcpb.sh
+
+      - uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: mcp/plonk-${{ steps.version.outputs.version }}.mcpb
+
+      - name: Publish the bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release upload "v$VERSION" "mcp/plonk-$VERSION.mcpb" --clobber
