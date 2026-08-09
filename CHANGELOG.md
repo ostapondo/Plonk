@@ -11,6 +11,27 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## 0.2.3 — 2026-08-09
+
+Nothing in the app changed. This release exists so the MCP server can be
+installed by opening a file.
+
+### Added
+
+- Every release now carries `plonk-<version>.mcpb`, the bundle format Claude
+  Desktop installs in two clicks. It holds the compiled server and a vendored
+  copy of its dependencies, so no client config gets edited by hand and nothing
+  is fetched at launch. `npx -y plonk-mcp` still works and is still what the
+  CLI-based clients use.
+- The bundle gets the same build attestation as the app archive and the npm
+  tarball, so `gh attestation verify` ties it to the commit it was built from.
+
+### Removed
+
+- `smithery.yaml`. It described a deployment format Smithery's current
+  documentation no longer mentions, and nothing in the repository read it. The
+  Smithery listing is built from the bundle instead.
+
 ## 0.2.2 — 2026-08-09
 
 Nothing in the app changed. If you are on 0.2.1, there is nothing here worth
