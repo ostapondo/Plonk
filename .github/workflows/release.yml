@@ -21,26 +21,13 @@ name: Release
 #
 # Set the first of those five and this workflow switches paths on its own:
 # Developer ID signing, notarization, a stapled ticket and a .dmg beside the
-# zip. Leave them unset and it behaves exactly as it did before they existed.
-# There is no flag in here to flip.
+# zip. Unset, it behaves exactly as it did before they existed.
 #
-# There is one thing to do by hand, once, and the build stops until it is done:
-# scripts/release-requirement pins the signature every release so far carries,
-# so the first Developer ID run fails that check with the old and new values
-# printed side by side. Commit the new one. release.sh makes that check before
-# it uploads anything to Apple, so finding out costs a build and not a
-# notarization.
-#
-# An API key rather than an Apple ID and an app-specific password, because
-# notarytool cannot be asked anything on a runner: a key is three values that go
-# in as secrets, and it can be revoked by itself without disturbing the account
-# it belongs to.
-#
-# The switch is not free, and it is one-way. A Developer ID signature is a
-# different designated requirement, so scripts/release-requirement has to change
-# in the same commit — and every copy already installed will refuse the update,
-# the way 0.0.5 did. See SECURITY.md; the reason to do it early is that the bill
-# is proportional to how many people are already running it.
+# One thing has to be done by hand, and the build stops until it is. A Developer
+# ID is a different designated requirement, so the first such run fails the
+# check in release.sh with the old and new values printed side by side — commit
+# the new one to scripts/release-requirement. Every installed copy will refuse
+# that update the way 0.0.5 did; SECURITY.md has why it is worth doing early.
 #
 # npm needs no secret at all: plonk-mcp names this repository and this workflow
 # file as a trusted publisher (npmjs.com > the package > Settings > Trusted
@@ -87,13 +74,10 @@ jobs:
             exit 1
           fi
 
-      # One step for both identities, because the keychain dance is the same
-      # either way: create, import, unlock, and tell codesign it may use the key
-      # without stopping to ask. Only two lines differ, and they are the two
-      # that matter — a self-signed root has to be trusted before macOS counts
-      # it as a valid identity at all, and a Developer ID already chains to a
-      # root every Mac ships with, so trusting it by hand would be a lie about
-      # where it came from.
+      # One step for both identities: the keychain dance is the same, and only
+      # the trust line differs. A self-signed root has to be trusted before
+      # macOS counts it as a valid identity at all; a Developer ID already
+      # chains to one every Mac ships with.
       - name: Import the signing certificate
         id: signing
         env:
@@ -238,15 +222,11 @@ jobs:
           DMG="Plonk-$VERSION.dmg"
 
           # The image only exists on the notarized path, so everything below
-          # names what this run actually produced rather than assuming both.
-          # Getting that wrong is not cosmetic: a digest published next to a
-          # file it does not belong to is worse than no digest, because someone
-          # checks it, sees a mismatch, and concludes the download was tampered
-          # with.
+          # names what this run produced. A digest printed next to a file it
+          # does not belong to is worse than none: it reads as tampering.
           #
-          # The positional list rather than a space-separated string, so the
-          # loops below iterate on quoted arguments instead of on whatever the
-          # shell decides to split.
+          # Positional list rather than a string, so the loops iterate on
+          # quoted arguments instead of on however the shell splits.
           set -- "$ZIP"
           if [ -f "$DMG" ]; then
             set -- "$ZIP" "$DMG"
