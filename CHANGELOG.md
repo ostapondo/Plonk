@@ -13,6 +13,14 @@ one of those.
 
 ## Unreleased
 
+### Fixed
+
+- **⌘C, ⌘V, ⌘X and ⌘A work in Plonk's text fields.** They never had, anywhere
+  in the app: AppKit delivers those through the main menu's key equivalents,
+  and Plonk had no main menu at all, so a field would take a typed sentence but
+  not a pasted one. An accessory app draws no menu bar, so the menu that fixes
+  it stays invisible.
+
 ### Added
 
 - **The command palette has a key of its own — `⌃⌥Space`.** It was already
