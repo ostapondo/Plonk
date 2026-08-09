@@ -22,7 +22,14 @@ name: Release
 # Set the first of those five and this workflow switches paths on its own:
 # Developer ID signing, notarization, a stapled ticket and a .dmg beside the
 # zip. Leave them unset and it behaves exactly as it did before they existed.
-# There is no flag to flip and nothing to remember on release day.
+# There is no flag in here to flip.
+#
+# There is one thing to do by hand, once, and the build stops until it is done:
+# scripts/release-requirement pins the signature every release so far carries,
+# so the first Developer ID run fails that check with the old and new values
+# printed side by side. Commit the new one. release.sh makes that check before
+# it uploads anything to Apple, so finding out costs a build and not a
+# notarization.
 #
 # An API key rather than an Apple ID and an app-specific password, because
 # notarytool cannot be asked anything on a runner: a key is three values that go
@@ -228,7 +235,22 @@ jobs:
         run: |
           set -eu
           ZIP="Plonk-$VERSION.zip"
-          SHA=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
+          DMG="Plonk-$VERSION.dmg"
+
+          # The image only exists on the notarized path, so everything below
+          # names what this run actually produced rather than assuming both.
+          # Getting that wrong is not cosmetic: a digest published next to a
+          # file it does not belong to is worse than no digest, because someone
+          # checks it, sees a mismatch, and concludes the download was tampered
+          # with.
+          #
+          # The positional list rather than a space-separated string, so the
+          # loops below iterate on quoted arguments instead of on whatever the
+          # shell decides to split.
+          set -- "$ZIP"
+          if [ -f "$DMG" ]; then
+            set -- "$ZIP" "$DMG"
+          fi
 
           STATE=$(gh release view "v$VERSION" --json isDraft \
             --jq 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo missing)
@@ -246,38 +268,40 @@ jobs:
           # New releases land as drafts, so nothing reaches the updater before
           # someone has said what changed.
           if [ "$STATE" = missing ]; then
-            gh release create "v$VERSION" --draft --title "Plonk $VERSION" --notes "$(
-              printf '%s\n' \
-                "Drafted by CI. Replace this with the release notes before publishing." \
-                "" \
-                "Built from \`$GITHUB_SHA\` by [this run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)." \
-                "Verify it against that commit before installing:" \
-                "" \
-                '```sh' \
-                "gh attestation verify $ZIP -R $GITHUB_REPOSITORY" \
-                '```' \
-                "" \
-                "sha256: \`$SHA\`"
-            )"
+            {
+              echo "Drafted by CI. Replace this with the release notes before publishing."
+              echo
+              echo "Built from \`$GITHUB_SHA\` by [this run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+              echo "Verify what you downloaded against that commit before installing:"
+              echo
+              echo '```sh'
+              for f in "$@"; do
+                echo "gh attestation verify $f -R $GITHUB_REPOSITORY"
+              done
+              echo '```'
+              echo
+              for f in "$@"; do
+                echo "\`$f\` sha256: \`$(shasum -a 256 "$f" | cut -d' ' -f1)\`"
+              done
+            } > "$RUNNER_TEMP/notes.md"
+            gh release create "v$VERSION" --draft --title "Plonk $VERSION" \
+              --notes-file "$RUNNER_TEMP/notes.md"
           fi
-          gh release upload "v$VERSION" "$ZIP" --clobber
+
+          for f in "$@"; do
+            gh release upload "v$VERSION" "$f" --clobber
+          done
 
           {
             echo "### Plonk $VERSION"
             echo
-            echo "- zip sha256: \`$SHA\`"
+            for f in "$@"; do
+              echo "- \`$f\` sha256: \`$(shasum -a 256 "$f" | cut -d' ' -f1)\`"
+            done
+            # Named rather than implied: the cask pins the zip, and once two
+            # digests are on screen "that sha256" stops meaning anything.
+            echo "- update the cask in \`ostapondo/homebrew-plonk\` with this version and the \`$ZIP\` sha256"
           } >> "$GITHUB_STEP_SUMMARY"
-
-          # Only there on the notarized path, so its absence is the normal case
-          # rather than a missing file worth failing over.
-          DMG="Plonk-$VERSION.dmg"
-          if [ -f "$DMG" ]; then
-            gh release upload "v$VERSION" "$DMG" --clobber
-            echo "- dmg sha256: \`$(shasum -a 256 "$DMG" | cut -d' ' -f1)\`" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-          echo "- update the cask in \`ostapondo/homebrew-plonk\` with that version and sha256" \
-            >> "$GITHUB_STEP_SUMMARY"
 
   mcp:
     runs-on: ubuntu-latest

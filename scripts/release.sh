@@ -97,34 +97,17 @@ PLONK_SIGN_IDENTITY="$IDENTITY" ./scripts/build.sh
 APP=Plonk.app
 ZIP="Plonk-$MARKETING_VERSION.zip"
 
-if [ "$NOTARIZE" = yes ]; then
-	# notarytool takes a zip, but stapling writes into the bundle, so this
-	# upload copy is thrown away and the distributed zip is made again after.
-	rm -f "$ZIP"
-	ditto -c -k --keepParent "$APP" "$ZIP"
-	notary submit "$ZIP" --wait
-
-	# Stapling puts the ticket inside the bundle, so a first launch works
-	# offline and without a Gatekeeper round trip.
-	xcrun stapler staple "$APP"
-fi
-
-rm -f "$ZIP"
-ditto -c -k --keepParent "$APP" "$ZIP"
-
-# What a user's Mac will conclude, asked the same way it asks.
-codesign --verify --deep --strict --verbose=2 "$APP"
-if [ "$NOTARIZE" = yes ]; then
-	spctl --assess --type execute --verbose=4 "$APP"
-	xcrun stapler validate "$APP"
-fi
-
 # The requirement every published release has to satisfy, recorded in the repo
 # rather than read back from the bundle being built. Checking a build against
 # its own signature proves nothing: it is the same signature. What has to be
 # caught is the identity *changing* — a release cut on another Mac, a
 # regenerated certificate, a fallback to ad-hoc — because every user's
 # permissions and their ability to update at all hang on it staying put.
+#
+# Checked here, before notarization, because Apple is the slow and finite half
+# of this script. A build that is going to be rejected for its signature should
+# not spend a submission and ten minutes finding that out — and the first
+# Developer ID release is exactly the case that trips it, deliberately.
 EXPECTED=scripts/release-requirement
 REQUIREMENT=$(codesign -d -r- "$APP" 2>/dev/null | sed -n 's/^designated => //p')
 if [ -z "$REQUIREMENT" ]; then
@@ -148,6 +131,28 @@ the first time a Developer ID is used — update $EXPECTED in the same commit an
 say so in the release notes.
 MSG
 	exit 1
+fi
+
+if [ "$NOTARIZE" = yes ]; then
+	# notarytool takes a zip, but stapling writes into the bundle, so this
+	# upload copy is thrown away and the distributed zip is made again after.
+	rm -f "$ZIP"
+	ditto -c -k --keepParent "$APP" "$ZIP"
+	notary submit "$ZIP" --wait
+
+	# Stapling puts the ticket inside the bundle, so a first launch works
+	# offline and without a Gatekeeper round trip.
+	xcrun stapler staple "$APP"
+fi
+
+rm -f "$ZIP"
+ditto -c -k --keepParent "$APP" "$ZIP"
+
+# What a user's Mac will conclude, asked the same way it asks.
+codesign --verify --deep --strict --verbose=2 "$APP"
+if [ "$NOTARIZE" = yes ]; then
+	spctl --assess --type execute --verbose=4 "$APP"
+	xcrun stapler validate "$APP"
 fi
 
 # What ships is the zip, not the bundle it was made from: an archiver that

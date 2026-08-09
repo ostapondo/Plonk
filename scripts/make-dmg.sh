@@ -36,8 +36,31 @@ if ! codesign --verify --deep --strict "$APP" 2>/dev/null; then
 	exit 1
 fi
 
+# The image and the app inside it have to come from the same identity. Nothing
+# downstream would catch a mismatch: each signature is valid on its own, so
+# `codesign --verify` passes on both, and only comparing them shows that a
+# Developer ID build got wrapped in a self-signed image — which is exactly what
+# a run by hand does, since PLONK_SIGN_IDENTITY defaults to the development one.
+SIGNER=$(codesign -dvv "$APP" 2>&1 | sed -n 's/^Authority=//p' | head -1)
+if [ "$SIGNER" != "$IDENTITY" ]; then
+	cat >&2 <<MSG
+error: $APP is signed by "$SIGNER", but the image would be signed by "$IDENTITY".
+
+Set PLONK_SIGN_IDENTITY to the identity the app was actually built with.
+MSG
+	exit 1
+fi
+
 STAGING=$(mktemp -d)
-trap 'rm -rf "$STAGING"' EXIT
+MOUNT=
+cleanup() {
+	if [ -n "$MOUNT" ]; then
+		hdiutil detach "$MOUNT" -quiet 2>/dev/null || :
+		rmdir "$MOUNT" 2>/dev/null || :
+	fi
+	rm -rf "$STAGING"
+}
+trap cleanup EXIT
 
 # ditto rather than cp: a code signature is partly extended attributes, and
 # copying without them produces a bundle that fails the check it just passed.
@@ -61,5 +84,25 @@ hdiutil create -volname "Plonk" -srcfolder "$STAGING" \
 codesign --force --identifier dev.plonk.dmg --sign "$IDENTITY" "$DMG"
 codesign --verify --strict "$DMG"
 
+# The zip gets unpacked and checked before it ships, on the grounds that an
+# archiver which mangled the signature would otherwise only be found on a user's
+# Mac. The image deserves the same: what matters is not that it mounts, but that
+# the bundle a user drags out of it is one macOS will still run. ditto is used
+# above precisely because cp -R drops the extended attributes a signature is
+# partly made of, and this is the check that would notice if it ever stopped.
+MOUNT=$(mktemp -d)
+hdiutil attach "$DMG" -mountpoint "$MOUNT" -nobrowse -quiet
+codesign --verify --deep --strict "$MOUNT/$APP"
+
+# Against the requirement recorded in the repo, not the one this bundle carries.
+# Comparing a signature with itself proves nothing; what has to hold is that the
+# copy inside the image still satisfies what every installed Plonk will demand
+# of an update.
+if [ -f scripts/release-requirement ]; then
+	codesign --verify -R="$(cat scripts/release-requirement)" "$MOUNT/$APP"
+fi
+
+# The digest is deliberately not printed here. On the release path this image is
+# stapled after it is built, which rewrites it — a hash from this moment would
+# be a hash of a file that no longer exists by the time anyone reads the log.
 echo "wrote $DMG"
-echo "sha256: $(shasum -a 256 "$DMG" | cut -d' ' -f1)"
