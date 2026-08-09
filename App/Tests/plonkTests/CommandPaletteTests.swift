@@ -54,3 +54,29 @@ private let sample = [
         #expect([command("a")].matching("aa").isEmpty)
     }
 }
+
+@Suite struct AskRowTests {
+    @Test func anEmptyQueryOffersNothingToSend() {
+        #expect(PlonkCommand.ask("", agent: "claude-code") {} == nil)
+        #expect(PlonkCommand.ask("   \n ", agent: "claude-code") {} == nil)
+    }
+
+    @Test func theRowNamesTheAgentAndQuotesWhatWasTyped() {
+        let row = PlonkCommand.ask("  put the browser left  ", agent: "claude-code") {}
+        #expect(row?.title == "Ask claude-code: “put the browser left”")
+        #expect(row?.group == "Agent")
+    }
+
+    @Test func withNoAgentSelectedItStaysVague() {
+        #expect(PlonkCommand.ask("save this", agent: nil) {}?.title == "Ask the agent: “save this”")
+        #expect(PlonkCommand.ask("save this", agent: "  ") {}?.title == "Ask the agent: “save this”")
+    }
+
+    /// The ask row is not a command, so it must never be filtered out by the
+    /// matcher — a sentence that matches nothing is exactly when it is needed.
+    @Test func theRowIsNotSubjectToCommandMatching() {
+        let row = PlonkCommand.ask("zzzz qqqq", agent: nil) {}
+        #expect(row != nil)
+        #expect(sample.matching("zzzz qqqq").isEmpty)
+    }
+}

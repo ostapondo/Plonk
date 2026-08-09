@@ -16,11 +16,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let updates = UpdateManager()
     let model = AppModel()
     private let snapMemory = SnapMemory()
-    private lazy var commands = WindowCommands(windows: windows, memory: snapMemory)
+    lazy var commands = WindowCommands(windows: windows, memory: snapMemory)
     private lazy var launcher = WorkspaceLauncher(windows: windows)
     lazy var presenter = WindowPresenter(model: model)
     private var statusMenu: StatusMenuController!
-    private var dragSnap: DragSnapManager!
+    var dragSnap: DragSnapManager!
     private var grabMove: GrabMove!
     private var newWindows: NewWindowWatcher!
     private let mouse = MouseTools()
@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var guideLoading = false
     /// How many captures are in flight; see hideOwnWindows.
     private var captureDepth = 0
-    private var router: Router!
+    var router: Router!
     private var server: ControlServer?
     private var previewToken = 0
     private var screenSettleWork: DispatchWorkItem?
@@ -221,6 +221,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pinCrop(live: false)
         case .shortcutGuide:
             toggleShortcutGuide()
+        case .commandPalette:
+            openCommandPalette()
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)
@@ -233,25 +235,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else if let preset = action.preset {
                 commands.apply(preset)
             }
-        }
-    }
-
-    /// A spoken command, run through the same calls the hotkeys use — so a
-    /// sentence cannot reach anything a key could not.
-    private func run(_ command: VoiceCommand) {
-        switch command {
-        case .preset(let preset): commands.apply(preset)
-        case .zone(let number): commands.snap(toZone: number)
-        case .putBack: commands.unsnap()
-        case .focus(let direction): commands.moveFocus(direction)
-        case .cycleZone: commands.cycleZone(backwards: false)
-        case .showZones: dragSnap.previewZones()
-        case .awake(let minutes):
-            setAwakeTimeout(minutes: minutes ?? 0)
-            setAwake(true)
-        case .awakeOff: setAwake(false)
-        case .capture(let mode): runCapture(mode, openEditor: false)
-        case .launchWorkspace(let name): launchWorkspace(named: name, onScreen: nil)
         }
     }
 
@@ -835,7 +818,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Screenshot
 
-    private func runCapture(_ mode: CaptureMode, openEditor: Bool,
+    func runCapture(_ mode: CaptureMode, openEditor: Bool,
                             completion: @escaping (NSImage?) -> Void = { _ in }) {
         let hidden = hideOwnWindows()
         ScreenshotManager.capture(mode) { [weak self] image in

@@ -47,7 +47,8 @@ final class WindowPresenter: NSObject {
 
     /// ⌘K. Rebuilt on every open rather than kept around, because the commands
     /// it lists change with the workspaces, the zone sets and the bindings.
-    func showCommandPalette(commands: [PlonkCommand]) {
+    func showCommandPalette(commands: [PlonkCommand], agent: String?,
+                            onAsk: @escaping (String) -> Void) {
         closeCommandPalette()
         let window = EditorWindow(contentRect: .zero, styleMask: .borderless,
                                   backing: .buffered, defer: false)
@@ -62,7 +63,7 @@ final class WindowPresenter: NSObject {
         // keeps eating the arrow keys.
         window.delegate = self
         window.contentViewController = NSHostingController(
-            rootView: CommandPaletteView(commands: commands) { [weak self] in
+            rootView: CommandPaletteView(commands: commands, agent: agent, onAsk: onAsk) { [weak self] in
                 self?.closeCommandPalette()
             }
         )

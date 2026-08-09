@@ -42,8 +42,45 @@ extension AppDelegate {
         store.config.appearance.apply(to: NSApp)
     }
 
+    /// A spoken command, run through the same calls the hotkeys use — so a
+    /// sentence cannot reach anything a key could not.
+    func run(_ command: VoiceCommand) {
+        switch command {
+        case .preset(let preset): commands.apply(preset)
+        case .zone(let number): commands.snap(toZone: number)
+        case .putBack: commands.unsnap()
+        case .focus(let direction): commands.moveFocus(direction)
+        case .cycleZone: commands.cycleZone(backwards: false)
+        case .showZones: dragSnap.previewZones()
+        case .awake(let minutes):
+            setAwakeTimeout(minutes: minutes ?? 0)
+            setAwake(true)
+        case .awakeOff: setAwake(false)
+        case .capture(let mode): runCapture(mode, openEditor: false)
+        case .launchWorkspace(let name): launchWorkspace(named: name, onScreen: nil)
+        }
+    }
+
     func openCommandPalette() {
-        presenter.showCommandPalette(commands: paletteCommands())
+        presenter.showCommandPalette(commands: paletteCommands(),
+                                     agent: store.config.selectedAgent) { [weak self] prompt in
+            self?.askAgent(prompt)
+        }
+    }
+
+    /// Whatever was typed into the palette that was not a command. It takes the
+    /// same call the voice path makes, so a sentence typed and a sentence spoken
+    /// reach the agent by one road and fail in one way.
+    func askAgent(_ prompt: String) {
+        let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        let response = router.dispatch(prompt: text)
+        if let error = response.json["error"] as? String {
+            HUD.shared.show(error)
+        } else {
+            let agent = (response.json["agent"] as? String) ?? "agent"
+            HUD.shared.show("→ \(agent): \(text)")
+        }
     }
 
     /// Every shortcut acts on whatever window is in front, and while the palette

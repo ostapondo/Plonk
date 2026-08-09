@@ -9,6 +9,9 @@ import SwiftUI
 
 struct CommandPaletteView: View {
     let commands: [PlonkCommand]
+    /// The agent a sentence would go to, for the label on the ask row.
+    var agent: String?
+    let onAsk: (String) -> Void
     let onClose: () -> Void
     @Environment(\.colorScheme) private var scheme
 
@@ -40,7 +43,7 @@ struct CommandPaletteView: View {
     private var field: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass").foregroundStyle(.tertiary)
-            TextField("Run a command", text: $query)
+            TextField("Run a command, or say what you want done", text: $query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 15))
                 .focused($focused)
@@ -89,6 +92,13 @@ struct CommandPaletteView: View {
         }
     }
 
+    /// Whatever was typed, offered to the agent. Deliberately last: a query
+    /// that matches a real command should run it, not send a sentence about it
+    /// on a round trip, and ⌘return is there for when that is what was meant.
+    private var askRow: PlonkCommand? {
+        PlonkCommand.ask(query, agent: agent) { onAsk(query) }
+    }
+
     /// Groups in the order the commands arrived, so the list does not reshuffle
     /// itself alphabetically while it is being typed into.
     private var sections: [(name: String, commands: [PlonkCommand])] {
@@ -98,7 +108,9 @@ struct CommandPaletteView: View {
             if !order.contains(command.group) { order.append(command.group) }
             byGroup[command.group, default: []].append(command)
         }
-        return order.map { ($0, byGroup[$0] ?? []) }
+        var result = order.map { ($0, byGroup[$0] ?? []) }
+        if let askRow { result.append((name: "Agent", commands: [askRow])) }
+        return result
     }
 
     private func row(_ command: PlonkCommand) -> some View {
@@ -126,11 +138,9 @@ struct CommandPaletteView: View {
         HStack(spacing: 14) {
             hint(["↑", "↓"], "navigate")
             hint(["return"], "run")
+            hint(["⌘", "return"], "ask the agent")
             hint(["esc"], "close")
             Spacer()
-            Text("Anything an agent can do, you can type")
-                .font(.system(size: 10.5))
-                .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 9)
@@ -142,6 +152,14 @@ struct CommandPaletteView: View {
             KeyCaps(parts: keys)
             Text(label).font(.system(size: 10.5)).foregroundStyle(.tertiary)
         }
+    }
+
+    /// Skips the selection entirely: ⌘return means "send what I typed", whatever
+    /// the list happens to be highlighting.
+    private func askSelected() {
+        guard let askRow else { return }
+        onClose()
+        DispatchQueue.main.async { askRow.run() }
     }
 
     private func runSelected() {
@@ -165,6 +183,8 @@ struct CommandPaletteView: View {
             case 125: move(1); return nil      // down
             case 126: move(-1); return nil     // up
             case 53: onClose(); return nil     // escape
+            case 36 where event.modifierFlags.contains(.command):
+                askSelected(); return nil      // return
             default: return event
             }
         }

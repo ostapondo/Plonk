@@ -16,6 +16,27 @@ struct PlonkCommand: Identifiable {
     let run: () -> Void
 }
 
+extension PlonkCommand {
+    /// The row that hands what was typed to an agent instead of matching it
+    /// against anything. It is what makes the palette answer a sentence — "put
+    /// the browser left and the terminal top right" is not a command and never
+    /// will be, but it is the kind of thing people want to type here.
+    ///
+    /// Nil for an empty query, because a palette offering to send nothing is
+    /// offering a mistake.
+    static func ask(_ query: String, agent: String?, run: @escaping () -> Void) -> PlonkCommand? {
+        let prompt = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty else { return nil }
+        let named = (agent ?? "").trimmingCharacters(in: .whitespaces)
+        // Named when one is selected, so it is obvious where the sentence went;
+        // vague when none is, because that is the honest state and the HUD says
+        // the rest when it fails.
+        let who = named.isEmpty ? "the agent" : named
+        return PlonkCommand(id: "agent.ask", title: "Ask \(who): “\(prompt)”",
+                            group: "Agent", keys: ["⌘", "return"], run: run)
+    }
+}
+
 extension Array where Element == PlonkCommand {
     /// The commands matching `query`, best first.
     ///

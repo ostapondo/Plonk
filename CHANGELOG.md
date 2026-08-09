@@ -11,6 +11,20 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Added
+
+- **The command palette has a key of its own — `⌃⌥Space`.** It was already
+  there, and it was reachable only from inside Plonk's own window, which is the
+  one place you are not when you want to move a window. It now opens over
+  whatever you are looking at, the way Spotlight does.
+- **Type a sentence into it and it goes to your agent.** Anything that is not a
+  command — "put the browser left and the terminal top right", "save this as a
+  workspace called review" — can be sent as it is, with `⌘return` or by picking
+  the last row. It takes the same road a spoken command takes, so it can reach
+  nothing a key could not.
+
 ## 0.2.3 — 2026-08-09
 
 Nothing in the app changed. This release exists so the MCP server can be
