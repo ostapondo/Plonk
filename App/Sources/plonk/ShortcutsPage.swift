@@ -33,11 +33,18 @@ struct ShortcutsPage: View {
                 }
             }
             Section {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "shortcuts"))
+                ShortcutRows(model: model, actions: [.shortcutGuide])
             } header: {
                 Text("Guide")
             } footer: {
                 Text("Opens every shortcut the app in front actually has, read from its own menus — so it is never out of date, and it works for software with no documentation at all. Press it again to close.")
+            }
+            Section {
+                ShortcutRows(model: model, actions: [.commandPalette])
+            } header: {
+                Text("Palette")
+            } footer: {
+                Text("Run anything in Plonk by name, over whatever you are looking at. What is not a command can be sent to the active agent as a sentence, with ⌘return. Press the key again to close it.")
             }
             ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
                 Section(group.name) {

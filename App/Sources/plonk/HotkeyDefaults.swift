@@ -56,10 +56,11 @@ extension HotkeyAction {
         case .cropLive: code = kVK_ANSI_P
         case .cropStill: code = kVK_ANSI_P; shift = true
         case .shortcutGuide: code = kVK_ANSI_Slash; shift = true
-        // Space, because the thing it opens is the one surface here that
-        // answers a sentence rather than a key, and that is where every Mac
-        // user's hand already goes for exactly that.
-        case .commandPalette: code = kVK_Space
+        // Not Space, however much it wants to be: ⌃⌥Space is macOS's own
+        // "Select next source in Input menu", on by default and live the
+        // moment a second keyboard layout exists. It would take the key
+        // silently and switch the layout instead.
+        case .commandPalette: code = kVK_ANSI_A
         }
         return Hotkey(keyCode: UInt32(code), control: true, option: true, shift: shift)
     }

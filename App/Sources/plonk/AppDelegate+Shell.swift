@@ -62,6 +62,13 @@ extension AppDelegate {
     }
 
     func openCommandPalette() {
+        // The same key closes it. Reopening instead would rebuild the window
+        // with an empty field, throwing away a half-typed sentence for anyone
+        // who pressed it twice wondering whether it had registered.
+        if presenter.isCommandPaletteOpen {
+            presenter.closeCommandPalette()
+            return
+        }
         presenter.showCommandPalette(commands: paletteCommands(),
                                      agent: store.config.selectedAgent) { [weak self] prompt in
             self?.askAgent(prompt)
@@ -83,12 +90,19 @@ extension AppDelegate {
         process.environment = ProcessInfo.processInfo.environment
             .merging(invocation.environment) { _, prompt in prompt }
 
-        // Kept so a failure can say why and not only that. Both pipes are set:
-        // an adapter that writes more than a pipe buffer and is never read
-        // blocks forever on the write, and then it really has hung.
-        let errors = Pipe()
-        process.standardError = errors
-        process.standardOutput = Pipe()
+        // A file, not a pipe. A pipe nobody is reading fills at about 64 KB and
+        // the adapter blocks on the write for ever — and `claude -p` printing
+        // its answer clears that easily, so attaching one and reading it only
+        // after exit produces exactly the hang this is supposed to report.
+        // Draining it concurrently would work and needs a lock and a reader;
+        // a file cannot block, and the tail is all the HUD ever shows.
+        let errorLog = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plonk-adapter-\(UUID().uuidString).log")
+        FileManager.default.createFile(atPath: errorLog.path, contents: nil)
+        let errors = try? FileHandle(forWritingTo: errorLog)
+        process.standardError = errors ?? FileHandle.nullDevice
+        // Discarded outright: nothing reads it, and that is the same trap.
+        process.standardOutput = FileHandle.nullDevice
 
         // A ticking HUD for as long as it runs. The agent takes tens of seconds
         // and moves nothing until it has decided what to move, so without this
@@ -98,10 +112,9 @@ extension AppDelegate {
         let started = Date()
         var ticks = 0
         var progress: Timer?
-        // A command that does not exist fails in milliseconds, which can land
-        // before the timer is even scheduled. Without this the stop arrives
-        // first, no-ops, and the ticking it was meant to cancel starts after it
-        // and never ends. Only ever touched on the main thread.
+        // Belt and braces. Both halves are queued on the main thread and the
+        // start is queued first, so FIFO already orders them; this is here so
+        // that stays true if either one ever moves.
         var done = false
         let beat = {
             ticks += 1
@@ -124,8 +137,9 @@ extension AppDelegate {
         }
 
         process.terminationHandler = { finished in
-            let complaint = String(data: errors.fileHandleForReading.readDataToEndOfFile(),
-                                   encoding: .utf8) ?? ""
+            try? errors?.close()
+            let complaint = (try? String(contentsOf: errorLog, encoding: .utf8)) ?? ""
+            try? FileManager.default.removeItem(at: errorLog)
             let last = complaint.split(separator: "\n").last.map(String.init) ?? ""
             let seconds = Int(Date().timeIntervalSince(started).rounded())
             DispatchQueue.main.async {
@@ -161,10 +175,18 @@ extension AppDelegate {
         let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         let response = router.dispatch(prompt: text)
-        if let error = response.json["error"] as? String {
-            HUD.shared.show(error)
+        let agent = (response.json["agent"] as? String) ?? "agent"
+        if response.json["error"] != nil {
+            // Router answers an API caller, and tells it to pass an "agent"
+            // field. There is no field here — there is a menu.
+            HUD.shared.show(store.config.selectedAgent == nil
+                            ? "No active agent. Pick one from the menu bar first."
+                            : (response.json["error"] as? String ?? "That did not go anywhere"))
+        } else if let note = response.json["note"] as? String {
+            // Queued for a session that has never connected. Saying "→ agent"
+            // here would be the silent success this was meant to stop.
+            HUD.shared.show("Waiting for \(agent) to connect: \(note)")
         } else {
-            let agent = (response.json["agent"] as? String) ?? "agent"
             HUD.shared.show("→ \(agent): \(text)")
         }
     }
@@ -187,7 +209,10 @@ extension AppDelegate {
     func paletteCommands() -> [PlonkCommand] {
         var result: [PlonkCommand] = []
 
-        for action in HotkeyAction.allCases {
+        // Every action but the one that opened this. Running it would hide the
+        // window to reach the front app and then reopen the palette on top of
+        // nothing, which is a loop with a side effect.
+        for action in HotkeyAction.allCases where action != .commandPalette {
             result.append(PlonkCommand(id: "hotkey.\(action.rawValue)",
                                        title: action.title,
                                        group: action.group,

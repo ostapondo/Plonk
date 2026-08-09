@@ -96,7 +96,11 @@ struct CommandPaletteView: View {
     /// that matches a real command should run it, not send a sentence about it
     /// on a round trip, and ⌘return is there for when that is what was meant.
     private var askRow: PlonkCommand? {
-        PlonkCommand.ask(query, agent: agent) { onAsk(query) }
+        // The value, not the binding. This runs a runloop turn after onClose()
+        // has torn the hosting view down, and reading @State by then can hand
+        // back the empty string it started as — which askAgent silently drops.
+        let prompt = query
+        return PlonkCommand.ask(prompt, agent: agent) { onAsk(prompt) }
     }
 
     /// Groups in the order the commands arrived, so the list does not reshuffle

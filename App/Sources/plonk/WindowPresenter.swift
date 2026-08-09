@@ -45,6 +45,8 @@ final class WindowPresenter: NSObject {
         present(main)
     }
 
+    var isCommandPaletteOpen: Bool { palette != nil }
+
     /// ⌘K. Rebuilt on every open rather than kept around, because the commands
     /// it lists change with the workspaces, the zone sets and the bindings.
     func showCommandPalette(commands: [PlonkCommand], agent: String?,

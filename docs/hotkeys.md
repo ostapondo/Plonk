@@ -21,7 +21,7 @@
 | `⌃⌥⇧/` | Every shortcut the front app has |
 | `⌃⌥/` · `⌃⌥\` | Find the pointer · jump it to the next screen |
 | `⌃⌥V` | Hold to talk |
-| `⌃⌥Space` | Command palette — run anything by name, or type a sentence for the agent |
+| `⌃⌥A` | Command palette — run anything by name, or type a sentence for the agent |
 
 ---
 

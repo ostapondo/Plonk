@@ -31,7 +31,7 @@ one of those.
 
 ### Added
 
-- **The command palette has a key of its own — `⌃⌥Space`.** It was already
+- **The command palette has a key of its own — `⌃⌥A`.** It was already
   there, and it was reachable only from inside Plonk's own window, which is the
   one place you are not when you want to move a window. It now opens over
   whatever you are looking at, the way Spotlight does.
