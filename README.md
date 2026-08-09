@@ -47,6 +47,10 @@ MCP, so a whole desk at once can go to an agent you already have open:
 >
 > read the error out of that dialog and tell me what it says
 
+<p align="center">
+  <img src="docs/app-zones.png" alt="Plonk's Zones page: a row of zone sets across the top with Edge snapping selected, controls for drag-to-snap and the modifier that shows the zones, and the list of halves, quarters, maximize and centre with the shortcut bound to each" width="820">
+</p>
+
 Everything runs on your Mac. No account, no cloud, no telemetry — and
 [none of that is a promise you have to take](docs/verify.md), it is all
 checkable from a terminal.
