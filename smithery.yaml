@@ -1,7 +1,0 @@
-startCommand:
-  type: stdio
-  configSchema:
-    type: object
-    properties: {}
-  commandFunction: |-
-    () => ({ command: 'npx', args: ['-y', 'plonk-mcp'] })

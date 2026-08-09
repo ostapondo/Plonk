@@ -75,6 +75,11 @@ Any MCP client works the same way, over stdio or HTTP.
 [Cursor](docs/clients/cursor.md), [Zed](docs/clients/zed.md) and
 [Cline](docs/clients/cline.md).
 
+For Claude Desktop there is nothing to type: download `plonk-<version>.mcpb`
+from the [latest release](https://github.com/ostapondo/plonk/releases/latest)
+and open it. The bundle carries the server and its dependencies, so no config
+file gets edited and nothing is fetched at launch.
+
 <details>
 <summary><strong>Installing it by hand, and why macOS holds a downloaded copy</strong></summary>
 
