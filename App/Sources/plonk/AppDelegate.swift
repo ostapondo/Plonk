@@ -561,21 +561,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return done([["ok": false, "error": "shutting down"]]) }
             launcher.launch(workspace, named: name, onScreen: screen, completion: done)
         }
-        // Adapters may run for minutes, so they never touch the main thread.
-        router.runAdapter = { adapter, prompt in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let invocation = AgentAdapter.invocation(command: adapter.command, prompt: prompt)
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-                process.arguments = ["-lc", invocation.command]
-                process.environment = ProcessInfo.processInfo.environment
-                    .merging(invocation.environment) { _, prompt in prompt }
-                do {
-                    try process.run()
-                } catch {
-                    NSLog("Plonk: adapter \(adapter.name) failed to start: \(error)")
-                }
-            }
+        router.runAdapter = { [weak self] adapter, prompt in
+            self?.launchAdapter(adapter, prompt: prompt)
         }
 
         let token = APIToken.loadOrCreate()

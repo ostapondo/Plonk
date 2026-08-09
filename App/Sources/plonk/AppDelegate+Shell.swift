@@ -68,6 +68,92 @@ extension AppDelegate {
         }
     }
 
+    /// Runs a CLI adapter for a prompt, and says on screen how it went.
+    ///
+    /// The process can take the better part of a minute, so "it started" and
+    /// "it worked" are different pieces of news and both have to be delivered.
+    /// Before this only the first one was, for two seconds, and a failure was
+    /// an NSLog nobody reads — which from the palette looked exactly like a
+    /// window closing and nothing happening.
+    func launchAdapter(_ adapter: AgentAdapter, prompt: String) {
+        let invocation = AgentAdapter.invocation(command: adapter.command, prompt: prompt)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-lc", invocation.command]
+        process.environment = ProcessInfo.processInfo.environment
+            .merging(invocation.environment) { _, prompt in prompt }
+
+        // Kept so a failure can say why and not only that. Both pipes are set:
+        // an adapter that writes more than a pipe buffer and is never read
+        // blocks forever on the write, and then it really has hung.
+        let errors = Pipe()
+        process.standardError = errors
+        process.standardOutput = Pipe()
+
+        // A ticking HUD for as long as it runs. The agent takes tens of seconds
+        // and moves nothing until it has decided what to move, so without this
+        // the whole middle of the job looks identical to nothing happening —
+        // which is exactly what it was mistaken for. The count is what makes it
+        // readable as progress rather than as a stuck label.
+        let started = Date()
+        var ticks = 0
+        var progress: Timer?
+        // A command that does not exist fails in milliseconds, which can land
+        // before the timer is even scheduled. Without this the stop arrives
+        // first, no-ops, and the ticking it was meant to cancel starts after it
+        // and never ends. Only ever touched on the main thread.
+        var done = false
+        let beat = {
+            ticks += 1
+            let dots = String(repeating: "·", count: 1 + ticks % 3)
+            let seconds = Int(Date().timeIntervalSince(started).rounded())
+            // Longer than the interval, so the panel never blinks out between
+            // beats, and short enough to clear itself if this stops ticking.
+            HUD.shared.show("\(adapter.name) is working \(dots)  \(seconds)s", duration: 3)
+        }
+        let stop = {
+            done = true
+            progress?.invalidate()
+            progress = nil
+        }
+
+        DispatchQueue.main.async {
+            guard !done else { return }
+            beat()
+            progress = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { _ in beat() }
+        }
+
+        process.terminationHandler = { finished in
+            let complaint = String(data: errors.fileHandleForReading.readDataToEndOfFile(),
+                                   encoding: .utf8) ?? ""
+            let last = complaint.split(separator: "\n").last.map(String.init) ?? ""
+            let seconds = Int(Date().timeIntervalSince(started).rounded())
+            DispatchQueue.main.async {
+                stop()
+                if finished.terminationStatus == 0 {
+                    HUD.shared.show("✓ \(adapter.name) finished in \(seconds)s")
+                } else {
+                    HUD.shared.show("✗ \(adapter.name) failed (\(finished.terminationStatus))"
+                                    + (last.isEmpty ? "" : ": \(last.prefix(70))"))
+                }
+            }
+        }
+
+        // Adapters may run for minutes, so they never touch the main thread.
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try process.run()
+            } catch {
+                // terminationHandler never runs for a process that never ran,
+                // so the ticking has to be stopped from here or it ticks for ever.
+                DispatchQueue.main.async {
+                    stop()
+                    HUD.shared.show("\(adapter.name) would not start: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
     /// Whatever was typed into the palette that was not a command. It takes the
     /// same call the voice path makes, so a sentence typed and a sentence spoken
     /// reach the agent by one road and fail in one way.

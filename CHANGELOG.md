@@ -15,6 +15,14 @@ one of those.
 
 ### Fixed
 
+- **A prompt sent to an agent now shows what it is doing.** A CLI adapter takes
+  tens of seconds and moves nothing until it has decided what to move, so the
+  palette closing was followed by a two-second HUD and then silence — which
+  looks exactly like nothing happening. There is now a ticking count for as
+  long as it runs, and it ends on how it went. A failure used to be an `NSLog`
+  nobody reads; it says so on screen, with the last line the adapter complained
+  about.
+
 - **⌘C, ⌘V, ⌘X and ⌘A work in Plonk's text fields.** They never had, anywhere
   in the app: AppKit delivers those through the main menu's key equivalents,
   and Plonk had no main menu at all, so a field would take a typed sentence but
