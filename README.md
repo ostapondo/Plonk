@@ -70,6 +70,14 @@ claude mcp add plonk -- npx -y plonk-mcp   # Claude Code
 codex mcp add plonk -- npx -y plonk-mcp    # Codex CLI
 ```
 
+In Claude Code it can also come as a plugin — the same server, pinned to the
+release it shipped with rather than to whatever npm serves as latest:
+
+```
+/plugin marketplace add ostapondo/plonk
+/plugin install plonk@plonk
+```
+
 Any MCP client works the same way, over stdio or HTTP.
 [For agents](docs/agents.md) has the rest, plus one-pagers for
 [Cursor](docs/clients/cursor.md), [Zed](docs/clients/zed.md) and

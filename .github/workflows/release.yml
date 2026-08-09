@@ -211,6 +211,19 @@ jobs:
             echo "::error::mcp/server.json says $SERVER / $SERVER_PACKAGE but version.env says $MARKETING_VERSION"
             exit 1
           fi
+          # The Claude Code plugin carries the version twice as well, and there
+          # it decides something: a plugin pinned to a version users already
+          # have is a plugin that never updates, however much the code moved.
+          PLUGIN=$(node -p "require('./plugins/plonk/.claude-plugin/plugin.json').version")
+          CATALOG=$(node -p "require('./.claude-plugin/marketplace.json').plugins[0].version")
+          # And a third time in the server it launches, which is the one that
+          # decides what actually runs: a plugin that says 0.2.3 while running
+          # whatever npm serves as latest is pinned in name only.
+          PINNED=$(node -p "require('./plugins/plonk/.mcp.json').mcpServers.plonk.args.at(-1).split('@').at(-1)")
+          if [ "$PLUGIN" != "$MARKETING_VERSION" ] || [ "$CATALOG" != "$MARKETING_VERSION" ] || [ "$PINNED" != "$MARKETING_VERSION" ]; then
+            echo "::error::the plugin says $PLUGIN / $CATALOG / $PINNED but version.env says $MARKETING_VERSION"
+            exit 1
+          fi
           echo "version=$PACKAGE" >> "$GITHUB_OUTPUT"
           # Re-running the workflow for a version already on npm is not a
           # failure, it is a no-op — publishing again would be the failure.

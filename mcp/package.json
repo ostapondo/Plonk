@@ -16,10 +16,14 @@
     "mcp",
     "model-context-protocol",
     "claude",
+    "claude-code",
     "macos",
     "window-manager",
     "workspaces",
-    "screenshots"
+    "zones",
+    "screenshots",
+    "ocr",
+    "accessibility"
   ],
   "engines": {
     "node": ">=18"
