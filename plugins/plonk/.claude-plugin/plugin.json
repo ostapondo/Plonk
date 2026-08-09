@@ -1,0 +1,13 @@
+{
+  "name": "plonk",
+  "description": "Drive the Plonk window manager from Claude Code. Needs the app installed: brew install --cask ostapondo/plonk/plonk",
+  "version": "0.2.3",
+  "author": {
+    "name": "ostapondo",
+    "url": "https://github.com/ostapondo"
+  },
+  "homepage": "https://ostapondo.github.io/Plonk/",
+  "repository": "https://github.com/ostapondo/plonk",
+  "license": "MIT",
+  "keywords": ["macos", "window-manager", "workspaces", "screenshots", "ocr", "productivity"]
+}
