@@ -8,6 +8,10 @@ really just words.
 Frames are fractions of a monitor's visible area, origin top-left — which is why
 "left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
 
+<p align="center">
+  <img src="agents.gif" alt="Four sentences typed to an agent: a layout is applied across the desk, the result is saved as a workspace called review and the Mac held awake until a build finishes, everything is then closed to an empty desktop and rebuilt from that workspace, and finally a line of error text is read off the screen" width="720">
+</p>
+
 ## The tools
 
 | Tool | |
@@ -18,7 +22,7 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 | `snap_window` | Drop a window into a numbered zone |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
 | `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
-| `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back |
+| `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
 | `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
 | `select_agent` | Make an agent the user's active one, optionally the only one allowed to control |
 

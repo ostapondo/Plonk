@@ -1,7 +1,7 @@
 # Zones
 
 <p align="center">
-  <img src="zones.svg" alt="A screen split into three zones, with a window being dragged into the highlighted one" width="720">
+  <img src="zones.gif" alt="Five clicks in the zone editor cut one screen into six zones, six windows fill them, and ⌃⌥⇧2 then swaps the whole set for another while the windows already in it follow their numbers across" width="720">
 </p>
 
 <p align="center">

@@ -31,6 +31,17 @@ one of those.
 
 ### Added
 
+- **An agent can screenshot a window it names, even a covered one.**
+  `take_screenshot` grew a `mode: "app"`, taking `app` and `title_contains`:
+  "what is playing in Spotify" now works with Spotify hidden behind the editor.
+  The three modes before it were the whole screen, or a picker waiting for a
+  hand on the mouse — so anything you could not see, an agent could not see
+  either, and the way round it was to raise the window and take your desktop
+  with it. macOS keeps every window's image apart from every other's, which is
+  what makes a buried one photograph cleanly; nothing is raised and no focus is
+  taken. A minimized window keeps no image at all and says so, rather than
+  handing back whatever was standing in its place.
+
 - **The command palette has a key of its own — `⌃⌥A`.** It was already
   there, and it was reachable only from inside Plonk's own window, which is the
   one place you are not when you want to move a window. It now opens over
@@ -40,6 +51,27 @@ one of those.
   workspace called review" — can be sent as it is, with `⌘return` or by picking
   the last row. It takes the same road a spoken command takes, so it can reach
   nothing a key could not.
+
+### Changed
+
+- **New animations in the README and the docs — three of them, and each one
+  shows a different thing.** The old one tried to be all of it at once: nineteen
+  seconds, seven beats, and windows drawn a shade darker than the wallpaper
+  behind them, so eight of them read as one dark rectangle with the same grey
+  lines inside. The hero is now the README's own headline, one window at a time
+  — dragged, sent with `⌃⌥2`, spoken, then a sentence to an agent.
+  [Zones](docs/zones.md) opens with five clicks cutting a grid and a whole set
+  being swapped under the windows in it, and [For agents](docs/agents.md) with
+  four sentences landing on six named MCP tools. Every window now looks like
+  the app it is meant to be rather than like a grey rectangle, and the hero is
+  half the size it was. Still drawn rather than recorded, still one `swift`
+  script per scene: `scripts/make-demo.sh`.
+
+- **The Zones screenshot in the README is of this version.** The one it
+  replaces was taken on 0.1.0, and it showed a build that had not been granted
+  Screen Recording and a zone set — Edge snapping — whose preview is an empty
+  rectangle by definition. The new one is 0.2.3 with the permissions green and
+  a set of three numbered zones actually drawn in it.
 
 ## 0.2.3 — 2026-08-09
 

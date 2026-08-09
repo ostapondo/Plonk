@@ -180,9 +180,12 @@ Why a token, when the port was already unreachable from outside: Plonk holds
 Screen Recording, and `/shot/capture` and `/shot/text` turn that grant into a
 service. A local script with no Screen Recording of its own could take a
 silent, full-screen capture, or read the words off your screen, by asking the
-port. macOS hands that permission out one app at a time, and an open port
-handed Plonk's to anything running as you. `/state` was the same shape more
-quietly: it lists the title of every open window.
+port. It can also name a window and be handed that one alone — including a
+window buried under others, or sitting on a Space you are not looking at,
+which no full-screen capture would have reached. macOS hands that permission
+out one app at a time, and an open port handed Plonk's to anything running as
+you. `/state` was the same shape more quietly: it lists the title of every
+open window.
 
 `/ping` stays open on purpose, so a client can tell a closed app from a stale
 token. It answers whether Plonk is running and nothing else.

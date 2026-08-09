@@ -22,7 +22,7 @@ it belongs: you drag it there, you press a key, or you say where.</sub></p>
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="An eight-zone grid is cut out of one screen with seven clicks in the zone editor, then filled: one window dragged in, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent. A command palette then switches the screen to a four-zone set, and the theme changes from dark to light" width="720">
+  <img src="docs/demo.gif" alt="A pile of overlapping windows is cleared four ways in turn: one window is dragged into a zone as the zones light up, the next is sent to zone two with ⌃⌥2, the third by holding ⌃⌥V and saying “zone three”, and the last two are placed together from a sentence typed to an agent" width="720">
 </p>
 
 ## Three ways to put a window somewhere
@@ -47,8 +47,17 @@ MCP, so a whole desk at once can go to an agent you already have open:
 >
 > read the error out of that dialog and tell me what it says
 
+Five zone sets ship with it, and past those you cut your own: click a zone to
+split it, `⇧`-click to split it the other way, one set per monitor. Swap the
+set on a screen and the windows already sitting in a numbered zone go to
+wherever that number is now.
+
 <p align="center">
-  <img src="docs/app-zones.png" alt="Plonk's Zones page: a row of zone sets across the top with Edge snapping selected, controls for drag-to-snap and the modifier that shows the zones, and the list of halves, quarters, maximize and centre with the shortcut bound to each" width="820">
+  <img src="docs/zones.gif" alt="Five clicks in the zone editor cut one screen into six zones, six windows fill them, and ⌃⌥⇧2 then swaps the whole set for another while the windows already in it follow their numbers across" width="720">
+</p>
+
+<p align="center">
+  <img src="docs/app-zones.png" alt="Plonk's Zones page: a row of zone sets across the top with Thirds selected and its three numbered zones drawn below, controls for drag-to-snap and the modifier that shows the zones, and the list of halves, quarters, maximize and centre with the shortcut bound to each" width="820">
 </p>
 
 Everything runs on your Mac. No account, no cloud, no telemetry — and
@@ -162,6 +171,10 @@ surface over MCP, so an agent can read the desk, rearrange it, save the result
 and read the screen back — without a screenshot round trip for anything that is
 really just words. Frames are fractions of a monitor's visible area, origin
 top-left, which is why "left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
+
+<p align="center">
+  <img src="docs/agents.gif" alt="Four sentences typed to an agent: a layout is applied across the desk, the result is saved as a workspace called review and the Mac held awake until a build finishes, everything is then closed to an empty desktop and rebuilt from that workspace, and finally a line of error text is read off the screen" width="720">
+</p>
 
 Nineteen tools, across state, layouts, workspaces, zones, keep-awake,
 screenshots and on-device OCR. Several agents can be connected at once, each
