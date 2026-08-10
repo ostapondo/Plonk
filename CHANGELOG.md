@@ -11,7 +11,11 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
-## Unreleased
+## 0.2.4 — 2026-08-10
+
+The command palette got a key of its own, an agent can photograph a window it
+names without disturbing it, and Claude Code installs the whole toolset in two
+commands.
 
 ### Fixed
 
@@ -51,6 +55,14 @@ one of those.
   workspace called review" — can be sent as it is, with `⌘return` or by picking
   the last row. It takes the same road a spoken command takes, so it can reach
   nothing a key could not.
+
+- **Claude Code installs the tools in two commands.**
+  `/plugin marketplace add ostapondo/plonk`, then `/plugin install plonk@plonk`.
+  The repository is its own marketplace, so there is no config file to find and
+  no directory's approval to wait on. The plugin launches the exact `plonk-mcp`
+  version its manifest names rather than whatever npm is serving, so the tools
+  it advertises are the tools you get. It needs the app installed — the server
+  is a bridge to a loopback API and does nothing on its own.
 
 ### Changed
 
