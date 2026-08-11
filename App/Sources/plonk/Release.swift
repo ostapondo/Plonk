@@ -39,7 +39,7 @@ struct ReleaseVersion: Comparable, CustomStringConvertible {
     }
 }
 
-struct Release {
+struct Release: Equatable {
     let version: ReleaseVersion
     /// The .zip asset holding Plonk.app.
     let downloadURL: URL
@@ -154,7 +154,7 @@ struct Release {
     """
 }
 
-enum UpdateError: LocalizedError {
+enum UpdateError: LocalizedError, Equatable {
     case malformedFeed(String)
     case network(String)
     case unpackFailed(String)
