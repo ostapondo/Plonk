@@ -38,14 +38,14 @@ enum CodeSignature {
         return (certificates?.isEmpty ?? true)
     }
 
-    /// Throws unless the bundle at `url` is intact and signed the same way this
-    /// copy is. Nested code is checked too, so a tampered helper inside an
-    /// otherwise valid bundle is caught.
-    static func verify(bundleAt url: URL, satisfies requirement: SecRequirement) throws {
+    /// Whether the bundle at `url` is intact and signed the same way this copy
+    /// is, and what to say when it is not. Nested code is checked too, so a
+    /// tampered helper inside an otherwise valid bundle is caught.
+    static func check(bundleAt url: URL, satisfies requirement: SecRequirement) -> SignatureCheck {
         var candidate: SecStaticCode?
         let created = SecStaticCodeCreateWithPath(url as CFURL, [], &candidate)
         guard created == errSecSuccess, let candidate else {
-            throw UpdateError.signatureRejected("the download is not signed code (OSStatus \(created))")
+            return .rejected("the download is not signed code (OSStatus \(created))")
         }
         let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSCheckNestedCode)
         var failure: Unmanaged<CFError>?
@@ -53,8 +53,9 @@ enum CodeSignature {
         guard status == errSecSuccess else {
             let detail = (failure?.takeRetainedValue() as Error?)?.localizedDescription
                 ?? "it is not signed by the certificate this copy was signed with (OSStatus \(status))"
-            throw UpdateError.signatureRejected(detail)
+            return .rejected(detail)
         }
+        return .satisfied
     }
 
     private static func selfStaticCode() throws -> SecStaticCode {

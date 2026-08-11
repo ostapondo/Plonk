@@ -17,6 +17,6 @@
 311   App/Sources/plonk/Hotkey.swift
 351   App/Sources/plonk/DragSnapManager.swift
 349   App/Sources/plonk/GrabMove.swift
-342   App/Sources/plonk/UpdateManager.swift
+341   App/Sources/plonk/UpdateManager.swift
 312   App/Sources/plonk/WorkspaceLauncher.swift
 306   mcp/src/api.ts

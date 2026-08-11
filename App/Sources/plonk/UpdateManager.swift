@@ -73,8 +73,7 @@ final class UpdateManager {
 
     /// The newer release, when there is one to offer.
     var available: Release? {
-        guard let latest, let current = Self.currentVersion, current < latest.version else { return nil }
-        return latest
+        UpdateDecision.offering(running: Self.currentVersion, latest: latest).offered
     }
 
     // MARK: - Checking
@@ -126,7 +125,7 @@ final class UpdateManager {
     private func offer(_ release: Release) {
         latest = release
         inFlight = false
-        guard let current = Self.currentVersion, current < release.version else {
+        guard case .offer = UpdateDecision.offering(running: Self.currentVersion, latest: release) else {
             set(phase: .idle, status: "Plonk \(Self.currentVersionText) is the latest release.")
             return
         }
@@ -150,8 +149,8 @@ final class UpdateManager {
             return
         }
         do {
-            let installed = try installedBundleURL()
-            guard !CodeSignature.selfIsAdHoc() else { throw UpdateError.adHocCopy }
+            let installed = Bundle.main.bundleURL
+            if let refusal = UpdateDecision.preflight(installedCopy(at: installed)).refusal { throw refusal }
             let requirement = try CodeSignature.selfRequirement()
             inFlight = true
             progress = 0
@@ -211,14 +210,20 @@ final class UpdateManager {
             let directory = FileManager.default.temporaryDirectory
                 .appendingPathComponent("plonk-update-\(UUID().uuidString)", isDirectory: true)
             defer { try? FileManager.default.removeItem(at: archive) }
+            let ours = Bundle.main.bundleIdentifier
             do {
-                try checkDigest(of: archive, matches: release)
+                // Each step fills in one more field and asks again, so the first
+                // refusal stops the step below it from ever running.
+                var verification = VerificationResult()
+                verification.digestMatched = try digestMatches(archive, of: release)
+                try verification.checked(against: release, identifier: ours)
                 try unpack(archive, into: directory)
                 let staged = directory.appendingPathComponent(installed.lastPathComponent)
-                try checkPayload(at: staged, matches: release)
-                try CodeSignature.verify(bundleAt: staged, satisfies: requirement)
-                DispatchQueue.main.async { [weak self] in
-                    self?.swap(staged, into: installed)
+                verification.payload = readPayload(at: staged)
+                try verification.checked(against: release, identifier: ours)
+                verification.signature = CodeSignature.check(bundleAt: staged, satisfies: requirement)
+                if case .install = try verification.checked(against: release, identifier: ours) {
+                    DispatchQueue.main.async { [weak self] in self?.swap(staged, into: installed) }
                 }
             } catch {
                 try? FileManager.default.removeItem(at: directory)
@@ -228,12 +233,12 @@ final class UpdateManager {
     }
 
     /// The cheapest check there is, and the first one: the bytes on disk have
-    /// to be the bytes the feed described. It runs before `ditto` is handed
-    /// the archive, so a download that went wrong on the way is never unpacked
-    /// at all. Releases cut before GitHub published a digest carry none, and
-    /// those fall through to the signature check exactly as they used to.
-    private func checkDigest(of archive: URL, matches release: Release) throws {
-        guard let expected = release.digest else { return }
+    /// to be the bytes the feed described. It runs before `ditto` is handed the
+    /// archive, so a download that went wrong on the way is never unpacked at
+    /// all. Releases cut before GitHub published a digest carry none and answer
+    /// nil, falling through to the signature check exactly as they used to.
+    private func digestMatches(_ archive: URL, of release: Release) throws -> Bool? {
+        guard let expected = release.digest else { return nil }
         let handle: FileHandle
         do {
             handle = try FileHandle(forReadingFrom: archive)
@@ -248,7 +253,7 @@ final class UpdateManager {
             hasher.update(data: chunk)
         }
         let actual = hasher.finalize().map { String(format: "%02x", $0) }.joined()
-        guard actual == expected else { throw UpdateError.digestMismatch }
+        return actual == expected
     }
 
     private func unpack(_ archive: URL, into directory: URL) throws {
@@ -265,22 +270,15 @@ final class UpdateManager {
         }
     }
 
-    /// The archive has to hold the app we were offered, at the version we were
-    /// offered. Without this a stale or mismatched asset would pass the
-    /// signature check on its way to being installed as an "update".
-    private func checkPayload(at staged: URL, matches release: Release) throws {
-        guard FileManager.default.fileExists(atPath: staged.path) else {
-            throw UpdateError.wrongPayload("it holds no \(staged.lastPathComponent)")
-        }
-        guard let bundle = Bundle(url: staged),
-              let identifier = bundle.bundleIdentifier,
-              identifier == Bundle.main.bundleIdentifier else {
-            throw UpdateError.wrongPayload("its bundle identifier is not \(Bundle.main.bundleIdentifier ?? "ours")")
-        }
-        let shipped = bundle.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        guard let version = ReleaseVersion(shipped), version == release.version else {
-            throw UpdateError.wrongPayload("it contains \(shipped), not \(release.version)")
-        }
+    /// What the unpacked archive holds. Whether that is the app we were offered
+    /// is `StagedPayload.refusal` to say.
+    private func readPayload(at staged: URL) -> StagedPayload {
+        let bundle = Bundle(url: staged)
+        return StagedPayload(
+            name: staged.lastPathComponent,
+            exists: FileManager.default.fileExists(atPath: staged.path),
+            identifier: bundle?.bundleIdentifier,
+            shortVersion: bundle?.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
     }
 
     private func swap(_ staged: URL, into installed: URL) {
@@ -309,15 +307,16 @@ final class UpdateManager {
         NSApp.terminate(nil)
     }
 
-    private func installedBundleURL() throws -> URL {
-        let url = Bundle.main.bundleURL
-        guard url.pathExtension == "app" else { throw UpdateError.notInstalled }
+    /// Everything the preflight needs about the copy being installed over.
+    /// Reading it is this manager's job; deciding on it is not.
+    private func installedCopy(at url: URL) -> InstalledCopy {
         let parent = url.deletingLastPathComponent()
-        guard FileManager.default.isWritableFile(atPath: url.path),
-              FileManager.default.isWritableFile(atPath: parent.path) else {
-            throw UpdateError.notWritable(parent.path)
-        }
-        return url
+        let files = FileManager.default
+        return InstalledCopy(
+            isApplicationBundle: url.pathExtension == "app",
+            isWritable: files.isWritableFile(atPath: url.path) && files.isWritableFile(atPath: parent.path),
+            parentPath: parent.path,
+            isAdHoc: CodeSignature.selfIsAdHoc())
     }
 
     // MARK: - State
