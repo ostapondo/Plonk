@@ -52,6 +52,10 @@ struct MainWindowView: View {
                 }
             }
         }
+        // The window hides its title bar so our own header is the only one, but
+        // the hosting view still insets the content by its height. Without this
+        // the top bar hangs below an empty strip the width of the window.
+        .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 620, minHeight: 520)
         // Both, and deliberately: `tint` is what system controls read, and the
         // deprecated `accentColor` is the only one that moves `Color.accentColor`

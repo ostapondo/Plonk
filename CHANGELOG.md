@@ -11,6 +11,15 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Fixed
+
+- **The main window's header sits at the top edge again.** The title bar is
+  hidden so the app draws its own, but the hosting view still reserved the
+  height of the one it hid: every page opened under an empty strip the width of
+  the window, and the sidebar started lower than it was told to.
+
 ## 0.2.4 — 2026-08-10
 
 The command palette got a key of its own, an agent can photograph a window it
