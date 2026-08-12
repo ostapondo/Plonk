@@ -13,7 +13,7 @@
 439   App/Sources/plonk/SettingsPages.swift
 489   App/Tests/plonkTests/ConfigTests.swift
 444   App/Tests/plonkTests/RouterTests.swift
-436   App/Sources/plonk/WindowManager.swift
+428   App/Sources/plonk/WindowManager.swift
 311   App/Sources/plonk/Hotkey.swift
 351   App/Sources/plonk/DragSnapManager.swift
 349   App/Sources/plonk/GrabMove.swift

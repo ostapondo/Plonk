@@ -109,7 +109,7 @@ final class ZoneOverlay {
                 width: z.w * visible.width,
                 height: z.h * visible.height
             ).insetBy(dx: 5, dy: 5)
-            let gapped = WindowManager.inset(rect, by: appearance.gap)
+            let gapped = ZoneGeometry.inset(rect, by: appearance.gap)
 
             let view = NSView(frame: gapped)
             view.wantsLayer = true

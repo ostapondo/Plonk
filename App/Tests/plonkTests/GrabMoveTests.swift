@@ -81,20 +81,20 @@ struct GrabMoveHandleTests {
 struct ZoneGapTests {
 
     @Test func aGapShrinksTheRectOnEverySide() {
-        let inset = WindowManager.inset(CGRect(x: 0, y: 0, width: 800, height: 600), by: 10)
+        let inset = ZoneGeometry.inset(CGRect(x: 0, y: 0, width: 800, height: 600), by: 10)
         #expect(inset == CGRect(x: 10, y: 10, width: 780, height: 580))
     }
 
     @Test func noGapChangesNothing() {
         let rect = CGRect(x: 0, y: 0, width: 800, height: 600)
-        #expect(WindowManager.inset(rect, by: 0) == rect)
+        #expect(ZoneGeometry.inset(rect, by: 0) == rect)
     }
 
     /// A wide gap on a narrow zone would otherwise produce a null rect, and a
     /// window set to a null rect goes to an infinite origin.
     @Test func aGapWiderThanTheZoneIsClampedRatherThanInverting() {
         let narrow = CGRect(x: 0, y: 0, width: 130, height: 130)
-        let inset = WindowManager.inset(narrow, by: 40)
+        let inset = ZoneGeometry.inset(narrow, by: 40)
         #expect(inset.width > 0 && inset.height > 0)
         #expect(!inset.isNull && !inset.isInfinite)
         #expect(inset.width <= narrow.width && inset.height <= narrow.height)
@@ -102,6 +102,41 @@ struct ZoneGapTests {
 
     @Test func aZoneAtTheMinimumIsLeftAlone() {
         let tiny = CGRect(x: 0, y: 0, width: 100, height: 90)
-        #expect(WindowManager.inset(tiny, by: 40) == tiny)
+        #expect(ZoneGeometry.inset(tiny, by: 40) == tiny)
+    }
+
+    /// The visible area of a laptop screen with the menu bar taken off, which is
+    /// what every fraction in the app is a fraction of.
+    private let visible = CGRect(x: 0, y: 33, width: 1728, height: 1084)
+
+    @Test func aFractionBecomesItsShareOfTheVisibleArea() {
+        let left = ZoneGeometry.frame(for: FracRect(0, 0, 0.5, 1), in: visible)
+        #expect(left == CGRect(x: 0, y: 33, width: 864, height: 1084))
+    }
+
+    /// The offset is not the origin: a zone that does not start at the screen
+    /// edge has to keep the visible area's own origin under it.
+    @Test func aFractionIsMeasuredFromTheVisibleOrigin() {
+        let right = ZoneGeometry.frame(for: FracRect(0.5, 0, 0.5, 1), in: visible)
+        #expect(right == CGRect(x: 864, y: 33, width: 864, height: 1084))
+    }
+
+    /// The regression this function exists for. A window dropped into a zone by
+    /// an agent used to get the zone rect untouched, while the same zone reached
+    /// by hotkey got it inset, so the gap was a setting that only worked when a
+    /// person pressed the key. Both paths compute the frame here now, so the
+    /// number below is the one either of them lands on.
+    @Test func theGapComesOffTheZoneWhoeverAsksForIt() {
+        let leftThird = FracRect(0, 0, 1.0 / 3.0, 1)
+        #expect(ZoneGeometry.frame(for: leftThird, in: visible, gap: 8)
+                == CGRect(x: 8, y: 41, width: 560, height: 1068))
+    }
+
+    /// A frame an agent gives as fractions is taken literally: it is not a zone,
+    /// so nothing is taken off it.
+    @Test func anExplicitFractionKeepsItsFullSize() {
+        let frame = ZoneGeometry.frame(for: FracRect(0, 0, 0.6, 1), in: visible)
+        #expect(frame.width == visible.width * 0.6)
+        #expect(frame.origin == CGPoint(x: 0, y: 33))
     }
 }

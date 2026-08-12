@@ -62,6 +62,31 @@ enum ZoneGeometry {
     static let grid = 0.05
     static let minSide = 0.1
 
+    /// The frame a window ends up with: the fraction's share of the visible
+    /// area, less the gap on every side.
+    ///
+    /// One function on purpose. A zone reached by ⌃⌥3 and the same zone reached
+    /// over MCP have to land in the same place, and they did not: the agent path
+    /// built this rect and placed the window without ever insetting it, so the
+    /// gap was a setting that only worked when a person pressed the key.
+    static func frame(for frac: FracRect, in visible: CGRect, gap: CGFloat = 0) -> CGRect {
+        inset(CGRect(x: visible.minX + frac.x * visible.width,
+                     y: visible.minY + frac.y * visible.height,
+                     width: frac.w * visible.width,
+                     height: frac.h * visible.height),
+              by: gap)
+    }
+
+    /// Insets a rect by the zone gap without ever turning it inside out: a wide
+    /// gap on a narrow zone would otherwise produce a null rect, and the window
+    /// would be sent to an infinite origin.
+    static func inset(_ rect: CGRect, by gap: CGFloat) -> CGRect {
+        guard gap > 0, rect.width > 0, rect.height > 0 else { return rect }
+        let minimumSide: CGFloat = 120
+        let room = min(gap, max((rect.width - minimumSide) / 2, 0), max((rect.height - minimumSide) / 2, 0))
+        return room > 0 ? rect.insetBy(dx: room, dy: room) : rect
+    }
+
     static func snapValue(_ v: Double) -> Double {
         (v / grid).rounded() * grid
     }

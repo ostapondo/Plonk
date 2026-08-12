@@ -15,6 +15,14 @@ one of those.
 
 ### Fixed
 
+- **The zone gap applies when an agent drops a window into a zone.** `⌃⌥3` left
+  the gap around the window and `snap_window` did not, so the same zone gave two
+  different frames depending on who asked for it, and the setting looked broken
+  to anyone driving Plonk over MCP or from the CLI. The agent path built the
+  zone's rectangle and placed the window without ever insetting it. Both paths
+  now compute the frame in one function, `ZoneGeometry.frame`, which is where
+  the gap comes off, so they cannot drift apart again.
+
 - **The main window's header sits at the top edge again.** The title bar is
   hidden so the app draws its own, but the hosting view still reserved the
   height of the one it hid: every page opened under an empty strip the width of

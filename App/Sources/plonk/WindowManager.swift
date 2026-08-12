@@ -212,15 +212,11 @@ final class WindowManager {
         return true
     }
 
-    private func axRect(for frac: FracRect, screenIndex: Int, in all: [ScreenInfo]) -> CGRect {
+    private func axRect(for frac: FracRect, screenIndex: Int, in all: [ScreenInfo],
+                        gap: CGFloat = 0) -> CGRect {
         guard !all.isEmpty else { return .zero }
         let v = all[min(max(screenIndex, 0), all.count - 1)].visible
-        return CGRect(
-            x: v.minX + frac.x * v.width,
-            y: v.minY + frac.y * v.height,
-            width: frac.w * v.width,
-            height: frac.h * v.height
-        )
+        return ZoneGeometry.frame(for: frac, in: v, gap: gap)
     }
 
     // MARK: - App matching
@@ -279,16 +275,23 @@ final class WindowManager {
     }
 
     /// Place one window by app name. Returns an error string, or nil on success.
-    func place(app appName: String, titleContains: String?, screen screenIdx: Int?, frac: FracRect) -> String? {
+    func place(app appName: String, titleContains: String?, screen screenIdx: Int?, frac: FracRect,
+               gap: CGFloat = 0) -> String? {
         place(app: appName, bundleID: nil, titleContains: titleContains, windowIndex: nil,
-              screen: screenIdx, frac: frac)
+              screen: screenIdx, frac: frac, gap: gap)
     }
 
     /// The workspace form: addresses a specific window of an app and can leave
     /// it minimized afterwards.
+    ///
+    /// `gap` defaults to none because most callers hand over a fraction that is
+    /// already exactly where the window goes: a workspace saved a frame that had
+    /// the gap in it, and a frame given as fractions is taken literally. Only a
+    /// caller naming a *zone* passes one, so an agent dropping a window into
+    /// zone 3 leaves the same space around it as ⌃⌥3 does.
     func place(app appName: String, bundleID: String?, titleContains: String?, windowIndex: Int?,
                screen screenIdx: Int?, frac: FracRect,
-               minimize: Bool = false, activate: Bool = true) -> String? {
+               minimize: Bool = false, activate: Bool = true, gap: CGFloat = 0) -> String? {
         guard isTrusted else { return "accessibility permission not granted" }
         let all = screens()
         if let screenIdx, !all.indices.contains(screenIdx) {
@@ -317,7 +320,7 @@ final class WindowManager {
             AXUIElementSetAttributeValue(win, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
         }
         let index = screenIdx ?? screenIndex(containing: frame(ofWindow: win) ?? .zero, in: all)
-        guard setFrame(win, axRect(for: frac, screenIndex: index, in: all)) else {
+        guard setFrame(win, axRect(for: frac, screenIndex: index, in: all, gap: gap)) else {
             return "window of \"\(appName)\" refused to move or resize"
         }
         if activate { app.activate() }
@@ -359,18 +362,7 @@ final class WindowManager {
     /// Place a specific window (used by drag snapping). `gap` is the empty
     /// space left around the zone, in points, so a snapped window can breathe.
     func apply(frac: FracRect, toWindow win: AXUIElement, screenIndex: Int, gap: CGFloat = 0) {
-        let rect = axRect(for: frac, screenIndex: screenIndex, in: screens())
-        setFrame(win, Self.inset(rect, by: gap))
-    }
-
-    /// Insets a rect by the zone gap without ever turning it inside out: a
-    /// wide gap on a narrow zone would otherwise produce a null rect, and the
-    /// window would be sent to an infinite origin.
-    static func inset(_ rect: CGRect, by gap: CGFloat) -> CGRect {
-        guard gap > 0, rect.width > 0, rect.height > 0 else { return rect }
-        let minimumSide: CGFloat = 120
-        let room = min(gap, max((rect.width - minimumSide) / 2, 0), max((rect.height - minimumSide) / 2, 0))
-        return room > 0 ? rect.insetBy(dx: room, dy: room) : rect
+        setFrame(win, axRect(for: frac, screenIndex: screenIndex, in: screens(), gap: gap))
     }
 
     /// Which screen a window sits on, by the screen its centre falls in.
