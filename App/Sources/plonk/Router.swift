@@ -576,7 +576,7 @@ final class Router {
             return .badRequest("screen \(screen) has zones 1...\(zones.count)")
         }
         let error = windows.place(app: app, titleContains: title, screen: screen,
-                                  frac: zones[number - 1].frac)
+                                  frac: zones[number - 1].frac, gap: CGFloat(store.config.zoneGap))
         if let error { return .failed(error) }
         return .ok(["ok": true, "app": app, "screen": screen, "zone": number, "zones": zones.count])
     }
