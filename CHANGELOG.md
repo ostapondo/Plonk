@@ -13,6 +13,13 @@ one of those.
 
 ## Unreleased
 
+### Changed
+
+- **README and CONTRIBUTING are shorter.** Roughly a fifth off each. Install
+  moved above the feature tour, and CONTRIBUTING leads with what there is to do
+  rather than with how review works. The version badge said 0.2.2, and so did
+  the `gh attestation verify` example next to it.
+
 ### Fixed
 
 - **The zone gap applies when an agent drops a window into a zone.** `⌃⌥3` left
