@@ -46,17 +46,19 @@ final class RulerRoutes {
                                 + "{\"interactive\": true} to hand the user the ruler"))
             return
         }
-        ruler.measure(at: point) { [weak self] result in
-            respond(self?.reply(result) ?? .failed("shutting down"))
+        let tolerance = (body["tolerance"] as? NSNumber)?.intValue
+        ruler.measure(at: point, tolerance: tolerance) { [weak self] result in
+            respond(self?.reply(result, tolerance: tolerance) ?? .failed("shutting down"))
         }
     }
 
-    private func reply(_ result: Result<RulerMeasurement, ScreenRuler.Failure>) -> HTTPResponse {
+    private func reply(_ result: Result<RulerMeasurement, ScreenRuler.Failure>,
+                       tolerance: Int? = nil) -> HTTPResponse {
         switch result {
         case .success(let measurement):
             var payload = measurement.asDict(visible: ruler.visibleArea(ofScreen: measurement.screen))
             payload["ok"] = true
-            payload["tolerance"] = store.config.rulerTolerance
+            payload["tolerance"] = tolerance ?? store.config.rulerEdgeTolerance
             return .ok(payload)
         case .failure(let failure):
             // Nothing here is the caller's mistake: the permission is missing,

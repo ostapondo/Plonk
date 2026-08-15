@@ -19,7 +19,7 @@ struct RulerPage: View {
             } header: {
                 Text("Ruler")
             } footer: {
-                Text("Hover and Plonk finds the edges of whatever is under the pointer and gives you its size. Drag for a straight-line distance. Click to copy the number, Escape to finish. The screen is photographed once when the ruler opens, so what is being measured holds still; reopen it after the screen changes. Needs Screen Recording access, the same as a screenshot.")
+                Text("Hover and Plonk measures how far the pointer can travel each way before it meets an edge: the width of a row, the height of a bar, the gap between two things. Two numbers, drawn on the two lines they belong to, because the run across and the run down are separate answers. Drag instead for a straight-line distance. Click copies, Space takes a fresh picture of the screen, Escape finishes. Needs Screen Recording access, the same as a screenshot.")
             }
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "ruler"))
@@ -42,19 +42,19 @@ struct RulerPage: View {
                            })
                         .labelsHidden()
                         .controlSize(.small)
-                    Text("Lower finds smaller things and stops at fainter borders; higher walks "
-                         + "through gradients and shadows to the edge you meant.")
+                    Text("Lower stops at fainter borders and finds smaller things; higher "
+                         + "walks through more before it calls anything an edge.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             } header: {
                 Text("Detection")
             } footer: {
-                Text("How different a pixel has to be from the one under the pointer, on a scale of 255, before Plonk calls it the edge. Text and thin borders want a low number; a window over a photograph wants a high one.")
+                Text("How different one pixel has to be from the pixel beside it, on a scale of 255, before Plonk calls that boundary an edge. Ten suits most interfaces: gradients and shadows step by less, borders by more. Raise it for a photograph or a noisy video, where every pixel differs a little from the last.")
             }
         }
         .formStyle(.grouped)
-        .onAppear { knob = Double(model.rulerTolerance) }
-        .onChange(of: model.rulerTolerance) { knob = Double($0) }
+        .onAppear { knob = Double(model.rulerEdgeTolerance) }
+        .onChange(of: model.rulerEdgeTolerance) { knob = Double($0) }
     }
 }

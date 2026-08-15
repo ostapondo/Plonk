@@ -611,7 +611,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.textLanguages = store.config.textLanguages
         model.supportedTextLanguages = TextExtractor.supportedLanguages
         model.shotFolder = store.config.shotFolder
-        model.rulerTolerance = store.config.rulerTolerance
+        model.rulerEdgeTolerance = store.config.rulerEdgeTolerance
         model.shotCopyToClipboard = store.config.shotCopyToClipboard
         model.voiceLocalCommands = store.config.voiceLocalCommands
         model.sawFirstSnap = store.config.sawFirstSnap

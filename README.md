@@ -112,7 +112,7 @@ otherwise each be another menu bar icon.
 | **[Workspaces](docs/workspaces.md)** | A desk you can put away: the apps, every window's frame, the monitor each belongs on, what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself |
 | **Focus that follows the layout** | `⌃⌥⇧←` goes to the window actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
 | **Text off the screen** | `⌃⌥T` selects an area and copies the words in it: a screenshot, a paused video, a dialog that will not let you select. On-device |
-| **A ruler** | `⌃⌥R` sizes whatever the pointer is over, edges found in the pixels, so nothing has to be aimed at. Drag for a distance. Points and pixels both |
+| **A ruler** | `⌃⌥R`, then hover: how far the pointer can go each way before it meets an edge, found in the pixels. The width of a row, the height of a bar, the gap between two things. Drag for a distance. Points and pixels both |
 | **Pin part of the screen** | Float a live crop above everything else. A build log, a chart, a call, visible in a corner while you work over it |
 | **Keep awake** | Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or when a process exits |
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |

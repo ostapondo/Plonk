@@ -82,9 +82,13 @@ struct Config: Codable {
     var awakeSessionEnd: Double?
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
-    // How different a pixel has to be, on one channel of 255, before the screen
-    // ruler treats the boundary as an edge. See EdgeDetector.
-    var rulerTolerance = EdgeDetector.defaultTolerance
+    // How different two neighbouring pixels have to be, on one channel of 255,
+    // before the screen ruler treats the boundary between them as an edge. See
+    // EdgeDetector. The key is not the "rulerTolerance" a pre-release build
+    // wrote: that number was a distance from the pixel under the pointer, which
+    // is a different measurement, so carrying it over would mean honouring a
+    // setting nobody chose.
+    var rulerEdgeTolerance = EdgeDetector.defaultTolerance
     var launchAtLogin = true
     // The only setting that decides whether the app ever opens an outbound
     // connection. Off means no release check, automatic or otherwise.
@@ -149,7 +153,7 @@ struct Config: Codable {
         awakeSessionEnd = try c.decodeIfPresent(Double.self, forKey: .awakeSessionEnd)
         shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
         shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
-        rulerTolerance = try c.decodeIfPresent(Int.self, forKey: .rulerTolerance)
+        rulerEdgeTolerance = try c.decodeIfPresent(Int.self, forKey: .rulerEdgeTolerance)
             ?? EdgeDetector.defaultTolerance
         launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
         updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
