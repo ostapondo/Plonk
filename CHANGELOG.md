@@ -11,14 +11,11 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
-## Unreleased
+## 0.2.5 — 2026-08-15
 
-### Changed
-
-- **README and CONTRIBUTING are shorter.** Roughly a fifth off each. Install
-  moved above the feature tour, and CONTRIBUTING leads with what there is to do
-  rather than with how review works. The version badge said 0.2.2, and so did
-  the `gh attestation verify` example next to it.
+Two fixes, one of them a setting that only worked when a person asked for it.
+The same zone gave an agent a different frame than the keyboard did, so the
+zone gap looked broken to anyone driving Plonk over MCP.
 
 ### Fixed
 
@@ -34,6 +31,13 @@ one of those.
   hidden so the app draws its own, but the hosting view still reserved the
   height of the one it hid: every page opened under an empty strip the width of
   the window, and the sidebar started lower than it was told to.
+
+### Changed
+
+- **README and CONTRIBUTING are shorter.** Roughly a fifth off each. Install
+  moved above the feature tour, and CONTRIBUTING leads with what there is to do
+  rather than with how review works. The version badge said 0.2.2, and so did
+  the `gh attestation verify` example next to it.
 
 ## 0.2.4 — 2026-08-10
 

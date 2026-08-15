@@ -6,7 +6,7 @@ nine more menu bar utilities behind the same icon.</strong><br>
 there, you press a key, or you say where.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.2.4-8b7cf6?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.2.5-8b7cf6?style=flat-square">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
@@ -50,7 +50,7 @@ That is a check being skipped on your behalf, so here is a stronger one to run
 instead, before you open anything:
 
 ```sh
-gh attestation verify $(brew --cache)/downloads/*--Plonk-0.2.4.zip \
+gh attestation verify $(brew --cache)/downloads/*--Plonk-0.2.5.zip \
   -R ostapondo/plonk
 ```
 
