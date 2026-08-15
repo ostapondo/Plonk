@@ -74,6 +74,20 @@ cat > "$APP/Contents/Info.plist" <<EOF
 EOF
 codesign --force --options runtime --sign "$IDENTITY" "$APP"
 
+# SECURITY.md tells people to run these two commands on the copy they have, and
+# says what the answers will be: no entitlements, hardened runtime. Checking the
+# same thing here means the page cannot start lying between one release and the
+# next. The commands are the reader's, verbatim.
+if [ -n "$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)" ]; then
+	echo "error: the signed bundle carries entitlements; SECURITY.md says it has none" >&2
+	codesign -d --entitlements - --xml "$APP" >&2
+	exit 1
+fi
+if ! codesign -dv --verbose=2 "$APP" 2>&1 | grep -q 'flags=.*runtime'; then
+	echo "error: the signed bundle is not under the hardened runtime; SECURITY.md says it is" >&2
+	exit 1
+fi
+
 # A changed requirement means every permission the app holds has just been
 # dropped. That is worth a line of output; discovering it from a failed capture
 # is not.

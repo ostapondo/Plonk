@@ -33,6 +33,19 @@ There is no Full Disk Access, no Automation (it cannot script other apps), no
 Keychain access, no helper daemon, no privileged tool, no installer script. It
 is one binary in one bundle.
 
+**The checkable half of this page is checked.** A claim nobody verifies goes
+stale on its own: not by anyone lying, but by a later commit adding a host, a
+dependency or an entitlement while the page that promised otherwise sits there
+unread. So the statements on this page that a script can settle are settled by
+one, [scripts/check-security-claims.sh](scripts/check-security-claims.sh), on
+every pull request. It fails the build if the app grows a Swift dependency or a
+second network host, if the npm side gains a third, if the control port moves,
+or if the token stops being created with `O_EXCL`, `O_NOFOLLOW` and mode 600.
+The two claims about the signed bundle, empty entitlements and the hardened
+runtime, are checked in [scripts/build.sh](scripts/build.sh) immediately after
+signing, using the same two commands printed above. None of that says the code
+is harmless. It says this page and the code cannot drift apart quietly.
+
 **It does start at login, and it turns that on by itself.** A menu bar app that
 is not there after a reboot is not much of a menu bar app, so the first launch
 registers Plonk as a login item. It does that the supported way —
