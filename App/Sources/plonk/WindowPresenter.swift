@@ -14,6 +14,7 @@ final class WindowPresenter: NSObject {
     private var shotEditor: NSWindow?
     private var workspaceLaunch: NSPanel?
     private var palette: EditorWindow?
+    private var zoneSetPalette: EditorWindow?
 
     var shotFolder: () -> String = { "~/Desktop" }
     var onCancelWorkspaceLaunch: (() -> Void)?
@@ -52,35 +53,12 @@ final class WindowPresenter: NSObject {
     func showCommandPalette(commands: [PlonkCommand], agent: String?,
                             onAsk: @escaping (String) -> Void) {
         closeCommandPalette()
-        let window = EditorWindow(contentRect: .zero, styleMask: .borderless,
-                                  backing: .buffered, defer: false)
-        window.onEscape = { [weak self] in self?.closeCommandPalette() }
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.level = .floating
-        window.isReleasedWhenClosed = false
-        window.hasShadow = true
-        // Clicking anywhere else dismisses it, the way Spotlight does. Without
-        // this it stays on top of whatever you switched to, and its key monitor
-        // keeps eating the arrow keys.
-        window.delegate = self
-        window.contentViewController = NSHostingController(
-            rootView: CommandPaletteView(commands: commands, agent: agent, onAsk: onAsk) { [weak self] in
-                self?.closeCommandPalette()
-            }
-        )
-        window.setContentSize(window.contentViewController?.view.fittingSize
-                              ?? NSSize(width: 560, height: 420))
+        let window = overlay(content: CommandPaletteView(commands: commands, agent: agent,
+                                                        onAsk: onAsk) { [weak self] in
+            self?.closeCommandPalette()
+        }, onEscape: { [weak self] in self?.closeCommandPalette() })
         palette = window
-        // A third of the way down rather than centred: a list that grows
-        // downwards should not start in the middle of the screen.
-        if let screen = NSScreen.main {
-            let frame = window.frame
-            window.setFrameOrigin(NSPoint(x: screen.frame.midX - frame.width / 2,
-                                          y: screen.visibleFrame.maxY - frame.height - 140))
-        }
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
+        show(window, near: NSScreen.main)
     }
 
     /// Closed rather than ordered out: the hosting view has to be torn down so
@@ -91,6 +69,58 @@ final class WindowPresenter: NSObject {
         palette = nil
         window.delegate = nil
         window.close()
+    }
+
+    /// The zone sets for one screen, opened on that screen: the list is about
+    /// that monitor, so it has to be visible on it.
+    func showZoneSetPalette(screenIndex: Int) {
+        closeZoneSetPalette()
+        let window = overlay(content: ZoneSetPaletteView(model: model, screenIndex: screenIndex) {
+            [weak self] in self?.closeZoneSetPalette()
+        }, onEscape: { [weak self] in self?.closeZoneSetPalette() })
+        zoneSetPalette = window
+        let screens = NSScreen.screens
+        show(window, near: screens.indices.contains(screenIndex) ? screens[screenIndex] : .main)
+    }
+
+    func closeZoneSetPalette() {
+        guard let window = zoneSetPalette else { return }
+        zoneSetPalette = nil
+        window.delegate = nil
+        window.close()
+    }
+
+    /// A borderless panel over everything, sized to what SwiftUI asks for.
+    /// Clicking anywhere else dismisses it, the way Spotlight does: without
+    /// that it stays on top of whatever you switched to, and its key monitor
+    /// keeps eating the arrow keys.
+    private func overlay<Content: View>(content: Content,
+                                        onEscape: @escaping () -> Void) -> EditorWindow {
+        let window = EditorWindow(contentRect: .zero, styleMask: .borderless,
+                                  backing: .buffered, defer: false)
+        window.onEscape = onEscape
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.level = .floating
+        window.isReleasedWhenClosed = false
+        window.hasShadow = true
+        window.delegate = self
+        window.contentViewController = NSHostingController(rootView: content)
+        window.setContentSize(window.contentViewController?.view.fittingSize
+                              ?? NSSize(width: 560, height: 420))
+        return window
+    }
+
+    /// A third of the way down rather than centred: a list that grows
+    /// downwards should not start in the middle of the screen.
+    private func show(_ window: NSWindow, near screen: NSScreen?) {
+        if let screen {
+            let frame = window.frame
+            window.setFrameOrigin(NSPoint(x: screen.frame.midX - frame.width / 2,
+                                          y: screen.visibleFrame.maxY - frame.height - 140))
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
     }
 
     func showZonePicker() {
@@ -239,8 +269,9 @@ extension WindowPresenter: NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
-        guard (notification.object as? NSWindow) === palette else { return }
-        closeCommandPalette()
+        let window = notification.object as? NSWindow
+        if window === palette { closeCommandPalette() }
+        if window === zoneSetPalette { closeZoneSetPalette() }
     }
 }
 

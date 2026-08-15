@@ -153,9 +153,7 @@ final class WindowCommands {
             announce?(names.isEmpty ? "No zone sets to switch to" : "There are \(names.count) zone sets")
             return
         }
-        let point = NSEvent.mouseLocation
-        let screen = NSScreen.screens.firstIndex { $0.frame.contains(point) } ?? 0
-        assign(names[number - 1], screen)
+        assign(names[number - 1], ScreenIdentity.indexUnderCursor)
         announce?(names[number - 1])
     }
 

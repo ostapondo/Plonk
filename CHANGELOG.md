@@ -15,6 +15,18 @@ one of those.
 
 ### Added
 
+- **The zone sets, as a list you can see.** `⌃⌥L` draws every set available for
+  the screen the cursor is on, each one as a small picture of itself, with the
+  one that screen is wearing marked. Arrows or the digit picks, `return` puts it
+  on the screen, `E` opens it in the fullscreen editor, `N` starts a new one,
+  Escape leaves everything as it was.
+
+  `⌃⌥⇧1`–`⌃⌥⇧9` already swapped a set, but only for someone who remembers which
+  set is number four. The digits in the list are those same numbers, so the list
+  is also the thing that teaches them. Editing from here duplicates a built-in
+  template first, exactly as the Zones window does, so the shipped sets stay
+  intact.
+
 - **A ruler for the screen.** `⌃⌥R`, then hover: Plonk photographs the screen
   once, walks out from the pointer in all four directions until one pixel is
   unlike the one beside it, and draws each run as a dimension line with its own

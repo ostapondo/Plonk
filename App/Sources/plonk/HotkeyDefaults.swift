@@ -44,6 +44,7 @@ extension HotkeyAction {
         case .layout7: code = kVK_ANSI_7; shift = true
         case .layout8: code = kVK_ANSI_8; shift = true
         case .layout9: code = kVK_ANSI_9; shift = true
+        case .zoneSetPalette: code = kVK_ANSI_L
         case .unsnap: code = kVK_ANSI_0
         case .cycleZone: code = kVK_ANSI_Grave
         case .cycleZoneBack: code = kVK_ANSI_Grave; shift = true

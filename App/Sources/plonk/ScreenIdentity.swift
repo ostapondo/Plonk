@@ -21,6 +21,13 @@ enum ScreenIdentity {
         return [uuid, String(index)]
     }
 
+    /// The screen the pointer is on, falling back to the first one: a shortcut
+    /// with no window to read a screen from acts on the one being looked at.
+    static var indexUnderCursor: Int {
+        let point = NSEvent.mouseLocation
+        return NSScreen.screens.firstIndex { $0.frame.contains(point) } ?? 0
+    }
+
     /// Where that display sits now, or nil when it is not attached.
     static func index(forUUID uuid: String) -> Int? {
         NSScreen.screens.indices.first { self.uuid(forIndex: $0) == uuid }

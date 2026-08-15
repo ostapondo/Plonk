@@ -112,7 +112,7 @@ struct ZonePickerView: View {
                     isPreviewing: model.previewedZoneSet == name,
                     onSelect: { model.actions?.assignZoneSet(name, toScreen: selectedScreen) },
                     onPreview: { model.actions?.togglePreview(zoneSet: name, onScreen: selectedScreen) },
-                    onEdit: { edit(name, isCustom: isCustom) },
+                    onEdit: { model.editZoneSet(named: name, onScreen: selectedScreen) },
                     onDelete: isCustom ? { model.actions?.deleteZoneSet(name) } : nil,
                     onRename: isCustom ? { _ = model.actions?.renameZoneSet(name, to: $0) } : nil
                 )
@@ -120,26 +120,9 @@ struct ZonePickerView: View {
         }
     }
 
-    private func edit(_ name: String, isCustom: Bool) {
-        guard let actions = model.actions else { return }
-        guard !isCustom else {
-            actions.editZoneSet(name, seed: nil, onScreen: selectedScreen)
-            return
-        }
-        actions.editZoneSet(uniqueName(base: name + " copy"),
-                            seed: model.zoneSets[name] ?? [], onScreen: selectedScreen)
-    }
-
     private func createNewLayout() {
-        model.actions?.editZoneSet(uniqueName(base: "Custom"),
+        model.actions?.editZoneSet(model.freeZoneSetName(base: "Custom"),
                                    seed: [ZoneRect(0, 0, 1, 1)], onScreen: selectedScreen)
-    }
-
-    private func uniqueName(base: String) -> String {
-        if model.zoneSets[base] == nil { return base }
-        var i = 2
-        while model.zoneSets["\(base) \(i)"] != nil { i += 1 }
-        return "\(base) \(i)"
     }
 }
 

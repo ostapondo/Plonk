@@ -31,7 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var captureDepth = 0
     var router: Router!
     private var server: ControlServer?
-    private var previewToken = 0
+    var previewToken = 0
     private var screenSettleWork: DispatchWorkItem?
     /// Display UUIDs seen at the last screen-parameter change, so a Dock
     /// resize can be told apart from a monitor being plugged in.
@@ -226,6 +226,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             toggleShortcutGuide()
         case .commandPalette:
             openCommandPalette()
+        case .zoneSetPalette:
+            openZoneSetPalette()
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)
@@ -673,7 +675,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMenu.workspaceNames = model.workspaceNames
     }
 
-    private func refreshZoneModel() {
+    func refreshZoneModel() {
         let custom = store.config.zoneSets.keys.sorted()
         model.customZoneSetNames = custom
         model.zoneSetNames = custom + BuiltinZoneSets.all.keys.sorted().filter { !custom.contains($0) }
@@ -695,7 +697,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
-    private func clearPreview() {
+    func clearPreview() {
         dragSnap.hidePreviews()
         model.previewedZoneSet = nil
     }
@@ -1027,66 +1029,6 @@ extension AppDelegate: AppActions {
     func reportBug() {
         guard let url = URL(string: Self.issuesURL) else { return }
         NSWorkspace.shared.open(url)
-    }
-
-    func assignZoneSet(_ name: String?, toScreen index: Int) {
-        store.update { $0.assignZoneSet(name, forKeys: ScreenIdentity.keys(forIndex: index)) }
-        refreshZoneModel()
-        commands.relayout(screenIndex: index)
-    }
-
-    func updateZoneSet(_ name: String, zones: [ZoneRect]) {
-        store.update { $0.zoneSets[name] = zones }
-        refreshZoneModel()
-        for index in NSScreen.screens.indices
-        where store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: index)) == name {
-            commands.relayout(screenIndex: index)
-        }
-        if !presenter.isFullscreenEditorVisible {
-            dragSnap.previewZones()
-        }
-    }
-
-    func renameZoneSet(_ old: String, to new: String) -> Bool {
-        guard old != new else { return true }
-        guard store.config.zoneSets[old] != nil, store.config.zoneSets[new] == nil else { return false }
-        store.update {
-            guard let zones = $0.zoneSets.removeValue(forKey: old) else { return }
-            $0.zoneSets[new] = zones
-            $0.screenZoneSets = $0.screenZoneSets.mapValues { $0 == old ? new : $0 }
-        }
-        refreshZoneModel()
-        return true
-    }
-
-    func deleteZoneSet(_ name: String) {
-        store.update { $0.forgetZoneSet(named: name) }
-        refreshZoneModel()
-    }
-
-    func togglePreview(zoneSet name: String, onScreen index: Int) {
-        previewToken += 1
-        guard model.previewedZoneSet != name else {
-            clearPreview()
-            return
-        }
-        guard let zones = store.config.zoneSets[name] ?? BuiltinZoneSets.all[name] else { return }
-        dragSnap.showPreview(zones: zones, screenIndex: index)
-        model.previewedZoneSet = name
-
-        let token = previewToken
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-            guard let self, previewToken == token else { return }
-            clearPreview()
-        }
-    }
-
-    func openZonePicker() {
-        presenter.showZonePicker()
-    }
-
-    func editZoneSet(_ name: String, seed: [ZoneRect]?, onScreen index: Int) {
-        presenter.showFullscreenEditor(set: name, seed: seed, screenIndex: index)
     }
 
     func launchWorkspace(named name: String, onScreen screen: Int?) {

@@ -80,7 +80,8 @@ struct ZonesPage: View {
         SettingsCard(title: "Switch zone sets",
                      note: "Applies the set at that place in the list of zone sets, to whichever "
                          + "screen the cursor is on. Windows already sitting in a numbered zone "
-                         + "move to where that number is in the new set.") {
+                         + "move to where that number is in the new set. The last shortcut puts "
+                         + "the same list on screen to pick from, or to open one in the editor.") {
             SettingBlock {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Zone sets"))
             }

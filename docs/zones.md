@@ -24,6 +24,7 @@ it.
 | **Or none** | Edge snapping instead: middles are halves, top is maximize, corners are quarters |
 | **Or hover the line** | Bring the cursor near the border between two zones and both light up, no modifier at all |
 | **Whole sets** | `⌃⌥⇧1`–`⌃⌥⇧9` swap the set on the screen the cursor is on. Windows already sitting in a numbered zone move to where that number is now |
+| **Picking one** | `⌃⌥L` draws the sets for that screen as a list: arrows or the digit to pick, `return` to use it, `E` to open it in the editor, `N` for a new one |
 | **Looks** | Gap, colour, opacity, numbers on or off, every monitor's zones shown while dragging. The gap is real — a window keeps that much space around it |
 | **Exceptions** | A list of apps Plonk keeps its hands off — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works; that names the window on purpose |
 | **New windows** | Optionally, a window that opens goes where that app's last one went |
