@@ -18,6 +18,7 @@
 | `⌃⌥Z` | Flash the zones |
 | `⌃⌥S` · `⌃⌥T` | Grab a region · lift the text out of one |
 | `⌃⌥P` · `⌃⌥⇧P` | Pin a live crop on top · pin a still one |
+| `⌃⌥R` | Measure what is under the pointer |
 | `⌃⌥⇧/` | Every shortcut the front app has |
 | `⌃⌥/` · `⌃⌥\` | Find the pointer · jump it to the next screen |
 | `⌃⌥V` | Hold to talk |

@@ -61,6 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupGrabMove()
         setupNewWindows()
         setupMouseTools()
+        setupRuler()
         setupServer()
         setupUpdates()
         refreshModel()
@@ -219,6 +220,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pinCrop(live: true)
         case .cropStill:
             pinCrop(live: false)
+        case .ruler:
+            startRuler()
         case .shortcutGuide:
             toggleShortcutGuide()
         case .commandPalette:
@@ -234,30 +237,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 commands.moveFocus(direction)
             } else if let preset = action.preset {
                 commands.apply(preset)
-            }
-        }
-    }
-
-    /// Region capture straight into recognition: the text lands on the
-    /// clipboard, and the HUD shows what was read so a bad crop is obvious
-    /// without pasting it somewhere first.
-    private func captureText() {
-        runCapture(.region, openEditor: false) { [weak self] image in
-            guard let self, let image else { return }
-            TextExtractor.recognize(in: image, languages: store.config.textLanguages) { result in
-                switch result {
-                case .failure(let error):
-                    HUD.shared.show(error.localizedDescription)
-                case .success(let lines):
-                    let text = TextExtractor.joined(lines)
-                    guard !text.isEmpty else {
-                        HUD.shared.show("No text found there")
-                        return
-                    }
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(text, forType: .string)
-                    HUD.shared.show("Copied: \(text.prefix(80))\(text.count > 80 ? "…" : "")")
-                }
             }
         }
     }
@@ -321,7 +300,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragSnap.start()
     }
 
-    private var zoneAppearance: ZoneAppearance {
+    var zoneAppearance: ZoneAppearance {
         ZoneAppearance(gap: CGFloat(store.config.zoneGap),
                        opacity: CGFloat(store.config.zoneOpacity),
                        // Falls back to the app's accent, which itself falls back
@@ -632,6 +611,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.textLanguages = store.config.textLanguages
         model.supportedTextLanguages = TextExtractor.supportedLanguages
         model.shotFolder = store.config.shotFolder
+        model.rulerTolerance = store.config.rulerTolerance
         model.shotCopyToClipboard = store.config.shotCopyToClipboard
         model.voiceLocalCommands = store.config.voiceLocalCommands
         model.sawFirstSnap = store.config.sawFirstSnap
@@ -811,7 +791,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Everything Plonk has on screen, ordered out so it cannot end up in a
     /// capture: settings and editors, but also the crosshairs and any pinned
     /// crop, which are floating over exactly the area being photographed.
-    private func hideOwnWindows() -> [NSWindow] {
+    func hideOwnWindows() -> [NSWindow] {
         // Counted, because a capture can start while a pinned crop is still
         // choosing its region: the first one to finish must not put the
         // overlays back into the other one's photograph.
@@ -823,7 +803,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return hidden
     }
 
-    private func showOwnWindows(_ hidden: [NSWindow]) {
+    func showOwnWindows(_ hidden: [NSWindow]) {
         captureDepth = max(0, captureDepth - 1)
         hidden.forEach { $0.orderFront(nil) }
         guard captureDepth == 0 else { return }

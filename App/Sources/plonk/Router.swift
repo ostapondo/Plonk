@@ -21,6 +21,7 @@ import Network
 //                        photographs that window even when it is buried
 //   POST /shot/annotate  { path, marks: [{kind, points, color?, width?}], output?, clipboard? }
 //   POST /shot/text      { mode?, path?, clipboard?, languages? }  on-device OCR
+//   POST /ruler/measure  { screen?, point? } | { from, to } | { interactive: true }
 //   POST /layout/zone    { app, zone, title?, screen? }
 //   POST /agents/hello     { name, version?, pid? }   registers/refreshes a session
 //   POST /agents/select    { name? }   no name clears the selection
@@ -44,6 +45,8 @@ final class Router {
     /// The `/shot` routes, which answer after the request has been left behind.
     /// AppDelegate wires its capture closures onto this.
     let shots: ShotRoutes
+    /// The `/ruler` route, which answers late for the same reason.
+    let ruler: RulerRoutes
 
     /// Set by AppDelegate. Launching shows a panel and outlives the request, so
     /// it stays out of Router the same way capture does.
@@ -70,6 +73,7 @@ final class Router {
         self.agents = agents
         self.changes = changes
         self.shots = ShotRoutes(store: store)
+        self.ruler = RulerRoutes(windows: windows, store: store)
     }
 
     func handle(_ request: HTTPRequest, respond: @escaping (HTTPResponse) -> Void) {
@@ -300,6 +304,9 @@ final class Router {
 
         case ("POST", "/shot/text"):
             shots.textRoute(body, respond: respond)
+
+        case ("POST", "/ruler/measure"):
+            ruler.measureRoute(body, respond: respond)
 
         case ("GET", "/update/state"):
             respond(.ok(updateState?() ?? ["error": "updates are not available"]))
@@ -579,34 +586,6 @@ final class Router {
                                   frac: zones[number - 1].frac, gap: CGFloat(store.config.zoneGap))
         if let error { return .failed(error) }
         return .ok(["ok": true, "app": app, "screen": screen, "zone": number, "zones": zones.count])
-    }
-
-    /// "17:00" or "17:00:00" is the next such moment — today when it is still
-    /// ahead, tomorrow when it has passed, which is what someone setting an
-    /// alarm at midnight means. An ISO-8601 timestamp is taken as written.
-    static func parseDeadline(_ raw: String, now: Date = Date(),
-                              calendar: Calendar = .current) -> Date? {
-        let trimmed = raw.trimmingCharacters(in: .whitespaces)
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = iso.date(from: trimmed) { return date }
-        iso.formatOptions = [.withInternetDateTime]
-        if let date = iso.date(from: trimmed) { return date }
-
-        let parts = trimmed.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
-        guard (2...3).contains(parts.count) else { return nil }
-        let numbers = parts.compactMap(Int.init)
-        guard numbers.count == parts.count else { return nil }
-        let (hour, minute) = (numbers[0], numbers[1])
-        let second = numbers.count == 3 ? numbers[2] : 0
-        guard (0...23).contains(hour), (0...59).contains(minute), (0...59).contains(second) else { return nil }
-
-        var components = calendar.dateComponents([.year, .month, .day], from: now)
-        components.hour = hour
-        components.minute = minute
-        components.second = second
-        guard let today = calendar.date(from: components) else { return nil }
-        return today > now ? today : calendar.date(byAdding: .day, value: 1, to: today)
     }
 
     private func trimmedName(_ value: Any?) -> String? {

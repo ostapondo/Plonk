@@ -55,6 +55,7 @@ extension HotkeyAction {
         case .jumpCursor: code = kVK_ANSI_Backslash
         case .cropLive: code = kVK_ANSI_P
         case .cropStill: code = kVK_ANSI_P; shift = true
+        case .ruler: code = kVK_ANSI_R
         case .shortcutGuide: code = kVK_ANSI_Slash; shift = true
         // Not Space, however much it wants to be: ⌃⌥Space is macOS's own
         // "Select next source in Input menu", on by default and live the

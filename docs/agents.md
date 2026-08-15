@@ -24,6 +24,7 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 | `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
 | `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
+| `measure_screen` | Size what is under a point, or the distance between two, in points and pixels — no image, no eyeballing |
 | `select_agent` | Make an agent the user's active one, optionally the only one allowed to control |
 
 ## Several agents at once
@@ -65,6 +66,7 @@ plonk state                      # screens, zone sets, workspaces, windows
 plonk launch review              # a saved workspace
 plonk awake while npm run build  # awake for exactly as long as the build
 plonk text | pbcopy              # OCR a region straight into the clipboard
+plonk measure 0.5 0.5            # size of whatever is in the middle of the screen
 ```
 
 ---

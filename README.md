@@ -1,7 +1,7 @@
 <h1 align="center">Plonk</h1>
 
 <p align="center"><strong>A Mac window manager with zones you draw yourself, plus
-nine more menu bar utilities behind the same icon.</strong><br>
+ten more menu bar utilities behind the same icon.</strong><br>
 <sub>To plonk is to set a thing down exactly where it belongs. You drag it
 there, you press a key, or you say where.</sub></p>
 
@@ -11,7 +11,7 @@ there, you press a key, or you say where.</sub></p>
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-19_tools-8957e5?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-20_tools-8957e5?style=flat-square">
 </p>
 
 <p align="center">
@@ -103,7 +103,7 @@ now.
 
 ## What you get
 
-Ten things. The first three are the window manager. The rest are what would
+Eleven things. The first three are the window manager. The rest are what would
 otherwise each be another menu bar icon.
 
 | | |
@@ -112,6 +112,7 @@ otherwise each be another menu bar icon.
 | **[Workspaces](docs/workspaces.md)** | A desk you can put away: the apps, every window's frame, the monitor each belongs on, what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself |
 | **Focus that follows the layout** | `⌃⌥⇧←` goes to the window actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
 | **Text off the screen** | `⌃⌥T` selects an area and copies the words in it: a screenshot, a paused video, a dialog that will not let you select. On-device |
+| **A ruler** | `⌃⌥R` sizes whatever the pointer is over, edges found in the pixels, so nothing has to be aimed at. Drag for a distance. Points and pixels both |
 | **Pin part of the screen** | Float a live crop above everything else. A build log, a chart, a call, visible in a corner while you work over it |
 | **Keep awake** | Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or when a process exits |
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |
@@ -133,10 +134,11 @@ browser on the left 60%, terminal top right, notes bottom right
 save that as a workspace called "review"
 keep the Mac awake until this build finishes
 read the error out of that dialog and tell me what it says
+how tall is that toolbar, in points and in pixels
 ```
 
-Nineteen tools across state, layouts, workspaces, zones, keep-awake, screenshots
-and on-device OCR. Frames are fractions of a monitor's visible area, origin
+Twenty tools across state, layouts, workspaces, zones, keep-awake, screenshots,
+on-device OCR and measuring. Frames are fractions of a monitor's visible area, origin
 top-left, so "left 60%" is `{x: 0, y: 0, w: 0.6, h: 1}`. Several agents can
 connect at once, each registering itself, with an optional mode that locks
 changes to the active one.
@@ -177,6 +179,7 @@ plonk state                      # screens, zone sets, workspaces, windows
 plonk launch review              # a saved workspace
 plonk awake while npm run build  # awake for exactly as long as the build
 plonk text | pbcopy              # OCR a region into the clipboard
+plonk measure 0.5 0.5            # size of what is mid-screen, in points and pixels
 ```
 
 **[For agents](docs/agents.md)** has every tool, the multi-agent rules, the HTTP

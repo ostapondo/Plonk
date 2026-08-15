@@ -11,6 +11,34 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Added
+
+- **A ruler for the screen.** `⌃⌥R`, and whatever the pointer is over is
+  measured: Plonk photographs the screen once, walks out from the pointer until
+  the colour stops matching, and draws the box it finds. That is the part worth
+  having — a button, a table row, the gap between two paragraphs, sized without
+  anybody aiming a drag at its corners. Drag instead of hovering and it measures
+  a straight line. Points and pixels both, because a 44-point tap target is 88
+  pixels and only one of those numbers is in the asset. A click copies the
+  number, Escape ends it. macOS has no ruler of its own; the nearest thing is
+  the size shown while `⌘⇧4` is dragging, which finds no edges and keeps
+  nothing.
+
+  Borrowed from PowerToys' Screen Ruler, including its tolerance setting: on
+  the Ruler page, under Capture, along with the shortcut. Low finds text and
+  hairlines, high walks through gradients and shadows to the edge you meant.
+
+- **`measure_screen` for agents, and `plonk measure` for a shell.** The same
+  measurement without a person: hand it a point and it answers with the box
+  under it, or two points and it answers with the distance. The reply carries
+  the points, the display's own pixels, and the fraction of the screen ready to
+  hand back to `apply_layout`. An agent that would have taken a screenshot and
+  guessed at sizes can ask for the number instead, at a fraction of the tokens.
+  `interactive: true` hands the ruler to the user and waits for what they
+  measure. Needs Screen Recording, like every other capture.
+
 ## 0.2.5 — 2026-08-15
 
 Two fixes, one of them a setting that only worked when a person asked for it.

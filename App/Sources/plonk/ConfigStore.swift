@@ -27,38 +27,6 @@ struct LayoutItemSpec: Codable {
     }
 }
 
-/// A command-line agent Plonk can start on demand — the fallback channel for
-/// clients that hold no live MCP session or cannot receive sampling requests.
-struct AgentAdapter: Codable {
-    var name: String
-    var command: String
-
-    /// The environment variable the prompt travels in. Substituting the text
-    /// into the command line cannot be made safe — a template that happens to
-    /// quote {prompt} would break any escaping we applied — so the shell never
-    /// sees the words at all, only the name of a variable holding them.
-    static let promptVariable = "PLONK_PROMPT"
-
-    /// The command to run for `prompt`, with the prompt supplied out of band.
-    /// `{prompt}` becomes a reference to the variable; a template without it
-    /// gets one appended. Quotes people naturally put around the placeholder
-    /// are consumed with it — the substitution already quotes itself, and
-    /// leaving theirs would either block expansion (single quotes, so the tool
-    /// would receive the literal text `$PLONK_PROMPT`) or nest pointlessly.
-    static func invocation(command: String, prompt: String) -> (command: String, environment: [String: String]) {
-        let reference = "\"$\(promptVariable)\""
-        var line = command
-        if line.contains("{prompt}") {
-            for quoted in ["'{prompt}'", "\"{prompt}\"", "{prompt}"] {
-                line = line.replacingOccurrences(of: quoted, with: reference)
-            }
-        } else {
-            line += " " + reference
-        }
-        return (line, [promptVariable: prompt])
-    }
-}
-
 struct Config: Codable {
     var hotkeysEnabled = true
     /// Action id to key spec, e.g. "leftHalf": "control+option+left". Missing
@@ -114,6 +82,9 @@ struct Config: Codable {
     var awakeSessionEnd: Double?
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
+    // How different a pixel has to be, on one channel of 255, before the screen
+    // ruler treats the boundary as an edge. See EdgeDetector.
+    var rulerTolerance = EdgeDetector.defaultTolerance
     var launchAtLogin = true
     // The only setting that decides whether the app ever opens an outbound
     // connection. Off means no release check, automatic or otherwise.
@@ -178,6 +149,8 @@ struct Config: Codable {
         awakeSessionEnd = try c.decodeIfPresent(Double.self, forKey: .awakeSessionEnd)
         shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
         shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
+        rulerTolerance = try c.decodeIfPresent(Int.self, forKey: .rulerTolerance)
+            ?? EdgeDetector.defaultTolerance
         launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
         updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
         selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)

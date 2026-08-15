@@ -46,6 +46,12 @@ protocol AppActions: AnyObject {
     func setLaunchAtLogin(_ on: Bool)
     func setShotFolder(_ folder: String)
     func setShotCopyToClipboard(_ on: Bool)
+    /// How different a pixel has to be before the ruler calls it an edge,
+    /// on one channel of 255. See EdgeDetector.
+    func setRulerTolerance(_ value: Int)
+    /// Hands the user the ruler: hover to size what is under the pointer, drag
+    /// for a distance.
+    func startRuler()
     func capture(_ mode: CaptureMode)
     func flashZones()
     func reportBug()
@@ -150,6 +156,7 @@ final class AppModel: ObservableObject {
     @Published var shotFolder = "~/Desktop"
     @Published var shotCopyToClipboard = true
     @Published var shotStatus = ""
+    @Published var rulerTolerance = EdgeDetector.defaultTolerance
     @Published var launchAtLogin = true
     @Published var connectedAgents: [String] = []
     @Published var selectedAgent: String?
