@@ -27,7 +27,7 @@ struct HomeStatus: View {
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Button(.homeSetOneUp) { model.selectedPage = "ai" }
+                    Button(String(localized: .homeSetOneUp)) { model.selectedPage = "ai" }
                         .buttonStyle(.link)
                         .font(.system(size: 12))
                 }
@@ -91,7 +91,7 @@ struct HomeStatus: View {
                 Text(.homeTokenStored)
                     .font(.system(size: 11.5))
                     .foregroundStyle(.tertiary)
-                Button(.homeReveal) { revealToken() }
+                Button(String(localized: .homeReveal)) { revealToken() }
                     .buttonStyle(.link)
                     .font(.system(size: 12))
             }

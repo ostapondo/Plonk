@@ -53,7 +53,7 @@ struct ShortcutsPage: View {
                 }
             }
             Section {
-                Button(.keysRestoreDefaults) { model.actions?.resetHotkeys() }
+                Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
             }
         }
         .formStyle(.grouped)

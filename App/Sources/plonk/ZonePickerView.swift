@@ -202,7 +202,7 @@ private struct ZoneSetCard: View {
         .onTapGesture(perform: onSelect)
         .contextMenu {
             if onRename != nil {
-                Button(.zoneSetRename) {
+                Button(String(localized: .zoneSetRename)) {
                     draftName = name
                     renaming = true
                 }

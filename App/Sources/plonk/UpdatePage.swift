@@ -36,13 +36,13 @@ struct UpdatePage: View {
                 }
                 HStack {
                     if hasUpdate {
-                        Button(.updateInstallAndRelaunch) { model.actions?.installUpdate() }
+                        Button(String(localized: .updateInstallAndRelaunch)) { model.actions?.installUpdate() }
                             .buttonStyle(.borderedProminent)
                             .disabled(isBusy)
                     }
-                    Button(.updateCheckNow) { model.actions?.checkForUpdates() }
+                    Button(String(localized: .updateCheckNow)) { model.actions?.checkForUpdates() }
                         .disabled(isBusy)
-                    Button(.updateReleaseNotes) { model.actions?.openReleasePage() }
+                    Button(String(localized: .updateReleaseNotes)) { model.actions?.openReleasePage() }
                 }
             } footer: {
                 Text(.updateInstallHelp)

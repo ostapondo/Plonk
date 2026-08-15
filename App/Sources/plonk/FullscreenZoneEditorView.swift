@@ -57,9 +57,9 @@ struct FullscreenZoneEditorView: View {
             }
             HStack {
                 Spacer()
-                Button(.zoneEditorSaveAndApply, action: save)
+                Button(String(localized: .zoneEditorSaveAndApply), action: save)
                     .keyboardShortcut(.defaultAction)
-                Button(.commonCancel, action: done)
+                Button(String(localized: .commonCancel), action: done)
             }
         }
         .padding(16)

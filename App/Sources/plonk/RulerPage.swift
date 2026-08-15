@@ -15,7 +15,7 @@ struct RulerPage: View {
     var body: some View {
         Form {
             Section {
-                Button(.rulerMeasure) { model.actions?.startRuler() }
+                Button(String(localized: .rulerMeasure)) { model.actions?.startRuler() }
             } header: {
                 Text(.rulerTitle)
             } footer: {

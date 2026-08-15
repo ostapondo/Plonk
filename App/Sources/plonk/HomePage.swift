@@ -109,7 +109,7 @@ struct HomePage: View {
                         .shadow(color: model.accent.opacity(0.45), radius: 10, y: 3)
                     }
                     .buttonStyle(.plain)
-                    Button(.homeEditZonesButton) { model.actions?.openZonePicker() }
+                    Button(String(localized: .homeEditZonesButton)) { model.actions?.openZonePicker() }
                         .controlSize(.large)
                         .fixedSize()
                 }

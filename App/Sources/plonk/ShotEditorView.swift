@@ -117,9 +117,9 @@ struct ShotEditorView: View {
                 Text(status).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Button(.shotEditorSaveAs, action: saveAs)
-            Button(.shotEditorSaveToFolder) { save(to: .folder(defaultFolder)) }
-            Button(.shotEditorCopy, action: copy)
+            Button(String(localized: .shotEditorSaveAs), action: saveAs)
+            Button(String(localized: .shotEditorSaveToFolder)) { save(to: .folder(defaultFolder)) }
+            Button(String(localized: .shotEditorCopy), action: copy)
                 .keyboardShortcut(.defaultAction)
         }
         .padding(10)

@@ -90,7 +90,7 @@ struct GettingStartedCard: View {
                 .padding(.vertical, 2)
                 .background(Capsule().fill(Color.primary.opacity(0.07)))
             Spacer()
-            Button(.startHide) { model.actions?.hideGettingStarted() }
+            Button(String(localized: .startHide)) { model.actions?.hideGettingStarted() }
                 .buttonStyle(.link)
                 .font(.caption)
                 .help(String(localized: .startHideHelp))
@@ -123,20 +123,20 @@ struct GettingStartedCard: View {
     private func action(for step: GettingStarted.Step) -> some View {
         switch step.id {
         case "grant":
-            Button(.startGrantButton) {
+            Button(String(localized: .startGrantButton)) {
                 open("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
             }
         case "snap":
-            Button(.startShowZones) { model.actions?.flashZones() }
+            Button(String(localized: .startShowZones)) { model.actions?.flashZones() }
         default:
             HStack(spacing: 6) {
-                Button(copied ? LocalizedStringResource.startCopied : .startCopyCommand) {
+                Button(String(localized: copied ? LocalizedStringResource.startCopied : .startCopyCommand)) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(Self.connectCommand, forType: .string)
                     copied = true
                 }
                 .help(Self.connectCommand)
-                Button(.startHow) { model.selectedPage = "ai" }
+                Button(String(localized: .startHow)) { model.selectedPage = "ai" }
                     .buttonStyle(.link)
                     .font(.caption)
             }

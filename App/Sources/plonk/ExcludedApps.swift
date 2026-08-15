@@ -25,7 +25,7 @@ struct ExcludedApps: View {
             row(for: pattern)
         }
         HStack(spacing: 8) {
-            Button(.excludedChooseApp, action: chooseApp)
+            Button(String(localized: .excludedChooseApp), action: chooseApp)
             Menu(String(localized: .excludedAddRunning)) {
                 ForEach(runningApps, id: \.bundleIdentifier) { app in
                     Button(app.localizedName ?? String(localized: .excludedUnnamed)) {
@@ -42,7 +42,7 @@ struct ExcludedApps: View {
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 150)
                 .onSubmit { add(typed) }
-            Button(.excludedAdd) { add(typed) }
+            Button(String(localized: .excludedAdd)) { add(typed) }
                 .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
         }
     }

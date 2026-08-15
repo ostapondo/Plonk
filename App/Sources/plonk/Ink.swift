@@ -157,7 +157,7 @@ struct StatusPill: View {
                 .shadow(color: (ok ? Color.green : Color.orange).opacity(0.7), radius: 3)
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
             if !ok, let fix {
-                Button(.appGrant, action: fix).buttonStyle(.link).font(.system(size: 11))
+                Button(String(localized: .appGrant), action: fix).buttonStyle(.link).font(.system(size: 11))
             }
         }
         .padding(.horizontal, 9)

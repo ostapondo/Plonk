@@ -50,9 +50,9 @@ struct ShotPage: View {
     var body: some View {
         Form {
             Section {
-                Button(.shotCaptureRegion) { model.actions?.capture(.region) }
-                Button(.shotCaptureWindow) { model.actions?.capture(.window) }
-                Button(.shotCaptureScreen) { model.actions?.capture(.screen) }
+                Button(String(localized: .shotCaptureRegion)) { model.actions?.capture(.region) }
+                Button(String(localized: .shotCaptureWindow)) { model.actions?.capture(.window) }
+                Button(String(localized: .shotCaptureScreen)) { model.actions?.capture(.screen) }
             } header: {
                 Text(.shotCapture)
             } footer: {
@@ -72,7 +72,7 @@ struct ShotPage: View {
                 Text(.shotPinPartHelp)
             }
             Section {
-                Picker(.shotLanguage, selection: language) {
+                Picker(String(localized: .shotLanguage), selection: language) {
                     Text(.shotLanguageAutomatic).tag("")
                     Divider()
                     ForEach(model.supportedTextLanguages, id: \.self) { Text($0).tag($0) }
@@ -92,7 +92,7 @@ struct ShotPage: View {
                     // does not rewrite the config on every keystroke.
                     TextField(text: $folderDraft) { Text(.shotSaveFolder) }
                         .onSubmit(commitFolder)
-                    Button(.commonChoose, action: chooseFolder)
+                    Button(String(localized: .commonChoose), action: chooseFolder)
                 }
                 if !model.shotStatus.isEmpty {
                     Text(model.shotStatus).font(.caption).foregroundStyle(.secondary)
@@ -224,7 +224,7 @@ struct AIPage: View {
                 Text(.aiNoAgents)
                     .foregroundStyle(.secondary)
             } else {
-                Picker(.aiActiveAgent, selection: selectedAgent) {
+                Picker(String(localized: .aiActiveAgent), selection: selectedAgent) {
                     Text(.aiAnyAgent).tag("")
                     Divider()
                     ForEach(agentChoices, id: \.self) { name in

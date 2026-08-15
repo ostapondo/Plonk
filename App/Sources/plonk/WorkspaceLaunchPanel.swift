@@ -18,7 +18,7 @@ struct WorkspaceLaunchPanel: View {
                                        ?? .launchLaunched))
                     .font(.headline)
                 Spacer(minLength: 20)
-                Button(finished ? LocalizedStringResource.launchClose : .commonCancel,
+                Button(String(localized: finished ? LocalizedStringResource.launchClose : .commonCancel),
                        action: finished ? onClose : onCancel)
                     .controlSize(.small)
             }

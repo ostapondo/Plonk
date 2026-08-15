@@ -48,7 +48,7 @@ struct ZonesTuning: View {
                            ? LocalizedStringResource.zonesColourFollowsAccent : nil) {
                 HStack(spacing: 10) {
                     ColorPicker("", selection: zoneColor, supportsOpacity: false).labelsHidden()
-                    Button(.zonesUseTheAccent) { model.actions?.setZoneColor(nil) }
+                    Button(String(localized: .zonesUseTheAccent)) { model.actions?.setZoneColor(nil) }
                         .controlSize(.small)
                         .disabled(model.zoneColorHex == nil)
                 }

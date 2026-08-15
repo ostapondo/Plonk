@@ -120,15 +120,15 @@ struct ZoneSetCanvas: View {
                 .foregroundStyle(.tertiary)
             Spacer(minLength: 8)
             if let assigned {
-                Button(.zoneSetPreview) { model.actions?.togglePreview(zoneSet: assigned, onScreen: screen) }
+                Button(String(localized: .zoneSetPreview)) { model.actions?.togglePreview(zoneSet: assigned, onScreen: screen) }
                     .help(String(localized: .zoneSetPreviewHelp))
-                Button(.zoneSetDuplicate) {
+                Button(String(localized: .zoneSetDuplicate)) {
                     model.actions?.editZoneSet(nextSetName, seed: zones, onScreen: screen)
                 }
-                Button(.zoneSetEdit) { model.actions?.editZoneSet(assigned, seed: nil, onScreen: screen) }
+                Button(String(localized: .zoneSetEdit)) { model.actions?.editZoneSet(assigned, seed: nil, onScreen: screen) }
                     .buttonStyle(.borderedProminent)
             }
-            Button(.zoneSetManage) { model.actions?.openZonePicker() }
+            Button(String(localized: .zoneSetManage)) { model.actions?.openZonePicker() }
                 .help(String(localized: .zoneSetManageHelp))
         }
         .controlSize(.small)

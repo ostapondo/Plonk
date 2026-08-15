@@ -30,7 +30,7 @@ struct WorkspacesPage: View {
                         .textFieldStyle(.roundedBorder)
                         .onSubmit(save)
                         .labelsHidden()
-                    Button(.commonSave, action: save)
+                    Button(String(localized: .commonSave), action: save)
                         .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             } header: {
@@ -67,9 +67,9 @@ struct WorkspacesPage: View {
                         .textFieldStyle(.roundedBorder)
                         .onSubmit { commitRename(of: name) }
                         .onExitCommand { renaming = nil }
-                    Button(.commonSave) { commitRename(of: name) }
+                    Button(String(localized: .commonSave)) { commitRename(of: name) }
                         .disabled(renameDraft.trimmingCharacters(in: .whitespaces).isEmpty)
-                    Button(.commonCancel) { renaming = nil }
+                    Button(String(localized: .commonCancel)) { renaming = nil }
                 }
                 .padding(.vertical, 4)
             } else {
@@ -106,7 +106,7 @@ struct WorkspacesPage: View {
                 .help(String(localized: expanded.contains(name)
                              ? .workspacesHideWindows : .workspacesShowWindows))
 
-                Button(.workspacesLaunch) { model.actions?.launchWorkspace(named: name, onScreen: nil) }
+                Button(String(localized: .workspacesLaunch)) { model.actions?.launchWorkspace(named: name, onScreen: nil) }
                 Menu {
                     // The way out when the captured display is gone.
                     if model.screenCount > 1 {
@@ -118,18 +118,18 @@ struct WorkspacesPage: View {
                             }
                         }
                     }
-                    Button(.workspacesRename) {
+                    Button(String(localized: .workspacesRename)) {
                         renameDraft = name
                         renaming = name
                     }
-                    Button(.workspacesRecapture) { model.actions?.saveCurrentWorkspace(named: name) }
+                    Button(String(localized: .workspacesRecapture)) { model.actions?.saveCurrentWorkspace(named: name) }
                     Toggle(String(localized: .workspacesMoveExisting),
                            isOn: Binding(
                             get: { model.workspaces[name]?.moveExisting ?? true },
                             set: { model.actions?.setWorkspaceMoveExisting($0, for: name) }
                            ))
                     Divider()
-                    Button(.commonDelete, role: .destructive) { model.actions?.deleteWorkspace(named: name) }
+                    Button(String(localized: .commonDelete), role: .destructive) { model.actions?.deleteWorkspace(named: name) }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -244,8 +244,8 @@ struct WorkspaceItemRow: View {
             field(.workspacesArguments, text: $args, hint: .workspacesArgumentsHint)
             HStack {
                 Spacer()
-                Button(.commonCancel) { editing = false }
-                Button(.commonSave) {
+                Button(String(localized: .commonCancel)) { editing = false }
+                Button(String(localized: .commonSave)) {
                     model.actions?.updateWorkspaceItem(index, in: workspace,
                                                        urls: lines(urls), args: lines(args))
                     editing = false
