@@ -10,8 +10,8 @@ import SwiftUI
 
 /// A card of rows with an optional heading and a note underneath.
 struct SettingsCard<Content: View>: View {
-    var title: String?
-    var note: String?
+    var title: LocalizedStringResource?
+    var note: LocalizedStringResource?
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -19,7 +19,7 @@ struct SettingsCard<Content: View>: View {
             VStack(spacing: 0) {
                 if let title {
                     HStack {
-                        Text(title.uppercased())
+                        Text(String(localized: title).uppercased())
                             .font(.system(size: 10, weight: .bold))
                             .kerning(0.8)
                             .foregroundStyle(.tertiary)
@@ -46,8 +46,8 @@ struct SettingsCard<Content: View>: View {
 /// One row: a name, an optional second line, and whatever control belongs on
 /// the right. The hairline is drawn above, so a card never ends with one.
 struct SettingRow<Trailing: View>: View {
-    let title: String
-    var detail: String?
+    let title: LocalizedStringResource
+    var detail: LocalizedStringResource?
     /// Rows that hold a wide control put it under the title instead of beside it.
     var stacked = false
     @ViewBuilder var trailing: Trailing
@@ -88,8 +88,8 @@ struct SettingRow<Trailing: View>: View {
 }
 
 struct ToggleRow: View {
-    let title: String
-    var detail: String?
+    let title: LocalizedStringResource
+    var detail: LocalizedStringResource?
     @Binding var isOn: Bool
 
     var body: some View {
@@ -101,10 +101,10 @@ struct ToggleRow: View {
 
 /// A choice small enough to show every option at once.
 struct SegmentedRow<Tag: Hashable>: View {
-    let title: String
-    var detail: String?
+    let title: LocalizedStringResource
+    var detail: LocalizedStringResource?
     @Binding var selection: Tag
-    let options: [(label: String, tag: Tag)]
+    let options: [(label: LocalizedStringResource, tag: Tag)]
     /// Long option labels need the width of the row rather than the right-hand
     /// third of it.
     var stacked = false

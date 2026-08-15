@@ -20,14 +20,14 @@ struct HomeStatus: View {
 
     private var agents: some View {
         VStack(spacing: 0) {
-            header("Connected agents")
+            header(.homeConnectedAgents)
             if model.connectedAgents.isEmpty {
                 row {
-                    Text("No agent has said hello yet")
+                    Text(.homeNoAgentYet)
                         .font(.system(size: 12.5))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Button("Set one up") { model.selectedPage = "ai" }
+                    Button(String(localized: .homeSetOneUp)) { model.selectedPage = "ai" }
                         .buttonStyle(.link)
                         .font(.system(size: 12))
                 }
@@ -39,13 +39,13 @@ struct HomeStatus: View {
                         .frame(width: 7, height: 7)
                     Text(name).font(.system(size: 12.5))
                     Spacer()
-                    Text(driving(name) ? "driving" : "idle")
+                    Text(driving(name) ? LocalizedStringResource.homeDriving : .homeIdle)
                         .font(.system(size: 11.5))
                         .foregroundStyle(.tertiary)
                 }
             }
             row {
-                Text("Only the selected agent may drive")
+                Text(.homeOnlySelectedDrives)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -67,7 +67,7 @@ struct HomeStatus: View {
 
     private var api: some View {
         VStack(spacing: 0) {
-            header("Local API")
+            header(.aiLocalApi)
             row {
                 Text("127.0.0.1:\(ControlServer.port)")
                     .font(.system(size: 12, design: .monospaced))
@@ -79,24 +79,24 @@ struct HomeStatus: View {
                         .foregroundStyle(.orange)
                         .help(warning)
                 } else {
-                    Text("listening").font(.system(size: 11.5)).foregroundStyle(.tertiary)
+                    Text(.homeListening).font(.system(size: 11.5)).foregroundStyle(.tertiary)
                 }
             }
             // Shown, never copied: a token on the pasteboard is a token every
             // other app on the Mac can read, and the MCP server reads the file
             // for itself.
             row {
-                Text("Token").font(.system(size: 12.5))
+                Text(.homeToken).font(.system(size: 12.5))
                 Spacer()
-                Text("stored with owner-only permissions")
+                Text(.homeTokenStored)
                     .font(.system(size: 11.5))
                     .foregroundStyle(.tertiary)
-                Button("Reveal") { revealToken() }
+                Button(String(localized: .homeReveal)) { revealToken() }
                     .buttonStyle(.link)
                     .font(.system(size: 12))
             }
             row {
-                Text("Loopback only. Browser requests are refused, and nothing leaves this Mac.")
+                Text(.homeLoopbackOnly)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -112,9 +112,9 @@ struct HomeStatus: View {
 
     // MARK: - Pieces
 
-    private func header(_ title: String) -> some View {
+    private func header(_ title: LocalizedStringResource) -> some View {
         HStack {
-            Text(title.uppercased())
+            Text(String(localized: title).uppercased())
                 .font(.system(size: 10, weight: .bold))
                 .kerning(0.8)
                 .foregroundStyle(.tertiary)

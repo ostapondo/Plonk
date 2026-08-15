@@ -87,31 +87,31 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         }
     }
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-        case .showZones: return "Flash the zones"
-        case .captureRegion: return "Capture a region"
-        case .captureText: return "Copy text from a region"
-        case .voice: return "Push to talk"
-        case .unsnap: return "Put it back"
-        case .cycleZone: return "Next window in this zone"
-        case .cycleZoneBack: return "Previous window in this zone"
-        case .focusLeft: return "Focus the window to the left"
-        case .focusRight: return "Focus the window to the right"
-        case .focusUp: return "Focus the window above"
-        case .focusDown: return "Focus the window below"
-        case .findCursor: return "Find the pointer"
-        case .jumpCursor: return "Jump the pointer to the next screen"
-        case .cropLive: return "Pin a live crop on top"
-        case .cropStill: return "Pin a still crop on top"
-        case .ruler: return "Measure the screen"
-        case .shortcutGuide: return "Show this app's shortcuts"
-        case .commandPalette: return "Open the command palette"
-        case .zoneSetPalette: return "Pick a zone set for this screen"
+        case .showZones: return .shortcutFlashZones
+        case .captureRegion: return .shortcutCaptureRegion
+        case .captureText: return .shortcutCaptureText
+        case .voice: return .shortcutPushToTalk
+        case .unsnap: return .shortcutPutItBack
+        case .cycleZone: return .shortcutNextInZone
+        case .cycleZoneBack: return .shortcutPreviousInZone
+        case .focusLeft: return .shortcutFocusLeft
+        case .focusRight: return .shortcutFocusRight
+        case .focusUp: return .shortcutFocusUp
+        case .focusDown: return .shortcutFocusDown
+        case .findCursor: return .shortcutFindPointer
+        case .jumpCursor: return .shortcutJumpPointer
+        case .cropLive: return .shortcutCropLive
+        case .cropStill: return .shortcutCropStill
+        case .ruler: return .shortcutRuler
+        case .shortcutGuide: return .shortcutGuide
+        case .commandPalette: return .shortcutCommandPalette
+        case .zoneSetPalette: return .shortcutZoneSetPalette
         default:
-            if let number = zoneNumber { return "Zone \(number)" }
-            if let number = layoutNumber { return "Zone set \(number)" }
-            return preset?.title ?? rawValue
+            if let number = zoneNumber { return .shortcutZone(number) }
+            if let number = layoutNumber { return .shortcutZoneSet(number) }
+            return preset?.title ?? LocalizedStringResource(stringLiteral: rawValue)
         }
     }
 
@@ -143,22 +143,46 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         }
     }
 
-    var group: String {
+    /// The heading an action is filed under, as a value rather than as its own
+    /// name: the pages filter on this, and a filter that compared printed text
+    /// would break the moment the text was translated.
+    enum Group: String, CaseIterable {
+        case halves, quarters, wholeScreen, numberedZones, zoneSets
+        case focus, pointer, guide, crop, ruler, other
+
+        var title: LocalizedStringResource {
+            switch self {
+            case .halves: return .shortcutGroupHalves
+            case .quarters: return .shortcutGroupQuarters
+            case .wholeScreen: return .shortcutGroupWholeScreen
+            case .numberedZones: return .shortcutGroupNumberedZones
+            case .zoneSets: return .shortcutGroupZoneSets
+            case .focus: return .shortcutGroupFocus
+            case .pointer: return .shortcutGroupPointer
+            case .guide: return .shortcutGroupGuide
+            case .crop: return .shortcutGroupCrop
+            case .ruler: return .shortcutGroupRuler
+            case .other: return .shortcutGroupOther
+            }
+        }
+    }
+
+    var group: Group {
         switch self {
-        case .leftHalf, .rightHalf, .topHalf, .bottomHalf: return "Halves"
-        case .topLeft, .topRight, .bottomLeft, .bottomRight: return "Quarters"
-        case .maximize, .center: return "Whole screen"
-        case .unsnap: return "Numbered zones"
-        case .cycleZone, .cycleZoneBack, .focusLeft, .focusRight, .focusUp, .focusDown: return "Focus"
-        case .findCursor, .jumpCursor: return "Pointer"
-        case .shortcutGuide, .commandPalette: return "Guide"
-        case .cropLive, .cropStill: return "Crop"
-        case .ruler: return "Ruler"
-        case .zoneSetPalette: return "Zone sets"
+        case .leftHalf, .rightHalf, .topHalf, .bottomHalf: return .halves
+        case .topLeft, .topRight, .bottomLeft, .bottomRight: return .quarters
+        case .maximize, .center: return .wholeScreen
+        case .unsnap: return .numberedZones
+        case .cycleZone, .cycleZoneBack, .focusLeft, .focusRight, .focusUp, .focusDown: return .focus
+        case .findCursor, .jumpCursor: return .pointer
+        case .shortcutGuide, .commandPalette: return .guide
+        case .cropLive, .cropStill: return .crop
+        case .ruler: return .ruler
+        case .zoneSetPalette: return .zoneSets
         default:
-            if zoneNumber != nil { return "Numbered zones" }
-            if layoutNumber != nil { return "Zone sets" }
-            return "Other"
+            if zoneNumber != nil { return .numberedZones }
+            if layoutNumber != nil { return .zoneSets }
+            return .other
         }
     }
 
@@ -178,7 +202,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         allCases.filter { $0.page == page }
     }
 
-    static func owned(by page: String, group: String) -> [HotkeyAction] {
+    static func owned(by page: String, group: Group) -> [HotkeyAction] {
         allCases.filter { $0.page == page && $0.group == group }
     }
 }

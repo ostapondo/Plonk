@@ -166,31 +166,22 @@ enum UpdateError: LocalizedError, Equatable {
     case wrongPayload(String)
 
     var errorDescription: String? {
+        String(localized: message)
+    }
+
+    /// Split from `errorDescription` so the catalog holds the wording and this
+    /// holds only which entry to use.
+    private var message: LocalizedStringResource {
         switch self {
-        case .malformedFeed(let why):
-            return "The update feed could not be read: \(why)."
-        case .network(let why):
-            return "The update check failed: \(why)."
-        case .unpackFailed(let why):
-            return "The download could not be unpacked: \(why)."
-        case .signatureRejected(let why):
-            return "The download was rejected: \(why). Nothing was installed."
-        case .digestMismatch:
-            return """
-            The download does not match the checksum published for it, so it is not the build \
-            that was offered. Nothing was installed.
-            """
-        case .adHocCopy:
-            return """
-            This copy is ad-hoc signed, so a downloaded build cannot be checked against it. \
-            Update by hand from the releases page, once; later updates install themselves.
-            """
-        case .notInstalled:
-            return "Updates only apply to Plonk.app, and this copy is running unbundled."
-        case .notWritable(let path):
-            return "Plonk cannot write to \(path). Move Plonk.app somewhere you own, then try again."
-        case .wrongPayload(let why):
-            return "The download did not contain the expected app: \(why)."
+        case .malformedFeed(let why): return .updateErrorMalformedFeed(why)
+        case .network(let why): return .updateErrorNetwork(why)
+        case .unpackFailed(let why): return .updateErrorUnpackFailed(why)
+        case .signatureRejected(let why): return .updateErrorSignatureRejected(why)
+        case .digestMismatch: return .updateErrorDigestMismatch
+        case .adHocCopy: return .updateErrorAdHocCopy
+        case .notInstalled: return .updateErrorNotInstalled
+        case .notWritable(let path): return .updateErrorNotWritable(path)
+        case .wrongPayload(let why): return .updateErrorWrongPayload(why)
         }
     }
 }

@@ -143,8 +143,10 @@ window.
   visual.
 - Match the surrounding code: Swift API design guidelines, comments only for
   constraints the code does not show, no emoji anywhere including user-facing
-  strings, user-facing text in English. `./scripts/lint.sh` checks the part a
-  script can check.
+  strings. `./scripts/lint.sh` checks the part a script can check.
+- Text the user reads goes in `App/Sources/plonk/Resources/en.lproj/`, never in
+  a view. `node scripts/check-strings.mjs` says so if you forget, and AGENTS.md
+  has the two-edit recipe.
 
 A change that touches the network, the permissions, the entitlements or the
 update path makes a claim in `README.md` or `SECURITY.md` false. Fix the document

@@ -44,10 +44,13 @@ struct RulerMeasurement {
     /// which, so theirs is the summary.
     var label: String {
         guard let distance else { return summary }
-        var lines = ["\(Self.round(distance)) pt"]
-        if scale != 1 { lines.append("\(Self.round(distance * Double(scale))) px") }
-        lines.append("dx \(Self.round(Double(abs((to?.x ?? 0) - (from?.x ?? 0))))) · "
-                     + "dy \(Self.round(Double(abs((to?.y ?? 0) - (from?.y ?? 0)))))")
+        var lines = [String(localized: .rulerPoints(Self.round(distance)))]
+        if scale != 1 {
+            lines.append(String(localized: .rulerPixels(Self.round(distance * Double(scale)))))
+        }
+        lines.append(String(localized: .rulerDelta(
+            Self.round(Double(abs((to?.x ?? 0) - (from?.x ?? 0)))),
+            Self.round(Double(abs((to?.y ?? 0) - (from?.y ?? 0)))))))
         return lines.joined(separator: "\n")
     }
 
@@ -56,14 +59,15 @@ struct RulerMeasurement {
     var verticalLabel: String { Self.measurement(Double(rect.height), pixels: pixelHeight, scale: scale) }
 
     private static func measurement(_ points: Double, pixels: Double, scale: CGFloat) -> String {
-        scale == 1 ? "\(round(points)) pt" : "\(round(points)) pt (\(round(pixels)) px)"
+        String(localized: scale == 1 ? LocalizedStringResource.rulerPoints(round(points))
+                                     : .rulerPointsAndPixels(round(points), round(pixels)))
     }
 
     /// One line, for the HUD and for the agents. "Across" and "down" rather
     /// than "×", because these are two measurements and not a rectangle.
     var summary: String {
         guard distance == nil else { return label.replacingOccurrences(of: "\n", with: "  ") }
-        return "across \(horizontalLabel) · down \(verticalLabel)"
+        return String(localized: .rulerAcrossAndDown(horizontalLabel, verticalLabel))
     }
 
     /// What a click puts on the clipboard: the measurement and nothing else, so

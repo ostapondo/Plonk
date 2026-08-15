@@ -122,7 +122,7 @@ extension AppDelegate {
             let seconds = Int(Date().timeIntervalSince(started).rounded())
             // Longer than the interval, so the panel never blinks out between
             // beats, and short enough to clear itself if this stops ticking.
-            HUD.shared.show("\(adapter.name) is working \(dots)  \(seconds)s", duration: 3)
+            HUD.shared.show(.hudWorking(adapter.name, dots, seconds), duration: 3)
         }
         let stop = {
             done = true
@@ -145,10 +145,11 @@ extension AppDelegate {
             DispatchQueue.main.async {
                 stop()
                 if finished.terminationStatus == 0 {
-                    HUD.shared.show("✓ \(adapter.name) finished in \(seconds)s")
+                    HUD.shared.show(.hudFinished(adapter.name, seconds))
                 } else {
-                    HUD.shared.show("✗ \(adapter.name) failed (\(finished.terminationStatus))"
-                                    + (last.isEmpty ? "" : ": \(last.prefix(70))"))
+                    let failure = String(localized: .hudFailed(adapter.name,
+                                                               Int(finished.terminationStatus)))
+                    HUD.shared.show(failure + (last.isEmpty ? "" : ": \(last.prefix(70))"))
                 }
             }
         }
@@ -162,7 +163,8 @@ extension AppDelegate {
                 // so the ticking has to be stopped from here or it ticks for ever.
                 DispatchQueue.main.async {
                     stop()
-                    HUD.shared.show("\(adapter.name) would not start: \(error.localizedDescription)")
+                    HUD.shared.show(.hudWouldNotStart(adapter.name,
+                                                        error.localizedDescription))
                 }
             }
         }
@@ -180,14 +182,14 @@ extension AppDelegate {
             // Router answers an API caller, and tells it to pass an "agent"
             // field. There is no field here — there is a menu.
             HUD.shared.show(store.config.selectedAgent == nil
-                            ? "No active agent. Pick one from the menu bar first."
-                            : (response.json["error"] as? String ?? "That did not go anywhere"))
+                            ? String(localized: .hudNoActiveAgent)
+                            : (response.json["error"] as? String ?? String(localized: .hudWentNowhere)))
         } else if let note = response.json["note"] as? String {
             // Queued for a session that has never connected. Saying "→ agent"
             // here would be the silent success this was meant to stop.
-            HUD.shared.show("Waiting for \(agent) to connect: \(note)")
+            HUD.shared.show(.hudWaitingFor(agent, note))
         } else {
-            HUD.shared.show("→ \(agent): \(text)")
+            HUD.shared.show(.hudSentTo(agent, text))
         }
     }
 
@@ -214,8 +216,8 @@ extension AppDelegate {
         // nothing, which is a loop with a side effect.
         for action in HotkeyAction.allCases where action != .commandPalette {
             result.append(PlonkCommand(id: "hotkey.\(action.rawValue)",
-                                       title: action.title,
-                                       group: action.group,
+                                       title: String(localized: action.title),
+                                       group: String(localized: action.group.title),
                                        keys: model.hotkeyParts[action.rawValue] ?? []) { [weak self] in
                 self?.runOnTheFrontWindow { self?.perform(action) }
             })
@@ -223,8 +225,8 @@ extension AppDelegate {
 
         for name in model.workspaceNames {
             result.append(PlonkCommand(id: "workspace.\(name)",
-                                       title: "Launch workspace “\(name)”",
-                                       group: "Workspaces") { [weak self] in
+                                       title: String(localized: .paletteLaunchWorkspace(name)),
+                                       group: String(localized: .paletteGroupWorkspaces)) { [weak self] in
                 self?.launchWorkspace(named: name, onScreen: nil)
             })
         }
@@ -233,37 +235,38 @@ extension AppDelegate {
             // The main screen, said out loud: the palette has no cursor to read
             // a screen from the way the shortcut does.
             result.append(PlonkCommand(id: "zoneset.\(name)",
-                                       title: "Use zone set “\(name)” on the main screen",
-                                       group: "Zone sets") { [weak self] in
+                                       title: String(localized: .paletteUseZoneSet(name)),
+                                       group: String(localized: .paletteGroupZoneSets)) { [weak self] in
                 self?.assignZoneSet(name, toScreen: 0)
             })
         }
 
         result.append(PlonkCommand(id: "app.zoneSetPalette",
-                                   title: "Pick a zone set for this screen…",
-                                   group: "Zone sets") { [weak self] in
+                                   title: String(localized: .palettePickZoneSet),
+                                   group: String(localized: .paletteGroupZoneSets)) { [weak self] in
             self?.openZoneSetPalette()
         })
-        result.append(PlonkCommand(id: "app.editZones", title: "Edit zone sets…",
-                                   group: "Zone sets") { [weak self] in
+        result.append(PlonkCommand(id: "app.editZones", title: String(localized: .paletteEditZoneSets),
+                                   group: String(localized: .paletteGroupZoneSets)) { [weak self] in
             self?.openZonePicker()
         })
         result.append(PlonkCommand(id: "app.awake",
-                                   title: awake.requested ? "Stop keeping the Mac awake"
-                                                          : "Keep the Mac awake",
-                                   group: "Gadgets") { [weak self] in
+                                   title: awake.requested ? String(localized: .paletteStopAwake)
+                                                          : String(localized: .paletteKeepAwake),
+                                   group: String(localized: .paletteGroupGadgets)) { [weak self] in
             guard let self else { return }
             setAwake(!awake.requested)
         })
-        result.append(PlonkCommand(id: "app.update", title: "Check for updates",
-                                   group: "Gadgets") { [weak self] in
+        result.append(PlonkCommand(id: "app.update", title: String(localized: .paletteCheckUpdates),
+                                   group: String(localized: .paletteGroupGadgets)) { [weak self] in
             self?.checkForUpdates()
         })
 
         for page in SettingsPages.all {
             result.append(PlonkCommand(id: "page.\(page.id)",
-                                       title: "Open \(page.title)",
-                                       group: "Settings") { [weak self] in
+                                       title: String(localized:
+                                           .paletteOpenPage(String(localized: page.title))),
+                                       group: String(localized: .paletteGroupSettings)) { [weak self] in
                 self?.openPage(page.id)
             })
         }

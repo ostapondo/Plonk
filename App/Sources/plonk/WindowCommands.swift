@@ -48,11 +48,11 @@ final class WindowCommands {
         let screen = windows.screenIndex(ofWindow: target.window)
         let zones = zonesForScreen?(screen) ?? []
         guard !zones.isEmpty else {
-            announce?("That screen uses edge snapping, so it has no numbered zones")
+            announce?(String(localized: .hudEdgeSnappingScreen))
             return
         }
         guard zones.indices.contains(number - 1) else {
-            announce?("That screen has zones 1–\(zones.count)")
+            announce?(String(localized: .hudZoneRange(zones.count)))
             return
         }
         let frac = zones[number - 1].frac
@@ -64,7 +64,7 @@ final class WindowCommands {
     func unsnap() {
         guard let target = focused() else { return }
         guard let original = memory.takeOriginal(of: target.window) else {
-            announce?("Plonk has not moved this window")
+            announce?(String(localized: .hudNeverMoved))
             return
         }
         windows.restore(frame: original, toWindow: target.window)
@@ -97,7 +97,7 @@ final class WindowCommands {
 
         guard let next = WindowNavigator.nextInZone(after: current, candidates: all.map(\.frame),
                                                     zone: zone, backwards: backwards) else {
-            announce?("Nothing else is in this zone")
+            announce?(String(localized: .hudNothingElseInZone))
             return
         }
         windows.focus(all[next].window, of: all[next].app)
@@ -150,7 +150,8 @@ final class WindowCommands {
     /// without opening anything.
     func applyZoneSet(number: Int, named names: [String], assign: (String, Int) -> Void) {
         guard names.indices.contains(number - 1) else {
-            announce?(names.isEmpty ? "No zone sets to switch to" : "There are \(names.count) zone sets")
+            announce?(String(localized: names.isEmpty ? LocalizedStringResource.hudNoZoneSets
+                                                  : .hudZoneSetCount(names.count)))
             return
         }
         assign(names[number - 1], ScreenIdentity.indexUnderCursor)

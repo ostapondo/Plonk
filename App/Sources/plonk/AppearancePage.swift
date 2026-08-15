@@ -11,12 +11,11 @@ struct AppearancePage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                SectionHead(title: "Theme", note: "Applies to the window, the HUD and the zone overlay")
+                SectionHead(title: .appearanceTheme, note: .appearanceThemeNote)
                 themes
-                SectionHead(title: "Accent")
+                SectionHead(title: .appearanceAccent)
                 accents
-                Text("The zone overlay and the pointer tools follow the accent. Give the overlay a "
-                     + "colour of its own on the Zones page when it needs to stand out from the app.")
+                Text(.appearanceAccentNote)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -63,7 +62,8 @@ struct AppearancePage: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("\(theme.title) — \(theme.note)")
+        .help(String(localized: .appearanceThemeHelp(String(localized: theme.title),
+                                                      String(localized: theme.note))))
     }
 
     // MARK: - Accent
@@ -74,13 +74,13 @@ struct AppearancePage: View {
                 swatch(hex)
             }
             Spacer(minLength: 8)
-            Text("Match the system accent").font(.system(size: 12)).foregroundStyle(.secondary)
+            Text(.appearanceMatchSystemAccent).font(.system(size: 12)).foregroundStyle(.secondary)
             Toggle("", isOn: Binding(
                 get: { model.appearance.accentHex == nil },
                 set: { model.actions?.setAccent($0 ? nil : AppearanceSettings.accentChoices.last) }
             ))
             .labelsHidden().toggleStyle(.switch).controlSize(.small)
-            .help("Follow the colour chosen in System Settings")
+            .help(String(localized: .appearanceFollowSystemAccent))
         }
         .padding(13)
         .card()

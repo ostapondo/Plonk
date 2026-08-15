@@ -13,48 +13,48 @@ import SwiftUI
 
 enum SettingsPages {
     static let groups: [SettingsGroup] = [
-        SettingsGroup(id: "home", title: "Home", icon: "house"),
-        SettingsGroup(id: "layout", title: "Layout", icon: "square.grid.2x2"),
-        SettingsGroup(id: "capture", title: "Capture", icon: "camera.viewfinder"),
-        SettingsGroup(id: "automation", title: "Automation", icon: "sparkles"),
-        SettingsGroup(id: "settings", title: "Settings", icon: "slider.horizontal.3"),
+        SettingsGroup(id: "home", title: .groupHome, icon: "house"),
+        SettingsGroup(id: "layout", title: .groupLayout, icon: "square.grid.2x2"),
+        SettingsGroup(id: "capture", title: .groupCapture, icon: "camera.viewfinder"),
+        SettingsGroup(id: "automation", title: .groupAutomation, icon: "sparkles"),
+        SettingsGroup(id: "settings", title: .groupSettings, icon: "slider.horizontal.3"),
     ]
 
     static let all: [SettingsPage] = [
-        SettingsPage(id: "home", title: "Home", icon: "house", parent: "home") {
+        SettingsPage(id: "home", title: .pageHome, icon: "house", parent: "home") {
             AnyView(HomePage(model: $0))
         },
-        SettingsPage(id: "zones", title: "Zones", icon: "square.grid.2x2", parent: "layout") {
+        SettingsPage(id: "zones", title: .pageZones, icon: "square.grid.2x2", parent: "layout") {
             AnyView(ZonesPage(model: $0))
         },
-        SettingsPage(id: "workspaces", title: "Workspaces", icon: "rectangle.3.group", parent: "layout") {
+        SettingsPage(id: "workspaces", title: .pageWorkspaces, icon: "rectangle.3.group", parent: "layout") {
             AnyView(WorkspacesPage(model: $0))
         },
-        SettingsPage(id: "shot", title: "Screenshot", icon: "camera.viewfinder", parent: "capture") {
+        SettingsPage(id: "shot", title: .pageShot, icon: "camera.viewfinder", parent: "capture") {
             AnyView(ShotPage(model: $0))
         },
-        SettingsPage(id: "mouse", title: "Pointer & clicks", icon: "cursorarrow.rays", parent: "capture") {
+        SettingsPage(id: "mouse", title: .pageMouse, icon: "cursorarrow.rays", parent: "capture") {
             AnyView(MousePage(model: $0))
         },
-        SettingsPage(id: "ruler", title: "Ruler", icon: "ruler", parent: "capture") {
+        SettingsPage(id: "ruler", title: .pageRuler, icon: "ruler", parent: "capture") {
             AnyView(RulerPage(model: $0))
         },
-        SettingsPage(id: "ai", title: "Agents & MCP", icon: "sparkles", parent: "automation") {
+        SettingsPage(id: "ai", title: .pageAI, icon: "sparkles", parent: "automation") {
             AnyView(AIPage(model: $0))
         },
-        SettingsPage(id: "voice", title: "Voice", icon: "mic", parent: "automation") {
+        SettingsPage(id: "voice", title: .pageVoice, icon: "mic", parent: "automation") {
             AnyView(VoicePage(model: $0))
         },
-        SettingsPage(id: "appearance", title: "Appearance", icon: "paintpalette", parent: "settings") {
+        SettingsPage(id: "appearance", title: .pageAppearance, icon: "paintpalette", parent: "settings") {
             AnyView(AppearancePage(model: $0))
         },
-        SettingsPage(id: "shortcuts", title: "Keyboard", icon: "keyboard", parent: "settings") {
+        SettingsPage(id: "shortcuts", title: .pageShortcuts, icon: "keyboard", parent: "settings") {
             AnyView(ShortcutsPage(model: $0))
         },
-        SettingsPage(id: "awake", title: "Keep awake", icon: "cup.and.saucer", parent: "settings") {
+        SettingsPage(id: "awake", title: .pageAwake, icon: "cup.and.saucer", parent: "settings") {
             AnyView(AwakePage(model: $0))
         },
-        SettingsPage(id: "update", title: "Updates", icon: "arrow.down.circle", parent: "settings") {
+        SettingsPage(id: "update", title: .pageUpdate, icon: "arrow.down.circle", parent: "settings") {
             AnyView(UpdatePage(model: $0))
         },
     ]

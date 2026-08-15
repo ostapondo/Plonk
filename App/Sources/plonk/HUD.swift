@@ -17,6 +17,13 @@ final class HUD {
 
     private init() {}
 
+    /// The usual way in: the HUD only ever says things a person reads, so a
+    /// catalog entry is the argument rather than a string somebody assembled.
+    func show(_ text: LocalizedStringResource, image: NSImage? = nil,
+              duration: TimeInterval = 2.2) {
+        show(String(localized: text), image: image, duration: duration)
+    }
+
     func show(_ text: String, image: NSImage? = nil, duration: TimeInterval = 2.2) {
         token += 1
         let generation = token

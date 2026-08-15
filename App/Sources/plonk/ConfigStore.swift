@@ -250,7 +250,7 @@ final class ConfigStore {
             NSLog("Plonk: config.json is unreadable (\(error)); moved to \(backupURL.path)")
             try? FileManager.default.removeItem(at: backupURL)
             try? FileManager.default.moveItem(at: url, to: backupURL)
-            loadFailure = "Settings could not be read and were reset. The old file is at \(backupURL.path)."
+            loadFailure = String(localized: .warningSettingsReset(backupURL.path))
         }
     }
 

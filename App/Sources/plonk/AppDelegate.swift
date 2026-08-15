@@ -215,7 +215,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .findCursor:
             mouse.flashSpotlight()
         case .jumpCursor:
-            if !mouse.jumpToNextScreen() { HUD.shared.show("Only one screen to jump between") }
+            if !mouse.jumpToNextScreen() { HUD.shared.show(.hudOneScreenOnly) }
         case .cropLive:
             pinCrop(live: true)
         case .cropStill:
@@ -245,7 +245,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupVoice() {
         voice.onPartial = { text in
-            HUD.shared.show(text.isEmpty ? "Listening…" : text)
+            HUD.shared.show(text.isEmpty ? String(localized: .hudListening) : text)
         }
         voice.onError = { message in HUD.shared.show(message) }
         voice.onTranscript = { [weak self] text in
@@ -255,7 +255,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if store.config.voiceLocalCommands,
                let command = VoiceCommand.parse(text, workspaces: model.workspaceNames) {
                 run(command)
-                HUD.shared.show("✓ \(command.announcement)")
+                HUD.shared.show(.hudRan(String(localized: command.announcement)))
                 return
             }
             let response = router.dispatch(prompt: text)
@@ -263,7 +263,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 HUD.shared.show(error)
             } else {
                 let agent = (response.json["agent"] as? String) ?? "agent"
-                HUD.shared.show("→ \(agent): \(text)")
+                HUD.shared.show(.hudSentTo(agent, text))
             }
         }
     }
@@ -409,11 +409,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // window would build a second panel and orphan the first.
         guard !guideLoading else { return }
         guard windows.isTrusted else {
-            HUD.shared.show("The shortcut guide needs Accessibility")
+            HUD.shared.show(.hudGuideNeedsAccessibility)
             return
         }
         guard let app = NSWorkspace.shared.frontmostApplication else { return }
-        let name = app.localizedName ?? "This app"
+        let name = app.localizedName ?? String(localized: .guideThisApp)
         guideLoading = true
         ShortcutGuide.read(for: app) { [weak self] items in
             guard let self else { return }
@@ -487,7 +487,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 "installed": UpdateManager.currentVersionText,
                 "available": updates.available != nil,
                 "phase": updates.phase.rawValue,
-                "status": updates.status,
+                "status": String(localized: updates.status),
                 "automatic": store.config.updateCheckAutomatically,
             ]
             if let release = updates.available {
@@ -541,10 +541,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let token = APIToken.loadOrCreate()
         if token == nil {
-            model.apiWarning = "No usable token at \(APIToken.url().path), so the local API is "
-                + "refusing everything but /ping — agents and the plonk command will not work. It "
-                + "has to be a plain file owned by you and readable by you alone; delete it and "
-                + "relaunch Plonk to have a new one written."
+            model.apiWarning = String(localized: .warningNoToken(APIToken.url().path))
         }
         let server = ControlServer(token: token) { [weak self] request, respond in
             guard let self else { return respond(.failed("shutting down")) }
@@ -555,7 +552,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try server.start()
         } catch {
             NSLog("Plonk: failed to start control server: \(error)")
-            model.apiWarning = "The local API could not start, so the MCP tools cannot reach this app."
+            model.apiWarning = String(localized: .warningApiDidNotStart)
         }
         self.server = server
     }
@@ -639,7 +636,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.updateCheckAutomatically = store.config.updateCheckAutomatically
         model.updateAvailableVersion = updates.available?.version.text ?? ""
         model.updateNotes = updates.available?.notes ?? ""
-        model.updateStatus = updates.status
+        model.updateStatus = String(localized: updates.status)
         model.updatePhase = updates.phase.rawValue
         model.updateProgress = updates.progress
     }
@@ -692,7 +689,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshStatusMenu() {
         statusMenu.refresh(
             icon: awake.isOn ? StatusIcon.awake : StatusIcon.idle,
-            tooltip: "Plonk — keep-awake: \(awake.statusText)",
+            tooltip: String(localized: .menuTooltip(String(localized: awake.statusText))),
             dimmed: awake.requested && !awake.isOn
         )
     }
@@ -817,7 +814,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
            let saved = NSImage(contentsOfFile: path) {
             ScreenshotManager.copyToClipboard(saved)
         }
-        model.shotStatus = path.map { "Saved to \($0)" } ?? "Copied to clipboard"
+        model.shotStatus = String(localized: path.map { .hudSavedTo($0) } ?? .hudCopiedToClipboard)
     }
 
     func openPage(_ id: String) {
@@ -874,7 +871,7 @@ extension AppDelegate: AppActions {
             config.hotkeys[action.rawValue] = hotkey.spec
         }
         if let taken = stolen.first {
-            HUD.shared.show("\(hotkey.display) taken from \(taken.title)")
+            HUD.shared.show(.hudHotkeyTaken(hotkey.display, String(localized: taken.title)))
         }
         hotkeys.bindings = store.config.resolvedHotkeys
         refreshHotkeyModel()

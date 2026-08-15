@@ -9,6 +9,15 @@ enum CaptureMode: String {
     case window
     case screen
 
+    /// Read out loud rather than sent over the API, which uses `rawValue`.
+    var title: LocalizedStringResource {
+        switch self {
+        case .region: return .captureRegion
+        case .window: return .captureWindow
+        case .screen: return .captureScreen
+        }
+    }
+
     var arguments: [String] {
         switch self {
         case .region: return ["-i", "-o"]

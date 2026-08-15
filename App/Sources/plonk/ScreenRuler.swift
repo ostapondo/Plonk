@@ -91,8 +91,7 @@ final class ScreenRuler {
             self?.handle(event)
             return nil
         }
-        announce?("Hover to measure, drag for a distance, click to copy, "
-                  + "Space for a fresh look at the screen, Escape to finish")
+        announce?(String(localized: .rulerHint))
         update(at: NSEvent.mouseLocation)
     }
 
@@ -148,8 +147,9 @@ final class ScreenRuler {
             guard let self else { return }
             if !sheets.isEmpty { self.sheets = sheets }
             overlay?.setVisible(true)
-            announce?(sheets.isEmpty ? "The screen could not be photographed again"
-                                     : "Measuring the screen as it is now")
+            announce?(String(localized: sheets.isEmpty
+                                        ? LocalizedStringResource.rulerRephotographFailed
+                                        : .rulerRephotographed))
             update(at: NSEvent.mouseLocation)
         }
     }
@@ -158,7 +158,7 @@ final class ScreenRuler {
         guard let current else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(current.clipboardText, forType: .string)
-        announce?("Copied \(current.clipboardText)")
+        announce?(String(localized: .rulerCopied(current.clipboardText)))
     }
 
     private func finish(_ result: Result<RulerMeasurement, Failure>) {

@@ -35,36 +35,38 @@ final class StatusMenuController: NSObject {
     override init() {
         super.init()
         menu.delegate = self
-        menu.addItem(entry("Open Plonk", #selector(openWindow)))
+        menu.addItem(entry(.menuOpenPlonk, #selector(openWindow)))
         menu.addItem(.separator())
 
         // Filled in on demand, so it tracks saved workspaces without wiring.
-        let workspaces = NSMenuItem(title: "Launch Workspace", action: nil, keyEquivalent: "")
+        let workspaces = NSMenuItem(title: String(localized: .menuLaunchWorkspace),
+                                    action: nil, keyEquivalent: "")
         workspaces.tag = Self.workspacesTag
         workspaces.submenu = NSMenu()
         menu.addItem(workspaces)
 
         // Also filled in on demand: agents come and go with their MCP sessions.
-        let agents = NSMenuItem(title: "Active Agent", action: nil, keyEquivalent: "")
+        let agents = NSMenuItem(title: String(localized: .menuActiveAgent),
+                                action: nil, keyEquivalent: "")
         agents.tag = Self.agentsTag
         agents.submenu = NSMenu()
         menu.addItem(agents)
 
-        menu.addItem(entry("Capture Region", #selector(captureRegion), key: "s"))
+        menu.addItem(entry(.menuCaptureRegion, #selector(captureRegion), key: "s"))
 
-        let awake = entry("Keep Screen Awake", #selector(toggleAwake))
+        let awake = entry(.menuKeepAwake, #selector(toggleAwake))
         awake.tag = Self.keepAwakeTag
         menu.addItem(awake)
 
         menu.addItem(.separator())
         // Hidden unless there is something to install, so the menu keeps its
         // "only what is worth doing without opening anything" shape.
-        let update = entry("Update Available", #selector(openUpdate))
+        let update = entry(.menuUpdateAvailable, #selector(openUpdate))
         update.tag = Self.updateTag
         update.isHidden = true
         menu.addItem(update)
-        menu.addItem(entry("Report a Bug", #selector(reportBug)))
-        menu.addItem(NSMenuItem(title: "Quit Plonk",
+        menu.addItem(entry(.menuReportBug, #selector(reportBug)))
+        menu.addItem(NSMenuItem(title: String(localized: .menuQuit),
                                 action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         // Assigning item.menu permanently would swallow the click, so the button
@@ -95,9 +97,9 @@ final class StatusMenuController: NSObject {
         item.menu = nil
     }
 
-    private func entry(_ title: String, _ action: Selector, key: String = "",
+    private func entry(_ title: LocalizedStringResource, _ action: Selector, key: String = "",
                        modifiers: NSEvent.ModifierFlags = [.control, .option]) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        let item = NSMenuItem(title: String(localized: title), action: action, keyEquivalent: key)
         if !key.isEmpty { item.keyEquivalentModifierMask = modifiers }
         item.target = self
         return item
@@ -126,7 +128,7 @@ extension StatusMenuController: NSMenuDelegate {
         if let update = menu.item(withTag: Self.updateTag) {
             let version = updateVersion()
             update.isHidden = version == nil
-            update.title = version.map { "Update to \($0)…" } ?? "Update Available"
+            update.title = String(localized: version.map { .menuUpdateTo($0) } ?? .menuUpdateAvailable)
         }
         refreshAgentsSubmenu(in: menu)
 
@@ -134,7 +136,8 @@ extension StatusMenuController: NSMenuDelegate {
         item.isEnabled = !workspaceNames.isEmpty
         submenu.removeAllItems()
         guard !workspaceNames.isEmpty else {
-            let empty = NSMenuItem(title: "No workspaces saved yet", action: nil, keyEquivalent: "")
+            let empty = NSMenuItem(title: String(localized: .menuNoWorkspaces),
+                                   action: nil, keyEquivalent: "")
             empty.isEnabled = false
             submenu.addItem(empty)
             return
@@ -151,13 +154,15 @@ extension StatusMenuController: NSMenuDelegate {
         submenu.removeAllItems()
         let entries = agentEntries()
         guard !entries.isEmpty else {
-            let empty = NSMenuItem(title: "No agents connected", action: nil, keyEquivalent: "")
+            let empty = NSMenuItem(title: String(localized: .menuNoAgents),
+                                   action: nil, keyEquivalent: "")
             empty.isEnabled = false
             submenu.addItem(empty)
             return
         }
 
-        let any = NSMenuItem(title: "Any Agent", action: #selector(selectAgent(_:)), keyEquivalent: "")
+        let any = NSMenuItem(title: String(localized: .menuAnyAgent),
+                             action: #selector(selectAgent(_:)), keyEquivalent: "")
         any.target = self
         any.state = hasSelection() ? .off : .on
         submenu.addItem(any)
@@ -170,7 +175,7 @@ extension StatusMenuController: NSMenuDelegate {
         }
 
         submenu.addItem(.separator())
-        let exclusive = NSMenuItem(title: "Only Selected Agent Controls",
+        let exclusive = NSMenuItem(title: String(localized: .menuOnlySelectedAgent),
                                    action: hasSelection() ? #selector(toggleExclusive) : nil,
                                    keyEquivalent: "")
         exclusive.target = self

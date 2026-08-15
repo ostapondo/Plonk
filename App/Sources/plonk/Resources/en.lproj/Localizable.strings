@@ -1,0 +1,616 @@
+/* The English text of the app. Every string the user reads is here and nowhere
+   else; the Swift side holds keys, declared in the Strings+*.swift files.
+
+   Adding a language means copying this file to <code>.lproj beside it and
+   translating the right-hand side. Nothing else in the app has to change.
+
+   Keys are grouped the way the app is: one prefix per module, matching the
+   settings page it belongs to. `scripts/check-strings.mjs` keeps this file and
+   the Swift declarations in step. */
+
+/* Words that belong to no one module. */
+"common.shortcuts" = "Shortcuts";
+"common.choose" = "Choose";
+"common.cancel" = "Cancel";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.done" = "Done";
+"common.points" = "pt";
+"common.separator" = " · ";
+
+/* Keep awake. */
+"awake.keepNow" = "Keep awake now";
+"awake.pausedOnBattery" = "Paused: on battery, and battery use is not allowed below";
+"awake.menuBarGlow" = "The menu bar cube glows amber while active";
+"awake.turnOffAfter" = "Turn off after";
+"awake.never" = "Never";
+"awake.after15Minutes" = "15 minutes";
+"awake.after30Minutes" = "30 minutes";
+"awake.after1Hour" = "1 hour";
+"awake.after2Hours" = "2 hours";
+"awake.power" = "Power";
+"awake.keepDisplayOn" = "Keep the display on";
+"awake.keepDisplayOnHelp" = "Off: only the system stays awake, the screen may still sleep";
+"awake.allowOnBattery" = "Allow on battery";
+"awake.allowOnBatteryHelp" = "Off: keep-awake pauses when unplugged and resumes on power";
+"awake.autoWhileCharging" = "Automatically while charging";
+"awake.autoWhileChargingHelp" = "Keeps the Mac awake whenever it is plugged in";
+
+/* Screenshots. */
+"shot.capture" = "Capture";
+"shot.captureRegion" = "Capture Region";
+"shot.captureWindow" = "Capture Window";
+"shot.captureScreen" = "Capture Whole Screen";
+"shot.captureHelp" = "The editor opens on the capture: draw with pen, arrow, rectangle, ellipse or highlighter, then copy or save. Needs Screen Recording access, which macOS asks for on the first capture.";
+"shot.pinPart" = "Pin Part of the Screen";
+"shot.pinPartHelp" = "Drag out a region and it floats above everything else. Live mirrors what is underneath — a build log, a chart, a call — so it can be watched while you work on top of it. Still freezes it, which costs nothing and works on windows a stream will not follow. Close the panel to stop it.";
+"shot.language" = "Language";
+"shot.languageAutomatic" = "Automatic";
+"shot.text" = "Text";
+"shot.textHelp" = "⌃⌥T selects an area and copies the words in it — including text in screenshots, videos and anything else that is only pixels. Recognition runs on this Mac; nothing is uploaded. Automatic follows the system language.";
+"shot.output" = "Output";
+"shot.copyOnSave" = "Copy to clipboard when saving";
+"shot.saveFolder" = "Save folder";
+
+/* Voice. */
+"voice.pushToTalk" = "Push to Talk";
+"voice.pushToTalkHelp" = "Hold the key, say it, let go — the words go to the active agent from the Agents list on the AI page. Recognition runs on this Mac and nothing is recorded; only the finished sentence reaches the agent. macOS asks for Microphone and Speech Recognition on first use.";
+"voice.runCommonHere" = "Run the common ones here";
+"voice.runCommonHereHelp" = "No agent, no round trip, works offline";
+"voice.straightToPlonk" = "Straight to Plonk";
+"voice.straightToPlonkHelp" = "Halves and quarters, numbered zones, put back, focus, next window in a zone, show zones, keep-awake, screenshots, and launching a workspace by name. Anything less clear-cut — two things at once, a percentage, an app by name, awake until a build finishes — goes to the agent instead, so nothing is guessed at.";
+"voice.example1" = "“snap this left”";
+"voice.example2" = "“zone three”";
+"voice.example3" = "“put it back”";
+"voice.example4" = "“next window”";
+"voice.example5" = "“keep awake for an hour”";
+"voice.example6" = "“launch my review workspace”";
+"voice.toTheAgent" = "What to Say to the Agent";
+"voice.toTheAgentHelp" = "\"Browser on the left, terminal right\" — the agent arranges it. \"Save this as a workspace called review\", \"screenshot the screen and circle what looks broken\" — same. Anything you could type to the agent, you can say.";
+
+/* Agents and MCP. */
+"ai.agents" = "Agents";
+"ai.agentsHelp" = "Every connected MCP client appears here. The active agent is who voice and other outgoing requests will go to.";
+"ai.noAgents" = "No agents connected yet — anything speaking MCP shows up here once it calls a Plonk tool.";
+"ai.activeAgent" = "Active agent";
+"ai.anyAgent" = "Any agent";
+"ai.agentOffline %@" = "%@ (offline)";
+"ai.exclusive" = "Only the active agent controls";
+"ai.exclusiveHelp" = "Other agents can still read state and take screenshots";
+"ai.localApi" = "Local API";
+"ai.anyMcpClient" = "Cursor, Zed, anything MCP";
+"ai.connect" = "Connect an Agent";
+"ai.connectHelp" = "Run one of these once, in the client. Plonk is not tied to one assistant — any MCP client can drive it, several at once. Set PLONK_AGENT_NAME in the client's MCP config to name a session by hand.";
+"ai.trySaying" = "Try Saying";
+"ai.clickToCopy" = "Click one to copy it.";
+"ai.copied" = "Copied to clipboard.";
+"ai.example1" = "Browser on the left 60%, terminal top right, notes bottom right";
+"ai.example2" = "Put VS Code in the middle zone";
+"ai.example3" = "Save this as a workspace called \"review\"";
+"ai.example4" = "Launch my \"work\" workspace";
+"ai.example5" = "Make me a three-column zone set for the main screen";
+"ai.example6" = "Keep the screen awake for the next hour";
+"ai.example7" = "Screenshot the screen and circle whatever looks broken";
+
+/* Pointer and clicks. */
+"mouse.pointer" = "Pointer";
+"mouse.pointerHelp" = "These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account, and no keystroke is watched at all. They take the zone colour from the Zones page.";
+"mouse.ringClicks" = "Ring every click";
+"mouse.ringClicksHelp" = "For screen recordings, where a click is otherwise invisible";
+"mouse.crosshairs" = "Crosshairs through the pointer";
+"mouse.crosshairsHelp" = "Full-width and full-height lines, for lining things up";
+"mouse.shortcutsHelp" = "Finding the pointer dims everything but a circle round it, briefly. Jumping warps it to the middle of the next display and flashes it there, which beats pushing a mouse across three monitors.";
+
+/* The points field the settings forms are built from. */
+"points.notWhole %@" = "%@ has to be a whole number of points.";
+"points.outOfRange %@ %lld %lld" = "%1$@ has to be between %2$lld and %3$lld.";
+
+/* Shortcuts: what each bindable action is called, and the headings they are
+   filed under. The group headings double as palette sections. */
+"shortcut.leftHalf" = "Left Half";
+"shortcut.rightHalf" = "Right Half";
+"shortcut.topHalf" = "Top Half";
+"shortcut.bottomHalf" = "Bottom Half";
+"shortcut.topLeft" = "Top Left";
+"shortcut.topRight" = "Top Right";
+"shortcut.bottomLeft" = "Bottom Left";
+"shortcut.bottomRight" = "Bottom Right";
+"shortcut.maximize" = "Maximize";
+"shortcut.center" = "Center";
+"shortcut.flashZones" = "Flash the zones";
+"shortcut.captureRegion" = "Capture a region";
+"shortcut.captureText" = "Copy text from a region";
+"shortcut.pushToTalk" = "Push to talk";
+"shortcut.putItBack" = "Put it back";
+"shortcut.nextInZone" = "Next window in this zone";
+"shortcut.previousInZone" = "Previous window in this zone";
+"shortcut.focusLeft" = "Focus the window to the left";
+"shortcut.focusRight" = "Focus the window to the right";
+"shortcut.focusUp" = "Focus the window above";
+"shortcut.focusDown" = "Focus the window below";
+"shortcut.findPointer" = "Find the pointer";
+"shortcut.jumpPointer" = "Jump the pointer to the next screen";
+"shortcut.cropLive" = "Pin a live crop on top";
+"shortcut.cropStill" = "Pin a still crop on top";
+"shortcut.ruler" = "Measure the screen";
+"shortcut.guide" = "Show this app's shortcuts";
+"shortcut.commandPalette" = "Open the command palette";
+"shortcut.zoneSetPalette" = "Pick a zone set for this screen";
+"shortcut.zone %lld" = "Zone %lld";
+"shortcut.zoneSet %lld" = "Zone set %lld";
+"shortcut.group.halves" = "Halves";
+"shortcut.group.quarters" = "Quarters";
+"shortcut.group.wholeScreen" = "Whole screen";
+"shortcut.group.numberedZones" = "Numbered zones";
+"shortcut.group.zoneSets" = "Zone sets";
+"shortcut.group.focus" = "Focus";
+"shortcut.group.pointer" = "Pointer";
+"shortcut.group.guide" = "Guide";
+"shortcut.group.crop" = "Crop";
+"shortcut.group.ruler" = "Ruler";
+"shortcut.group.other" = "Other";
+"shortcut.unbound" = "None";
+"shortcut.pressKeys" = "Press keys";
+"shortcut.alreadyTaken" = "Another app already owns this combination";
+
+/* What the HUD says after a spoken command runs, so a command handled here can
+   be told from a sentence that went to the agent. */
+"voice.announce.zone %lld" = "Zone %lld";
+"voice.announce.putBack" = "Put back";
+"voice.announce.focus %@" = "Focus %@";
+"voice.announce.nextInZone" = "Next window in zone";
+"voice.announce.zones" = "Zones";
+"voice.announce.keepAwake" = "Keep awake";
+"voice.announce.awakeHours %lld" = "Awake for %lldh";
+"voice.announce.awakeMinutes %lld" = "Awake for %lldm";
+"voice.announce.awakeOff" = "Awake off";
+"voice.announce.screenshot %@" = "Screenshot (%@)";
+"voice.announce.launch %@" = "Launch \"%@\"";
+
+/* Directions and capture modes, as they are read out rather than as the API
+   spells them. */
+"direction.left" = "left";
+"direction.right" = "right";
+"direction.up" = "up";
+"direction.down" = "down";
+"capture.region" = "region";
+"capture.window" = "window";
+"capture.screen" = "screen";
+
+/* Home. */
+"home.ready" = "EVERYTHING READY";
+"home.headline" = "Ten windows,\none keystroke.";
+"home.tagline" = "Snap, save and restore layouts — from the keyboard, the menu bar, or an agent talking to the local API.";
+"home.showZones" = "Show zones";
+"home.editZonesButton" = "Edit zones…";
+"home.quickActions" = "Quick actions";
+"home.captureRegion" = "Capture region";
+"home.editZones" = "Edit zones";
+"home.awakeOn" = "Awake: on";
+"home.keepAwake" = "Keep awake";
+"home.whatIsOn" = "What is on";
+"home.hotkeys" = "Hotkeys";
+"home.hotkeysDetail" = "⌃⌥ with an arrow, a letter or Return";
+"home.hotkeysTaken %@" = "Taken by another app: %@";
+"home.dragToSnap" = "Drag to snap";
+"home.dragToSnapDetail" = "Drop windows into zones or screen edges";
+"home.keepAwakeDetail" = "Holds a power assertion";
+"home.keepAwakePaused" = "Paused: on battery";
+"home.launchAtLogin" = "Launch at login";
+"home.launchAtLoginDetail" = "Plonk starts automatically when you log in";
+"home.privacy" = "Everything runs on this Mac. No account, no cloud, no telemetry.";
+"home.edgeSnapping" = "Edge snapping";
+
+/* Zones: the page, and the tuning below it. */
+"zones.dragging" = "Dragging";
+"zones.draggingHelp" = "Holding the modifier while dragging inverts the mode, so the other behaviour is always available. Hold ⌘ as well and the zone you started over and the one under the cursor are dropped into as one.";
+"zones.dragToSnap" = "Drag to snap";
+"zones.dragToSnapDetail" = "Drop windows into zones or screen edges";
+"zones.showZones" = "Show zones";
+"zones.whileDragging" = "While dragging";
+"zones.withTheModifier" = "With the modifier";
+"zones.modifier" = "Modifier";
+"zones.modifierShift" = "⇧ Shift";
+"zones.modifierOption" = "⌥ Option";
+"zones.modifierCommand" = "⌘ Command";
+"zones.modifierControl" = "⌃ Control";
+"zones.presets" = "Halves, quarters and the rest";
+"zones.numbered" = "Numbered zones";
+"zones.numberedHelp" = "The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it. Click a key field and press the combination; Esc cancels, Delete unbinds.";
+"zones.switching" = "Switch zone sets";
+"zones.switchingHelp" = "Applies the set at that place in the list of zone sets, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set. The last shortcut puts the same list on screen to pick from, or to open one in the editor.";
+"zones.focus" = "Move between windows";
+"zones.focusHelp" = "Focus follows the layout instead of the order things were last used: step to the window that is actually to the left, or cycle through the ones stacked in a zone.";
+"zones.desktopChanges" = "When the desktop changes";
+"zones.restoreOnDisplayChange" = "Put windows back after a display change";
+"zones.restoreOnDisplayChangeDetail" = "Windows Plonk placed return to the same spot on the same monitor when one is plugged in or unplugged";
+"zones.placeNewWindows" = "Send new windows where that app's last one went";
+"zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits";
+"zones.overlay" = "Overlay";
+"zones.overlayHelp" = "The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything; zero switches it off.";
+"zones.gap" = "Gap";
+"zones.gapHelp" = "Empty space kept around every snapped window";
+"zones.opacity" = "Opacity";
+"zones.colour" = "Colour";
+"zones.colourFollowsAccent" = "Following the app's accent colour";
+"zones.useTheAccent" = "Use the accent";
+"zones.numberTheZones" = "Number the zones";
+"zones.everyMonitor" = "Show every monitor's zones while dragging";
+"zones.edgeSpanning" = "Edge spanning";
+"zones.edgeSpanningHelp" = "How near the line between two zones covers both. 0 turns it off";
+"zones.grabMove" = "Grab and move";
+"zones.grabMoveHelp" = "Off by default, because option-drag already means something inside plenty of Mac apps — duplicating a layer, copying a file. Anything in the exception list below is never grabbed. Add the zones modifier while dragging and the zones appear as usual.";
+"zones.grabAnywhere" = "Grab windows anywhere";
+"zones.grabAnywhereDetail" = "Hold the key and drag from any point inside a window, instead of aiming for the title bar";
+"zones.hold" = "Hold";
+"zones.rightDragResizes" = "Right-drag resizes";
+"zones.rightDragResizesDetail" = "Pulls the edge or corner nearest where the drag started";
+"zones.showSizeWhileDragging" = "Show the size while dragging";
+"zones.exclusions" = "Leave these alone";
+"zones.exclusionsHelp" = "Dragging and the shortcuts skip these — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works, because that names the window on purpose.";
+
+/* Appearance. */
+"appearance.theme" = "Theme";
+"appearance.themeNote" = "Applies to the window, the HUD and the zone overlay";
+"appearance.accent" = "Accent";
+"appearance.accentNote" = "The zone overlay and the pointer tools follow the accent. Give the overlay a colour of its own on the Zones page when it needs to stand out from the app.";
+"appearance.matchSystemAccent" = "Match the system accent";
+"appearance.followSystemAccent" = "Follow the colour chosen in System Settings";
+"appearance.themeSystem" = "System";
+"appearance.themeLight" = "Light";
+"appearance.themeDark" = "Dark";
+"appearance.themeSystemNote" = "follows macOS";
+"appearance.themeLightNote" = "daylight";
+"appearance.themeDarkNote" = "midnight";
+"appearance.themeHelp %@ %@" = "%1$@ — %2$@";
+
+/* Home: the two cards that answer "can an agent reach this?" */
+"home.connectedAgents" = "Connected agents";
+"home.noAgentYet" = "No agent has said hello yet";
+"home.setOneUp" = "Set one up";
+"home.driving" = "driving";
+"home.idle" = "idle";
+"home.onlySelectedDrives" = "Only the selected agent may drive";
+"home.listening" = "listening";
+"home.token" = "Token";
+"home.tokenStored" = "stored with owner-only permissions";
+"home.reveal" = "Reveal";
+"home.loopbackOnly" = "Loopback only. Browser requests are refused, and nothing leaves this Mac.";
+
+/* The first three steps, shown on Home until they are done. */
+"start.title" = "Getting started";
+"start.progress %lld %lld" = "%1$lld of %2$lld";
+"start.hide" = "Hide";
+"start.hideHelp" = "Hide this until the next version";
+"start.grant" = "Grant Accessibility";
+"start.grantDetail" = "The only way macOS lets one app move another's windows";
+"start.snap" = "Snap a window";
+"start.snapDetail" = "Press ⌃⌥← with any window in front, or drag one to the side of the screen";
+"start.agent" = "Let an agent drive it";
+"start.agentDetail" = "One line, and \"browser left, terminal right\" becomes something you can say";
+"start.grantButton" = "Grant";
+"start.showZones" = "Show zones";
+"start.copied" = "Copied";
+"start.copyCommand" = "Copy command";
+"start.how" = "How";
+
+/* Workspaces. */
+"workspaces.grantAccessibility" = "Grant Accessibility access: System Settings, Privacy & Security, Accessibility. Then relaunch Plonk.";
+"workspaces.name" = "Workspace name";
+"workspaces.saveWhatIsOnScreen" = "Save What Is On Screen";
+"workspaces.saveHelp" = "Type a name and press Save. Every open window is captured with the app it belongs to and the monitor it sits on.";
+"workspaces.none" = "No workspaces yet. Open the apps you want, arrange them, and save above. Launching a workspace opens whatever is missing and puts every window back.";
+"workspaces.title" = "Workspaces";
+"workspaces.listHelp" = "Apps cannot be opened straight into position, so windows appear first and are moved a moment later.";
+"workspaces.hideWindows" = "Hide the windows";
+"workspaces.showWindows" = "Show the windows";
+"workspaces.launch" = "Launch";
+"workspaces.launchOnMonitor" = "Launch on Monitor";
+"workspaces.rename" = "Rename";
+"workspaces.recapture" = "Recapture from Screen";
+"workspaces.moveExisting" = "Move Windows That Are Already Open";
+"workspaces.mainDisplay %@" = "Main Display (%@)";
+"workspaces.display %lld %@" = "Display %1$lld (%2$@)";
+"workspaces.openWith" = "What this app should open";
+"workspaces.remove" = "Remove from this workspace";
+"workspaces.openWithField" = "Open with this app";
+"workspaces.openWithHint" = "One file, folder or URL per line. Used only when the app has to be launched.";
+"workspaces.arguments" = "Arguments";
+"workspaces.argumentsHint" = "One per line. Ignored by apps that do not read them.";
+"workspaces.placement %lld %lld %lld %lld" = "%1$lld%% × %2$lld%% at %3$lld,%4$lld";
+"workspaces.onScreen %lld %@" = "screen %1$lld · %2$@";
+
+/* The window itself: sidebar, top bar, and the names of the pages. */
+"app.name" = "Plonk";
+"app.version %@" = "Version %@";
+"app.runACommand" = "Run a command";
+"app.workspaces" = "Workspaces";
+"app.launchWorkspace %@" = "Launch %@";
+"app.reportBug" = "Report a Bug";
+"app.report" = "Report";
+"app.themePicker" = "Light, dark, or whatever macOS is using";
+"app.allPermissionsGranted" = "All permissions granted";
+"app.accessibility" = "Accessibility";
+"app.screenRecording" = "Screen Recording";
+"app.title %@ %@" = "%1$@ · %2$@";
+
+"group.home" = "Home";
+"group.layout" = "Layout";
+"group.capture" = "Capture";
+"group.automation" = "Automation";
+"group.settings" = "Settings";
+"page.home" = "Home";
+"page.zones" = "Zones";
+"page.workspaces" = "Workspaces";
+"page.shot" = "Screenshot";
+"page.mouse" = "Pointer & clicks";
+"page.ruler" = "Ruler";
+"page.ai" = "Agents & MCP";
+"page.voice" = "Voice";
+"page.appearance" = "Appearance";
+"page.shortcuts" = "Keyboard";
+"page.awake" = "Keep awake";
+"page.update" = "Updates";
+
+/* The menu bar item. */
+"menu.openPlonk" = "Open Plonk";
+"menu.launchWorkspace" = "Launch Workspace";
+"menu.noWorkspaces" = "No workspaces saved yet";
+"menu.activeAgent" = "Active Agent";
+"menu.noAgents" = "No agents connected";
+"menu.anyAgent" = "Any Agent";
+"menu.onlySelectedAgent" = "Only Selected Agent Controls";
+"menu.captureRegion" = "Capture Region";
+"menu.keepAwake" = "Keep Screen Awake";
+"menu.updateAvailable" = "Update Available";
+"menu.updateTo %@" = "Update to %@…";
+"menu.reportBug" = "Report a Bug";
+"menu.quit" = "Quit Plonk";
+
+/* Updates. The status line is shown on the page and also handed to an agent
+   asking about /update/state; the machine-readable half of that answer is the
+   phase, which is never translated. */
+"update.installed" = "Installed";
+"update.unbundled" = "unbundled";
+"update.available" = "Available";
+"update.installAndRelaunch" = "Install and Relaunch";
+"update.checkNow" = "Check Now";
+"update.releaseNotes" = "Release Notes";
+"update.installHelp" = "Installing downloads the release from GitHub, checks it is signed with the same certificate as this copy, and swaps it in — so the permissions you have already granted carry over. A build that fails that check is discarded and nothing is replaced.";
+"update.whatsNew %@" = "What's New in %@";
+"update.automatically" = "Check for updates automatically";
+"update.automaticallyDetail" = "On launch, once a day, and when the network comes back";
+"update.privacy" = "This is the only thing Plonk connects out for. The check asks api.github.com for the latest release and sends nothing but a User-Agent naming the app and its version — no identifier, no account, no telemetry. Turn it off and nothing here reaches the network on its own, and an agent asking for a check is refused: the buttons above are the only way one happens.";
+"update.checking" = "Checking for updates…";
+"update.upToDate %@" = "Plonk %@ is the latest release.";
+"update.isAvailable %@" = "Plonk %@ is available.";
+"update.checkRunning" = "A check is still running. Try again in a moment.";
+"update.downloading %@" = "Downloading Plonk %@…";
+"update.verifying" = "Checking the download…";
+"update.installing" = "Installing…";
+
+/* Why an update stopped. Every one of these ends up on the Updates page. */
+"updateError.malformedFeed %@" = "The update feed could not be read: %@.";
+"updateError.network %@" = "The update check failed: %@.";
+"updateError.unpackFailed %@" = "The download could not be unpacked: %@.";
+"updateError.signatureRejected %@" = "The download was rejected: %@. Nothing was installed.";
+"updateError.digestMismatch" = "The download does not match the checksum published for it, so it is not the build that was offered. Nothing was installed.";
+"updateError.adHocCopy" = "This copy is ad-hoc signed, so a downloaded build cannot be checked against it. Update by hand from the releases page, once; later updates install themselves.";
+"updateError.notInstalled" = "Updates only apply to Plonk.app, and this copy is running unbundled.";
+"updateError.notWritable %@" = "Plonk cannot write to %@. Move Plonk.app somewhere you own, then try again.";
+"updateError.wrongPayload %@" = "The download did not contain the expected app: %@.";
+
+/* Ruler. */
+"ruler.title" = "Ruler";
+"ruler.measure" = "Measure the Screen";
+"ruler.help" = "Hover and Plonk measures how far the pointer can travel each way before it meets an edge: the width of a row, the height of a bar, the gap between two things. Two numbers, drawn on the two lines they belong to, because the run across and the run down are separate answers. Drag instead for a straight-line distance. Click copies, Space takes a fresh picture of the screen, Escape finishes. Needs Screen Recording access, the same as a screenshot.";
+"ruler.shortcut" = "Shortcut";
+"ruler.detection" = "Detection";
+"ruler.sensitivity" = "Edge sensitivity";
+"ruler.sensitivityHelp" = "Lower stops at fainter borders and finds smaller things; higher walks through more before it calls anything an edge.";
+"ruler.detectionHelp" = "How different one pixel has to be from the pixel beside it, on a scale of 255, before Plonk calls that boundary an edge. Ten suits most interfaces: gradients and shadows step by less, borders by more. Raise it for a photograph or a noisy video, where every pixel differs a little from the last.";
+
+/* The apps Plonk keeps its hands off. */
+"excluded.none" = "Nothing is excluded — Plonk will move any window.";
+"excluded.chooseApp" = "Choose App…";
+"excluded.addRunning" = "Add Running App";
+"excluded.unnamed" = "?";
+"excluded.orType" = "or type a name";
+"excluded.add" = "Add";
+"excluded.matchedAnywhere" = "matched anywhere in an app's name or bundle id";
+"excluded.stopExcluding" = "Stop excluding this";
+"excluded.prompt" = "Exclude";
+
+/* Zone sets: the picker, the canvas at the top of the Zones page, and the
+   palette that drops onto the screen itself. */
+"zoneSet.templates" = "Templates";
+"zoneSet.custom" = "Custom";
+"zoneSet.createNew" = "Create New Layout";
+"zoneSet.emptyState" = "Create a layout or duplicate a template to get started";
+"zoneSet.edgeSnappingCard" = "Edge Snapping";
+"zoneSet.edgeSnappingSubtitle" = "Halves, quarters and maximize at screen edges";
+"zoneSet.nameField" = "Name";
+"zoneSet.showOnScreen" = "Show on the selected screen";
+"zoneSet.emptyCard" = "Empty — draw zones in the editor";
+"zoneSet.rename" = "Rename…";
+"zoneSet.edgeSnapping" = "Edge snapping";
+"zoneSet.newSet" = "New set";
+"zoneSet.screen %lld" = "Screen %lld";
+"zoneSet.screenWithSize %lld %@" = "Screen %1$lld — %2$@";
+"zoneSet.edgeHint" = "Windows dropped near an edge fill that half of the screen.";
+"zoneSet.zoneHint" = "Drop a window on a zone while dragging, or press ⌃⌥ and its number.";
+"zoneSet.preview" = "Preview";
+"zoneSet.previewHelp" = "Flash this set on the screen itself";
+"zoneSet.duplicate" = "Duplicate";
+"zoneSet.edit" = "Edit…";
+"zoneSet.manage" = "Manage…";
+"zoneSet.manageHelp" = "Rename, delete and compare every set";
+"zoneSet.title" = "Zone sets";
+"zoneSet.onThisScreenNow" = "On this screen now";
+"zoneSet.editThis" = "Edit this set";
+"zoneSet.editCopy" = "Edit a copy of this template";
+
+/* The fullscreen zone editor. */
+"zoneEditor.name" = "Layout name";
+"zoneEditor.split" = "Split: click a zone, hold ⇧ while clicking for a vertical split.";
+"zoneEditor.resize" = "Resize: drag a border or handle — neighboring zones follow.";
+"zoneEditor.delete" = "Delete: ✕ removes a zone and neighbors fill the space.";
+"zoneEditor.keyboard" = "Keyboard: ⇥ selects, arrows move, ⇧arrows resize, S splits, ⇧S splits vertically, ⌫ deletes.";
+"zoneEditor.saveAndApply" = "Save & Apply";
+"zoneEditor.nameTaken %@" = "A layout named \"%@\" already exists.";
+
+/* The screenshot editor. */
+"shotEditor.width" = "Width";
+"shotEditor.undo" = "Undo";
+"shotEditor.redo" = "Redo";
+"shotEditor.saveAs" = "Save As";
+"shotEditor.saveToFolder" = "Save to Folder";
+"shotEditor.copy" = "Copy";
+"shotEditor.renderFailed" = "Could not render the annotations";
+"shotEditor.writeFailed" = "Could not write the file";
+"tool.pen" = "Pen";
+"tool.arrow" = "Arrow";
+"tool.rectangle" = "Rectangle";
+"tool.ellipse" = "Ellipse";
+"tool.highlight" = "Highlight";
+
+/* The shortcut guide, read off whatever app is in front. */
+"guide.filter" = "Filter";
+"guide.noShortcuts" = "This app publishes no menu shortcuts.";
+"guide.readFromMenus" = "Read from this app's own menus, so it cannot go stale. Escape closes.";
+"guide.windowTitle %@" = "Shortcuts — %@";
+
+/* The command palette. */
+"palette.prompt" = "Run a command, or say what you want done";
+"palette.noMatch %@" = "Nothing matches “%@”";
+"palette.groupAgent" = "Agent";
+"palette.groupWorkspaces" = "Workspaces";
+"palette.groupZoneSets" = "Zone sets";
+"palette.groupGadgets" = "Gadgets";
+"palette.groupSettings" = "Settings";
+"palette.theAgent" = "the agent";
+"palette.ask %@ %@" = "Ask %1$@: “%2$@”";
+"palette.launchWorkspace %@" = "Launch workspace “%@”";
+"palette.useZoneSet %@" = "Use zone set “%@” on the main screen";
+"palette.pickZoneSet" = "Pick a zone set for this screen…";
+"palette.editZoneSets" = "Edit zone sets…";
+"palette.stopAwake" = "Stop keeping the Mac awake";
+"palette.keepAwake" = "Keep the Mac awake";
+"palette.checkUpdates" = "Check for updates";
+"palette.openPage %@" = "Open %@";
+
+/* Window titles, and the panels a crop opens in. */
+"window.zones" = "Zones";
+"window.screenshot" = "Screenshot";
+"window.cropLive" = "Live";
+"window.cropStill" = "Still";
+"window.cropTitle %@" = "Plonk — %@";
+
+/* The Edit menu, which exists so the standard editing keys work in the app's
+   own text fields. */
+"edit.menu" = "Edit";
+"edit.undo" = "Undo";
+"edit.redo" = "Redo";
+"edit.cut" = "Cut";
+"edit.copy" = "Copy";
+"edit.paste" = "Paste";
+"edit.selectAll" = "Select All";
+
+/* What the HUD says. */
+"hud.savedTo %@" = "Saved to %@";
+"hud.noTextFound" = "No text found there";
+"hud.copied %@" = "Copied: %@";
+"hud.oneScreenOnly" = "Only one screen to jump between";
+"hud.listening" = "Listening…";
+"hud.guideNeedsAccessibility" = "The shortcut guide needs Accessibility";
+"hud.hotkeyTaken %@ %@" = "%1$@ taken from %2$@";
+"hud.noActiveAgent" = "No active agent. Pick one from the menu bar first.";
+"hud.wentNowhere" = "That did not go anywhere";
+"hud.waitingFor %@ %@" = "Waiting for %1$@ to connect: %2$@";
+"hud.sentTo %@ %@" = "→ %1$@: %2$@";
+"hud.working %@ %@ %lld" = "%1$@ is working %2$@  %3$llds";
+"hud.finished %@ %lld" = "✓ %1$@ finished in %2$llds";
+"hud.failed %@ %lld" = "✗ %1$@ failed (%2$lld)";
+"hud.wouldNotStart %@ %@" = "%1$@ would not start: %2$@";
+"hud.ran %@" = "✓ %@";
+
+/* Voice. */
+"voiceError.permissions" = "Voice needs Microphone and Speech Recognition access: System Settings → Privacy & Security";
+"voiceError.noLanguage" = "On-device speech recognition is not available for this language";
+"voiceError.noMicrophone" = "No microphone is available";
+"voiceError.microphoneFailed %@" = "Could not open the microphone: %@";
+"voiceError.heardNothing" = "Heard nothing";
+
+/* The ruler, when it cannot measure. */
+"rulerError.noScreenRecording" = "Plonk does not have Screen Recording, so it cannot see the pixels it would measure. Grant it in System Settings › Privacy & Security › Screen Recording.";
+"rulerError.captureFailed" = "the screen could not be photographed";
+"rulerError.noScreen" = "that point is not on any screen";
+"rulerError.cancelled" = "nothing was measured";
+
+/* Small pieces shared across the window. */
+"app.grant" = "Grant";
+
+/* The Keyboard page, which lists every binding in one place. */
+"keys.hotkeys" = "Hotkeys";
+"keys.hotkeysDetail" = "Click a shortcut to open the page where it is set.";
+"keys.guide" = "Guide";
+"keys.guideHelp" = "Opens every shortcut the app in front actually has, read from its own menus — so it is never out of date, and it works for software with no documentation at all. Press it again to close.";
+"keys.palette" = "Palette";
+"keys.paletteHelp" = "Run anything in Plonk by name, over whatever you are looking at. What is not a command can be sent to the active agent as a sentence, with ⌘return. Press the key again to close it.";
+"keys.restoreDefaults" = "Restore Defaults";
+"keys.setOnPage %@" = "Set on the %@ page";
+"palette.askTheAgent" = "ask the agent";
+
+/* The panel shown while a workspace comes up. */
+"launch.launching %@" = "Launching %@";
+"launch.launched" = "Workspace launched";
+"launch.close" = "Close";
+"launch.pending" = "Waiting";
+"launch.opening" = "Opening";
+"launch.waitingForWindow" = "Waiting for a window";
+
+/* What is wrong, when something is. Both of these sit in the top bar until it
+   is fixed. */
+"warning.noToken %@" = "No usable token at %@, so the local API is refusing everything but /ping — agents and the plonk command will not work. It has to be a plain file owned by you and readable by you alone; delete it and relaunch Plonk to have a new one written.";
+"warning.portTaken %lld" = "Port %lld is taken, so the MCP tools cannot reach this app. Another copy of Plonk is probably already running.";
+"warning.apiDidNotStart" = "The local API could not start, so the MCP tools cannot reach this app.";
+"warning.settingsReset %@" = "Settings could not be read and were reset. The old file is at %@.";
+
+/* Why one app in a workspace did not end up where it was meant to. Shown in
+   the launch panel, and handed to an agent as the reason beside "ok": false. */
+"launch.alreadyOpen" = "already open";
+"launch.notInstalled %@" = "%@ is not installed";
+"launch.cancelled" = "cancelled";
+"launch.noWindow %lld" = "no window appeared within %llds";
+
+/* The ruler, while it is running. */
+"ruler.hint" = "Hover to measure, drag for a distance, click to copy, Space for a fresh look at the screen, Escape to finish";
+"ruler.rephotographFailed" = "The screen could not be photographed again";
+"ruler.rephotographed" = "Measuring the screen as it is now";
+"ruler.copied %@" = "Copied %@";
+"ruler.points %lld" = "%lld pt";
+"ruler.pixels %lld" = "%lld px";
+"ruler.pointsAndPixels %lld %lld" = "%1$lld pt (%2$lld px)";
+"ruler.delta %lld %lld" = "dx %1$lld · dy %2$lld";
+"ruler.acrossAndDown %@ %@" = "across %1$@ · down %2$@";
+
+/* What the HUD says after a shortcut that could not do what was asked. */
+"hud.edgeSnappingScreen" = "That screen uses edge snapping, so it has no numbered zones";
+"hud.zoneRange %lld" = "That screen has zones 1–%lld";
+"hud.neverMoved" = "Plonk has not moved this window";
+"hud.nothingElseInZone" = "Nothing else is in this zone";
+"hud.noZoneSets" = "No zone sets to switch to";
+"hud.zoneSetCount %lld" = "There are %lld zone sets";
+"hud.copiedToClipboard" = "Copied to clipboard";
+"hud.saved" = "Saved";
+
+/* Keep-awake, in one word, for the menu bar tooltip and for an agent asking. */
+"awake.statusOn" = "on";
+"awake.statusOff" = "off";
+"awake.statusAutoCharging" = "auto (charging)";
+"awake.statusUntilProcess %lld" = "on until process %lld exits";
+"awake.statusPausedOnBattery" = "paused on battery";
+"menu.tooltip %@" = "Plonk — keep-awake: %@";
+
+/* Stand-in for an app that will not say what it is called. */
+"guide.thisApp" = "This app";

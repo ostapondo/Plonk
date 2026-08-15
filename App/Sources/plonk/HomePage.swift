@@ -34,12 +34,12 @@ struct HomePage: View {
                     GettingStartedCard(model: model)
                 }
                 hero
-                SectionHead(title: "Quick actions")
+                SectionHead(title: .homeQuickActions)
                 quickActions
-                SectionHead(title: "What is on")
+                SectionHead(title: .homeWhatIsOn)
                 switches
                 HomeStatus(model: model)
-                Text("Everything runs on this Mac. No account, no cloud, no telemetry.")
+                Text(.homePrivacy)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -78,18 +78,17 @@ struct HomePage: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     Circle().fill(Color.green).frame(width: 5, height: 5)
-                    Text("EVERYTHING READY")
+                    Text(.homeReady)
                         .font(.system(size: 10, weight: .bold))
                         .kerning(1)
                         .foregroundStyle(model.accent)
                 }
                 .opacity(ready ? 1 : 0)
-                Text("Ten windows,\none keystroke.")
+                Text(.homeHeadline)
                     .font(.system(size: 26, weight: .bold))
                     .kerning(-0.4)
                     .padding(.top, 9)
-                Text("Snap, save and restore layouts — from the keyboard, the menu bar, "
-                     + "or an agent talking to the local API.")
+                Text(.homeTagline)
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -98,7 +97,7 @@ struct HomePage: View {
                     Button { model.actions?.flashZones() } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "square.grid.2x2").font(.system(size: 12))
-                            Text("Show zones").font(.system(size: 12.5, weight: .medium))
+                            Text(.homeShowZones).font(.system(size: 12.5, weight: .medium))
                             KeyCaps(parts: keys(.showZones))
                         }
                         .fixedSize()
@@ -110,7 +109,7 @@ struct HomePage: View {
                         .shadow(color: model.accent.opacity(0.45), radius: 10, y: 3)
                     }
                     .buttonStyle(.plain)
-                    Button("Edit zones…") { model.actions?.openZonePicker() }
+                    Button(String(localized: .homeEditZonesButton)) { model.actions?.openZonePicker() }
                         .controlSize(.large)
                         .fixedSize()
                 }
@@ -153,22 +152,23 @@ struct HomePage: View {
 
     private var quickActions: some View {
         HStack(spacing: 10) {
-            tile("Capture region", "camera.viewfinder", keys: keys(.captureRegion)) {
+            tile(.homeCaptureRegion, "camera.viewfinder", keys: keys(.captureRegion)) {
                 model.actions?.capture(.region)
             }
-            tile("Show zones", "square.grid.2x2", keys: keys(.showZones)) {
+            tile(.homeShowZones, "square.grid.2x2", keys: keys(.showZones)) {
                 model.actions?.flashZones()
             }
-            tile("Edit zones", "pencil.and.outline", keys: []) {
+            tile(.homeEditZones, "pencil.and.outline", keys: []) {
                 model.actions?.openZonePicker()
             }
-            tile(model.awakeRequested ? "Awake: on" : "Keep awake", "cup.and.saucer", keys: []) {
+            tile(model.awakeRequested ? LocalizedStringResource.homeAwakeOn : .homeKeepAwake,
+                 "cup.and.saucer", keys: []) {
                 model.actions?.setAwake(!model.awakeRequested)
             }
         }
     }
 
-    private func tile(_ title: String, _ icon: String, keys: [String],
+    private func tile(_ title: LocalizedStringResource, _ icon: String, keys: [String],
                       action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 9) {
@@ -194,29 +194,30 @@ struct HomePage: View {
     // than a switch lives on its own page, so this list has one job.
     private var switches: some View {
         VStack(spacing: 0) {
-            switchRow("Hotkeys", "keyboard",
+            switchRow(.homeHotkeys, "keyboard",
                       detail: model.unavailableHotkeys.isEmpty
-                          ? "⌃⌥ with an arrow, a letter or Return"
-                          : "Taken by another app: \(model.unavailableHotkeys.joined(separator: ", "))",
+                          ? .homeHotkeysDetail
+                          : .homeHotkeysTaken(model.unavailableHotkeys.joined(separator: ", ")),
                       toggle: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
             Divider()
-            switchRow("Drag to snap", "rectangle.3.group",
-                      detail: "Drop windows into zones or screen edges",
+            switchRow(.homeDragToSnap, "rectangle.3.group",
+                      detail: .homeDragToSnapDetail,
                       toggle: model.binding(\.dragSnapEnabled, set: { $0.setDragSnap($1) }))
             Divider()
-            switchRow("Keep awake", "cup.and.saucer",
+            switchRow(.homeKeepAwake, "cup.and.saucer",
                       detail: model.awakeRequested && !model.awakeOn
-                          ? "Paused: on battery" : "Holds a power assertion",
+                          ? LocalizedStringResource.homeKeepAwakePaused : .homeKeepAwakeDetail,
                       toggle: model.binding(\.awakeRequested, set: { $0.setAwake($1) }))
             Divider()
-            switchRow("Launch at login", "power",
-                      detail: "Plonk starts automatically when you log in",
+            switchRow(.homeLaunchAtLogin, "power",
+                      detail: .homeLaunchAtLoginDetail,
                       toggle: model.binding(\.launchAtLogin, set: { $0.setLaunchAtLogin($1) }))
         }
         .card()
     }
 
-    private func switchRow(_ title: String, _ icon: String, detail: String,
+    private func switchRow(_ title: LocalizedStringResource, _ icon: String,
+                           detail: LocalizedStringResource,
                            toggle: Binding<Bool>) -> some View {
         HStack(spacing: 11) {
             Image(systemName: icon).frame(width: 20).foregroundStyle(.secondary)
@@ -255,7 +256,7 @@ struct ZonePreview: View {
                         tile(index: index, zone: zone, in: geo.size)
                     }
                     if zones.isEmpty {
-                        Text("Edge snapping")
+                        Text(.homeEdgeSnapping)
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)

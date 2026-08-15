@@ -33,7 +33,7 @@ struct ShortcutGuideView: View {
             HStack {
                 Text(appName).font(.headline)
                 Spacer()
-                TextField("Filter", text: $query)
+                TextField(String(localized: .guideFilter), text: $query)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 180)
             }
@@ -42,7 +42,7 @@ struct ShortcutGuideView: View {
             Divider()
 
             if items.isEmpty {
-                Text("This app publishes no menu shortcuts.")
+                Text(.guideNoShortcuts)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(40)
@@ -72,7 +72,7 @@ struct ShortcutGuideView: View {
             }
 
             Divider()
-            Text("Read from this app's own menus, so it cannot go stale. Escape closes.")
+            Text(.guideReadFromMenus)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 14)
@@ -91,7 +91,7 @@ final class ShortcutGuidePanel: NSPanel {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 720, height: 460),
                    styleMask: [.titled, .closable, .resizable, .utilityWindow, .nonactivatingPanel],
                    backing: .buffered, defer: false)
-        title = "Shortcuts — \(appName)"
+        title = String(localized: .guideWindowTitle(appName))
         isFloatingPanel = true
         level = .floating
         hidesOnDeactivate = false

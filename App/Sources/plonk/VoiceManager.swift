@@ -43,7 +43,7 @@ final class VoiceManager {
             guard let self else { return }
             guard granted else {
                 starting = false
-                onError?("Voice needs Microphone and Speech Recognition access: System Settings → Privacy & Security")
+                onError?(String(localized: .voiceErrorPermissions))
                 return
             }
             // Released while the permission prompt was up: nothing to record.
@@ -71,7 +71,7 @@ final class VoiceManager {
         // Whatever happens below, a start is no longer in flight.
         defer { starting = false }
         guard let recognizer = Self.recognizer() else {
-            onError?("On-device speech recognition is not available for this language")
+            onError?(String(localized: .voiceErrorNoLanguage))
             return
         }
         let request = SFSpeechAudioBufferRecognitionRequest()
@@ -87,7 +87,7 @@ final class VoiceManager {
         // with an Objective-C exception Swift cannot catch.
         guard format.sampleRate > 0, format.channelCount > 0 else {
             self.request = nil
-            onError?("No microphone is available")
+            onError?(String(localized: .voiceErrorNoMicrophone))
             return
         }
         node.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
@@ -99,7 +99,7 @@ final class VoiceManager {
         } catch {
             node.removeTap(onBus: 0)
             self.request = nil
-            onError?("Could not open the microphone: \(error.localizedDescription)")
+            onError?(String(localized: .voiceErrorMicrophoneFailed(error.localizedDescription)))
             return
         }
         onPartial?("")
@@ -132,7 +132,7 @@ final class VoiceManager {
         starting = false
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            onError?("Heard nothing")
+            onError?(String(localized: .voiceErrorHeardNothing))
             return
         }
         onTranscript?(trimmed)

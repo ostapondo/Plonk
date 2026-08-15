@@ -126,7 +126,7 @@ final class WorkspaceLauncher {
     private func start(_ group: LaunchGroup, moveExisting: Bool, workspace: String) {
         if windows.findApp(bundleID: group.bundleID, named: group.app) != nil {
             guard moveExisting else {
-                set(group.itemIndices, to: .skipped("already open"), workspace: workspace)
+                set(group.itemIndices, to: .skipped(LaunchReason.alreadyOpen), workspace: workspace)
                 return
             }
             // Its windows are moved as they are: opening the saved files again
@@ -135,7 +135,7 @@ final class WorkspaceLauncher {
             return
         }
         guard let url = applicationURL(for: group) else {
-            set(group.itemIndices, to: .failed("\(group.app) is not installed"), workspace: workspace)
+            set(group.itemIndices, to: .failed(LaunchReason.notInstalled(group.app)), workspace: workspace)
             return
         }
         set(group.itemIndices, to: .launching, workspace: workspace)
@@ -199,11 +199,11 @@ final class WorkspaceLauncher {
                 let unsettled = self.pass(workspace, named: name)
                 if unsettled.isEmpty { break }
                 if self.isCancelled {
-                    self.set(unsettled, to: .failed("cancelled"), workspace: name)
+                    self.set(unsettled, to: .failed(LaunchReason.cancelled), workspace: name)
                     break
                 }
                 if Date() >= deadline {
-                    self.set(unsettled, to: .failed("no window appeared within \(Int(Self.windowTimeout))s"),
+                    self.set(unsettled, to: .failed(LaunchReason.noWindow(Int(Self.windowTimeout))),
                              workspace: name)
                     break
                 }

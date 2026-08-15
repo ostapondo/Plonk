@@ -53,18 +53,18 @@ enum Preset: String, CaseIterable {
         }
     }
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-        case .leftHalf: return "Left Half"
-        case .rightHalf: return "Right Half"
-        case .topHalf: return "Top Half"
-        case .bottomHalf: return "Bottom Half"
-        case .topLeft: return "Top Left"
-        case .topRight: return "Top Right"
-        case .bottomLeft: return "Bottom Left"
-        case .bottomRight: return "Bottom Right"
-        case .maximize: return "Maximize"
-        case .center: return "Center"
+        case .leftHalf: return .shortcutLeftHalf
+        case .rightHalf: return .shortcutRightHalf
+        case .topHalf: return .shortcutTopHalf
+        case .bottomHalf: return .shortcutBottomHalf
+        case .topLeft: return .shortcutTopLeft
+        case .topRight: return .shortcutTopRight
+        case .bottomLeft: return .shortcutBottomLeft
+        case .bottomRight: return .shortcutBottomRight
+        case .maximize: return .shortcutMaximize
+        case .center: return .shortcutCenter
         }
     }
 }

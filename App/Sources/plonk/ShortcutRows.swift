@@ -27,10 +27,10 @@ struct ShortcutRows: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
-                        .help("Another app already owns this combination")
+                        .help(String(localized: .shortcutAlreadyTaken))
                 }
                 ShortcutField(
-                    display: model.hotkeyDisplays[action.rawValue] ?? "None",
+                    display: model.hotkeyDisplays[action.rawValue] ?? String(localized: .shortcutUnbound),
                     isRecording: recording == action,
                     onStart: { recording = action },
                     onFinish: { hotkey in
@@ -132,7 +132,7 @@ final class RecorderView: NSView {
 
     func apply(display: String, recording: Bool) {
         self.recording = recording
-        label.stringValue = recording ? "Press keys" : display
+        label.stringValue = recording ? String(localized: .shortcutPressKeys) : display
         invalidateIntrinsicContentSize()
         label.textColor = recording ? .controlAccentColor : .labelColor
         layer?.backgroundColor = (recording ? NSColor.controlAccentColor.withAlphaComponent(0.18)

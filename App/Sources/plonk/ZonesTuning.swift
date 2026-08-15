@@ -30,39 +30,36 @@ struct ZonesTuning: View {
     // MARK: - Appearance
 
     private var appearance: some View {
-        SettingsCard(title: "Overlay",
-                     note: "The gap is real, not decoration: a window dropped into a zone keeps "
-                         + "that much space around it. Edge spanning covers both zones when the "
-                         + "cursor comes that close to the line between them, without holding "
-                         + "anything; zero switches it off.") {
+        SettingsCard(title: .zonesOverlay,
+                     note: .zonesOverlayHelp) {
             SettingBlock {
-                PointsField(title: "Gap", help: "Empty space kept around every snapped window",
+                PointsField(title: .zonesGap, help: .zonesGapHelp,
                             placeholder: "0", range: 0...40, value: model.zoneGap) {
                     model.actions?.setZoneGap($0)
                 }
             }
-            SettingRow(title: "Opacity", stacked: true) {
+            SettingRow(title: .zonesOpacity, stacked: true) {
                 Slider(value: $opacityDraft, in: 0.1...1) { editing in
                     if !editing { model.actions?.setZoneOpacity(opacityDraft) }
                 }
             }
-            SettingRow(title: "Colour",
+            SettingRow(title: .zonesColour,
                        detail: model.zoneColorHex == nil
-                           ? "Following the app's accent colour" : nil) {
+                           ? LocalizedStringResource.zonesColourFollowsAccent : nil) {
                 HStack(spacing: 10) {
                     ColorPicker("", selection: zoneColor, supportsOpacity: false).labelsHidden()
-                    Button("Use the accent") { model.actions?.setZoneColor(nil) }
+                    Button(String(localized: .zonesUseTheAccent)) { model.actions?.setZoneColor(nil) }
                         .controlSize(.small)
                         .disabled(model.zoneColorHex == nil)
                 }
             }
-            ToggleRow(title: "Number the zones",
+            ToggleRow(title: .zonesNumberTheZones,
                       isOn: model.binding(\.zoneNumbersVisible, set: { $0.setZoneNumbersVisible($1) }))
-            ToggleRow(title: "Show every monitor's zones while dragging",
+            ToggleRow(title: .zonesEveryMonitor,
                       isOn: model.binding(\.zonesOnAllMonitors, set: { $0.setZonesOnAllMonitors($1) }))
             SettingBlock {
-                PointsField(title: "Edge spanning",
-                            help: "How near the line between two zones covers both. 0 turns it off",
+                PointsField(title: .zonesEdgeSpanning,
+                            help: .zonesEdgeSpanningHelp,
                             placeholder: "16", range: 0...60, value: model.zoneEdgeSpan) {
                     model.actions?.setZoneEdgeSpan($0)
                 }
@@ -73,25 +70,22 @@ struct ZonesTuning: View {
     // MARK: - Grab and move
 
     private var grabMove: some View {
-        SettingsCard(title: "Grab and move",
-                     note: "Off by default, because option-drag already means something inside "
-                         + "plenty of Mac apps — duplicating a layer, copying a file. Anything in "
-                         + "the exception list below is never grabbed. Add the zones modifier "
-                         + "while dragging and the zones appear as usual.") {
-            ToggleRow(title: "Grab windows anywhere",
-                      detail: "Hold the key and drag from any point inside a window, instead of "
-                          + "aiming for the title bar",
+        SettingsCard(title: .zonesGrabMove,
+                     note: .zonesGrabMoveHelp) {
+            ToggleRow(title: .zonesGrabAnywhere,
+                      detail: .zonesGrabAnywhereDetail,
                       isOn: model.binding(\.grabMoveEnabled, set: { $0.setGrabMove($1) }))
             Group {
-                SegmentedRow(title: "Hold",
+                SegmentedRow(title: .zonesHold,
                              selection: model.binding(\.grabMoveModifier,
                                                       set: { $0.setGrabMoveModifier($1) }),
-                             options: [("⌥ Option", "option"), ("⌘ Command", "command"),
-                                       ("⌃ Control", "control")])
-                ToggleRow(title: "Right-drag resizes",
-                          detail: "Pulls the edge or corner nearest where the drag started",
+                             options: [(.zonesModifierOption, "option"),
+                                       (.zonesModifierCommand, "command"),
+                                       (.zonesModifierControl, "control")])
+                ToggleRow(title: .zonesRightDragResizes,
+                          detail: .zonesRightDragResizesDetail,
                           isOn: model.binding(\.grabMoveResize, set: { $0.setGrabMoveResize($1) }))
-                ToggleRow(title: "Show the size while dragging",
+                ToggleRow(title: .zonesShowSizeWhileDragging,
                           isOn: model.binding(\.grabMoveShowGeometry,
                                               set: { $0.setGrabMoveShowGeometry($1) }))
             }
@@ -103,10 +97,8 @@ struct ZonesTuning: View {
     // MARK: - Exclusions
 
     private var exclusions: some View {
-        SettingsCard(title: "Leave these alone",
-                     note: "Dragging and the shortcuts skip these — games, remote desktops, "
-                         + "anything that manages its own geometry. Asking an agent to place one "
-                         + "still works, because that names the window on purpose.") {
+        SettingsCard(title: .zonesExclusions,
+                     note: .zonesExclusionsHelp) {
             SettingBlock {
                 ExcludedApps(model: model)
             }

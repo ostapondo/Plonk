@@ -95,12 +95,12 @@ private struct CardSurface: ViewModifier {
 /// A group heading with a rule that runs to the edge, and room for a note that
 /// says something the rows themselves cannot.
 struct SectionHead: View {
-    let title: String
-    var note: String?
+    let title: LocalizedStringResource
+    var note: LocalizedStringResource?
 
     var body: some View {
         HStack(spacing: 9) {
-            Text(title.uppercased())
+            Text(String(localized: title).uppercased())
                 .font(.system(size: 10, weight: .bold))
                 .kerning(0.9)
                 .foregroundStyle(.tertiary)
@@ -125,7 +125,7 @@ struct KeyCaps: View {
     var body: some View {
         HStack(spacing: 3) {
             if parts.isEmpty, showsNone {
-                Text("None").font(.caption).foregroundStyle(.tertiary)
+                Text(.shortcutUnbound).font(.caption).foregroundStyle(.tertiary)
             }
             ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
                 Text(part)
@@ -143,7 +143,7 @@ struct KeyCaps: View {
 /// One fact about whether the app can do its job. Green states it in a word;
 /// anything else says what is wrong and offers the fix.
 struct StatusPill: View {
-    let title: String
+    let title: LocalizedStringResource
     let ok: Bool
     var fix: (() -> Void)?
 
@@ -157,7 +157,7 @@ struct StatusPill: View {
                 .shadow(color: (ok ? Color.green : Color.orange).opacity(0.7), radius: 3)
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
             if !ok, let fix {
-                Button("Grant", action: fix).buttonStyle(.link).font(.system(size: 11))
+                Button(String(localized: .appGrant), action: fix).buttonStyle(.link).font(.system(size: 11))
             }
         }
         .padding(.horizontal, 9)

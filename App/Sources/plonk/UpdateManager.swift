@@ -22,7 +22,7 @@ final class UpdateManager {
     private(set) var phase: Phase = .idle
     private(set) var latest: Release?
     /// One line for the UI, always in step with `phase`.
-    private(set) var status = ""
+    private(set) var status: LocalizedStringResource = ""
     private(set) var progress: Double = 0
 
     /// Fires on the main queue when the phase or the status text changes.
@@ -85,7 +85,7 @@ final class UpdateManager {
     func check() {
         guard !inFlight else { return }
         inFlight = true
-        set(phase: .checking, status: "Checking for updates…")
+        set(phase: .checking, status: .updateChecking)
 
         let task = session.dataTask(with: Release.latestURL) { [weak self] data, response, error in
             guard let self else { return }
@@ -112,10 +112,10 @@ final class UpdateManager {
         latest = release
         inFlight = false
         guard case .offer = UpdateDecision.offering(running: Self.currentVersion, latest: release) else {
-            set(phase: .idle, status: "Plonk \(Self.currentVersionText) is the latest release.")
+            set(phase: .idle, status: .updateUpToDate(Self.currentVersionText))
             return
         }
-        set(phase: .available, status: "Plonk \(release.version) is available.")
+        set(phase: .available, status: .updateIsAvailable(release.version.text))
     }
 
     // MARK: - Installing
@@ -131,7 +131,7 @@ final class UpdateManager {
         // The route has already answered "installing"; going quiet here would
         // leave the caller waiting for a relaunch that is never coming.
         guard !inFlight else {
-            set(phase: .failed, status: "A check is still running. Try again in a moment.")
+            set(phase: .failed, status: .updateCheckRunning)
             return
         }
         do {
@@ -140,7 +140,7 @@ final class UpdateManager {
             let requirement = try CodeSignature.selfRequirement()
             inFlight = true
             progress = 0
-            set(phase: .downloading, status: "Downloading Plonk \(release.version)…")
+            set(phase: .downloading, status: .updateDownloading(release.version.text))
             download(release) { [weak self] result in
                 guard let self else { return }
                 switch result {
@@ -189,7 +189,7 @@ final class UpdateManager {
     private func stage(_ archive: URL, of release: Release,
                        requirement: SecRequirement, into installed: URL) {
         DispatchQueue.main.async { [weak self] in
-            self?.set(phase: .verifying, status: "Checking the download…")
+            self?.set(phase: .verifying, status: .updateVerifying)
         }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
@@ -268,7 +268,7 @@ final class UpdateManager {
     }
 
     private func swap(_ staged: URL, into installed: URL) {
-        set(phase: .installing, status: "Installing…")
+        set(phase: .installing, status: .updateInstalling)
         // On the way out the script deletes the staged bundle; if we never get
         // that far, an unpacked copy of the whole app would sit in temp until
         // the next reboot, once per attempt.
@@ -313,13 +313,13 @@ final class UpdateManager {
         let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         var offline = false
         if case UpdateError.network = error { offline = true }
-        set(phase: .failed, status: message, offline: offline)
+        set(phase: .failed, status: "\(message)", offline: offline)
     }
 
     /// `offline` marks the one failure the schedule can undo on its own, and
     /// every other call clears it: whatever a check ends up saying, it is the
     /// current answer, and the network coming back does not change it.
-    private func set(phase: Phase, status: String, offline: Bool = false) {
+    private func set(phase: Phase, status: LocalizedStringResource, offline: Bool = false) {
         let apply = { [weak self] in
             guard let self else { return }
             if phase == .failed { inFlight = false }

@@ -3,11 +3,13 @@ import PackageDescription
 
 let package = Package(
     name: "plonk",
+    defaultLocalization: "en",
     platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
             name: "plonk",
             path: "Sources/plonk",
+            resources: [.process("Resources")],
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(

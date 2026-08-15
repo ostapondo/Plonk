@@ -16,6 +16,9 @@ Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
 - `Ink` holds the surfaces, the radius and the accent gradient every page draws
   with, and `SettingRows` the rows a settings card is made of. Pages compose
   those instead of spelling out colours.
+- `Resources/en.lproj/Localizable.strings` holds every word the user reads, and
+  the `Strings+*.swift` files declare the keys that reach it. Views hold keys,
+  never sentences — see "Text" below.
 - `AppActions` is the full list of things the UI can ask the app to do.
   `AppModel` is state only; views never reach past it.
 - `ScreenIdentity` turns a screen index into the keys config is stored under.
@@ -49,6 +52,7 @@ Each line is a subshell, so the block runs as written from the repository root:
 ./scripts/lint.sh                # style rules — must pass
 (cd mcp && npm test)             # must pass when mcp/ changed
 node scripts/check-zone-sets.mjs # must pass when zone-sets/ changed
+node scripts/check-strings.mjs   # must pass when any user-facing text changed
 ./scripts/build.sh               # produces Plonk.app; needs a signing identity
 curl -s 127.0.0.1:43917/ping     # smoke test while the app is running
 ```
@@ -81,9 +85,45 @@ Put new logic there and cover it in `App/Tests/plonkTests/`.
 - Swift API design guidelines; match the existing code.
 - Comments only for non-obvious constraints (coordinate spaces, AX quirks). No narration, no changelog comments.
 - No emoji anywhere, user-facing strings included. Key glyphs (⌃⌥⇧↩) are not emoji and are fine.
-- User-facing strings are English.
 - Coordinate spaces are documented in `WindowManager.swift` — read that before touching geometry.
 - Annotations are stored in unit coordinates, not view points; see `Annotation.swift`.
+
+## Text
+
+Every string the user reads lives in `App/Sources/plonk/Resources/en.lproj/`,
+and nowhere else. A view holds a key:
+
+```swift
+Text(.zonesOverlay)                       // a page heading
+Button(.commonCancel) { dismiss() }       // a button
+HUD.shared.show(.hudNoTextFound)          // a notice
+```
+
+Adding one is two edits and no more. Put the English in
+`Localizable.strings`, keyed by `<module>.<thing>`; declare it in the
+`Strings+*.swift` file for that module as `Self.key("module.thing")`. Anything
+counted goes in `Localizable.stringsdict` instead, because English needing two
+plural forms is not a reason to assume every language does.
+
+Rules the checker enforces, so they are worth knowing before it tells you:
+
+- A type that carries text to the screen holds a `LocalizedStringResource`, not
+  a `String` — `SettingRow`, `HotkeyAction.title`, `SettingsPage.title`. That is
+  what makes a raw sentence impossible to pass rather than merely discouraged.
+- Never key anything off displayed text. `HotkeyAction.Group` is a value, and
+  `group.title` is what gets drawn; filtering on the words would break the
+  moment they were translated.
+- English is a translation like any other. `en.lproj` is where it lives, and
+  adding a language means one new `.lproj` beside it and no Swift at all.
+- What an agent reads over the API is a different surface: ids, route names,
+  `phase` and every other machine-readable field stay English, always. Sentences
+  written for a person are translated even when they also reach an agent — the
+  update status, the keep-awake status, and why an app in a workspace did not
+  land. Each of those sits beside a structured field that did not change.
+
+`scripts/check-strings.mjs` fails on a key with no value, a value nothing uses,
+a mismatched number of format specifiers, a translation that has drifted from
+English, and a literal sentence left in a view.
 
 ## Boundaries
 

@@ -29,7 +29,7 @@ struct ZoneSetPaletteView: View {
         let zones: [ZoneRect]
         let custom: Bool
         var id: String { name }
-        var title: String { name.isEmpty ? "Edge snapping" : name }
+        var title: String { name.isEmpty ? String(localized: .zoneSetEdgeSnapping) : name }
     }
 
     private var rows: [Row] {
@@ -65,7 +65,7 @@ struct ZoneSetPaletteView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Image(systemName: "rectangle.3.group").foregroundStyle(.tertiary)
-            Text("Zone sets").font(.system(size: 13, weight: .semibold))
+            Text(.zoneSetTitle).font(.system(size: 13, weight: .semibold))
             Spacer()
             Text(screenLabel).font(.system(size: 11)).foregroundStyle(.secondary)
         }
@@ -77,7 +77,8 @@ struct ZoneSetPaletteView: View {
         let size = model.screenDescriptions.indices.contains(screenIndex)
             ? model.screenDescriptions[screenIndex] : ""
         guard model.screenCount > 1 else { return size }
-        return size.isEmpty ? "Screen \(screenIndex + 1)" : "Screen \(screenIndex + 1) — \(size)"
+        return String(localized: size.isEmpty ? .zoneSetScreen(screenIndex + 1)
+                                              : .zoneSetScreenWithSize(screenIndex + 1, size))
     }
 
     private var list: some View {
@@ -105,7 +106,7 @@ struct ZoneSetPaletteView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title).font(.system(size: 12.5, weight: selected ? .semibold : .regular))
                 if row.name == assigned {
-                    Text("On this screen now").font(.system(size: 10.5)).foregroundStyle(.secondary)
+                    Text(.zoneSetOnThisScreenNow).font(.system(size: 10.5)).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 8)
@@ -114,7 +115,7 @@ struct ZoneSetPaletteView: View {
                 Button { edit(row) } label: { Image(systemName: "pencil") }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
-                    .help(row.custom ? "Edit this set" : "Edit a copy of this template")
+                    .help(String(localized: row.custom ? .zoneSetEditThis : .zoneSetEditCopy))
             }
         }
         .padding(.horizontal, 16)
@@ -176,7 +177,7 @@ struct ZoneSetPaletteView: View {
         let screen = screenIndex
         DispatchQueue.main.async { [model] in
             model.actions?.assignZoneSet(name, toScreen: screen)
-            HUD.shared.show(name.isEmpty ? "Edge snapping" : name)
+            HUD.shared.show(name.isEmpty ? String(localized: .zoneSetEdgeSnapping) : name)
         }
     }
 
@@ -194,7 +195,7 @@ struct ZoneSetPaletteView: View {
         onClose()
         let screen = screenIndex
         DispatchQueue.main.async { [model] in
-            model.actions?.editZoneSet(model.freeZoneSetName(base: "Custom"),
+            model.actions?.editZoneSet(model.freeZoneSetName(base: String(localized: .zoneSetCustom)),
                                        seed: [ZoneRect(0, 0, 1, 1)], onScreen: screen)
         }
     }

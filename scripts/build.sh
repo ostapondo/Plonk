@@ -40,11 +40,24 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp App/.build/release/plonk "$APP/Contents/MacOS/plonk"
 [ -f App/Resources/AppIcon.icns ] || swift scripts/make-icon.swift
 cp App/Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+# The text of the app. swiftpm leaves the compiled catalog in a resource bundle
+# of its own; macOS looks for an app's languages in Contents/Resources, and only
+# what it finds there is offered to the language picker in System Settings. A
+# bundle without them draws its own keys on screen, so this is checked rather
+# than assumed.
+cp -R App/.build/release/plonk_plonk.bundle/*.lproj "$APP/Contents/Resources/"
+if [ ! -f "$APP/Contents/Resources/en.lproj/Localizable.strings" ]; then
+	echo "error: the string catalog did not make it into the bundle" >&2
+	exit 1
+fi
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
 	<key>CFBundleExecutable</key>
 	<string>plonk</string>
 	<key>CFBundleIconFile</key>

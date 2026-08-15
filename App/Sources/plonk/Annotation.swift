@@ -27,11 +27,11 @@ struct Annotation: Identifiable, Equatable {
 
         var title: String {
             switch self {
-            case .pen: return "Pen"
-            case .arrow: return "Arrow"
-            case .rectangle: return "Rectangle"
-            case .ellipse: return "Ellipse"
-            case .highlight: return "Highlight"
+            case .pen: return String(localized: .toolPen)
+            case .arrow: return String(localized: .toolArrow)
+            case .rectangle: return String(localized: .toolRectangle)
+            case .ellipse: return String(localized: .toolEllipse)
+            case .highlight: return String(localized: .toolHighlight)
             }
         }
 

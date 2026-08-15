@@ -53,6 +53,17 @@ jobs:
       - run: npm test
         working-directory: mcp
 
+  # The catalog and the Swift that reads it are two files that have to agree,
+  # and nothing about a mismatch is visible until a key shows up on screen.
+  strings:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - run: node scripts/check-strings.mjs
+
   # Deliberately the cheapest job in the file: a pull request that adds one
   # layout to zone-sets/ gets an answer in seconds, on a runner that is not
   # queueing behind a Swift build it did not touch.
