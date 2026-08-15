@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- Counted things. English needs two forms and would survive being written
+     with an "s" glued on; most languages this will be translated into need
+     three or more, and the plural rule is the translator's to state, not the
+     code's to guess. Keys here belong to the same table as Localizable.strings
+     and are looked up the same way. -->
+<dict>
+	<key>workspaces.appCount %lld</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@apps@</string>
+		<key>apps</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>1 app</string>
+			<key>other</key>
+			<string>%lld apps</string>
+		</dict>
+	</dict>
+	<key>workspaces.windowCount %lld</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@windows@</string>
+		<key>windows</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>1 window</string>
+			<key>other</key>
+			<string>%lld windows</string>
+		</dict>
+	</dict>
+	<key>workspaces.monitorCount %lld</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@monitors@</string>
+		<key>monitors</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>1 monitor</string>
+			<key>other</key>
+			<string>%lld monitors</string>
+		</dict>
+	</dict>
+	<key>app.agentCount %lld</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@agents@</string>
+		<key>agents</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>1 agent</string>
+			<key>other</key>
+			<string>%lld agents</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

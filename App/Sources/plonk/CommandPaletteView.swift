@@ -43,7 +43,7 @@ struct CommandPaletteView: View {
     private var field: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass").foregroundStyle(.tertiary)
-            TextField("Run a command, or say what you want done", text: $query)
+            TextField(String(localized: .palettePrompt), text: $query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 15))
                 .focused($focused)
@@ -76,7 +76,7 @@ struct CommandPaletteView: View {
                         }
                     }
                     if results.isEmpty {
-                        Text("Nothing matches “\(query)”")
+                        Text(.paletteNoMatch(query))
                             .font(.system(size: 12.5))
                             .foregroundStyle(.secondary)
                             .padding(16)
@@ -113,7 +113,9 @@ struct CommandPaletteView: View {
             byGroup[command.group, default: []].append(command)
         }
         var result = order.map { ($0, byGroup[$0] ?? []) }
-        if let askRow { result.append((name: "Agent", commands: [askRow])) }
+        if let askRow {
+            result.append((name: String(localized: .paletteGroupAgent), commands: [askRow]))
+        }
         return result
     }
 
@@ -142,7 +144,7 @@ struct CommandPaletteView: View {
         HStack(spacing: 14) {
             hint(["↑", "↓"], "navigate")
             hint(["return"], "run")
-            hint(["⌘", "return"], "ask the agent")
+            hint(["⌘", "return"], String(localized: .paletteAskTheAgent))
             hint(["esc"], "close")
             Spacer()
         }

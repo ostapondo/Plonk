@@ -13,6 +13,31 @@ one of those.
 
 ## Unreleased
 
+### Changed
+
+- **Every word the app says now lives in one file.** The text was written into
+  the views that draw it, spread across sixty-odd Swift files, which meant a
+  second language would have had to start by unpicking all of them. It is a
+  string catalog now — `Resources/en.lproj/Localizable.strings`, with counted
+  things in `Localizable.stringsdict` so plural rules belong to the language
+  rather than to the code — and the source holds keys. Adding a language is one
+  new folder beside the English one and no Swift at all.
+
+  Nothing looks different, and that is the point: this is the groundwork, not
+  the translation. Two things did have to change underneath. A shortcut's group
+  ("Halves", "Numbered zones") was both the heading on screen and the value the
+  pages filtered on, so translating it would have quietly emptied those lists;
+  the two are separate now. And a handful of sentences are read by a person and
+  by an agent both — the update status, the keep-awake status, why an app in a
+  workspace did not land — so those reach the API in whatever language the app
+  is running in. Every machine-readable field beside them is untouched: ids,
+  route names and `phase` stay English, because that is the half a client
+  actually branches on.
+
+  The two permission dialogs macOS draws are covered too, through an
+  `InfoPlist.strings` beside the catalog, since Info.plist itself cannot be
+  translated.
+
 ### Added
 
 - **The zone sets, as a list you can see.** `⌃⌥L` draws every set available for

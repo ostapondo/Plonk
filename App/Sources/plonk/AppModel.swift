@@ -183,7 +183,7 @@ final class AppModel: ObservableObject {
 // in SettingsPages instead of editing the sidebar.
 struct SettingsPage: Identifiable {
     let id: String
-    let title: String
+    let title: LocalizedStringResource
     let icon: String
     /// The destination it belongs to, by SettingsGroup id.
     var parent: String?
@@ -194,7 +194,7 @@ struct SettingsPage: Identifiable {
 /// it expands into them only while it is the one being looked at.
 struct SettingsGroup: Identifiable {
     let id: String
-    let title: String
+    let title: LocalizedStringResource
     let icon: String
 }
 

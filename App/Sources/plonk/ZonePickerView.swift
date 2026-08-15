@@ -25,9 +25,9 @@ struct ZonePickerView: View {
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Templates").font(.title3.bold())
+                    Text(.zoneSetTemplates).font(.title3.bold())
                     cardGrid(edgeCard: true, names: builtinNames)
-                    Text("Custom").font(.title3.bold()).padding(.top, 8)
+                    Text(.zoneSetCustom).font(.title3.bold()).padding(.top, 8)
                     if model.customZoneSetNames.isEmpty {
                         emptyState
                     } else {
@@ -40,7 +40,7 @@ struct ZonePickerView: View {
             HStack {
                 Spacer()
                 Button(action: createNewLayout) {
-                    Label("Create New Layout", systemImage: "plus")
+                    Label(String(localized: .zoneSetCreateNew), systemImage: "plus")
                 }
                 .keyboardShortcut(.defaultAction)
             }
@@ -54,7 +54,7 @@ struct ZonePickerView: View {
             Image(systemName: "rectangle.split.2x1")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Text("Create a layout or duplicate a template to get started")
+            Text(.zoneSetEmptyState)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -90,9 +90,9 @@ struct ZonePickerView: View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 12)], spacing: 12) {
             if edgeCard {
                 ZoneSetCard(
-                    name: "Edge Snapping",
+                    name: String(localized: .zoneSetEdgeSnappingCard),
                     zones: [],
-                    subtitle: "Halves, quarters and maximize at screen edges",
+                    subtitle: String(localized: .zoneSetEdgeSnappingSubtitle),
                     isSelected: assignedName == "edge",
                     isPreviewing: false,
                     onSelect: { model.actions?.assignZoneSet("", toScreen: selectedScreen) },
@@ -121,7 +121,7 @@ struct ZonePickerView: View {
     }
 
     private func createNewLayout() {
-        model.actions?.editZoneSet(model.freeZoneSetName(base: "Custom"),
+        model.actions?.editZoneSet(model.freeZoneSetName(base: String(localized: .zoneSetCustom)),
                                    seed: [ZoneRect(0, 0, 1, 1)], onScreen: selectedScreen)
     }
 }
@@ -145,7 +145,7 @@ private struct ZoneSetCard: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 if renaming {
-                    TextField("Name", text: $draftName)
+                    TextField(String(localized: .zoneSetNameField), text: $draftName)
                         .textFieldStyle(.roundedBorder)
                         .font(.subheadline)
                         .onSubmit(commitRename)
@@ -162,7 +162,7 @@ private struct ZoneSetCard: View {
                     }
                     .buttonStyle(.borderless)
                     .foregroundStyle(isPreviewing ? Color.accentColor : Color.secondary)
-                    .help("Show on the selected screen")
+                    .help(String(localized: .zoneSetShowOnScreen))
                 }
                 if let onEdit {
                     Button(action: onEdit) { Image(systemName: "pencil") }
@@ -179,7 +179,7 @@ private struct ZoneSetCard: View {
                     RoundedRectangle(cornerRadius: 6)
                         .fill(Color.gray.opacity(0.12))
                         .overlay(
-                            Text(subtitle ?? "Empty — draw zones in the editor")
+                            Text(subtitle ?? String(localized: .zoneSetEmptyCard))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
@@ -202,7 +202,7 @@ private struct ZoneSetCard: View {
         .onTapGesture(perform: onSelect)
         .contextMenu {
             if onRename != nil {
-                Button("Rename…") {
+                Button(.zoneSetRename) {
                     draftName = name
                     renaming = true
                 }

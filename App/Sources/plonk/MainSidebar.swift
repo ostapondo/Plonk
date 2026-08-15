@@ -62,7 +62,7 @@ struct MainSidebar: View {
                 .overlay(Image(systemName: "cube")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white))
-            Text("Plonk").font(.system(size: 14, weight: .semibold))
+            Text(.appName).font(.system(size: 14, weight: .semibold))
             Spacer(minLength: 0)
             if !model.appVersion.isEmpty {
                 Text(model.appVersion)
@@ -71,7 +71,7 @@ struct MainSidebar: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 1.5)
                     .overlay(Capsule().strokeBorder(Ink.capStroke))
-                    .help("Version \(model.appVersion)")
+                    .help(String(localized: .appVersion(model.appVersion)))
             }
         }
         .padding(.horizontal, 14)
@@ -85,7 +85,7 @@ struct MainSidebar: View {
             HStack(spacing: 7) {
                 Image(systemName: "magnifyingglass").font(.system(size: 12))
                 if !rail {
-                    Text("Run a command").font(.system(size: 12))
+                    Text(.appRunACommand).font(.system(size: 12))
                     Spacer(minLength: 0)
                     KeyCaps(parts: ["⌘", "K"])
                 }
@@ -101,7 +101,7 @@ struct MainSidebar: View {
         .buttonStyle(.plain)
         .padding(.horizontal, 8)
         .padding(.bottom, 12)
-        .help("Run a command")
+        .help(String(localized: .appRunACommand))
     }
 
     // MARK: - Rows
@@ -146,7 +146,7 @@ struct MainSidebar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(group.title)
+        .help(String(localized: group.title))
     }
 
     private func child(_ page: SettingsPage) -> some View {
@@ -180,12 +180,12 @@ struct MainSidebar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(page.title)
+        .help(String(localized: page.title))
     }
 
     private var workspaces: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text("WORKSPACES")
+            Text(String(localized: .appWorkspaces).uppercased())
                 .font(.system(size: 9.5, weight: .bold))
                 .kerning(0.9)
                 .foregroundStyle(.tertiary)
@@ -207,7 +207,7 @@ struct MainSidebar: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("Launch \(name)")
+                .help(String(localized: .appLaunchWorkspace(name)))
             }
         }
     }
@@ -222,7 +222,7 @@ struct MainSidebar: View {
                 }
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
-                .help("Report a Bug")
+                .help(String(localized: .appReportBug))
             } else {
                 Picker("", selection: model.binding(\.appearance.theme, set: { $0.setTheme($1) })) {
                     ForEach(AppearanceSettings.Theme.allCases) { theme in
@@ -232,17 +232,17 @@ struct MainSidebar: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 96)
-                .help("Light, dark, or whatever macOS is using")
+                .help(String(localized: .appThemePicker))
                 Spacer(minLength: 0)
                 Button { model.actions?.reportBug() } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "ladybug").font(.system(size: 12))
-                        Text("Report").font(.system(size: 11.5))
+                        Text(.appReport).font(.system(size: 11.5))
                     }
                     .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Report a Bug")
+                .help(String(localized: .appReportBug))
             }
         }
         .padding(.horizontal, 12)

@@ -15,19 +15,19 @@ struct AppearanceSettings: Codable, Equatable {
 
         var id: String { rawValue }
 
-        var title: String {
+        var title: LocalizedStringResource {
             switch self {
-            case .system: return "System"
-            case .light: return "Light"
-            case .dark: return "Dark"
+            case .system: return .appearanceThemeSystem
+            case .light: return .appearanceThemeLight
+            case .dark: return .appearanceThemeDark
             }
         }
 
-        var note: String {
+        var note: LocalizedStringResource {
             switch self {
-            case .system: return "follows macOS"
-            case .light: return "daylight"
-            case .dark: return "midnight"
+            case .system: return .appearanceThemeSystemNote
+            case .light: return .appearanceThemeLightNote
+            case .dark: return .appearanceThemeDarkNote
             }
         }
 

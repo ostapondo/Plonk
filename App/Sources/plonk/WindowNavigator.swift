@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 // Choosing a window by where it sits rather than by when it was last used.
 //
@@ -10,6 +11,16 @@ import CoreGraphics
 enum WindowNavigator {
     enum Direction: String, CaseIterable {
         case left, right, up, down
+
+        /// Read out loud rather than sent over the API, which uses `rawValue`.
+        var title: LocalizedStringResource {
+            switch self {
+            case .left: return .directionLeft
+            case .right: return .directionRight
+            case .up: return .directionUp
+            case .down: return .directionDown
+            }
+        }
     }
 
     /// Index of the window to focus when stepping from `origin` in a

@@ -10,32 +10,32 @@ struct AwakePage: View {
         Form {
             Section {
                 Toggle(isOn: model.binding(\.awakeRequested, set: { $0.setAwake($1) })) {
-                    Text("Keep awake now")
+                    Text(LocalizedStringResource.awakeKeepNow)
                     Text(model.awakeRequested && !model.awakeOn
-                         ? "Paused: on battery, and battery use is not allowed below"
-                         : "The menu bar cube glows amber while active")
+                         ? LocalizedStringResource.awakePausedOnBattery
+                         : .awakeMenuBarGlow)
                 }
-                Picker("Turn off after",
+                Picker(String(localized: .awakeTurnOffAfter),
                        selection: model.binding(\.awakeTimeoutMinutes, set: { $0.setAwakeTimeout(minutes: $1) })) {
-                    Text("Never").tag(0)
-                    Text("15 minutes").tag(15)
-                    Text("30 minutes").tag(30)
-                    Text("1 hour").tag(60)
-                    Text("2 hours").tag(120)
+                    Text(.awakeNever).tag(0)
+                    Text(.awakeAfter15Minutes).tag(15)
+                    Text(.awakeAfter30Minutes).tag(30)
+                    Text(.awakeAfter1Hour).tag(60)
+                    Text(.awakeAfter2Hours).tag(120)
                 }
             }
-            Section("Power") {
+            Section(String(localized: .awakePower)) {
                 Toggle(isOn: model.binding(\.awakeKeepDisplayOn, set: { $0.setAwakeKeepDisplayOn($1) })) {
-                    Text("Keep the display on")
-                    Text("Off: only the system stays awake, the screen may still sleep")
+                    Text(.awakeKeepDisplayOn)
+                    Text(.awakeKeepDisplayOnHelp)
                 }
                 Toggle(isOn: model.binding(\.awakeAllowOnBattery, set: { $0.setAwakeAllowOnBattery($1) })) {
-                    Text("Allow on battery")
-                    Text("Off: keep-awake pauses when unplugged and resumes on power")
+                    Text(.awakeAllowOnBattery)
+                    Text(.awakeAllowOnBatteryHelp)
                 }
                 Toggle(isOn: model.binding(\.awakeAutoWhileCharging, set: { $0.setAwakeAutoWhileCharging($1) })) {
-                    Text("Automatically while charging")
-                    Text("Keeps the Mac awake whenever it is plugged in")
+                    Text(.awakeAutoWhileCharging)
+                    Text(.awakeAutoWhileChargingHelp)
                 }
             }
         }
@@ -50,49 +50,49 @@ struct ShotPage: View {
     var body: some View {
         Form {
             Section {
-                Button("Capture Region") { model.actions?.capture(.region) }
-                Button("Capture Window") { model.actions?.capture(.window) }
-                Button("Capture Whole Screen") { model.actions?.capture(.screen) }
+                Button(.shotCaptureRegion) { model.actions?.capture(.region) }
+                Button(.shotCaptureWindow) { model.actions?.capture(.window) }
+                Button(.shotCaptureScreen) { model.actions?.capture(.screen) }
             } header: {
-                Text("Capture")
+                Text(.shotCapture)
             } footer: {
-                Text("The editor opens on the capture: draw with pen, arrow, rectangle, ellipse or highlighter, then copy or save. Needs Screen Recording access, which macOS asks for on the first capture.")
+                Text(.shotCaptureHelp)
             }
             Section {
                 ShortcutRows(model: model,
-                             actions: HotkeyAction.owned(by: "shot").filter { $0.group != "Crop" })
+                             actions: HotkeyAction.owned(by: "shot").filter { $0.group != .crop })
             } header: {
-                Text("Shortcuts")
+                Text(.commonShortcuts)
             }
             Section {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "shot", group: "Crop"))
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "shot", group: .crop))
             } header: {
-                Text("Pin Part of the Screen")
+                Text(.shotPinPart)
             } footer: {
-                Text("Drag out a region and it floats above everything else. Live mirrors what is underneath — a build log, a chart, a call — so it can be watched while you work on top of it. Still freezes it, which costs nothing and works on windows a stream will not follow. Close the panel to stop it.")
+                Text(.shotPinPartHelp)
             }
             Section {
-                Picker("Language", selection: language) {
-                    Text("Automatic").tag("")
+                Picker(.shotLanguage, selection: language) {
+                    Text(.shotLanguageAutomatic).tag("")
                     Divider()
                     ForEach(model.supportedTextLanguages, id: \.self) { Text($0).tag($0) }
                 }
                 .disabled(model.supportedTextLanguages.isEmpty)
             } header: {
-                Text("Text")
+                Text(.shotText)
             } footer: {
-                Text("⌃⌥T selects an area and copies the words in it — including text in screenshots, videos and anything else that is only pixels. Recognition runs on this Mac; nothing is uploaded. Automatic follows the system language.")
+                Text(.shotTextHelp)
             }
-            Section("Output") {
+            Section(String(localized: .shotOutput)) {
                 Toggle(isOn: model.binding(\.shotCopyToClipboard, set: { $0.setShotCopyToClipboard($1) })) {
-                    Text("Copy to clipboard when saving")
+                    Text(.shotCopyOnSave)
                 }
                 HStack {
                     // Committed on Return or when focus leaves, so typing a path
                     // does not rewrite the config on every keystroke.
-                    TextField("Save folder", text: $folderDraft)
+                    TextField(text: $folderDraft) { Text(.shotSaveFolder) }
                         .onSubmit(commitFolder)
-                    Button("Choose", action: chooseFolder)
+                    Button(.commonChoose, action: chooseFolder)
                 }
                 if !model.shotStatus.isEmpty {
                     Text(model.shotStatus).font(.caption).foregroundStyle(.secondary)
@@ -149,32 +149,32 @@ struct VoicePage: View {
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "voice"))
             } header: {
-                Text("Push to Talk")
+                Text(.voicePushToTalk)
             } footer: {
-                Text("Hold the key, say it, let go — the words go to the active agent from the Agents list on the AI page. Recognition runs on this Mac and nothing is recorded; only the finished sentence reaches the agent. macOS asks for Microphone and Speech Recognition on first use.")
+                Text(.voicePushToTalkHelp)
             }
             Section {
                 Toggle(isOn: model.binding(\.voiceLocalCommands, set: { $0.setVoiceLocalCommands($1) })) {
-                    Text("Run the common ones here")
-                    Text("No agent, no round trip, works offline")
+                    Text(.voiceRunCommonHere)
+                    Text(.voiceRunCommonHereHelp)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    ForEach(["snap this left", "zone three", "put it back", "next window",
-                             "keep awake for an hour", "launch my review workspace"], id: \.self) { example in
-                        Text("“\(example)”").font(.callout)
+                    ForEach(Array(LocalizedStringResource.voiceExamples.enumerated()),
+                            id: \.offset) { _, example in
+                        Text(example).font(.callout)
                     }
                 }
                 .foregroundStyle(.secondary)
             } header: {
-                Text("Straight to Plonk")
+                Text(.voiceStraightToPlonk)
             } footer: {
-                Text("Halves and quarters, numbered zones, put back, focus, next window in a zone, show zones, keep-awake, screenshots, and launching a workspace by name. Anything less clear-cut — two things at once, a percentage, an app by name, awake until a build finishes — goes to the agent instead, so nothing is guessed at.")
+                Text(.voiceStraightToPlonkHelp)
             }
             Section {
-                Text("\"Browser on the left, terminal right\" — the agent arranges it. \"Save this as a workspace called review\", \"screenshot the screen and circle what looks broken\" — same. Anything you could type to the agent, you can say.")
+                Text(.voiceToTheAgentHelp)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("What to Say to the Agent")
+                Text(.voiceToTheAgent)
             }
         }
         .formStyle(.grouped)
@@ -184,16 +184,6 @@ struct VoicePage: View {
 struct AIPage: View {
     @ObservedObject var model: AppModel
     @State private var copied: String?
-
-    private static let examples = [
-        "Browser on the left 60%, terminal top right, notes bottom right",
-        "Put VS Code in the middle zone",
-        "Save this as a workspace called \"review\"",
-        "Launch my \"work\" workspace",
-        "Make me a three-column zone set for the main screen",
-        "Keep the screen awake for the next hour",
-        "Screenshot the screen and circle whatever looks broken",
-    ]
 
     /// Everything the picker can offer: whoever is online, plus the current
     /// pick even when its session is gone, so it can still be cleared.
@@ -231,51 +221,59 @@ struct AIPage: View {
     private var agentsSection: some View {
         Section {
             if agentChoices.isEmpty {
-                Text("No agents connected yet — anything speaking MCP shows up here once it calls a Plonk tool.")
+                Text(.aiNoAgents)
                     .foregroundStyle(.secondary)
             } else {
-                Picker("Active agent", selection: selectedAgent) {
-                    Text("Any agent").tag("")
+                Picker(.aiActiveAgent, selection: selectedAgent) {
+                    Text(.aiAnyAgent).tag("")
                     Divider()
                     ForEach(agentChoices, id: \.self) { name in
-                        Text(model.connectedAgents.contains(name) ? name : "\(name) (offline)").tag(name)
+                        Text(model.connectedAgents.contains(name)
+                             ? name
+                             : String(localized: .aiAgentOffline(name))).tag(name)
                     }
                 }
                 Toggle(isOn: model.binding(\.agentExclusive, set: { $0.setAgentExclusive($1) })) {
-                    Text("Only the active agent controls")
-                    Text("Other agents can still read state and take screenshots")
+                    Text(.aiExclusive)
+                    Text(.aiExclusiveHelp)
                 }
                 .disabled(model.selectedAgent == nil)
             }
         } header: {
-            Text("Agents")
+            Text(.aiAgents)
         } footer: {
-            Text("Every connected MCP client appears here. The active agent is who voice and other outgoing requests will go to.")
+            Text(.aiAgentsHelp)
         }
     }
 
     @ViewBuilder
     private var mcpSection: some View {
         Section {
-            LabeledContent("Local API", value: "127.0.0.1:\(ControlServer.port)")
+            LabeledContent {
+                Text("127.0.0.1:\(ControlServer.port)")
+            } label: {
+                Text(.aiLocalApi)
+            }
             connectRow("Claude Code", "claude mcp add plonk -- npx -y plonk-mcp")
             connectRow("Codex CLI", "codex mcp add plonk -- npx -y plonk-mcp")
-            connectRow("Cursor, Zed, anything MCP", "command: npx, args: [\"-y\", \"plonk-mcp\"]")
+            connectRow(String(localized: .aiAnyMcpClient),
+                       "command: npx, args: [\"-y\", \"plonk-mcp\"]")
         } header: {
-            Text("Connect an Agent")
+            Text(.aiConnect)
         } footer: {
-            Text("Run one of these once, in the client. Plonk is not tied to one assistant — any MCP client can drive it, several at once. Set PLONK_AGENT_NAME in the client's MCP config to name a session by hand.")
+            Text(.aiConnectHelp)
         }
     }
 
     @ViewBuilder
     private var examplesSection: some View {
         Section {
-            ForEach(Array(Self.examples.enumerated()), id: \.offset) { _, example in
+            ForEach(Array(LocalizedStringResource.aiExamples.enumerated()), id: \.offset) { _, example in
                 Button {
+                    let sentence = String(localized: example)
                     NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(example, forType: .string)
-                    copied = example
+                    NSPasteboard.general.setString(sentence, forType: .string)
+                    copied = sentence
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "quote.bubble").foregroundStyle(Color.accentColor)
@@ -288,9 +286,9 @@ struct AIPage: View {
                 .buttonStyle(.plain)
             }
         } header: {
-            Text("Try Saying")
+            Text(.aiTrySaying)
         } footer: {
-            Text(copied == nil ? "Click one to copy it." : "Copied to clipboard.")
+            Text(copied == nil ? String(localized: .aiClickToCopy) : String(localized: .aiCopied))
         }
     }
 }
@@ -302,24 +300,24 @@ struct MousePage: View {
         Form {
             Section {
                 Toggle(isOn: model.binding(\.highlightClicksEnabled, set: { $0.setHighlightClicks($1) })) {
-                    Text("Ring every click")
-                    Text("For screen recordings, where a click is otherwise invisible")
+                    Text(.mouseRingClicks)
+                    Text(.mouseRingClicksHelp)
                 }
                 Toggle(isOn: model.binding(\.crosshairsEnabled, set: { $0.setCrosshairs($1) })) {
-                    Text("Crosshairs through the pointer")
-                    Text("Full-width and full-height lines, for lining things up")
+                    Text(.mouseCrosshairs)
+                    Text(.mouseCrosshairsHelp)
                 }
             } header: {
-                Text("Pointer")
+                Text(.mousePointer)
             } footer: {
-                Text("These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account, and no keystroke is watched at all. They take the zone colour from the Zones page.")
+                Text(.mousePointerHelp)
             }
             Section {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "mouse"))
             } header: {
-                Text("Shortcuts")
+                Text(.commonShortcuts)
             } footer: {
-                Text("Finding the pointer dims everything but a circle round it, briefly. Jumping warps it to the middle of the next display and flashes it there, which beats pushing a mouse across three monitors.")
+                Text(.mouseShortcutsHelp)
             }
         }
         .formStyle(.grouped)
@@ -340,8 +338,8 @@ struct MousePage: View {
 /// rather than silently rounded into something nobody asked for. An empty
 /// field is zero.
 struct PointsField: View {
-    let title: String
-    let help: String
+    let title: LocalizedStringResource
+    let help: LocalizedStringResource
     let placeholder: String
     let range: ClosedRange<Int>
     let value: Double
@@ -377,7 +375,7 @@ struct PointsField: View {
                         let digits = typed.filter(\.isNumber)
                         if digits != typed { draft = digits }
                     }
-                Text("pt").foregroundStyle(.secondary)
+                Text(.commonPoints).foregroundStyle(.secondary)
             }
             // onEditingChanged spelled out rather than trailing, and no `step:`
             // — that draws tick marks, and the rounding belongs to the value.
@@ -425,11 +423,12 @@ struct PointsField: View {
             return
         }
         guard let number = Int(trimmed) else {
-            error = "\(title) has to be a whole number of points."
+            error = String(localized: .pointsNotWhole(String(localized: title)))
             return
         }
         guard range.contains(number) else {
-            error = "\(title) has to be between \(range.lowerBound) and \(range.upperBound)."
+            error = String(localized: .pointsOutOfRange(String(localized: title),
+                                                        range.lowerBound, range.upperBound))
             return
         }
         error = nil

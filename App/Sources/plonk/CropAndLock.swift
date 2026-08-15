@@ -112,7 +112,7 @@ final class CroppedPanel: NSPanel {
             throw CropAndLock.CropError.noDisplay
         }
 
-        let panel = CroppedPanel(region: region, title: "Live")
+        let panel = CroppedPanel(region: region, title: String(localized: .windowCropLive))
         panel.onClose = onClose
 
         let configuration = SCStreamConfiguration()
@@ -143,7 +143,7 @@ final class CroppedPanel: NSPanel {
     }
 
     static func still(image: NSImage, region: CGRect, onClose: @escaping (CroppedPanel) -> Void) -> CroppedPanel {
-        let panel = CroppedPanel(region: region, title: "Still")
+        let panel = CroppedPanel(region: region, title: String(localized: .windowCropStill))
         panel.onClose = onClose
         panel.imageLayer.contents = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
         panel.orderFrontRegardless()
@@ -158,7 +158,7 @@ final class CroppedPanel: NSPanel {
         super.init(contentRect: NSRect(origin: .zero, size: size),
                    styleMask: [.titled, .closable, .resizable, .utilityWindow, .nonactivatingPanel],
                    backing: .buffered, defer: false)
-        self.title = "Plonk — \(title)"
+        self.title = String(localized: .windowCropTitle(title))
         isFloatingPanel = true
         level = .floating
         hidesOnDeactivate = false

@@ -51,10 +51,11 @@ struct ZoneSetCanvas: View {
                             model.actions?.assignZoneSet(name, toScreen: screen)
                         }
                     }
-                    tab("Edge snapping", selected: assigned == nil, icon: "rectangle.split.2x1") {
+                    tab(String(localized: .zoneSetEdgeSnapping), selected: assigned == nil,
+                        icon: "rectangle.split.2x1") {
                         model.actions?.assignZoneSet("", toScreen: screen)
                     }
-                    tab("New set", selected: false, icon: "plus", dashed: true) {
+                    tab(String(localized: .zoneSetNewSet), selected: false, icon: "plus", dashed: true) {
                         model.actions?.editZoneSet(nextSetName, seed: [ZoneRect(0, 0, 1, 1)],
                                                    onScreen: screen)
                     }
@@ -64,7 +65,7 @@ struct ZoneSetCanvas: View {
             if model.screenCount > 1 {
                 Picker("", selection: $chosen) {
                     ForEach(0..<model.screenCount, id: \.self) { index in
-                        Text("Screen \(index + 1)").tag(index)
+                        Text(.zoneSetScreen(index + 1)).tag(index)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -113,22 +114,22 @@ struct ZoneSetCanvas: View {
     private var actions: some View {
         HStack(spacing: 9) {
             Text(assigned == nil
-                 ? "Windows dropped near an edge fill that half of the screen."
-                 : "Drop a window on a zone while dragging, or press ⌃⌥ and its number.")
+                 ? String(localized: .zoneSetEdgeHint)
+                 : String(localized: .zoneSetZoneHint))
                 .font(.caption)
                 .foregroundStyle(.tertiary)
             Spacer(minLength: 8)
             if let assigned {
-                Button("Preview") { model.actions?.togglePreview(zoneSet: assigned, onScreen: screen) }
-                    .help("Flash this set on the screen itself")
-                Button("Duplicate") {
+                Button(.zoneSetPreview) { model.actions?.togglePreview(zoneSet: assigned, onScreen: screen) }
+                    .help(String(localized: .zoneSetPreviewHelp))
+                Button(.zoneSetDuplicate) {
                     model.actions?.editZoneSet(nextSetName, seed: zones, onScreen: screen)
                 }
-                Button("Edit…") { model.actions?.editZoneSet(assigned, seed: nil, onScreen: screen) }
+                Button(.zoneSetEdit) { model.actions?.editZoneSet(assigned, seed: nil, onScreen: screen) }
                     .buttonStyle(.borderedProminent)
             }
-            Button("Manage…") { model.actions?.openZonePicker() }
-                .help("Rename, delete and compare every set")
+            Button(.zoneSetManage) { model.actions?.openZonePicker() }
+                .help(String(localized: .zoneSetManageHelp))
         }
         .controlSize(.small)
     }

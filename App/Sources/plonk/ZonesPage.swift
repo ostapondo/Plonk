@@ -10,7 +10,7 @@ struct ZonesPage: View {
 
     /// Everything on this page that is not one of the three grouped sections.
     private var presetActions: [HotkeyAction] {
-        let grouped: Set<String> = ["Numbered zones", "Zone sets", "Focus"]
+        let grouped: Set<HotkeyAction.Group> = [.numberedZones, .zoneSets, .focus]
         return HotkeyAction.owned(by: "zones").filter { !grouped.contains($0.group) }
     }
 
@@ -35,28 +35,28 @@ struct ZonesPage: View {
     // MARK: - Dragging
 
     private var dragging: some View {
-        SettingsCard(title: "Dragging",
-                     note: "Holding the modifier while dragging inverts the mode, so the other "
-                         + "behaviour is always available. Hold ⌘ as well and the zone you started "
-                         + "over and the one under the cursor are dropped into as one.") {
-            ToggleRow(title: "Drag to snap",
-                      detail: "Drop windows into zones or screen edges",
+        SettingsCard(title: .zonesDragging,
+                     note: .zonesDraggingHelp) {
+            ToggleRow(title: .zonesDragToSnap,
+                      detail: .zonesDragToSnapDetail,
                       isOn: model.binding(\.dragSnapEnabled, set: { $0.setDragSnap($1) }))
-            SegmentedRow(title: "Show zones",
+            SegmentedRow(title: .zonesShowZones,
                          selection: model.binding(\.zonesRequireModifier,
                                                   set: { $0.setZonesRequireModifier($1) }),
-                         options: [("While dragging", false), ("With the modifier", true)],
+                         options: [(.zonesWhileDragging, false), (.zonesWithTheModifier, true)],
                          stacked: true)
-            SegmentedRow(title: "Modifier",
+            SegmentedRow(title: .zonesModifier,
                          selection: model.binding(\.zonesModifier, set: { $0.setZonesModifier($1) }),
-                         options: [("⇧ Shift", "shift"), ("⌥ Option", "option"), ("⌃ Control", "control")])
+                         options: [(.zonesModifierShift, "shift"),
+                                   (.zonesModifierOption, "option"),
+                                   (.zonesModifierControl, "control")])
         }
     }
 
     // MARK: - Shortcuts
 
     private var shortcuts: some View {
-        SettingsCard(title: "Halves, quarters and the rest") {
+        SettingsCard(title: .zonesPresets) {
             SettingBlock {
                 ShortcutRows(model: model, actions: presetActions)
             }
@@ -64,37 +64,29 @@ struct ZonesPage: View {
     }
 
     private var numbered: some View {
-        SettingsCard(title: "Numbered zones",
-                     note: "The numbers the overlay draws, on whichever screen the front window is "
-                         + "on. ⌃⌥0 gives a window back the frame it had before Plonk first moved "
-                         + "it. Click a key field and press the combination; Esc cancels, Delete "
-                         + "unbinds.") {
+        SettingsCard(title: .zonesNumbered,
+                     note: .zonesNumberedHelp) {
             SettingBlock {
                 ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones",
-                                                                       group: "Numbered zones"))
+                                                                       group: .numberedZones))
             }
         }
     }
 
     private var switching: some View {
-        SettingsCard(title: "Switch zone sets",
-                     note: "Applies the set at that place in the list of zone sets, to whichever "
-                         + "screen the cursor is on. Windows already sitting in a numbered zone "
-                         + "move to where that number is in the new set. The last shortcut puts "
-                         + "the same list on screen to pick from, or to open one in the editor.") {
+        SettingsCard(title: .zonesSwitching,
+                     note: .zonesSwitchingHelp) {
             SettingBlock {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Zone sets"))
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: .zoneSets))
             }
         }
     }
 
     private var focus: some View {
-        SettingsCard(title: "Move between windows",
-                     note: "Focus follows the layout instead of the order things were last used: "
-                         + "step to the window that is actually to the left, or cycle through the "
-                         + "ones stacked in a zone.") {
+        SettingsCard(title: .zonesFocus,
+                     note: .zonesFocusHelp) {
             SettingBlock {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: "Focus"))
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: .focus))
             }
         }
     }
@@ -102,15 +94,13 @@ struct ZonesPage: View {
     // MARK: - Desktop changes
 
     private var desktopChanges: some View {
-        SettingsCard(title: "When the desktop changes") {
-            ToggleRow(title: "Put windows back after a display change",
-                      detail: "Windows Plonk placed return to the same spot on the same monitor "
-                          + "when one is plugged in or unplugged",
+        SettingsCard(title: .zonesDesktopChanges) {
+            ToggleRow(title: .zonesRestoreOnDisplayChange,
+                      detail: .zonesRestoreOnDisplayChangeDetail,
                       isOn: model.binding(\.restoreZonesOnScreenChange,
                                           set: { $0.setRestoreZonesOnScreenChange($1) }))
-            ToggleRow(title: "Send new windows where that app's last one went",
-                      detail: "Once an app's window has been put in a zone, its next one lands "
-                          + "there too. Forgotten when Plonk quits",
+            ToggleRow(title: .zonesPlaceNewWindows,
+                      detail: .zonesPlaceNewWindowsDetail,
                       isOn: model.binding(\.placeNewWindows, set: { $0.setPlaceNewWindows($1) }))
         }
     }

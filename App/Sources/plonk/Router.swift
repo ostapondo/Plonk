@@ -119,7 +119,7 @@ final class Router {
                 respond(.badRequest(error))
                 return
             }
-            respond(.ok(["ok": true, "awake": awake.isOn, "status": awake.statusText]))
+            respond(.ok(["ok": true, "awake": awake.isOn, "status": String(localized: awake.statusText)]))
 
         case ("POST", "/layout"):
             guard let items = body["items"] as? [[String: Any]], !items.isEmpty else {
@@ -454,7 +454,7 @@ final class Router {
             "awake": awake.isOn,
             "awake_details": [
                 "requested": awake.requested,
-                "status": awake.statusText,
+                "status": String(localized: awake.statusText),
                 "power": awake.isOnAC ? "ac" : "battery",
                 "allow_on_battery": awake.allowOnBattery,
                 "auto_while_charging": awake.autoWhileCharging,

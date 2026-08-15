@@ -160,7 +160,8 @@ final class ShotRoutes {
         var result: [String: Any] = ["ok": true, "path": written.path, "marks": marks.count]
         if copy { result["clipboard"] = true }
         if let preview = written.preview { result["preview_path"] = preview }
-        announce?(copy ? "Copied to clipboard" : "Saved", written.preview ?? written.path)
+        announce?(String(localized: copy ? LocalizedStringResource.hudCopiedToClipboard : .hudSaved),
+                  written.preview ?? written.path)
         return .ok(result)
     }
 

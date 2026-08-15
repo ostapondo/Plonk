@@ -16,7 +16,7 @@ import AppKit
 
 enum EditMenu {
     static func install(on app: NSApplication) {
-        let edit = NSMenu(title: "Edit")
+        let edit = NSMenu(title: String(localized: .editMenu))
         for item in items() { edit.addItem(item) }
 
         let editItem = NSMenuItem()
@@ -29,13 +29,13 @@ enum EditMenu {
 
     private static func items() -> [NSMenuItem] {
         [
-            item("Undo", "undo:", "z"),
-            item("Redo", "redo:", "Z"),
+            item(String(localized: .editUndo), "undo:", "z"),
+            item(String(localized: .editRedo), "redo:", "Z"),
             .separator(),
-            item("Cut", "cut:", "x"),
-            item("Copy", "copy:", "c"),
-            item("Paste", "paste:", "v"),
-            item("Select All", "selectAll:", "a"),
+            item(String(localized: .editCut), "cut:", "x"),
+            item(String(localized: .editCopy), "copy:", "c"),
+            item(String(localized: .editPaste), "paste:", "v"),
+            item(String(localized: .editSelectAll), "selectAll:", "a"),
         ]
     }
 

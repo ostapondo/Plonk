@@ -37,7 +37,7 @@ final class WindowPresenter: NSObject {
 
     func showMainWindow() {
         if main == nil {
-            let window = panel(title: "Plonk",
+            let window = panel(title: String(localized: .appName),
                                size: NSSize(width: 1000, height: 700),
                                unified: true,
                                content: MainWindowView(model: model))
@@ -125,7 +125,7 @@ final class WindowPresenter: NSObject {
 
     func showZonePicker() {
         if zonePicker == nil {
-            let window = panel(title: "Zones",
+            let window = panel(title: String(localized: .windowZones),
                                size: NSSize(width: 780, height: 580),
                                content: ZonePickerView(model: model))
             window.delegate = self
@@ -206,7 +206,7 @@ final class WindowPresenter: NSObject {
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false
         )
-        window.title = "Screenshot"
+        window.title = String(localized: .windowScreenshot)
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(
             rootView: ShotEditorView(image: image, defaultFolder: shotFolder()) { [weak self] copied, path in

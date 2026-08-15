@@ -13,11 +13,10 @@ extension ScreenRuler {
         var errorDescription: String? {
             switch self {
             case .notPermitted:
-                return "Plonk does not have Screen Recording, so it cannot see the pixels it would "
-                    + "measure. Grant it in System Settings › Privacy & Security › Screen Recording."
-            case .captureFailed: return "the screen could not be photographed"
-            case .noScreen: return "that point is not on any screen"
-            case .cancelled: return "nothing was measured"
+                return String(localized: .rulerErrorNoScreenRecording)
+            case .captureFailed: return String(localized: .rulerErrorCaptureFailed)
+            case .noScreen: return String(localized: .rulerErrorNoScreen)
+            case .cancelled: return String(localized: .rulerErrorCancelled)
             }
         }
 

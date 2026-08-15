@@ -39,14 +39,14 @@ struct FullscreenZoneEditorView: View {
 
     private var panel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextField("Layout name", text: $name)
+            TextField(String(localized: .zoneEditorName), text: $name)
                 .textFieldStyle(.roundedBorder)
                 .font(.headline)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Split: click a zone, hold ⇧ while clicking for a vertical split.")
-                Text("Resize: drag a border or handle — neighboring zones follow.")
-                Text("Delete: ✕ removes a zone and neighbors fill the space.")
-                Text("Keyboard: ⇥ selects, arrows move, ⇧arrows resize, S splits, ⇧S splits vertically, ⌫ deletes.")
+                Text(.zoneEditorSplit)
+                Text(.zoneEditorResize)
+                Text(.zoneEditorDelete)
+                Text(.zoneEditorKeyboard)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -57,9 +57,9 @@ struct FullscreenZoneEditorView: View {
             }
             HStack {
                 Spacer()
-                Button("Save & Apply", action: save)
+                Button(.zoneEditorSaveAndApply, action: save)
                     .keyboardShortcut(.defaultAction)
-                Button("Cancel", action: done)
+                Button(.commonCancel, action: done)
             }
         }
         .padding(16)
@@ -107,12 +107,12 @@ struct FullscreenZoneEditorView: View {
         let target = trimmed.isEmpty ? setName : trimmed
         if seed != nil {
             guard model.zoneSets[target] == nil else {
-                error = "A layout named \"\(target)\" already exists."
+                error = String(localized: .zoneEditorNameTaken(target))
                 return
             }
         } else if target != setName {
             guard actions.renameZoneSet(setName, to: target) else {
-                error = "A layout named \"\(target)\" already exists."
+                error = String(localized: .zoneEditorNameTaken(target))
                 return
             }
         }

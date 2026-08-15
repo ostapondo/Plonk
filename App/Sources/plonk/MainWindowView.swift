@@ -28,9 +28,12 @@ struct MainWindowView: View {
 
     /// "Layout · Zones", or just "Home" where the destination is the page.
     private var title: String {
-        guard let current else { return "Plonk" }
-        guard let group, group.title != current.title else { return current.title }
-        return "\(group.title) · \(current.title)"
+        guard let current else { return String(localized: .appName) }
+        let page = String(localized: current.title)
+        guard let group else { return page }
+        let destination = String(localized: group.title)
+        guard destination != page else { return page }
+        return String(localized: .appTitle(destination, page))
     }
 
     var body: some View {
@@ -84,21 +87,21 @@ struct MainWindowView: View {
             Text(title).font(.system(size: 14.5, weight: .semibold))
             Spacer(minLength: 12)
             if healthy {
-                StatusPill(title: "All permissions granted", ok: true)
+                StatusPill(title: .appAllPermissionsGranted, ok: true)
             } else {
                 if !model.accessibilityGranted {
-                    StatusPill(title: "Accessibility", ok: false, fix: PrivacySettings.openAccessibility)
+                    StatusPill(title: .appAccessibility, ok: false, fix: PrivacySettings.openAccessibility)
                 }
                 if !model.screenRecordingGranted {
-                    StatusPill(title: "Screen Recording", ok: false,
+                    StatusPill(title: .appScreenRecording, ok: false,
                                fix: PrivacySettings.openScreenRecording)
                 }
                 if let warning = model.apiWarning {
-                    StatusPill(title: "Local API", ok: false).help(warning)
+                    StatusPill(title: .aiLocalApi, ok: false).help(warning)
                 }
             }
             if !model.connectedAgents.isEmpty {
-                StatusPill(title: agentCount, ok: true)
+                StatusPill(title: .appAgentCount(model.connectedAgents.count), ok: true)
                     .help(model.connectedAgents.joined(separator: ", "))
             }
             Button { model.actions?.openCommandPalette() } label: {
@@ -115,7 +118,7 @@ struct MainWindowView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Run a command")
+            .help(String(localized: .appRunACommand))
         }
         .padding(.horizontal, 20)
         .frame(height: 52)
@@ -141,9 +144,6 @@ struct MainWindowView: View {
         model.accessibilityGranted && model.screenRecordingGranted && model.apiWarning == nil
     }
 
-    private var agentCount: String {
-        model.connectedAgents.count == 1 ? "1 agent" : "\(model.connectedAgents.count) agents"
-    }
 }
 
 /// The two panes of System Settings the app can send someone to. Both pages

@@ -14,10 +14,12 @@ struct WorkspaceLaunchPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                Text(model.launchingWorkspace.map { "Launching \($0)" } ?? "Workspace launched")
+                Text(String(localized: model.launchingWorkspace.map { .launchLaunching($0) }
+                                       ?? .launchLaunched))
                     .font(.headline)
                 Spacer(minLength: 20)
-                Button(finished ? "Close" : "Cancel", action: finished ? onClose : onCancel)
+                Button(finished ? LocalizedStringResource.launchClose : .commonCancel,
+                       action: finished ? onClose : onCancel)
                     .controlSize(.small)
             }
             VStack(spacing: 0) {
@@ -66,9 +68,9 @@ struct WorkspaceLaunchPanel: View {
 
     private func detail(for state: LaunchStatus.State) -> String? {
         switch state {
-        case .pending: return "Waiting"
-        case .launching: return "Opening"
-        case .waiting: return "Waiting for a window"
+        case .pending: return String(localized: .launchPending)
+        case .launching: return String(localized: .launchOpening)
+        case .waiting: return String(localized: .launchWaitingForWindow)
         case .placed: return nil
         case .skipped(let why): return why
         case .failed(let why): return why

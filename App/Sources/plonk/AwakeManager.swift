@@ -38,14 +38,16 @@ final class AwakeManager {
         return type == nil || type == "AC Power"
     }
 
-    var statusText: String {
+    /// One word for the menu bar tooltip, and the same one for an agent asking
+    /// what state keep-awake is in.
+    var statusText: LocalizedStringResource {
         if isOn {
-            guard requested else { return "auto (charging)" }
-            if let boundPID { return "on until process \(boundPID) exits" }
-            return "on"
+            guard requested else { return .awakeStatusAutoCharging }
+            if let boundPID { return .awakeStatusUntilProcess(boundPID) }
+            return .awakeStatusOn
         }
-        if requested { return "paused on battery" }
-        return "off"
+        if requested { return .awakeStatusPausedOnBattery }
+        return .awakeStatusOff
     }
 
     func startObservingPowerSource() {

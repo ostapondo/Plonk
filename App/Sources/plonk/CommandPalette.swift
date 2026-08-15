@@ -31,8 +31,8 @@ extension PlonkCommand {
         // Named when one is selected, so it is obvious where the sentence went;
         // vague when none is, because that is the honest state and the HUD says
         // the rest when it fails.
-        let who = named.isEmpty ? "the agent" : named
-        return PlonkCommand(id: "agent.ask", title: "Ask \(who): “\(prompt)”",
+        let who = named.isEmpty ? String(localized: .paletteTheAgent) : named
+        return PlonkCommand(id: "agent.ask", title: String(localized: .paletteAsk(who, prompt)),
                             group: "Agent", keys: ["⌘", "return"], run: run)
     }
 }

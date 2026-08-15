@@ -17,8 +17,8 @@ import SwiftUI
 struct GettingStarted: Equatable {
     struct Step: Identifiable, Equatable {
         let id: String
-        let title: String
-        let detail: String
+        let title: LocalizedStringResource
+        let detail: LocalizedStringResource
         let done: Bool
     }
 
@@ -28,14 +28,14 @@ struct GettingStarted: Equatable {
 
     var steps: [Step] {
         [
-            Step(id: "grant", title: "Grant Accessibility",
-                 detail: "The only way macOS lets one app move another's windows",
+            Step(id: "grant", title: .startGrant,
+                 detail: .startGrantDetail,
                  done: accessibilityGranted),
-            Step(id: "snap", title: "Snap a window",
-                 detail: "Press ⌃⌥← with any window in front, or drag one to the side of the screen",
+            Step(id: "snap", title: .startSnap,
+                 detail: .startSnapDetail,
                  done: snapped),
-            Step(id: "agent", title: "Let an agent drive it",
-                 detail: "One line, and \"browser left, terminal right\" becomes something you can say",
+            Step(id: "agent", title: .startAgent,
+                 detail: .startAgentDetail,
                  done: agentConnected),
         ]
     }
@@ -82,18 +82,18 @@ struct GettingStartedCard: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            Text("Getting started").font(.subheadline.bold())
-            Text("\(guide.doneCount) of \(guide.steps.count)")
+            Text(.startTitle).font(.subheadline.bold())
+            Text(.startProgress(guide.doneCount, guide.steps.count))
                 .font(.caption2.weight(.medium).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(Capsule().fill(Color.primary.opacity(0.07)))
             Spacer()
-            Button("Hide") { model.actions?.hideGettingStarted() }
+            Button(.startHide) { model.actions?.hideGettingStarted() }
                 .buttonStyle(.link)
                 .font(.caption)
-                .help("Hide this until the next version")
+                .help(String(localized: .startHideHelp))
         }
     }
 
@@ -123,20 +123,20 @@ struct GettingStartedCard: View {
     private func action(for step: GettingStarted.Step) -> some View {
         switch step.id {
         case "grant":
-            Button("Grant") {
+            Button(.startGrantButton) {
                 open("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
             }
         case "snap":
-            Button("Show zones") { model.actions?.flashZones() }
+            Button(.startShowZones) { model.actions?.flashZones() }
         default:
             HStack(spacing: 6) {
-                Button(copied ? "Copied" : "Copy command") {
+                Button(copied ? LocalizedStringResource.startCopied : .startCopyCommand) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(Self.connectCommand, forType: .string)
                     copied = true
                 }
                 .help(Self.connectCommand)
-                Button("How") { model.selectedPage = "ai" }
+                Button(.startHow) { model.selectedPage = "ai" }
                     .buttonStyle(.link)
                     .font(.caption)
             }

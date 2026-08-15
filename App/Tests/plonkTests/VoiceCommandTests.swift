@@ -119,12 +119,16 @@ struct VoiceCommandTests {
 
     // MARK: - What the user is told
 
+    /// Resolved through the catalog, the way the HUD does it: the announcement
+    /// is a key now, and a test comparing keys would pass while the app drew
+    /// nothing but keys on screen.
     @Test func everyCommandSaysWhatItDid() {
-        #expect(VoiceCommand.preset(.leftHalf).announcement == "Left Half")
-        #expect(VoiceCommand.zone(3).announcement == "Zone 3")
-        #expect(VoiceCommand.awake(minutes: 60).announcement == "Awake for 1h")
-        #expect(VoiceCommand.awake(minutes: 45).announcement == "Awake for 45m")
-        #expect(VoiceCommand.awake(minutes: nil).announcement == "Keep awake")
-        #expect(VoiceCommand.launchWorkspace("review").announcement == "Launch \"review\"")
+        let said = { (command: VoiceCommand) in String(localized: command.announcement) }
+        #expect(said(.preset(.leftHalf)) == "Left Half")
+        #expect(said(.zone(3)) == "Zone 3")
+        #expect(said(.awake(minutes: 60)) == "Awake for 1h")
+        #expect(said(.awake(minutes: 45)) == "Awake for 45m")
+        #expect(said(.awake(minutes: nil)) == "Keep awake")
+        #expect(said(.launchWorkspace("review")) == "Launch \"review\"")
     }
 }

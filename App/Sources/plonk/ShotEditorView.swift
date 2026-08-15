@@ -51,7 +51,7 @@ struct ShotEditorView: View {
                 }
             }
 
-            Slider(value: $strokePoints, in: 1...16) { Text("Width") }
+            Slider(value: $strokePoints, in: 1...16) { Text(.shotEditorWidth) }
                 .frame(width: 110)
 
             Spacer()
@@ -62,7 +62,7 @@ struct ShotEditorView: View {
                 Image(systemName: "arrow.uturn.backward")
             }
             .disabled(annotations.isEmpty)
-            .help("Undo")
+            .help(String(localized: .shotEditorUndo))
 
             Button {
                 if let last = redoStack.popLast() { annotations.append(last) }
@@ -70,7 +70,7 @@ struct ShotEditorView: View {
                 Image(systemName: "arrow.uturn.forward")
             }
             .disabled(redoStack.isEmpty)
-            .help("Redo")
+            .help(String(localized: .shotEditorRedo))
         }
         .padding(10)
     }
@@ -117,9 +117,9 @@ struct ShotEditorView: View {
                 Text(status).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Save As", action: saveAs)
-            Button("Save to Folder") { save(to: .folder(defaultFolder)) }
-            Button("Copy", action: copy)
+            Button(.shotEditorSaveAs, action: saveAs)
+            Button(.shotEditorSaveToFolder) { save(to: .folder(defaultFolder)) }
+            Button(.shotEditorCopy, action: copy)
                 .keyboardShortcut(.defaultAction)
         }
         .padding(10)
@@ -134,7 +134,7 @@ struct ShotEditorView: View {
 
     private func copy() {
         guard let output = flattened() else {
-            status = "Could not render the annotations"
+            status = String(localized: .shotEditorRenderFailed)
             return
         }
         ScreenshotManager.copyToClipboard(output)
@@ -143,11 +143,11 @@ struct ShotEditorView: View {
 
     private func save(to destination: ScreenshotManager.Destination) {
         guard let output = flattened() else {
-            status = "Could not render the annotations"
+            status = String(localized: .shotEditorRenderFailed)
             return
         }
         guard let path = ScreenshotManager.save(output, to: destination) else {
-            status = "Could not write the file"
+            status = String(localized: .shotEditorWriteFailed)
             return
         }
         onFinish(false, path)

@@ -1,0 +1,6 @@
+/* The two sentences macOS itself puts in a permission dialog. They live in
+   Info.plist, which is not translatable; a value here overrides that one per
+   language, which is the only way these get translated. Keys must match the
+   ones scripts/build.sh writes into the plist. */
+"NSMicrophoneUsageDescription" = "Push-to-talk voice commands listen while the key is held.";
+"NSSpeechRecognitionUsageDescription" = "Spoken commands are transcribed on this Mac and sent to your agent.";

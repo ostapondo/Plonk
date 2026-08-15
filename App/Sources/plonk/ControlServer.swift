@@ -65,7 +65,7 @@ final class ControlServer {
             guard case .failed(let error) = state else { return }
             NSLog("Plonk: control server on port \(Self.port) is unavailable: \(error)")
             DispatchQueue.main.async {
-                self?.onUnavailable?("Port \(Self.port) is taken, so the MCP tools cannot reach this app. Another copy of Plonk is probably already running.")
+                self?.onUnavailable?(String(localized: .warningPortTaken(Int(Self.port))))
             }
         }
         listener.newConnectionHandler = { [weak self] conn in

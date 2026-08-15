@@ -18,17 +18,19 @@ struct ExcludedApps: View {
 
     var body: some View {
         if model.excludedApps.isEmpty {
-            Text("Nothing is excluded — Plonk will move any window.")
+            Text(.excludedNone)
                 .foregroundStyle(.secondary)
         }
         ForEach(model.excludedApps, id: \.self) { pattern in
             row(for: pattern)
         }
         HStack(spacing: 8) {
-            Button("Choose App…", action: chooseApp)
-            Menu("Add Running App") {
+            Button(.excludedChooseApp, action: chooseApp)
+            Menu(String(localized: .excludedAddRunning)) {
                 ForEach(runningApps, id: \.bundleIdentifier) { app in
-                    Button(app.localizedName ?? "?") { add(app.bundleIdentifier ?? app.localizedName ?? "") }
+                    Button(app.localizedName ?? String(localized: .excludedUnnamed)) {
+                        add(app.bundleIdentifier ?? app.localizedName ?? "")
+                    }
                 }
             }
             .fixedSize()
@@ -36,11 +38,11 @@ struct ExcludedApps: View {
             // The escape hatch for anything the two buttons above cannot
             // reach: a helper process, a game that is not installed yet, or a
             // word that should match a family of apps.
-            TextField("or type a name", text: $typed)
+            TextField(String(localized: .excludedOrType), text: $typed)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 150)
                 .onSubmit { add(typed) }
-            Button("Add") { add(typed) }
+            Button(.excludedAdd) { add(typed) }
                 .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
         }
     }
@@ -65,7 +67,7 @@ struct ExcludedApps: View {
                         .monospaced()
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("matched anywhere in an app's name or bundle id")
+                    Text(.excludedMatchedAnywhere)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -78,7 +80,7 @@ struct ExcludedApps: View {
             }
             .buttonStyle(.borderless)
             .foregroundStyle(.secondary)
-            .help("Stop excluding this")
+            .help(String(localized: .excludedStopExcluding))
         }
     }
 
@@ -94,7 +96,7 @@ struct ExcludedApps: View {
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = true
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.prompt = "Exclude"
+        panel.prompt = String(localized: .excludedPrompt)
         guard panel.runModal() == .OK else { return }
         for url in panel.urls {
             // The bundle id, not the name: it survives the app being renamed

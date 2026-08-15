@@ -14,7 +14,7 @@ struct WorkspacesPage: View {
         Form {
             if !model.accessibilityGranted {
                 Section {
-                    Label("Grant Accessibility access: System Settings, Privacy & Security, Accessibility. Then relaunch Plonk.",
+                    Label(String(localized: .workspacesGrantAccessibility),
                           systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                 }
@@ -26,30 +26,30 @@ struct WorkspacesPage: View {
                 HStack(spacing: 8) {
                     Image(systemName: "plus.rectangle.on.rectangle")
                         .foregroundStyle(.secondary)
-                    TextField("Workspace name", text: $newName, prompt: Text("Workspace name"))
+                    TextField(text: $newName, prompt: Text(.workspacesName)) { Text(.workspacesName) }
                         .textFieldStyle(.roundedBorder)
                         .onSubmit(save)
                         .labelsHidden()
-                    Button("Save", action: save)
+                    Button(.commonSave, action: save)
                         .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             } header: {
-                Text("Save What Is On Screen")
+                Text(.workspacesSaveWhatIsOnScreen)
             } footer: {
-                Text("Type a name and press Save. Every open window is captured with the app it belongs to and the monitor it sits on.")
+                Text(.workspacesSaveHelp)
             }
             Section {
                 if model.workspaceNames.isEmpty {
-                    Text("No workspaces yet. Open the apps you want, arrange them, and save above. Launching a workspace opens whatever is missing and puts every window back.")
+                    Text(.workspacesNone)
                         .foregroundStyle(.secondary)
                 }
                 ForEach(model.workspaceNames, id: \.self) { name in
                     workspace(name)
                 }
             } header: {
-                Text("Workspaces")
+                Text(.workspacesTitle)
             } footer: {
-                Text("Apps cannot be opened straight into position, so windows appear first and are moved a moment later.")
+                Text(.workspacesListHelp)
             }
         }
         .formStyle(.grouped)
@@ -63,13 +63,13 @@ struct WorkspacesPage: View {
         VStack(alignment: .leading, spacing: 8) {
             if renaming == name {
                 HStack(spacing: 8) {
-                    TextField("Workspace name", text: $renameDraft)
+                    TextField(text: $renameDraft) { Text(.workspacesName) }
                         .textFieldStyle(.roundedBorder)
                         .onSubmit { commitRename(of: name) }
                         .onExitCommand { renaming = nil }
-                    Button("Save") { commitRename(of: name) }
+                    Button(.commonSave) { commitRename(of: name) }
                         .disabled(renameDraft.trimmingCharacters(in: .whitespaces).isEmpty)
-                    Button("Cancel") { renaming = nil }
+                    Button(.commonCancel) { renaming = nil }
                 }
                 .padding(.vertical, 4)
             } else {
@@ -103,13 +103,14 @@ struct WorkspacesPage: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(expanded.contains(name) ? "Hide the windows" : "Show the windows")
+                .help(String(localized: expanded.contains(name)
+                             ? .workspacesHideWindows : .workspacesShowWindows))
 
-                Button("Launch") { model.actions?.launchWorkspace(named: name, onScreen: nil) }
+                Button(.workspacesLaunch) { model.actions?.launchWorkspace(named: name, onScreen: nil) }
                 Menu {
                     // The way out when the captured display is gone.
                     if model.screenCount > 1 {
-                        Menu("Launch on Monitor") {
+                        Menu(String(localized: .workspacesLaunchOnMonitor)) {
                             ForEach(0..<model.screenCount, id: \.self) { index in
                                 Button(monitorTitle(index)) {
                                     model.actions?.launchWorkspace(named: name, onScreen: index)
@@ -117,18 +118,18 @@ struct WorkspacesPage: View {
                             }
                         }
                     }
-                    Button("Rename") {
+                    Button(.workspacesRename) {
                         renameDraft = name
                         renaming = name
                     }
-                    Button("Recapture from Screen") { model.actions?.saveCurrentWorkspace(named: name) }
-                    Toggle("Move Windows That Are Already Open",
+                    Button(.workspacesRecapture) { model.actions?.saveCurrentWorkspace(named: name) }
+                    Toggle(String(localized: .workspacesMoveExisting),
                            isOn: Binding(
                             get: { model.workspaces[name]?.moveExisting ?? true },
                             set: { model.actions?.setWorkspaceMoveExisting($0, for: name) }
                            ))
                     Divider()
-                    Button("Delete", role: .destructive) { model.actions?.deleteWorkspace(named: name) }
+                    Button(.commonDelete, role: .destructive) { model.actions?.deleteWorkspace(named: name) }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -152,19 +153,20 @@ struct WorkspacesPage: View {
         .padding(.vertical, 2)
     }
 
+    /// Counted parts come from the plural dictionary, and the separator with
+    /// them: joining with a hardcoded middot is a decision about the language.
     private func summary(_ items: [WorkspaceItem]) -> String {
-        let apps = Workspace(items: items).apps.count
-        let windows = items.count
-        let appPart = apps == 1 ? "1 app" : "\(apps) apps"
-        let windowPart = windows == 1 ? "1 window" : "\(windows) windows"
         let screens = Set(items.compactMap(\.screen)).count
-        let screenPart = screens > 1 ? " · \(screens) monitors" : ""
-        return "\(appPart) · \(windowPart)\(screenPart)"
+        var parts = [String(localized: .workspacesAppCount(Workspace(items: items).apps.count)),
+                     String(localized: .workspacesWindowCount(items.count))]
+        if screens > 1 { parts.append(String(localized: .workspacesMonitorCount(screens))) }
+        return parts.joined(separator: String(localized: .commonSeparator))
     }
 
     private func monitorTitle(_ index: Int) -> String {
         let size = model.screenDescriptions.indices.contains(index) ? model.screenDescriptions[index] : ""
-        return index == 0 ? "Main Display (\(size))" : "Display \(index + 1) (\(size))"
+        return String(localized: index == 0 ? .workspacesMainDisplay(size)
+                                            : .workspacesDisplay(index + 1, size))
     }
 
     private func commitRename(of old: String) {
@@ -220,7 +222,7 @@ struct WorkspaceItemRow: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
-            .help("What this app should open")
+            .help(String(localized: .workspacesOpenWith))
             .popover(isPresented: $editing, arrowEdge: .bottom) { editor }
 
             Button {
@@ -230,7 +232,7 @@ struct WorkspaceItemRow: View {
             }
             .buttonStyle(.borderless)
             .foregroundStyle(.secondary)
-            .help("Remove from this workspace")
+            .help(String(localized: .workspacesRemove))
         }
         .padding(.vertical, 6)
     }
@@ -238,13 +240,12 @@ struct WorkspaceItemRow: View {
     private var editor: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(item.app).font(.headline)
-            field("Open with this app", text: $urls,
-                  hint: "One file, folder or URL per line. Used only when the app has to be launched.")
-            field("Arguments", text: $args, hint: "One per line. Ignored by apps that do not read them.")
+            field(.workspacesOpenWithField, text: $urls, hint: .workspacesOpenWithHint)
+            field(.workspacesArguments, text: $args, hint: .workspacesArgumentsHint)
             HStack {
                 Spacer()
-                Button("Cancel") { editing = false }
-                Button("Save") {
+                Button(.commonCancel) { editing = false }
+                Button(.commonSave) {
                     model.actions?.updateWorkspaceItem(index, in: workspace,
                                                        urls: lines(urls), args: lines(args))
                     editing = false
@@ -256,7 +257,8 @@ struct WorkspaceItemRow: View {
         .frame(width: 340)
     }
 
-    private func field(_ title: String, text: Binding<String>, hint: String) -> some View {
+    private func field(_ title: LocalizedStringResource, text: Binding<String>,
+                       hint: LocalizedStringResource) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title).font(.caption.weight(.medium))
             TextEditor(text: text)
@@ -275,7 +277,9 @@ struct WorkspaceItemRow: View {
 
     private var placement: String {
         let percent = { (value: Double) in Int((value * 100).rounded()) }
-        let screen = item.screen.map { "screen \($0) · " } ?? ""
-        return "\(screen)\(percent(item.w))% × \(percent(item.h))% at \(percent(item.x)),\(percent(item.y))"
+        let frame = String(localized: .workspacesPlacement(percent(item.w), percent(item.h),
+                                                           percent(item.x), percent(item.y)))
+        guard let screen = item.screen else { return frame }
+        return String(localized: .workspacesOnScreen(screen, frame))
     }
 }

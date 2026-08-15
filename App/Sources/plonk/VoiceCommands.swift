@@ -28,22 +28,22 @@ enum VoiceCommand: Equatable {
 
     /// What the HUD says when one of these runs, so the user can tell a local
     /// command from a sentence that went to the agent.
-    var announcement: String {
+    var announcement: LocalizedStringResource {
         switch self {
         case .preset(let preset): return preset.title
-        case .zone(let number): return "Zone \(number)"
-        case .putBack: return "Put back"
-        case .focus(let direction): return "Focus \(direction.rawValue)"
-        case .cycleZone: return "Next window in zone"
-        case .showZones: return "Zones"
+        case .zone(let number): return .voiceAnnounceZone(number)
+        case .putBack: return .voiceAnnouncePutBack
+        case .focus(let direction): return .voiceAnnounceFocus(String(localized: direction.title))
+        case .cycleZone: return .voiceAnnounceNextInZone
+        case .showZones: return .voiceAnnounceZones
         case .awake(let minutes):
-            guard let minutes else { return "Keep awake" }
+            guard let minutes else { return .voiceAnnounceKeepAwake }
             return minutes % 60 == 0 && minutes >= 60
-                ? "Awake for \(minutes / 60)h"
-                : "Awake for \(minutes)m"
-        case .awakeOff: return "Awake off"
-        case .capture(let mode): return "Screenshot (\(mode.rawValue))"
-        case .launchWorkspace(let name): return "Launch \"\(name)\""
+                ? .voiceAnnounceAwakeHours(minutes / 60)
+                : .voiceAnnounceAwakeMinutes(minutes)
+        case .awakeOff: return .voiceAnnounceAwakeOff
+        case .capture(let mode): return .voiceAnnounceScreenshot(String(localized: mode.title))
+        case .launchWorkspace(let name): return .voiceAnnounceLaunch(name)
         }
     }
 }

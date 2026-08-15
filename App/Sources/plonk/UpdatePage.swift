@@ -12,9 +12,18 @@ struct UpdatePage: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Installed") { Text(model.appVersion.isEmpty ? "unbundled" : model.appVersion) }
+                LabeledContent {
+                    Text(model.appVersion.isEmpty
+                         ? String(localized: .updateUnbundled) : model.appVersion)
+                } label: {
+                    Text(.updateInstalled)
+                }
                 if hasUpdate {
-                    LabeledContent("Available") { Text(model.updateAvailableVersion) }
+                    LabeledContent {
+                        Text(model.updateAvailableVersion)
+                    } label: {
+                        Text(.updateAvailable)
+                    }
                 }
                 if !model.updateStatus.isEmpty {
                     Text(model.updateStatus)
@@ -27,23 +36,19 @@ struct UpdatePage: View {
                 }
                 HStack {
                     if hasUpdate {
-                        Button("Install and Relaunch") { model.actions?.installUpdate() }
+                        Button(.updateInstallAndRelaunch) { model.actions?.installUpdate() }
                             .buttonStyle(.borderedProminent)
                             .disabled(isBusy)
                     }
-                    Button("Check Now") { model.actions?.checkForUpdates() }
+                    Button(.updateCheckNow) { model.actions?.checkForUpdates() }
                         .disabled(isBusy)
-                    Button("Release Notes") { model.actions?.openReleasePage() }
+                    Button(.updateReleaseNotes) { model.actions?.openReleasePage() }
                 }
             } footer: {
-                Text("""
-                Installing downloads the release from GitHub, checks it is signed with the same \
-                certificate as this copy, and swaps it in — so the permissions you have already \
-                granted carry over. A build that fails that check is discarded and nothing is replaced.
-                """)
+                Text(.updateInstallHelp)
             }
             if hasUpdate && !model.updateNotes.isEmpty {
-                Section("What's New in \(model.updateAvailableVersion)") {
+                Section(String(localized: .updateWhatsNew(model.updateAvailableVersion))) {
                     ScrollView {
                         Text(model.updateNotes)
                             .font(.callout)
@@ -56,17 +61,11 @@ struct UpdatePage: View {
             Section {
                 Toggle(isOn: model.binding(\.updateCheckAutomatically,
                                            set: { $0.setUpdateCheckAutomatically($1) })) {
-                    Text("Check for updates automatically")
-                    Text("On launch, once a day, and when the network comes back")
+                    Text(LocalizedStringResource.updateAutomatically)
+                    Text(.updateAutomaticallyDetail)
                 }
             } footer: {
-                Text("""
-                This is the only thing Plonk connects out for. The check asks api.github.com for the \
-                latest release and sends nothing but a User-Agent naming the app and its version — \
-                no identifier, no account, no telemetry. Turn it off and nothing here reaches the \
-                network on its own, and an agent asking for a check is refused: the buttons above \
-                are the only way one happens.
-                """)
+                Text(.updatePrivacy)
             }
         }
         .formStyle(.grouped)

@@ -8,51 +8,52 @@ import SwiftUI
 struct ShortcutsPage: View {
     @ObservedObject var model: AppModel
 
-    private var groups: [(name: String, actions: [HotkeyAction])] {
-        var order: [String] = []
-        var byGroup: [String: [HotkeyAction]] = [:]
+    private var groups: [(name: LocalizedStringResource, actions: [HotkeyAction])] {
+        var order: [HotkeyAction.Group] = []
+        var byGroup: [HotkeyAction.Group: [HotkeyAction]] = [:]
         // The Guide has its own editable section above; listing it again here
         // would show the same row twice.
         for action in HotkeyAction.allCases where action.page != "shortcuts" {
             if !order.contains(action.group) { order.append(action.group) }
             byGroup[action.group, default: []].append(action)
         }
-        return order.map { ($0, byGroup[$0] ?? []) }
+        return order.map { ($0.title, byGroup[$0] ?? []) }
     }
 
     private func pageTitle(_ id: String) -> String {
-        model.settingsPages.first { $0.id == id }?.title ?? id
+        guard let title = model.settingsPages.first(where: { $0.id == id })?.title else { return id }
+        return String(localized: title)
     }
 
     var body: some View {
         Form {
             Section {
                 Toggle(isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) })) {
-                    Text("Hotkeys")
-                    Text("Click a shortcut to open the page where it is set.")
+                    Text(LocalizedStringResource.keysHotkeys)
+                    Text(.keysHotkeysDetail)
                 }
             }
             Section {
                 ShortcutRows(model: model, actions: [.shortcutGuide])
             } header: {
-                Text("Guide")
+                Text(.shortcutGroupGuide)
             } footer: {
-                Text("Opens every shortcut the app in front actually has, read from its own menus — so it is never out of date, and it works for software with no documentation at all. Press it again to close.")
+                Text(.keysGuideHelp)
             }
             Section {
                 ShortcutRows(model: model, actions: [.commandPalette])
             } header: {
-                Text("Palette")
+                Text(.keysPalette)
             } footer: {
-                Text("Run anything in Plonk by name, over whatever you are looking at. What is not a command can be sent to the active agent as a sentence, with ⌘return. Press the key again to close it.")
+                Text(.keysPaletteHelp)
             }
             ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
-                Section(group.name) {
+                Section(String(localized: group.name)) {
                     ForEach(group.actions) { row($0) }
                 }
             }
             Section {
-                Button("Restore Defaults") { model.actions?.resetHotkeys() }
+                Button(.keysRestoreDefaults) { model.actions?.resetHotkeys() }
             }
         }
         .formStyle(.grouped)
@@ -70,7 +71,7 @@ struct ShortcutsPage: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
-                        .help("Another app already owns this combination")
+                        .help(String(localized: .shortcutAlreadyTaken))
                 }
                 KeyCaps(parts: model.hotkeyParts[action.rawValue] ?? [], showsNone: true)
                 Image(systemName: "chevron.right")
@@ -80,7 +81,7 @@ struct ShortcutsPage: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("Set on the \(pageTitle(action.page)) page")
+        .help(String(localized: .keysSetOnPage(pageTitle(action.page))))
     }
 
 }

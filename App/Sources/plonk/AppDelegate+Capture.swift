@@ -7,7 +7,9 @@ import AppKit
 extension AppDelegate {
     func setupShotRoutes() {
         let shots = router.shots
-        shots.didSave = { [weak self] path in self?.model.shotStatus = "Saved to \(path)" }
+        shots.didSave = { [weak self] path in
+            self?.model.shotStatus = String(localized: .hudSavedTo(path))
+        }
         shots.announce = { text, path in
             HUD.shared.show(text, image: path.flatMap { NSImage(contentsOfFile: $0) })
         }
@@ -47,12 +49,13 @@ extension AppDelegate {
                 case .success(let lines):
                     let text = TextExtractor.joined(lines)
                     guard !text.isEmpty else {
-                        HUD.shared.show("No text found there")
+                        HUD.shared.show(.hudNoTextFound)
                         return
                     }
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(text, forType: .string)
-                    HUD.shared.show("Copied: \(text.prefix(80))\(text.count > 80 ? "…" : "")")
+                    HUD.shared.show(String(localized: .hudCopied(text.prefix(80)
+                                                  + (text.count > 80 ? "…" : ""))))
                 }
             }
         }
