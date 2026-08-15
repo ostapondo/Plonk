@@ -16,6 +16,8 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     /// Swap the whole zone set on the screen under the cursor, by its place in
     /// the list the Zones page shows.
     case layout1, layout2, layout3, layout4, layout5, layout6, layout7, layout8, layout9
+    /// The same swap, but with the sets on screen to choose from.
+    case zoneSetPalette
     case unsnap
     case cycleZone, cycleZoneBack
     case focusLeft, focusRight, focusUp, focusDown
@@ -105,6 +107,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .ruler: return "Measure the screen"
         case .shortcutGuide: return "Show this app's shortcuts"
         case .commandPalette: return "Open the command palette"
+        case .zoneSetPalette: return "Pick a zone set for this screen"
         default:
             if let number = zoneNumber { return "Zone \(number)" }
             if let number = layoutNumber { return "Zone set \(number)" }
@@ -132,6 +135,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .ruler: return "ruler"
         case .shortcutGuide: return "keyboard"
         case .commandPalette: return "command"
+        case .zoneSetPalette: return "rectangle.3.group"
         default:
             if zoneNumber != nil { return "square.grid.2x2" }
             if layoutNumber != nil { return "rectangle.3.group" }
@@ -150,6 +154,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .shortcutGuide, .commandPalette: return "Guide"
         case .cropLive, .cropStill: return "Crop"
         case .ruler: return "Ruler"
+        case .zoneSetPalette: return "Zone sets"
         default:
             if zoneNumber != nil { return "Numbered zones" }
             if layoutNumber != nil { return "Zone sets" }

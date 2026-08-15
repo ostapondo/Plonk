@@ -239,6 +239,11 @@ extension AppDelegate {
             })
         }
 
+        result.append(PlonkCommand(id: "app.zoneSetPalette",
+                                   title: "Pick a zone set for this screen…",
+                                   group: "Zone sets") { [weak self] in
+            self?.openZoneSetPalette()
+        })
         result.append(PlonkCommand(id: "app.editZones", title: "Edit zone sets…",
                                    group: "Zone sets") { [weak self] in
             self?.openZonePicker()

@@ -63,6 +63,9 @@ protocol AppActions: AnyObject {
     func deleteZoneSet(_ name: String)
     func togglePreview(zoneSet name: String, onScreen index: Int)
     func openZonePicker()
+    /// The zone sets, listed over whatever is on screen, for the monitor the
+    /// pointer is on.
+    func openZoneSetPalette()
     /// `seed` opens the editor on a set that does not exist yet; it is only
     /// written if the user saves, so cancelling leaves nothing behind.
     func editZoneSet(_ name: String, seed: [ZoneRect]?, onScreen index: Int)
@@ -198,6 +201,26 @@ struct SettingsGroup: Identifiable {
 extension AppModel {
     /// The colour the app draws itself with, ready to hand to SwiftUI.
     var accent: Color { Color(nsColor: appearance.accent) }
+
+    /// A zone set name nobody has taken, which is `base` itself when it is free.
+    func freeZoneSetName(base: String) -> String {
+        if zoneSets[base] == nil { return base }
+        var index = 2
+        while zoneSets["\(base) \(index)"] != nil { index += 1 }
+        return "\(base) \(index)"
+    }
+
+    /// Opens the editor on a set. A built-in template is duplicated first, so
+    /// editing one never changes what the app ships with.
+    func editZoneSet(named name: String, onScreen index: Int) {
+        guard let actions else { return }
+        guard !customZoneSetNames.contains(name) else {
+            actions.editZoneSet(name, seed: nil, onScreen: index)
+            return
+        }
+        actions.editZoneSet(freeZoneSetName(base: name + " copy"),
+                            seed: zoneSets[name] ?? [], onScreen: index)
+    }
 
     /// Reads published state, writes through AppActions.
     func binding<Value>(_ keyPath: KeyPath<AppModel, Value>,
