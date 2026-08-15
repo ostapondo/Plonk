@@ -48,10 +48,10 @@ argued about what a window manager owes them, and rebuilt for the Mac:
 - **Focus by geometry** — step to the window that is actually to the left, or
   cycle through the ones stacked in a zone, instead of alt-tabbing by recency.
 - **Windows return after a display change**, on the monitor they were placed on.
-- **A screen ruler** (`⌃⌥R`, `measure_screen`, `plonk measure`) — the size of
-  what the pointer is over, found by walking out through the pixels until the
-  colour changes, and the distance between two points. macOS ships nothing like
-  it: `⌘⇧4` shows the size of a drag and finds no edges.
+- **A screen ruler** (`⌃⌥R`, `measure_screen`, `plonk measure`) — how far the
+  pointer can travel each way before the pixels change, drawn as two dimension
+  lines, and the distance between two points. macOS ships nothing like it:
+  `⌘⇧4` shows the size of a drag and finds no edges.
 - **Text off the screen** (`⌃⌥T`, `extract_text`, `plonk text`) — Vision,
   on-device. The agent side hands back a box per line in the same coordinates
   annotations are drawn in, so what was read can be pointed at.

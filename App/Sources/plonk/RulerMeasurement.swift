@@ -11,8 +11,10 @@ import Foundation
 
 struct RulerMeasurement {
     enum Kind: String {
-        /// The box of one colour under the pointer, found by EdgeDetector.
-        case bounds
+        /// How far the pointer can go each way before it meets an edge: the run
+        /// across and the run down, found by EdgeDetector. Two answers, not the
+        /// outline of one thing, and drawn as two.
+        case spans
         /// A straight line the user dragged out.
         case line
     }
@@ -24,36 +26,45 @@ struct RulerMeasurement {
     let rect: CGRect
     /// Pixels per point on the screen this was measured on.
     let scale: CGFloat
-    /// Where a line ran from and to. Nil for a box.
+    /// Where a line ran from and to. Nil for spans.
     var from: CGPoint?
     var to: CGPoint?
 
     var pixelWidth: Double { Double(rect.width * scale) }
     var pixelHeight: Double { Double(rect.height * scale) }
 
-    /// Length of the line, in points. Nil for a box, whose size is its answer.
+    /// Length of the line, in points. Nil for spans, whose two runs are theirs.
     var distance: Double? {
         guard kind == .line, let from, let to else { return nil }
         return Double(hypot(to.x - from.x, to.y - from.y))
     }
 
-    /// What the overlay writes beside the pointer, one fact a line.
+    /// What a dragged line is written as, one fact a line. Spans are drawn one
+    /// number per line on the screen, which is the only way to see which is
+    /// which, so theirs is the summary.
     var label: String {
-        var lines: [String] = []
-        if let distance {
-            lines.append("\(Self.round(distance)) pt")
-            if scale != 1 { lines.append("\(Self.round(distance * Double(scale))) px") }
-            lines.append("dx \(Self.round(Double(abs((to?.x ?? 0) - (from?.x ?? 0))))) · "
-                         + "dy \(Self.round(Double(abs((to?.y ?? 0) - (from?.y ?? 0)))))")
-        } else {
-            lines.append("\(Self.round(Double(rect.width))) × \(Self.round(Double(rect.height))) pt")
-            if scale != 1 { lines.append("\(Self.round(pixelWidth)) × \(Self.round(pixelHeight)) px") }
-        }
+        guard let distance else { return summary }
+        var lines = ["\(Self.round(distance)) pt"]
+        if scale != 1 { lines.append("\(Self.round(distance * Double(scale))) px") }
+        lines.append("dx \(Self.round(Double(abs((to?.x ?? 0) - (from?.x ?? 0))))) · "
+                     + "dy \(Self.round(Double(abs((to?.y ?? 0) - (from?.y ?? 0)))))")
         return lines.joined(separator: "\n")
     }
 
-    /// The HUD gets one line rather than three.
-    var summary: String { label.replacingOccurrences(of: "\n", with: "  ") }
+    /// Drawn on the horizontal span, and on the vertical one.
+    var horizontalLabel: String { Self.measurement(Double(rect.width), pixels: pixelWidth, scale: scale) }
+    var verticalLabel: String { Self.measurement(Double(rect.height), pixels: pixelHeight, scale: scale) }
+
+    private static func measurement(_ points: Double, pixels: Double, scale: CGFloat) -> String {
+        scale == 1 ? "\(round(points)) pt" : "\(round(points)) pt (\(round(pixels)) px)"
+    }
+
+    /// One line, for the HUD and for the agents. "Across" and "down" rather
+    /// than "×", because these are two measurements and not a rectangle.
+    var summary: String {
+        guard distance == nil else { return label.replacingOccurrences(of: "\n", with: "  ") }
+        return "across \(horizontalLabel) · down \(verticalLabel)"
+    }
 
     /// What a click puts on the clipboard: the measurement and nothing else, so
     /// it can be pasted straight into a stylesheet or a message.

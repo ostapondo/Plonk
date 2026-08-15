@@ -15,29 +15,33 @@ one of those.
 
 ### Added
 
-- **A ruler for the screen.** `⌃⌥R`, and whatever the pointer is over is
-  measured: Plonk photographs the screen once, walks out from the pointer until
-  the colour stops matching, and draws the box it finds. That is the part worth
-  having — a button, a table row, the gap between two paragraphs, sized without
-  anybody aiming a drag at its corners. Drag instead of hovering and it measures
-  a straight line. Points and pixels both, because a 44-point tap target is 88
-  pixels and only one of those numbers is in the asset. A click copies the
-  number, Escape ends it. macOS has no ruler of its own; the nearest thing is
-  the size shown while `⌘⇧4` is dragging, which finds no edges and keeps
-  nothing.
+- **A ruler for the screen.** `⌃⌥R`, then hover: Plonk photographs the screen
+  once, walks out from the pointer in all four directions until one pixel is
+  unlike the one beside it, and draws each run as a dimension line with its own
+  number. That is the width of a row, the height of a bar, the size of the gap
+  between two things, without anybody aiming a drag at a corner. Drag instead
+  and it measures a straight line. Points and pixels both, because a 44-point
+  tap target is 88 pixels and only one of those numbers is in the asset. A click
+  copies, `Space` takes a fresh picture of the screen, Escape ends it.
 
-  Borrowed from PowerToys' Screen Ruler, including its tolerance setting: on
-  the Ruler page, under Capture, along with the shortcut. Low finds text and
-  hairlines, high walks through gradients and shadows to the edge you meant.
+  Two numbers on two lines rather than a box: the run across and the run down
+  are separate answers, often about different things, and a rectangle drawn
+  round them would claim they are the sides of one object — the one thing
+  pixels cannot say.
+
+  Borrowed from PowerToys' Screen Ruler, tolerance setting included, on the
+  Ruler page under Capture. Ten out of 255 suits an interface: gradients and
+  shadows step by less, borders by more. Raise it for a photograph or a video,
+  where every pixel differs a little from the last.
 
 - **`measure_screen` for agents, and `plonk measure` for a shell.** The same
-  measurement without a person: hand it a point and it answers with the box
-  under it, or two points and it answers with the distance. The reply carries
-  the points, the display's own pixels, and the fraction of the screen ready to
-  hand back to `apply_layout`. An agent that would have taken a screenshot and
-  guessed at sizes can ask for the number instead, at a fraction of the tokens.
-  `interactive: true` hands the ruler to the user and waits for what they
-  measure. Needs Screen Recording, like every other capture.
+  measurement without a person: hand it a point and it answers with the two
+  runs through it, or two points and it answers with the distance. The reply
+  carries the points, the display's own pixels, and the fraction of the screen
+  ready to hand back to `apply_layout`. An agent that would have taken a
+  screenshot and guessed at sizes can ask for the number instead, at a fraction
+  of the tokens. `interactive: true` hands the ruler to the user and waits for
+  what they measure. Needs Screen Recording, like every other capture.
 
 ## 0.2.5 — 2026-08-15
 

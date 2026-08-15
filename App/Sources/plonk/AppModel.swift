@@ -156,7 +156,7 @@ final class AppModel: ObservableObject {
     @Published var shotFolder = "~/Desktop"
     @Published var shotCopyToClipboard = true
     @Published var shotStatus = ""
-    @Published var rulerTolerance = EdgeDetector.defaultTolerance
+    @Published var rulerEdgeTolerance = EdgeDetector.defaultTolerance
     @Published var launchAtLogin = true
     @Published var connectedAgents: [String] = []
     @Published var selectedAgent: String?

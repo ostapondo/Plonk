@@ -12,7 +12,7 @@ extension AppDelegate {
         // the tolerance are whatever settings say at that moment.
         ruler.appearance = { [weak self] in
             (self?.zoneAppearance.tint ?? .controlAccentColor,
-             self?.store.config.rulerTolerance ?? EdgeDetector.defaultTolerance)
+             self?.store.config.rulerEdgeTolerance ?? EdgeDetector.defaultTolerance)
         }
         // The ruler measures a photograph of the screen, so Plonk's own windows
         // have to be out of it — a pinned crop or the crosshairs sitting over
@@ -37,7 +37,7 @@ extension AppDelegate {
     func setRulerTolerance(_ value: Int) {
         let clamped = min(max(value, EdgeDetector.toleranceRange.lowerBound),
                           EdgeDetector.toleranceRange.upperBound)
-        store.update { $0.rulerTolerance = clamped }
-        model.rulerTolerance = clamped
+        store.update { $0.rulerEdgeTolerance = clamped }
+        model.rulerEdgeTolerance = clamped
     }
 }

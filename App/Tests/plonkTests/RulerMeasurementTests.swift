@@ -9,20 +9,23 @@ struct RulerMeasurementTests {
 
     private let visible = CGRect(x: 0, y: 25, width: 1440, height: 875)
 
-    @Test func aBoxOnARetinaScreenSaysBothNumbers() {
-        let measurement = RulerMeasurement(kind: .bounds, screen: 0,
+    @Test func spansOnARetinaScreenSayBothNumbers() {
+        let measurement = RulerMeasurement(kind: .spans, screen: 0,
                                            rect: CGRect(x: 100, y: 200, width: 412, height: 96),
                                            scale: 2)
-        #expect(measurement.label == "412 × 96 pt\n824 × 192 px")
+        #expect(measurement.horizontalLabel == "412 pt (824 px)")
+        #expect(measurement.verticalLabel == "96 pt (192 px)")
+        #expect(measurement.summary == "across 412 pt (824 px) · down 96 pt (192 px)")
         #expect(measurement.clipboardText == "412 × 96")
     }
 
     /// On a screen where a point is a pixel, saying it twice is noise.
-    @Test func aBoxOnAPlainScreenSaysOne() {
-        let measurement = RulerMeasurement(kind: .bounds, screen: 0,
+    @Test func spansOnAPlainScreenSayOne() {
+        let measurement = RulerMeasurement(kind: .spans, screen: 0,
                                            rect: CGRect(x: 0, y: 0, width: 200, height: 50),
                                            scale: 1)
-        #expect(measurement.label == "200 × 50 pt")
+        #expect(measurement.horizontalLabel == "200 pt")
+        #expect(measurement.summary == "across 200 pt · down 50 pt")
     }
 
     @Test func aLineReportsItsLengthAndItsSides() {
@@ -35,8 +38,8 @@ struct RulerMeasurementTests {
         #expect(measurement.clipboardText == "50")
     }
 
-    @Test func aBoxHasNoDistance() {
-        let measurement = RulerMeasurement(kind: .bounds, screen: 1,
+    @Test func spansHaveNoDistance() {
+        let measurement = RulerMeasurement(kind: .spans, screen: 1,
                                            rect: CGRect(x: 0, y: 0, width: 10, height: 10), scale: 1)
         #expect(measurement.distance == nil)
     }
@@ -44,12 +47,12 @@ struct RulerMeasurementTests {
     /// Everything crossing [String: Any] has to be a Double on the way out:
     /// CGFloat is its own type and reads back as nil.
     @Test func theApiPayloadIsDoublesAllTheWayDown() {
-        let measurement = RulerMeasurement(kind: .bounds, screen: 2,
+        let measurement = RulerMeasurement(kind: .spans, screen: 2,
                                            rect: CGRect(x: 144, y: 112.5, width: 720, height: 175),
                                            scale: 2)
         let payload = measurement.asDict(visible: visible)
 
-        #expect(payload["kind"] as? String == "bounds")
+        #expect(payload["kind"] as? String == "spans")
         #expect(payload["screen"] as? Int == 2)
         #expect((payload["points"] as? [String: Double])?["w"] == 720)
         #expect((payload["pixels"] as? [String: Double])?["h"] == 350)
@@ -66,14 +69,14 @@ struct RulerMeasurementTests {
     /// area, so its fraction is allowed to be negative rather than clamped
     /// into a lie.
     @Test func somethingAboveTheVisibleAreaKeepsItsSign() {
-        let measurement = RulerMeasurement(kind: .bounds, screen: 0,
+        let measurement = RulerMeasurement(kind: .spans, screen: 0,
                                            rect: CGRect(x: 0, y: 0, width: 100, height: 20), scale: 1)
         let fraction = measurement.asDict(visible: visible)["fraction"] as? [String: Double]
         #expect((fraction?["y"] ?? 0) < 0)
     }
 
     @Test func aScreenWithNoVisibleAreaGetsNoFraction() {
-        let measurement = RulerMeasurement(kind: .bounds, screen: 0,
+        let measurement = RulerMeasurement(kind: .spans, screen: 0,
                                            rect: CGRect(x: 0, y: 0, width: 10, height: 10), scale: 1)
         #expect(measurement.asDict(visible: .zero)["fraction"] == nil)
     }

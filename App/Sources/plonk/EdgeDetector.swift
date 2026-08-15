@@ -6,14 +6,21 @@ import Foundation
 // A button, a table cell, the gap between two paragraphs: the eye sees a
 // boundary there, and no API knows about any of it, because it is drawn inside
 // somebody else's window. So the boundary is found the way the eye finds it, in
-// the pixels. From the point, walk out in each of the four directions until the
-// colour stops matching, and the box between those four stops is what was
-// under the cursor.
+// the pixels: from the point, walk out in each of the four directions until one
+// pixel is suddenly unlike the one before it, and that is the edge.
+//
+// Each step is compared with its neighbour rather than with the pixel under the
+// pointer, which is the difference between measuring a thing and measuring a
+// colour. Compared with the pointer, a gradient drifts far enough to stop the
+// scan halfway across itself, while a panel and the panel beside it in the same
+// grey read as one continuous nothing. Compared with the neighbour, a gradient
+// is walked through — no single step is large — and a real border stops it even
+// when it is one shade off what it borders.
 //
 // PowerToys' Screen Ruler works this way too, and its tolerance setting is here
-// for the same reason: nothing on a modern desktop is one flat colour —
-// gradients, shadows, subpixel text — so "the same colour" has to mean "near
-// enough", and how near is a matter of taste and of what is being measured.
+// for the same reason: nothing on a modern desktop is a flat colour, so "the
+// same" has to mean "near enough", and how near depends on what is being
+// measured.
 
 /// A picture in memory: 8 bits a channel, origin top-left, y downward, which is
 /// the space `CGImage` and every capture in this app already speak.
@@ -34,6 +41,13 @@ struct PixelGrid {
         /// all three: green text on a grey panel has to read as an edge.
         func difference(from other: Colour) -> Int {
             max(abs(red - other.red), max(abs(green - other.green), abs(blue - other.blue)))
+        }
+
+        static func mean(_ colours: [Colour]) -> Colour {
+            let count = max(colours.count, 1)
+            return Colour(red: colours.reduce(0) { $0 + $1.red } / count,
+                          green: colours.reduce(0) { $0 + $1.green } / count,
+                          blue: colours.reduce(0) { $0 + $1.blue } / count)
         }
     }
 
@@ -69,43 +83,68 @@ extension PixelGrid {
 }
 
 enum EdgeDetector {
-    /// How far apart two pixels have to be, on one channel, before the boundary
-    /// between them counts as an edge. Low enough that a border one shade off
-    /// its panel still stops a scan, high enough that a gradient does not.
-    static let defaultTolerance = 30
-    static let toleranceRange = 1...120
-
-    /// The box of near-enough-the-same colour around `point`, in the grid's own
-    /// pixels. Nil when the point is outside the picture.
+    /// How far apart two neighbouring pixels have to be, on one channel, before
+    /// the boundary between them counts as an edge.
     ///
-    /// The box is the run through the point across, meeting the run through it
-    /// down: it is what the cursor is inside, not the shape of the whole thing
-    /// it belongs to. On a rectangle those are the same answer, which is why
-    /// the rectangles a desktop is made of come out right.
-    static func bounds(in grid: PixelGrid, at point: CGPoint, tolerance: Int) -> CGRect? {
+    /// Ten, measured rather than guessed: a desk of dark editor panels was
+    /// probed at 4, 8, 15 and 30, and everything up to 15 agreed on the same
+    /// blocks while 30 walked straight through the hairline between two panels
+    /// and reported one run half again as long. Steps inside a gradient or a
+    /// shadow are far smaller than this; a border, even one a shade off what it
+    /// borders, is larger.
+    static let defaultTolerance = 10
+    static let toleranceRange = 1...80
+
+    /// How far the pointer can travel in each direction before something
+    /// changes, in the grid's own pixels: the run across meeting the run down.
+    /// Nil when the point is outside the picture.
+    ///
+    /// These are two independent answers that happen to share a corner, not the
+    /// outline of one thing, and the ruler draws them as two. On a plain
+    /// rectangle they agree with its sides, which is what makes a button, a row
+    /// or a gap measure the way it looks.
+    static func spans(in grid: PixelGrid, at point: CGPoint, tolerance: Int) -> CGRect? {
         let x = Int(point.x.rounded(.down))
         let y = Int(point.y.rounded(.down))
-        guard let reference = grid.colour(x: x, y: y) else { return nil }
+        guard grid.colour(x: x, y: y) != nil else { return nil }
         let allowed = max(0, tolerance)
 
-        let left = edge(grid, from: x, y, dx: -1, dy: 0, reference, allowed).x
-        let right = edge(grid, from: x, y, dx: 1, dy: 0, reference, allowed).x
-        let top = edge(grid, from: x, y, dx: 0, dy: -1, reference, allowed).y
-        let bottom = edge(grid, from: x, y, dx: 0, dy: 1, reference, allowed).y
+        let left = edge(grid, from: x, y, dx: -1, dy: 0, allowed).x
+        let right = edge(grid, from: x, y, dx: 1, dy: 0, allowed).x
+        let top = edge(grid, from: x, y, dx: 0, dy: -1, allowed).y
+        let bottom = edge(grid, from: x, y, dx: 0, dy: 1, allowed).y
 
         return CGRect(x: left, y: top, width: right - left + 1, height: bottom - top + 1)
     }
 
-    /// The last pixel in that direction still within tolerance of `reference`.
+    /// The last pixel in that direction before the step to the next one is
+    /// bigger than the tolerance allows.
     private static func edge(_ grid: PixelGrid, from x: Int, _ y: Int, dx: Int, dy: Int,
-                             _ reference: PixelGrid.Colour, _ tolerance: Int) -> (x: Int, y: Int) {
+                             _ tolerance: Int) -> (x: Int, y: Int) {
         var last = (x: x, y: y)
+        guard var previous = sample(grid, x: x, y: y, dx: dx, dy: dy) else { return last }
         var next = (x: x + dx, y: y + dy)
-        while let colour = grid.colour(x: next.x, y: next.y),
-              colour.difference(from: reference) <= tolerance {
+        while let colour = sample(grid, x: next.x, y: next.y, dx: dx, dy: dy),
+              colour.difference(from: previous) <= tolerance {
             last = next
+            previous = colour
             next = (x: next.x + dx, y: next.y + dy)
         }
         return last
+    }
+
+    /// A pixel averaged with the two beside it, across the scan rather than
+    /// along it. A photograph, a video still or a dithered gradient is speckled
+    /// enough that neighbouring pixels differ on their own, and every one of
+    /// those would otherwise be an edge; three pixels of a real border still
+    /// average to a border. Across rather than along, so the boundary the scan
+    /// is walking towards stays exactly where it is.
+    private static func sample(_ grid: PixelGrid, x: Int, y: Int,
+                               dx: Int, dy: Int) -> PixelGrid.Colour? {
+        guard let middle = grid.colour(x: x, y: y) else { return nil }
+        // Perpendicular to the direction of travel.
+        let (ox, oy) = (dy == 0 ? 0 : 1, dx == 0 ? 0 : 1)
+        let neighbours = [grid.colour(x: x - ox, y: y - oy), grid.colour(x: x + ox, y: y + oy)]
+        return PixelGrid.Colour.mean([middle] + neighbours.compactMap { $0 })
     }
 }

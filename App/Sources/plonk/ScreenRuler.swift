@@ -8,38 +8,15 @@ import AppKit
 // wants to aim a drag at the exact corner of a button.
 //
 // So the screen is photographed once at the start and every measurement is
-// taken against that still. Hovering finds the box under the pointer with
-// EdgeDetector, dragging measures a straight line, a click copies whatever is
-// showing, Escape ends it. Measuring against a frozen frame rather than the
-// live screen is deliberate: it costs one capture instead of thirty a second,
-// and a picture that stops moving is the one being measured.
+// taken against that still. Hovering asks EdgeDetector how far the pointer can
+// go each way before it meets an edge and draws those two runs, dragging
+// measures a straight line, a click copies whatever is showing, Space takes a
+// fresh picture, Escape ends it. Measuring against a frozen frame rather than
+// the live screen is deliberate: it costs one capture instead of thirty a
+// second, and a picture that stops moving is the one being measured.
 
 final class ScreenRuler {
     static let shared = ScreenRuler()
-
-    enum Failure: LocalizedError {
-        case notPermitted
-        case captureFailed
-        case noScreen
-        case cancelled
-
-        var errorDescription: String? {
-            switch self {
-            case .notPermitted:
-                return "Plonk does not have Screen Recording, so it cannot see the pixels it would "
-                    + "measure. Grant it in System Settings › Privacy & Security › Screen Recording."
-            case .captureFailed: return "the screen could not be photographed"
-            case .noScreen: return "that point is not on any screen"
-            case .cancelled: return "nothing was measured"
-            }
-        }
-
-        /// Somebody pressing Escape is not news; the other three are.
-        var isWorthSaying: Bool {
-            if case .cancelled = self { return false }
-            return true
-        }
-    }
 
     /// Set by AppDelegate and read at the moment the ruler opens, the way the
     /// zone overlay reads its own, so a colour or a tolerance changed in
@@ -60,6 +37,11 @@ final class ScreenRuler {
     /// Where a drag began, in CG points. Nil while hovering.
     private var anchor: CGPoint?
     private var current: RulerMeasurement?
+    /// Puts Plonk's own windows back. Held for the length of a session rather
+    /// than the length of the capture: the ruler is often started from the
+    /// Ruler page, and leaving that window up would mean hovering over Plonk
+    /// and measuring what is behind it.
+    private var restoreOwnWindows: (() -> Void)?
     private var onFinish: ((Result<RulerMeasurement, Failure>) -> Void)?
 
     var isMeasuring: Bool { overlay != nil }
@@ -82,6 +64,7 @@ final class ScreenRuler {
         }
         refreshAppearance()
         onFinish = completion
+        hideOwnWindowsForSession()
         capture { [weak self] sheets in
             guard let self else { return }
             guard !sheets.isEmpty else {
@@ -108,7 +91,8 @@ final class ScreenRuler {
             self?.handle(event)
             return nil
         }
-        announce?("Hover to measure, drag for a distance, click to copy, Escape to finish")
+        announce?("Hover to measure, drag for a distance, click to copy, "
+                  + "Space for a fresh look at the screen, Escape to finish")
         update(at: NSEvent.mouseLocation)
     }
 
@@ -119,6 +103,10 @@ final class ScreenRuler {
             // keystroke must not leave the overlay up with no way out.
             if event.keyCode == 53 { finish(current.map { .success($0) } ?? .failure(.cancelled)) }
             if event.keyCode == 36 { copyCurrent() }
+            // 49 is Space: the still goes stale the moment anything on the
+            // screen moves, and re-opening the ruler to get a fresh one is a
+            // silly thing to make somebody do.
+            if event.keyCode == 49 { recapture() }
         case .rightMouseDown:
             finish(current.map { .success($0) } ?? .failure(.cancelled))
         case .leftMouseDown:
@@ -147,9 +135,23 @@ final class ScreenRuler {
         if let anchor {
             current = line(from: anchor, to: point)
         } else {
-            current = bounds(at: point)
+            current = spans(at: point)
         }
         overlay?.update(measurement: current, pointer: pointer, anchor: anchor.map(RulerSheet.toScreen))
+    }
+
+    /// Photographs the screen again, with the ruler's own overlay out of the
+    /// picture, and goes on measuring against that.
+    private func recapture() {
+        overlay?.setVisible(false)
+        capture { [weak self] sheets in
+            guard let self else { return }
+            if !sheets.isEmpty { self.sheets = sheets }
+            overlay?.setVisible(true)
+            announce?(sheets.isEmpty ? "The screen could not be photographed again"
+                                     : "Measuring the screen as it is now")
+            update(at: NSEvent.mouseLocation)
+        }
     }
 
     private func copyCurrent() {
@@ -162,6 +164,8 @@ final class ScreenRuler {
     private func finish(_ result: Result<RulerMeasurement, Failure>) {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
+        restoreOwnWindows?()
+        restoreOwnWindows = nil
         overlay?.hide()
         overlay = nil
         sheets = []
@@ -174,9 +178,16 @@ final class ScreenRuler {
 
     // MARK: - Measuring
 
-    /// The box under one point, with no user involved: the agents' road in.
-    func measure(at point: CGPoint, completion: @escaping (Result<RulerMeasurement, Failure>) -> Void) {
+    /// The two runs through one point, with no user involved: the agents' way in.
+    /// `tolerance` overrides the user's setting for this one measurement, for a
+    /// caller that knows it is looking at something faint or something noisy.
+    func measure(at point: CGPoint, tolerance override: Int? = nil,
+                 completion: @escaping (Result<RulerMeasurement, Failure>) -> Void) {
         refreshAppearance()
+        if let override {
+            tolerance = min(max(override, EdgeDetector.toleranceRange.lowerBound),
+                            EdgeDetector.toleranceRange.upperBound)
+        }
         guard CGPreflightScreenCaptureAccess() else {
             completion(.failure(.notPermitted))
             return
@@ -185,7 +196,9 @@ final class ScreenRuler {
             completion(.failure(.noScreen))
             return
         }
+        let restore = hideOwnWindows?()
         capture(only: screen.index) { [weak self] sheets in
+            restore?()
             guard let self else { return }
             // Kept only for the length of this call: a still of the whole
             // screen is a good few megabytes, and nobody is hovering over it.
@@ -196,7 +209,7 @@ final class ScreenRuler {
                 completion(.failure(.captureFailed))
                 return
             }
-            guard let measurement = self.bounds(at: point) else {
+            guard let measurement = self.spans(at: point) else {
                 completion(.failure(.noScreen))
                 return
             }
@@ -229,17 +242,17 @@ final class ScreenRuler {
         tolerance = current.tolerance
     }
 
-    private func bounds(at point: CGPoint) -> RulerMeasurement? {
+    private func spans(at point: CGPoint) -> RulerMeasurement? {
         guard let sheet = sheets.first(where: { $0.frame.contains(point) }) else { return nil }
         let pixel = CGPoint(x: (point.x - sheet.frame.minX) * sheet.scale,
                             y: (point.y - sheet.frame.minY) * sheet.scale)
-        guard let box = EdgeDetector.bounds(in: sheet.grid, at: pixel, tolerance: tolerance) else {
+        guard let box = EdgeDetector.spans(in: sheet.grid, at: pixel, tolerance: tolerance) else {
             return nil
         }
         let rect = CGRect(x: sheet.frame.minX + box.minX / sheet.scale,
                           y: sheet.frame.minY + box.minY / sheet.scale,
                           width: box.width / sheet.scale, height: box.height / sheet.scale)
-        return RulerMeasurement(kind: .bounds, screen: sheet.index, rect: rect, scale: sheet.scale)
+        return RulerMeasurement(kind: .spans, screen: sheet.index, rect: rect, scale: sheet.scale)
     }
 
     private func line(from: CGPoint, to: CGPoint) -> RulerMeasurement? {
@@ -254,15 +267,16 @@ final class ScreenRuler {
 
     // MARK: - Capture
 
-    /// Photographs the screens with Plonk's own windows out of the way, since
-    /// a pinned crop or the crosshairs sitting over the thing being measured
-    /// would be what got measured.
+    /// Plonk's own windows go out of the way before any of this: a pinned crop
+    /// or the settings window sitting over the thing being measured would be
+    /// what got measured.
+    private func hideOwnWindowsForSession() {
+        guard restoreOwnWindows == nil else { return }
+        restoreOwnWindows = hideOwnWindows?()
+    }
+
     private func capture(only wanted: Int? = nil, completion: @escaping ([RulerSheet]) -> Void) {
-        let screens = RulerSheet.screens().filter { wanted == nil || $0.index == wanted }
-        let restore = hideOwnWindows?()
-        RulerSheet.capture(screens) { sheets in
-            restore?()
-            completion(sheets)
-        }
+        RulerSheet.capture(RulerSheet.screens().filter { wanted == nil || $0.index == wanted },
+                           completion: completion)
     }
 }

@@ -19,7 +19,7 @@ const USAGE = `plonk — drive the Plonk menu bar app from a shell
   plonk awake off
   plonk awake on [--minutes N] [--until HH:MM] [--pid N]
   plonk awake while <command...>    stay awake until that command exits
-  plonk measure [X Y] [--screen N]   size of what is at that point on screen
+  plonk measure [X Y] [--screen N] [--tolerance N]   measure at that point
   plonk text [--mode region|window|screen] [--path FILE]
   plonk shot [--mode region|window|screen] [--path FILE]
 
@@ -207,7 +207,11 @@ async function main(): Promise<void> {
         method: "POST",
         body: interactive
           ? { interactive: true }
-          : { screen, point: { x: fraction(x, "x"), y: fraction(y, "y") } },
+          : {
+              screen,
+              point: { x: fraction(x, "x"), y: fraction(y, "y") },
+              tolerance: number(flags.tolerance, "--tolerance"),
+            },
         timeoutMs: interactive ? 5 * 60_000 : 30_000,
       }));
       break;
