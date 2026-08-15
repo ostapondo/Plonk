@@ -11,6 +11,7 @@ import { register as registerAwake } from "./tools/awake.js";
 import { register as registerScreenshot } from "./tools/screenshot.js";
 import { register as registerAnnotate } from "./tools/annotate.js";
 import { register as registerText } from "./tools/text.js";
+import { register as registerRuler } from "./tools/ruler.js";
 import { register as registerAgents } from "./tools/agents.js";
 import { register as registerUpdate } from "./tools/update.js";
 
@@ -26,6 +27,7 @@ export function createPlonkServer(): McpServer {
   registerScreenshot(server);
   registerAnnotate(server);
   registerText(server);
+  registerRuler(server);
   registerAgents(server);
   registerUpdate(server);
   return server;

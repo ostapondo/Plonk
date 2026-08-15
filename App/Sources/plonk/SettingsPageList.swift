@@ -36,6 +36,9 @@ enum SettingsPages {
         SettingsPage(id: "mouse", title: "Pointer & clicks", icon: "cursorarrow.rays", parent: "capture") {
             AnyView(MousePage(model: $0))
         },
+        SettingsPage(id: "ruler", title: "Ruler", icon: "ruler", parent: "capture") {
+            AnyView(RulerPage(model: $0))
+        },
         SettingsPage(id: "ai", title: "Agents & MCP", icon: "sparkles", parent: "automation") {
             AnyView(AIPage(model: $0))
         },

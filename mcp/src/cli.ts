@@ -19,6 +19,7 @@ const USAGE = `plonk — drive the Plonk menu bar app from a shell
   plonk awake off
   plonk awake on [--minutes N] [--until HH:MM] [--pid N]
   plonk awake while <command...>    stay awake until that command exits
+  plonk measure [X Y] [--screen N]   size of what is at that point on screen
   plonk text [--mode region|window|screen] [--path FILE]
   plonk shot [--mode region|window|screen] [--path FILE]
 
@@ -42,6 +43,16 @@ function number(raw: string | undefined, what: string): number | undefined {
   if (raw === undefined) return undefined;
   const value = Number(raw);
   if (!Number.isInteger(value)) fail(`${what} must be a whole number, got "${raw}"`);
+  return value;
+}
+
+/** Points arrive as fractions of a screen, the way every frame in this API
+ * does, so a measurement can be pasted straight back into a layout. */
+function fraction(raw: string, what: string): number {
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    fail(`${what} must be a fraction between 0 and 1, got "${raw}"`);
+  }
   return value;
 }
 
@@ -183,6 +194,21 @@ async function main(): Promise<void> {
           until: flags.until,
           pid: number(flags.pid, "--pid"),
         },
+      }));
+      break;
+    }
+
+    case "measure": {
+      // With no point named there is nobody to ask but the user, so the ruler
+      // goes on screen and this waits for them.
+      const [x, y] = args;
+      const interactive = x === undefined || y === undefined;
+      report(await call("/ruler/measure", {
+        method: "POST",
+        body: interactive
+          ? { interactive: true }
+          : { screen, point: { x: fraction(x, "x"), y: fraction(y, "y") } },
+        timeoutMs: interactive ? 5 * 60_000 : 30_000,
       }));
       break;
     }

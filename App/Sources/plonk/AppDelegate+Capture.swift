@@ -33,4 +33,28 @@ extension AppDelegate {
             completion(result)
         }
     }
+
+    /// Region capture straight into recognition: the text lands on the
+    /// clipboard, and the HUD shows what was read so a bad crop is obvious
+    /// without pasting it somewhere first.
+    func captureText() {
+        runCapture(.region, openEditor: false) { [weak self] image in
+            guard let self, let image else { return }
+            TextExtractor.recognize(in: image, languages: store.config.textLanguages) { result in
+                switch result {
+                case .failure(let error):
+                    HUD.shared.show(error.localizedDescription)
+                case .success(let lines):
+                    let text = TextExtractor.joined(lines)
+                    guard !text.isEmpty else {
+                        HUD.shared.show("No text found there")
+                        return
+                    }
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                    HUD.shared.show("Copied: \(text.prefix(80))\(text.count > 80 ? "…" : "")")
+                }
+            }
+        }
+    }
 }
