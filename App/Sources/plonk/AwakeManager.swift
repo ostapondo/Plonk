@@ -32,8 +32,9 @@ final class AwakeManager {
     var timeoutMinutes = 0
 
     var isOnAC: Bool {
-        // IOPSGetProvidingPowerSourceType returns "AC Power", "Battery Power" or "UPS Power".
-        let type = IOPSGetProvidingPowerSourceType(nil)?.takeRetainedValue() as String?
+        // IOPSGetProvidingPowerSourceType returns "AC Power", "Battery Power" or
+        // "UPS Power". A "Get" function, so the string is not ours to release.
+        let type = IOPSGetProvidingPowerSourceType(nil)?.takeUnretainedValue() as String?
         return type == nil || type == "AC Power"
     }
 
