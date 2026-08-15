@@ -180,3 +180,30 @@ struct UpdateVerdictTests {
             == .refuse(.wrongPayload("its bundle identifier is not ours")))
     }
 }
+
+struct UpdateRetryTests {
+
+    @Test func theNetworkComingBackRetriesACheckThatGaveUpWithoutOne() {
+        #expect(ConnectivityChange(isSatisfied: true, awaitingNetwork: true, automatic: true)
+            .warrantsCheck)
+    }
+
+    @Test func aPathChangeOnItsOwnIsNotWorthACheck() {
+        // Wi-Fi hops, VPNs, a cable pulled and put back: none of them is a
+        // reason to ask GitHub anything when the last check got an answer.
+        #expect(!ConnectivityChange(isSatisfied: true, awaitingNetwork: false, automatic: true)
+            .warrantsCheck)
+    }
+
+    @Test func theNetworkGoingAwayIsNotACheck() {
+        #expect(!ConnectivityChange(isSatisfied: false, awaitingNetwork: true, automatic: true)
+            .warrantsCheck)
+    }
+
+    @Test func nothingIsRetriedWhenTheUserTurnedCheckingOff() {
+        // The settings page promises the buttons are the only way a connection
+        // is opened, and a check that failed does not get to be an exception.
+        #expect(!ConnectivityChange(isSatisfied: true, awaitingNetwork: true, automatic: false)
+            .warrantsCheck)
+    }
+}

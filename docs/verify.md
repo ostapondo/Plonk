@@ -36,7 +36,9 @@ plonk  …  TCP 127.0.0.1:43917 (LISTEN)
 One listener on loopback. The only outbound connection Plonk makes is the
 update check: on launch and once a day it asks `api.github.com` for the latest
 release, and sends nothing but a User-Agent naming the app and its version — no
-identifier, no account, no analytics, no crash reporter. Turn it off under
+identifier, no account, no analytics, no crash reporter. A check that failed
+for want of a network runs again when one comes back, which is the only thing
+the app watches the network path for. Turn it off under
 Updates and it stops happening — including for agents, which get a 409 rather
 than a connection made on your behalf, so the buttons on that page are the only
 thing that can trigger one. `nettop` or Little Snitch will then show a process

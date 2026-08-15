@@ -129,9 +129,11 @@ This is the part of the app with the most reach, so here is every step it takes:
 
 1. On launch and once a day it asks `api.github.com` for the latest release, and
    sends nothing but a `User-Agent` naming the app and its version. No
-   identifier, no account, no analytics. Turn the check off under Updates and
-   this stops happening, agents included — they get a 409 rather than a
-   connection opened on your behalf.
+   identifier, no account, no analytics. A check that failed because there was
+   no network is retried once the network is back, and nothing else about the
+   path is acted on. Turn the check off under Updates and all of this stops
+   happening, agents included — they get a 409 rather than a connection opened
+   on your behalf.
 2. Nothing downloads until you press Install.
 3. The archive's SHA-256 is checked against the digest GitHub published for that
    asset, before it is unpacked. This catches a download that arrived damaged or

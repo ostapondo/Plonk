@@ -43,6 +43,18 @@ one of those.
   of the tokens. `interactive: true` hands the ruler to the user and waits for
   what they measure. Needs Screen Recording, like every other capture.
 
+### Fixed
+
+- **An update check that failed offline runs again when the network is back.**
+  It stopped at "The update check failed: The Internet connection appears to be
+  offline", and that is where it stayed: nothing watched for the network
+  returning, so the next attempt was the daily timer or the Check Now button. A
+  copy launched away from a network sat on a day-old error next to a version it
+  had never managed to check. Only that failure is retried, and only while
+  automatic checks are on — a Wi-Fi hop does not re-ask GitHub about a feed that
+  answered badly, and with checks turned off the buttons are still the only way
+  a connection is opened.
+
 ## 0.2.5 — 2026-08-15
 
 Two fixes, one of them a setting that only worked when a person asked for it.

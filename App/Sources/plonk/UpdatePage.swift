@@ -57,7 +57,7 @@ struct UpdatePage: View {
                 Toggle(isOn: model.binding(\.updateCheckAutomatically,
                                            set: { $0.setUpdateCheckAutomatically($1) })) {
                     Text("Check for updates automatically")
-                    Text("On launch and once a day")
+                    Text("On launch, once a day, and when the network comes back")
                 }
             } footer: {
                 Text("""
