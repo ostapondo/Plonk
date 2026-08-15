@@ -10,6 +10,10 @@ name: Release
 #
 #   PLONK_SIGN_CERT_P12       the "Plonk Signing" certificate and its key, base64
 #   PLONK_SIGN_CERT_PASSWORD  the password used when exporting it
+#   SMITHERY_API_KEY          smithery.ai > Account > API keys
+#
+# Only the first two are required. Without SMITHERY_API_KEY the release still
+# goes out in full and the Smithery listing keeps whatever version it last had.
 #
 # npm needs no secret at all: plonk-mcp names this repository and this workflow
 # file as a trusted publisher (npmjs.com > the package > Settings > Trusted
@@ -290,6 +294,12 @@ jobs:
     runs-on: ubuntu-latest
     # The draft release this uploads to is created by the app job.
     needs: app
+    env:
+      # Here rather than on the two steps that use it because `if:` cannot read
+      # the secrets context, and a step's own env is not in scope for its `if`
+      # either. A job env var is, so the Smithery steps test this and skip
+      # cleanly on a fork or a dispatch where the secret is not set.
+      SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
     permissions:
       contents: write # upload the bundle to the release
       id-token: write # sign the attestation
@@ -324,3 +334,32 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: gh release upload "v$VERSION" "mcp/plonk-$VERSION.mcpb" --clobber
+
+      # Smithery listed 0.2.2 for six days after 0.2.5 shipped, because the
+      # first publish was run by hand and nothing ran the second. These two
+      # steps are that hand, moved into the release.
+      #
+      # Neither blocks a release. By the time they run the zip, the npm tarball
+      # and the bundle are already out; a directory that is down should leave a
+      # yellow mark on the run, not withhold a build from everyone else.
+      - name: Publish the bundle to Smithery
+        continue-on-error: true
+        if: env.SMITHERY_API_KEY != ''
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          # The off-spec build: Smithery validates manifest.tools against the
+          # MCP tool schema, where inputSchema is required. See build-mcpb.sh.
+          ./scripts/build-mcpb.sh --smithery
+          npx --yes @smithery/cli@4 mcp publish \
+            "mcp/plonk-$VERSION-smithery.mcpb" -n ostapondo/plonk
+
+      # Separate step because the publish above carries none of this: `mcp
+      # publish` takes only --name, --resume and --config-schema, and the
+      # bundle path drops the manifest's listing fields (smithery-ai/cli#787),
+      # so a card published without this shows a bare qualified name.
+      - name: Fill in the Smithery listing
+        continue-on-error: true
+        if: env.SMITHERY_API_KEY != ''
+        run: ./scripts/publish-smithery.sh
