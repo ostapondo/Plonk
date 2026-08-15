@@ -32,18 +32,16 @@ final class UpdateManager {
     /// times and every onChange bumps the change bus, which does not coalesce:
     /// one update would bury every listener on /events under its own progress.
     var onProgress: (() -> Void)?
-    /// Whether launch and the daily timer check on their own. The user's
+    /// Whether launch and the schedule check on their own. The user's
     /// setting; a check they ask for explicitly always runs.
     var automatic = true {
-        didSet { scheduleAutomaticCheck() }
+        didSet { schedule.automatic = automatic }
     }
 
     private let session: URLSession
-    private var timer: Timer?
+    private let schedule = UpdateSchedule()
     private var observation: NSKeyValueObservation?
     private var inFlight = false
-
-    private static let checkInterval: TimeInterval = 24 * 60 * 60
 
     init() {
         let config = URLSessionConfiguration.ephemeral
@@ -54,10 +52,10 @@ final class UpdateManager {
             "User-Agent": "Plonk/\(UpdateManager.currentVersionText)",
         ]
         session = URLSession(configuration: config)
+        schedule.onDue = { [weak self] in self?.check() }
     }
 
     deinit {
-        timer?.invalidate()
         observation?.invalidate()
     }
 
@@ -79,21 +77,9 @@ final class UpdateManager {
     // MARK: - Checking
 
     func start() {
-        scheduleAutomaticCheck()
+        schedule.automatic = automatic
         guard automatic else { return }
         check()
-    }
-
-    private func scheduleAutomaticCheck() {
-        timer?.invalidate()
-        timer = nil
-        guard automatic else { return }
-        let timer = Timer(timeInterval: Self.checkInterval, repeats: true) { [weak self] _ in
-            self?.check()
-        }
-        timer.tolerance = 60 * 60
-        RunLoop.main.add(timer, forMode: .common)
-        self.timer = timer
     }
 
     func check() {
@@ -325,13 +311,19 @@ final class UpdateManager {
     /// again — a check that gave up still leaves the app usable.
     private func finish(_ error: Error) {
         let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        set(phase: .failed, status: message)
+        var offline = false
+        if case UpdateError.network = error { offline = true }
+        set(phase: .failed, status: message, offline: offline)
     }
 
-    private func set(phase: Phase, status: String) {
+    /// `offline` marks the one failure the schedule can undo on its own, and
+    /// every other call clears it: whatever a check ends up saying, it is the
+    /// current answer, and the network coming back does not change it.
+    private func set(phase: Phase, status: String, offline: Bool = false) {
         let apply = { [weak self] in
             guard let self else { return }
             if phase == .failed { inFlight = false }
+            schedule.awaitingNetwork = offline
             self.phase = phase
             self.status = status
             onChange?()
