@@ -15,6 +15,18 @@ one of those.
 
 ### Changed
 
+- **The window looks like the rest of Plonk now.** Colour is the zone number
+  everywhere it is drawn, so the sidebar, the Zones page, the website and the
+  README all say the same thing the same way. The sidebar lists every page under
+  the heading it belongs to instead of hiding ten of them behind groups that
+  expanded, the selected row is the accent rather than a grey fill, and the
+  Zones page opens with the set named in full, what it is running under it, and
+  each zone printing the fraction an agent would send for it.
+
+- **The README and the docs dropped the screen recordings** that still showed
+  the old single-accent overlay. What replaced them is drawn to the same palette
+  as the app, so a picture cannot go stale the next time the interface moves.
+
 - **Every word the app says now lives in one file.** The text was written into
   the views that draw it, spread across sixty-odd Swift files, which meant a
   second language would have had to start by unpicking all of them. It is a

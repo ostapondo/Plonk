@@ -23,11 +23,6 @@ out loud.</strong><br>
   <a href="https://ostapondo.github.io/Plonk/"><strong>ostapondo.github.io/Plonk</strong></a>
 </p>
 
-<p align="center">
-  <img src="docs/demo.gif" width="720"
-       alt="A pile of overlapping windows is cleared four ways in turn: one window is dragged into a zone as the zones light up, the next is sent to zone two with ⌃⌥2, the third by holding ⌃⌥V and saying “zone three”, and the last two are placed together from a sentence typed to an agent">
-</p>
-
 ## Why another one
 
 You most likely already have Rectangle, Magnet, Loop or Raycast. If a fixed grid
@@ -78,14 +73,13 @@ screen and any window already in a numbered zone moves to wherever that number
 is now.
 
 <p align="center">
-  <img src="docs/zones.gif" width="720"
-       alt="Five clicks in the zone editor cut one screen into six zones, six windows fill them, and ⌃⌥⇧2 then swaps the whole set for another while the windows already in it follow their numbers across">
+  <img src="docs/zone-swap.svg" width="720"
+       alt="The same screen under two zone sets. In the first, zone 1 is a narrow left rail, zone 2 the wide middle, zone 3 the right column; after ⌃⌥⇧2 the shape is different but the numbers are not, so the window in zone 2 is still in zone 2">
 </p>
 
-<p align="center">
-  <img src="docs/app-zones.png" width="820"
-       alt="Plonk's Zones page: zone sets across the top with Thirds selected and its three numbered zones drawn below, controls for drag-to-snap and the modifier that shows the zones, and the list of halves, quarters, maximize and centre with the shortcut bound to each">
-</p>
+Colour is the zone number, everywhere it is drawn: 1 rose, 2 plum, 3 blue,
+4 mint, 5 sun, 6 sky. In the overlay you drag into, in the editor, in the menu
+bar, and in every picture on this page. A set can be read before a digit is.
 
 ## Install
 
@@ -210,8 +204,8 @@ can connect at once, each registering itself, with an optional mode that locks
 changes to the active one.
 
 <p align="center">
-  <img src="docs/agents.gif" width="720"
-       alt="Four sentences typed to an agent: a layout is applied across the desk, the result is saved as a workspace called review and the Mac held awake until a build finishes, everything is then closed to an empty desktop and rebuilt from that workspace, and finally a line of error text is read off the screen">
+  <img src="docs/agent-desk.svg" width="720"
+       alt="A sentence typed to an agent becomes a desk: the browser takes the left 0.6 of the screen, the terminal the top right and the notes the bottom right, and the result is saved as a workspace called review">
 </p>
 
 Setup, if you want the `plonk` CLI or an agent driving it (Node 18+):
