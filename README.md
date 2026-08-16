@@ -1,12 +1,12 @@
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>A Mac window manager with zones you draw yourself, plus
-ten more menu bar utilities behind the same icon.</strong><br>
-<sub>To plonk is to set a thing down exactly where it belongs. You drag it
-there, you press a key, or you say where.</sub></p>
+<p align="center"><strong>A Mac window manager with zones you draw yourself. Put a
+window in one by dragging it, by shortcut, by voice, or by asking an agent over
+MCP.</strong><br>
+<sub>To plonk is to set a thing down exactly where it belongs.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.2.5-8b7cf6?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/github/v/release/ostapondo/Plonk?style=flat-square&color=8b7cf6&label=version">
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
@@ -23,56 +23,33 @@ there, you press a key, or you say where.</sub></p>
        alt="A pile of overlapping windows is cleared four ways in turn: one window is dragged into a zone as the zones light up, the next is sent to zone two with ⌃⌥2, the third by holding ⌃⌥V and saying “zone three”, and the last two are placed together from a sentence typed to an agent">
 </p>
 
-## Install
+## Why another one
 
-macOS 13 or newer.
+You most likely already have Rectangle, Magnet, Loop or Raycast. If a fixed grid
+of halves and thirds is all you want, they do it well. Plonk is for three things
+they do not do.
 
-```sh
-brew install --cask ostapondo/plonk/plonk
-```
+**Zones you draw.** Not a preset grid. Any number of zones, any size, a
+different set per monitor, overlapping if that suits you. Click a zone to split
+it, `⇧`-click to split the other way: a narrow rail for chat, a wide middle
+split in two, a strip for the terminal.
 
-Grant Accessibility when it asks, then relaunch. Screen Recording is asked for
-separately, the first time you capture. Nothing else: no Full Disk Access, no
-Automation, no Keychain.
+**Workspaces that remember which monitor.** Save the desk: the apps, every
+window's frame, and the display each one belongs on. Launch it onto an empty
+desktop and it rebuilds itself, on the right screens.
 
-<details>
-<summary>Installing by hand, and why macOS holds a downloaded copy</summary>
+**An agent can drive all of it.** Plonk ships an MCP server that covers its
+whole surface: layouts, workspaces, zones, keep-awake, screenshots, on-device
+OCR, measuring. Generic macOS automation servers can nudge a window around. This
+is the window manager itself, so "browser on the left 60%, terminal top right,
+save that as a workspace called review" is one sentence rather than a script.
 
-<br>
+The other seven tools, OCR and a ruler and keep-awake among them, are there
+because each was otherwise its own icon in the menu bar.
 
-Plonk is signed but **not notarized**. The certificate is self-signed rather
-than an Apple Developer ID, because notarizing needs a paid Apple account and
-this project does not have one. So macOS cannot vouch for who built it, and says
-so: a hand-downloaded copy is held on first launch. The cask skips that by
-clearing the quarantine flag for you.
-
-That is a check being skipped on your behalf, so here is a stronger one to run
-instead, before you open anything:
-
-```sh
-gh attestation verify $(brew --cache)/downloads/*--Plonk-0.2.5.zip \
-  -R ostapondo/plonk
-```
-
-It prints the commit and the GitHub Actions run that built this exact archive.
-Apple's stamp would tell you a build passed a malware scan; this tells you the
-binary came from the source in this repository, with no laptop in between.
-
-Without Homebrew: download [the latest release][rel], unzip, drop Plonk.app into
-Applications, then clear the flag yourself, which is all the cask does:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/Plonk.app
-```
-
-Or do the Gatekeeper detour once: open Plonk, dismiss the warning, then System
-Settings, Privacy & Security, scroll to Security, **Open Anyway**.
-
-If you later move or rename Plonk.app, macOS ties the old grant to the old path
-and windows of newly launched apps stop being seen. Remove Plonk from Privacy &
-Security, Accessibility, and grant it again.
-
-</details>
+**It is early.** Version 0.2.x, one author. Shortcuts, zone files and workspaces
+are settled. The MCP tool names and the HTTP API are not, and can still change
+between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 
 ## Three ways to move a window
 
@@ -86,10 +63,9 @@ on that screen. `⌃⌥0` puts a window back where it was before Plonk touched i
 **Say it.** Hold `⌃⌥V` and name the place: "snap this left", "zone three". That
 runs in the app, offline, on-device.
 
-Five zone sets ship with it. Past those you cut your own: click a zone to split
-it, `⇧`-click to split the other way, one set per monitor. Swap the set on a
-screen and windows already in a numbered zone move to wherever that number is
-now.
+Five zone sets ship with it, and past those you draw your own. Swap the set on a
+screen and any window already in a numbered zone moves to wherever that number
+is now.
 
 <p align="center">
   <img src="docs/zones.gif" width="720"
@@ -101,33 +77,113 @@ now.
        alt="Plonk's Zones page: zone sets across the top with Thirds selected and its three numbered zones drawn below, controls for drag-to-snap and the modifier that shows the zones, and the list of halves, quarters, maximize and centre with the shortcut bound to each">
 </p>
 
+## Install
+
+macOS 13 or newer, Apple silicon.
+
+```sh
+brew install --cask ostapondo/plonk/plonk
+```
+
+Grant Accessibility when it asks, then relaunch. Screen Recording is asked for
+separately, the first time you capture. Nothing else: no Full Disk Access, no
+Automation, no Keychain.
+
+Plonk is signed but not notarized, so macOS holds a copy you download by hand.
+The cask takes care of that for you.
+
+Running it alongside Rectangle or Magnet is fine, as long as their shortcuts do
+not collide.
+
+<details>
+<summary>Installing by hand, Intel Macs, tiling managers, and removing it</summary>
+
+<br>
+
+**Why macOS holds a downloaded copy.** The certificate is self-signed rather
+than an Apple Developer ID, because notarizing needs a paid Apple account and
+this project does not have one. macOS cannot vouch for who built it, and says
+so. The cask skips that check by clearing the quarantine flag for you.
+
+That is a check skipped on your behalf, so here is a stronger one to run before
+you open anything:
+
+```sh
+gh attestation verify $(brew --cache)/downloads/*--Plonk-*.zip \
+  -R ostapondo/plonk
+```
+
+It prints the commit and the GitHub Actions run that built this exact archive.
+Apple's stamp would tell you a build passed a malware scan. This tells you the
+binary came from the source in this repository, with no laptop in between.
+
+**Without Homebrew.** Download [the latest release][rel], unzip, drop Plonk.app
+into Applications, then clear the flag yourself, which is all the cask does:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Plonk.app
+```
+
+Or do the Gatekeeper detour once: open Plonk, dismiss the warning, then System
+Settings, Privacy & Security, scroll to Security, **Open Anyway**.
+
+**If you move or rename Plonk.app** later, macOS ties the old grant to the old
+path and windows of newly launched apps stop being seen. Remove Plonk from
+Privacy & Security, Accessibility, and grant it again.
+
+**On an Intel Mac.** Releases are built for Apple silicon only, so the download
+will not run. Building from source ought to work, see [Build](#build), but
+nobody has tried it and a report either way is welcome in [issues][hw].
+
+**Next to a tiling manager.** yabai and Amethyst own every window on screen and
+will pull windows straight back out of a zone. Run one or the other.
+
+**Removing it.** `brew uninstall --cask plonk`, or quit Plonk and drag it to the
+trash. Then delete `~/Library/Application Support/Plonk/`. The login item goes
+with the app, and nothing was written anywhere else.
+
+</details>
+
 ## What you get
 
-Eleven things. The first three are the window manager. The rest are what would
-otherwise each be another menu bar icon.
+The window manager is four things, and this is the part of each that the
+sections above left out.
 
 | | |
 | --- | --- |
-| **[Zones](docs/zones.md)** | Any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows return to their zone after a display is unplugged and plugged back in |
-| **[Workspaces](docs/workspaces.md)** | A desk you can put away: the apps, every window's frame, the monitor each belongs on, what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself |
+| **[Zones](docs/zones.md)** | Overlap them, gap them, hide the numbers, keep a list of apps Plonk never touches. Windows return to their zone after a display is unplugged and plugged back in |
+| **[Workspaces](docs/workspaces.md)** | Files, folders or URLs each app should open on the way up, so a desk comes back with the right documents and not just the right apps. Monitors are keyed by UUID, so unplugging one does not scramble them |
 | **Focus that follows the layout** | `⌃⌥⇧←` goes to the window actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
+| **Voice** | Hold `⌃⌥V` and say it. Common commands run in the app, offline. Anything bigger goes to your agent. Recognition is on-device |
+
+And the [MCP server](#for-agents), which is every one of these as a tool an
+agent can call.
+
+<details>
+<summary>Seven smaller things, behind the same menu bar icon</summary>
+
+<br>
+
+| | |
+| --- | --- |
 | **Text off the screen** | `⌃⌥T` selects an area and copies the words in it: a screenshot, a paused video, a dialog that will not let you select. On-device |
-| **A ruler** | `⌃⌥R`, then hover: how far the pointer can go each way before it meets an edge, found in the pixels. The width of a row, the height of a bar, the gap between two things. Drag for a distance. Points and pixels both |
+| **A ruler** | `⌃⌥R`, then hover: how far the pointer can go each way before it meets an edge, read off the pixels. The width of a row, the height of a bar, the gap between two things. Drag for a straight-line distance. Points and pixels both |
 | **Pin part of the screen** | Float a live crop above everything else. A build log, a chart, a call, visible in a corner while you work over it |
 | **Keep awake** | Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or when a process exits |
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |
 | **A shortcut guide** | Every shortcut the front app actually has, read from its own menus, so it is never out of date |
 | **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display |
-| **Voice** | Hold `⌃⌥V` and say it. Common commands run in the app, offline. Anything bigger goes to your agent. Recognition is on-device |
+
+</details>
 
 Longer versions: [Zones](docs/zones.md) · [Workspaces](docs/workspaces.md) ·
 [Hotkeys](docs/hotkeys.md) · [Everything else](docs/features.md)
 
 ## For agents
 
-Plonk exposes its whole surface over MCP, so an agent can read the desk,
-rearrange it, save the result, and read the screen back without a screenshot
-round trip for anything that is really just words.
+An agent can read the desk, rearrange it, save the result, and read text back
+off the screen, with no screenshot round trip for anything that is really just
+words.
 
 ```
 browser on the left 60%, terminal top right, notes bottom right
@@ -138,9 +194,9 @@ how tall is that toolbar, in points and in pixels
 ```
 
 Twenty tools across state, layouts, workspaces, zones, keep-awake, screenshots,
-on-device OCR and measuring. Frames are fractions of a monitor's visible area, origin
-top-left, so "left 60%" is `{x: 0, y: 0, w: 0.6, h: 1}`. Several agents can
-connect at once, each registering itself, with an optional mode that locks
+on-device OCR and measuring. Frames are fractions of a monitor's visible area,
+origin top-left, so "left 60%" is `{x: 0, y: 0, w: 0.6, h: 1}`. Several agents
+can connect at once, each registering itself, with an optional mode that locks
 changes to the active one.
 
 <p align="center">
@@ -201,7 +257,7 @@ gh attestation verify Plonk-<version>.zip -R ostapondo/plonk
 ```
 
 **[Check it yourself](docs/verify.md)** is every claim above with the command
-that tests it. [SECURITY.md](SECURITY.md) is where each one stops.
+that tests it. [SECURITY.md](SECURITY.md) says where each promise stops.
 
 ## Under the hood
 
