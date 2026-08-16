@@ -20,7 +20,7 @@ struct WorkspacesPage: View {
     @State private var renaming: String?
     @State private var renameDraft = ""
 
-    private let columns = [GridItem(.adaptive(minimum: 300), spacing: 11)]
+    private let columns = [GridItem(.adaptive(minimum: 330), spacing: 11, alignment: .top)]
 
     var body: some View {
         ScrollView {
@@ -45,7 +45,7 @@ struct WorkspacesPage: View {
                 }
                 Text(.workspacesListHelp)
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .muted()
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(20)
@@ -54,8 +54,11 @@ struct WorkspacesPage: View {
 
     // MARK: - Header
 
+    // The title says what the page is; saving a desk is the one thing it does,
+    // so that sits under it on a line of its own rather than being squeezed in
+    // beside a sentence that wraps.
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(.workspacesTitle)
                     .font(.system(size: 26, weight: .heavy))
@@ -65,19 +68,17 @@ struct WorkspacesPage: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 8)
             HStack(spacing: 7) {
                 TextField(text: $newName, prompt: Text(.workspacesName)) { Text(.workspacesName) }
                     .textFieldStyle(.roundedBorder)
                     .labelsHidden()
-                    .frame(width: 150)
+                    .frame(width: 190)
                     .onSubmit(save)
                 Button(String(localized: .commonSave), action: save)
                     .buttonStyle(.borderedProminent)
                     .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             .controlSize(.small)
-            .fixedSize()
         }
     }
 
@@ -119,7 +120,7 @@ struct WorkspacesPage: View {
                     Text(name).font(.system(size: 13.5, weight: .bold)).lineLimit(1)
                     Text(summary(items))
                         .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.tertiary)
+                        .muted()
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -167,8 +168,12 @@ struct WorkspacesPage: View {
         } label: {
             Image(systemName: "ellipsis.circle")
         }
+        // A borderless menu still draws its own chevron beside the label, which
+        // next to a three-dot glyph reads as a rendering fault rather than as a
+        // control. The dots are the indicator.
         .menuStyle(.borderlessButton)
-        .frame(width: 24)
+        .menuIndicator(.hidden)
+        .fixedSize()
     }
 
     private func rename(_ name: String) -> some View {

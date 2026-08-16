@@ -64,7 +64,7 @@ struct ZoneSetPaletteView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            Image(systemName: "rectangle.3.group").foregroundStyle(.tertiary)
+            Image(systemName: "rectangle.3.group").muted()
             Text(.zoneSetTitle).font(.system(size: 13, weight: .semibold))
             Spacer()
             Text(screenLabel).font(.system(size: 11)).foregroundStyle(.secondary)
@@ -162,7 +162,7 @@ struct ZoneSetPaletteView: View {
     private func hint(_ keys: [String], _ label: String) -> some View {
         HStack(spacing: 5) {
             KeyCaps(parts: keys)
-            Text(label).font(.system(size: 10.5)).foregroundStyle(.tertiary)
+            Text(label).font(.system(size: 10.5)).muted()
         }
     }
 

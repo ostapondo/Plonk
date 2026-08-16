@@ -99,20 +99,9 @@ struct MainWindowView: View {
                 StatusPill(title: .appAgentCount(model.connectedAgents.count), ok: true)
                     .help(model.connectedAgents.joined(separator: ", "))
             }
-            Button { model.actions?.openCommandPalette() } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 10.5))
-                    Text("⌘K").font(.system(size: 10.5, design: .monospaced))
-                }
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 7)
-                .frame(height: 21)
-                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Ink.capFill))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help(String(localized: .appRunACommand))
         }
+        // No search button here: the sidebar already carries "Run a command"
+        // with the same shortcut on it, and one way in is one way in.
         .padding(.horizontal, 14)
         .frame(height: Self.bar)
         .background(Ink.chrome(scheme))

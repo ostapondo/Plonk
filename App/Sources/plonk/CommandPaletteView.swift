@@ -42,7 +42,7 @@ struct CommandPaletteView: View {
 
     private var field: some View {
         HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass").foregroundStyle(.tertiary)
+            Image(systemName: "magnifyingglass").muted()
             TextField(String(localized: .palettePrompt), text: $query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 15))
@@ -67,7 +67,7 @@ struct CommandPaletteView: View {
                             Text(section.name.uppercased())
                                 .font(.system(size: 9.5, weight: .bold))
                                 .kerning(0.9)
-                                .foregroundStyle(.tertiary)
+                                .muted()
                                 .padding(.horizontal, 16)
                                 .padding(.top, 11)
                                 .padding(.bottom, 4)
@@ -156,7 +156,7 @@ struct CommandPaletteView: View {
     private func hint(_ keys: [String], _ label: String) -> some View {
         HStack(spacing: 5) {
             KeyCaps(parts: keys)
-            Text(label).font(.system(size: 10.5)).foregroundStyle(.tertiary)
+            Text(label).font(.system(size: 10.5)).muted()
         }
     }
 

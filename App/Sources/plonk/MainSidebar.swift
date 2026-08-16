@@ -84,7 +84,7 @@ struct MainSidebar: View {
         Text(String(localized: title).uppercased())
             .font(.system(size: 11, weight: .bold))
             .kerning(0.45)
-            .foregroundStyle(.tertiary)
+            .muted()
             .padding(.horizontal, 8)
             .padding(.top, 9)
             .padding(.bottom, 4)
@@ -178,9 +178,12 @@ struct MainSidebar: View {
                 .frame(maxWidth: .infinity)
                 .help(String(localized: .appReportBug))
             } else {
-                Image(systemName: "cube")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Ink.gradient(model.accent))
+                // The bundle's own icon, not an SF Symbol that looks like it:
+                // the cube is a drawing with three coloured faces, and a
+                // monochrome glyph of a box is a different mark entirely.
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 16, height: 16)
                 Text(model.appVersion.isEmpty
                      ? String(localized: .appName)
                      : String(localized: .appNameVersion(model.appVersion)))

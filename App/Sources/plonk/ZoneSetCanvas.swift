@@ -171,7 +171,7 @@ struct ZoneSetCanvas: View {
                 if zones.isEmpty {
                     Text(.homeEdgeSnapping)
                         .font(.system(size: 12.5))
-                        .foregroundStyle(.tertiary)
+                        .muted()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
@@ -220,6 +220,6 @@ struct ZoneSetCanvas: View {
     private var hint: some View {
         Text(assigned == nil ? .zoneSetEdgeHint : .zoneSetZoneHint)
             .font(.caption)
-            .foregroundStyle(.tertiary)
+            .muted()
     }
 }

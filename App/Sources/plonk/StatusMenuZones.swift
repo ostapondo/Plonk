@@ -30,7 +30,7 @@ struct StatusMenuZones: View {
             if zones.isEmpty {
                 Text(.zoneSetEdgeHint)
                     .font(.system(size: 11.5))
-                    .foregroundStyle(.tertiary)
+                    .muted()
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {

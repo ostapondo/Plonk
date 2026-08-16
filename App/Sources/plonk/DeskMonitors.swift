@@ -28,7 +28,7 @@ struct DeskMonitors: View {
     }
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(alignment: .top, spacing: 5) {
             if screens.isEmpty {
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
                     .fill(Color.primary.opacity(0.06))
@@ -51,7 +51,9 @@ struct DeskMonitors: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity)
+        // Shaped like a screen rather than stretched to whatever is left: a bar
+        // the width of the card reads as a colour swatch, not as a monitor.
+        .aspectRatio(16.0 / 10, contentMode: .fit)
     }
 
     private func tile(_ window: WorkspaceItem, set: [ZoneRect], in size: CGSize) -> some View {

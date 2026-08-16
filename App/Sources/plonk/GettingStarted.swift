@@ -119,10 +119,10 @@ struct GettingStartedCard: View {
         HStack(alignment: .top, spacing: 7) {
             Image(systemName: "eye.slash")
                 .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
+                .muted()
             Text(.startNeverAsked)
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .muted()
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
