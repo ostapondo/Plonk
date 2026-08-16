@@ -178,12 +178,11 @@ struct MainSidebar: View {
                 .frame(maxWidth: .infinity)
                 .help(String(localized: .appReportBug))
             } else {
-                // The bundle's own icon, not an SF Symbol that looks like it:
-                // the cube is a drawing with three coloured faces, and a
-                // monochrome glyph of a box is a different mark entirely.
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: 16, height: 16)
+                // The mark itself, drawn: the bundle icon is the whole macOS
+                // tile, rounded square and all, and shrinking that to 16 points
+                // beside a line of text puts a picture of an app icon in the
+                // sidebar rather than the cube.
+                PlonkCube().frame(height: 16)
                 Text(model.appVersion.isEmpty
                      ? String(localized: .appName)
                      : String(localized: .appNameVersion(model.appVersion)))
