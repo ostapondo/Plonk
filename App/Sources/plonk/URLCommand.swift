@@ -34,7 +34,8 @@ enum URLCommand: Equatable {
     static func parse(_ url: URL) -> Result<URLCommand, Failure> {
         let scheme = url.scheme?.lowercased() ?? ""
         guard schemes.contains(scheme) else { return .failure(.unknownScheme(scheme)) }
-        guard url.host() == host else { return .failure(.unknownHost(url.host() ?? "")) }
+        let verb = url.host()?.lowercased() ?? ""
+        guard verb == host else { return .failure(.unknownHost(verb)) }
         let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         guard let name = query.first(where: { $0.name == "name" })?.value, !name.isEmpty else {
             return .failure(.missingName)

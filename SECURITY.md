@@ -221,8 +221,10 @@ What it cannot reach:
 - **Nothing the API guards.** There is no URL for `/shot/capture`, `/shot/text`
   or `/state`, so the silent capture, the screen read and the window list stay
   behind the token. `capture-region` and `capture-text` open the interactive
-  picker and wait for you to drag a rectangle, the same as the shortcut does;
-  neither returns anything to the caller.
+  picker and wait for you to drag a rectangle, the same as the shortcut does,
+  and neither returns anything to the caller. `capture-text` does put what it
+  read on the clipboard, which anything running as you can then read — the
+  same as pressing `⌃⌥T`, but worth knowing about a surface a page can poke.
 - **The microphone.** `voice` is push-to-talk and ends when the key comes back
   up, which a URL has no way of doing, so it is refused outright rather than
   started with nothing to stop it.
@@ -238,8 +240,9 @@ that scheme unless you turn on **Shortcuts → Answer rectangle:// URLs too**,
 and it hands it back to an installed Rectangle if it is ever handed it without
 being asked. See [docs/from-rectangle.md](docs/from-rectangle.md).
 
-If you want none of it: quit Plonk and the scheme goes with it, since a URL
-scheme belongs to an installed bundle rather than to a running process.
+Quitting does not turn it off. A URL scheme belongs to an installed bundle
+rather than to a running process, so a `plonk://` URL launches the app and then
+runs the action. Removing Plonk is what removes the scheme.
 
 `/ping` stays open on purpose, so a client can tell a closed app from a stale
 token. It answers whether Plonk is running and nothing else.

@@ -94,9 +94,11 @@ silently, because nothing tells an app it has lost a scheme. If you have
 removed Rectangle there is nobody to lose it and the switch costs nothing.
 
 Off is not passive either. Merely declaring the scheme is enough for macOS to
-hand it over on install, so if a `rectangle://` URL ever arrives while the
-switch is off, Plonk hands the scheme back to Rectangle and runs that one URL
-anyway. The switch shows what macOS actually does, not what was asked for.
+hand it over on install, so Plonk checks at every launch and gives it back to
+an installed Rectangle. If one of those URLs arrives anyway, it is refused
+rather than run, and Plonk says on screen that the switch is off — with no
+Rectangle installed there is nobody to hand the scheme to, and refusing is
+then the only thing that makes the switch mean what it says.
 
 ## Running both at once
 

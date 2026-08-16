@@ -125,8 +125,9 @@ final class AppModel: ObservableObject {
     @Published var zonesRequireModifier = true
     @Published var zonesModifier = "shift"
     @Published var zoneGap = 0.0
-    /// Whether macOS currently opens rectangle:// URLs with this app. Read back
-    /// from the system, not from config, so the switch cannot show a wish.
+    /// Whether this app answers rectangle:// URLs. Off means it refuses them
+    /// even while still holding the scheme, which is the only reading that
+    /// stays true with no Rectangle installed to hand it back to.
     @Published var handleRectangleURLs = false
     @Published var zoneOpacity = 1.0
     @Published var zoneColorHex: String?

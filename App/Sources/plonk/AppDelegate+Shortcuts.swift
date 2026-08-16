@@ -19,7 +19,8 @@ extension AppDelegate {
     func refreshHotkeyModel() {
         let bindings = store.config.resolvedHotkeys
         model.hotkeyDisplays = HotkeyAction.allCases.reduce(into: [:]) { result, action in
-            result[action.rawValue] = bindings[action]?.display ?? "None"
+            result[action.rawValue] = bindings[action]?.display
+                ?? String(localized: .shortcutUnbound)
         }
         model.hotkeyParts = HotkeyAction.allCases.reduce(into: [:]) { result, action in
             result[action.rawValue] = bindings[action]?.parts ?? []

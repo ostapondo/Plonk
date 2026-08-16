@@ -532,6 +532,8 @@
 "hud.urlHeldDown %@" = "%@ runs while a key is held, so a URL cannot drive it";
 "hud.rectangleTook %@" = "Rectangle's shortcuts are in. Keys taken from %@";
 "hud.rectangleLeftBehind %@" = "Rectangle's shortcuts are in. Not these: %@";
+"hud.rectangleTookAndLeft %@ %@" = "Rectangle's shortcuts are in. Keys taken from %1$@; not imported: %2$@";
+"hud.rectangleUrlsOff" = "Answering rectangle:// URLs is off, on the Shortcuts page";
 "hud.rectangleNoneMatched %@" = "Nothing in Rectangle's setup has a counterpart here: %@";
 "hud.urlUnreadable" = "That URL named no action";
 "hud.urlUnknown %@" = "Nothing here is called %@";

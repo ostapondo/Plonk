@@ -26,10 +26,14 @@ enum RectangleURLs {
     /// running a quarantined copy from a shadow mount, and comparing paths
     /// would read as "not us" and quietly stop handing the scheme back.
     static var isHandler: Bool {
-        guard let probe = URL(string: "\(scheme)://\(URLCommand.host)?name=left-half"),
+        // Both sides have to exist. Unbundled through `swift run` there is no
+        // identifier on this side, and a handler whose bundle will not load has
+        // none on the other; nil == nil would read as "us".
+        guard let mine = Bundle.main.bundleIdentifier,
+              let probe = URL(string: "\(scheme)://\(URLCommand.host)?name=left-half"),
               let handler = NSWorkspace.shared.urlForApplication(toOpen: probe)
         else { return false }
-        return Bundle(url: handler)?.bundleIdentifier == Bundle.main.bundleIdentifier
+        return Bundle(url: handler)?.bundleIdentifier == mine
     }
 
     enum Move: Equatable {

@@ -10,11 +10,18 @@ extension AppDelegate {
 
     /// Take the bindings that mean the same thing here.
     ///
-    /// Live preferences first, since those are what the user is pressing. A
-    /// `RectangleConfig.json` is the fallback, which covers someone who
-    /// exported on an old machine and never installed Rectangle on this one.
+    /// Reading means a round trip to `cfprefsd` for another app's preferences
+    /// and possibly a file off disk, neither of which may happen on the main
+    /// queue. Only the applying comes back.
     func importFromRectangle() {
-        guard let found = readRectangleSetup(), !found.isEmpty else {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let found = Self.readRectangleSetup()
+            OnMain.run { [weak self] in self?.applyRectangleSetup(found) }
+        }
+    }
+
+    private func applyRectangleSetup(_ found: RectangleImport.Found?) {
+        guard let found, !found.isEmpty else {
             HUD.shared.show(.hudRectangleNothing)
             return
         }
@@ -37,24 +44,27 @@ extension AppDelegate {
     private func outcome(
         of found: RectangleImport.Found, displaced: [HotkeyAction]
     ) -> LocalizedStringResource {
-        let left = found.unmapped.map(Self.readable)
+        let left = ListFormatter.localizedString(byJoining: found.unmapped.map(Self.readable))
         if found.bindings.isEmpty {
-            // Nothing bound. Which kind of nothing matters: pointing someone at
-            // the zone sets is only useful if the grid is what they lost.
+            // An empty list satisfies every test, so ask whether there is one
+            // before asking what is in it: a setup holding nothing but a gap
+            // would otherwise be reported as having been all thirds.
+            guard !found.unmapped.isEmpty else { return .hudRectangleImported }
             return found.unmapped.allSatisfy(RectangleImport.isFixedGrid)
                 ? .hudRectangleGridOnly
-                : .hudRectangleNoneMatched(ListFormatter.localizedString(byJoining: left))
+                : .hudRectangleNoneMatched(left)
         }
-        // A key that has stopped working outranks a key that never started, and
-        // all of them are named either way: the page promises none go quietly.
-        if !displaced.isEmpty {
-            let names = displaced.map { String(localized: $0.title) }
-            return .hudRectangleTook(ListFormatter.localizedString(byJoining: names))
+        let taken = ListFormatter.localizedString(
+            byJoining: displaced.map { String(localized: $0.title) }
+        )
+        switch (displaced.isEmpty, found.unmapped.isEmpty) {
+        case (true, true): return .hudRectangleImported
+        case (true, false): return .hudRectangleLeftBehind(left)
+        case (false, true): return .hudRectangleTook(taken)
+        // Both, in one sentence: a key that stopped working is the more urgent
+        // half, and the page promises the other half is named too.
+        case (false, false): return .hudRectangleTookAndLeft(taken, left)
         }
-        if !left.isEmpty {
-            return .hudRectangleLeftBehind(ListFormatter.localizedString(byJoining: left))
-        }
-        return .hudRectangleImported
     }
 
     /// Rectangle's own key for an action, as words. The config stores
@@ -66,11 +76,15 @@ extension AppDelegate {
         }
     }
 
-    private func readRectangleSetup() -> RectangleImport.Found? {
-        // Bindings, not merely something: an installed Rectangle whose only
-        // stored value is a gap should not shadow an export that has the keys.
-        if let domain = UserDefaults(suiteName: RectangleImport.defaultsSuite)?
-            .dictionaryRepresentation() {
+    /// Rectangle's own domain, not the search list `UserDefaults(suiteName:)`
+    /// would merge: that folds in this app's preferences and the globals, and
+    /// anything in them shaped like a shortcut would be read as Rectangle's.
+    private static func readRectangleSetup() -> RectangleImport.Found? {
+        if let domain = UserDefaults.standard.persistentDomain(
+            forName: RectangleImport.defaultsSuite
+        ) {
+            // Bindings, not merely something: an installed Rectangle whose only
+            // stored value is a gap should not shadow an export with the keys.
             let found = RectangleImport.read(defaults: domain)
             if !found.bindings.isEmpty || !found.unmapped.isEmpty { return found }
         }
@@ -82,9 +96,6 @@ extension AppDelegate {
     // MARK: - URLs
 
     /// Ask macOS to send `rectangle://` here too, or hand it back.
-    ///
-    /// The switch shows what macOS settled on rather than what was asked of it,
-    /// which is why the model is written from the callback and not from `on`.
     func setRectangleURLs(_ on: Bool) {
         store.update { $0.handleRectangleURLs = on }
         // Asking who holds a scheme is a round trip to lsd, and this runs from
@@ -109,29 +120,34 @@ extension AppDelegate {
     }
 
     private func open(_ url: URL) {
-        returnRectangleURLsIfUnwanted(url)
+        // The setting decides whether this app answers, not merely whether it
+        // asked for the scheme. Holding one it was handed by accident is not a
+        // reason to act on it, and with no Rectangle installed there is nobody
+        // to hand it back to — so refusing here is the only thing that makes
+        // the switch mean what it says.
+        if url.scheme?.lowercased() == RectangleURLs.scheme, !store.config.handleRectangleURLs {
+            returnRectangleURLs()
+            HUD.shared.show(.hudRectangleUrlsOff)
+            return
+        }
         switch URLCommand.parse(url) {
         case .success(.action(let action)):
             perform(action)
         case .failure(.fixedGridAction(let name)):
             HUD.shared.show(.hudUrlZoneSet(name))
-        case .failure(.unknownAction(let name)):
-            HUD.shared.show(.hudUrlUnknown(name))
         case .failure(.heldDownAction(let name)):
             HUD.shared.show(.hudUrlHeldDown(name))
+        case .failure(.unknownAction(let name)):
+            HUD.shared.show(.hudUrlUnknown(name))
         case .failure(.missingName), .failure(.unknownHost), .failure(.unknownScheme):
             HUD.shared.show(.hudUrlUnreadable)
         }
     }
 
-    /// A `rectangle://` URL arriving while the setting is off means the scheme
-    /// was won by accident, which declaring it is enough to do. Hand it back,
-    /// and still run this one rather than drop it.
-    ///
-    /// The only moment that mistake is observable, so the only place to check.
-    private func returnRectangleURLsIfUnwanted(_ url: URL) {
-        guard url.scheme?.lowercased() == RectangleURLs.scheme,
-              !store.config.handleRectangleURLs else { return }
+    /// Declaring a scheme is enough to be handed it, so a `rectangle://` URL
+    /// arriving while the setting is off means this app is holding one nobody
+    /// asked for. Give it back if there is a Rectangle to take it.
+    private func returnRectangleURLs() {
         DispatchQueue.global(qos: .utility).async {
             RectangleURLs.setHandled(false) { [weak self] holding in
                 self?.model.handleRectangleURLs = holding

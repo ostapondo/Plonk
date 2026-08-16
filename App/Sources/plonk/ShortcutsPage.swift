@@ -66,6 +66,7 @@ struct ShortcutsPage: View {
                 }
             }
             .opacity(model.hotkeysEnabled ? 1 : 0.5)
+            .disabled(!model.hotkeysEnabled)
             Section {
                 Toggle(isOn: model.binding(\.handleRectangleURLs,
                                            set: { $0.setRectangleURLs($1) })) {

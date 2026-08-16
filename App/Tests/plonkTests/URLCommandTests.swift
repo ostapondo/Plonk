@@ -102,6 +102,12 @@ struct URLCommandTests {
         #expect(parse("plonk://execute-task?name=ignore-app") == .failure(.unknownHost("execute-task")))
     }
 
+    /// The scheme was already case-insensitive and the verb beside it was not,
+    /// though RFC 3986 makes the whole authority case-insensitive.
+    @Test func theVerbIsNotCaseSensitiveEither() {
+        #expect(parse("plonk://Execute-Action?name=left-half") == .success(.action(.leftHalf)))
+    }
+
     @Test func somethingNobodyAnswersToIsRefused() {
         #expect(parse("plonk://execute-action?name=fly-away") == .failure(.unknownAction("fly-away")))
     }

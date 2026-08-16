@@ -34,7 +34,7 @@ struct ZonesTuning: View {
                      note: .zonesOverlayHelp) {
             SettingBlock {
                 PointsField(title: .zonesGap, help: .zonesGapHelp,
-                            placeholder: "0", range: 0...Config.gapLimit, value: model.zoneGap) {
+                            placeholder: "0", range: 0...Int(Config.gapLimit), value: model.zoneGap) {
                     model.actions?.setZoneGap($0)
                 }
             }
