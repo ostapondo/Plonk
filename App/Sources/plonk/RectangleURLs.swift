@@ -2,16 +2,13 @@ import AppKit
 
 // Answering `rectangle://` as well as this app's own scheme, if asked to.
 //
-// Both schemes are declared in the bundle, which makes this an eligible handler
-// for each. Eligible is not the same as chosen: which app LaunchServices hands
-// a scheme to when two of them claim it is not something Apple documents, and
-// in practice it follows whichever bundle was registered last. So the choice is
-// made here, out loud, rather than left to an accident of install order.
+// Declaring both schemes in the bundle makes this an eligible handler for
+// each, which is not the same as being the chosen one. Apple does not document
+// how LaunchServices picks between two claimants, and in practice it follows
+// install order, so the choice is made here through NSWorkspace instead.
 //
-// Off unless the user says otherwise, and off means off. Declaring the scheme
-// is enough to win it by accident, so this hands it back to an installed
-// Rectangle when it finds itself holding something nobody asked for. A setting
-// that only described what should have happened would not be worth having.
+// Off unless asked for. Since declaring a scheme is enough to win it by
+// accident, off also means handing it back to an installed Rectangle.
 
 enum RectangleURLs {
     static let scheme = "rectangle"
@@ -30,26 +27,35 @@ enum RectangleURLs {
         return handler.standardizedFileURL == Bundle.main.bundleURL.standardizedFileURL
     }
 
-    /// Take the scheme, or give it back. Nothing happens when the answer is
-    /// already right, so this is safe to call on every launch and every toggle.
+    enum Move: Equatable {
+        case take
+        case giveBack
+        case nothing
+    }
+
+    /// The rule `setHandled` follows, without the LaunchServices database it
+    /// would otherwise take to check.
     ///
-    /// Giving it back needs somewhere to give it to. With no Rectangle
-    /// installed there is no other claimant, so the scheme stays here and
-    /// `wanted` was only ever about whether to ask for it.
+    /// Giving the scheme back needs a claimant: with no Rectangle installed it
+    /// stays here whatever `wanted` says, because there is nowhere to put it.
+    static func move(wanted: Bool, isHandler: Bool, rectangleInstalled: Bool) -> Move {
+        if wanted { return isHandler ? .nothing : .take }
+        return isHandler && rectangleInstalled ? .giveBack : .nothing
+    }
+
+    /// Take the scheme, or give it back. A no-op when the answer already
+    /// matches, so it is safe to call repeatedly.
     static func setHandled(_ wanted: Bool) {
-        if wanted {
-            guard !isHandler else { return }
-            hand(to: Bundle.main.bundleURL)
-        } else {
-            guard isHandler, let rectangle = installed else { return }
-            hand(to: rectangle)
+        switch move(wanted: wanted, isHandler: isHandler, rectangleInstalled: installed != nil) {
+        case .take: hand(to: Bundle.main.bundleURL)
+        case .giveBack: if let rectangle = installed { hand(to: rectangle) }
+        case .nothing: break
         }
     }
 
-    /// macOS asks the user before a default handler changes for http, https and
-    /// html. A private scheme like this one is not on that list, so this is the
-    /// whole of it: no prompt, and no way to be sure it took except by asking
-    /// again, which `isHandler` does.
+    /// macOS prompts before a default handler changes for http, https and
+    /// html. A private scheme is not on that list, so this runs unprompted and
+    /// the only way to confirm it took is to ask again with `isHandler`.
     private static func hand(to app: URL) {
         NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: scheme) { error in
             if let error {

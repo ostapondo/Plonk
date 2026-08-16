@@ -2,17 +2,12 @@ import Foundation
 
 // plonk://execute-action?name=left-half
 //
-// The vocabulary is Rectangle's, deliberately. Anyone arriving here already
-// has `rectangle://execute-action?name=…` written into a Raycast script, an
-// Alfred workflow or a Stream Deck button, and the names in those should keep
-// working after the scheme is swapped; docs/from-rectangle.md is one sed away.
+// The action names are Rectangle's, so a Raycast script or a Stream Deck
+// button that already drives Rectangle needs only its scheme swapped. Names
+// past the ten shared placements are this app's own.
 //
-// Both schemes are answered here. Whether macOS actually hands this app a
-// `rectangle://` URL is a different question, decided out loud in RectangleURLs
-// rather than left to whichever bundle LaunchServices registered last.
-//
-// Everything past the shared vocabulary is named after the action, so the zones
-// and the tools are reachable too.
+// Both schemes parse here. Whether macOS actually delivers a `rectangle://`
+// URL to this app is a separate question; see RectangleURLs.
 
 enum URLCommand: Equatable {
     case action(HotkeyAction)
@@ -30,9 +25,6 @@ enum URLCommand: Equatable {
         case fixedGridAction(String)
     }
 
-    /// Both are declared in the bundle. Whether this app is what macOS hands
-    /// a `rectangle://` URL to is a separate question, and one the user
-    /// answers; see RectangleURLs.
     static let schemes: Set<String> = ["plonk", RectangleURLs.scheme]
     static let host = "execute-action"
 
@@ -55,17 +47,15 @@ enum URLCommand: Equatable {
 
     /// Rectangle's names for things this app calls something else.
     ///
-    /// `next-display` and `previous-display` are not here on purpose. Those
-    /// move the window to another screen; the nearest thing here, `jump-cursor`,
-    /// moves the pointer and leaves the window where it is. Answering to the
-    /// name and doing the other thing is worse than not answering.
+    /// `next-display` and `previous-display` are deliberately absent: they move
+    /// the window to another screen, and the nearest thing here, `jump-cursor`,
+    /// moves the pointer instead.
     static let aliases: [String: HotkeyAction] = [
         "restore": .unsnap,
     ]
 
     /// Rectangle actions that are a zone set here rather than a fixed fraction
-    /// of the screen. Listed so that a script asking for one is told why it did
-    /// not happen, instead of appearing to work.
+    /// of the screen. Listed so a script asking for one gets told why.
     static let fixedGrid: Set<String> = [
         "first-third", "center-third", "last-third",
         "first-two-thirds", "last-two-thirds", "center-two-thirds",
@@ -85,9 +75,9 @@ enum URLCommand: Equatable {
 
 extension HotkeyAction {
     /// The name this action answers to in a URL. Spelled out rather than
-    /// derived from the case name: this is a public surface other people's
-    /// scripts hold, so it should only ever change on purpose. The ten window
-    /// placements match Rectangle's spelling exactly.
+    /// derived from the case name, since other people's scripts hold these and
+    /// a rename should take a deliberate edit. The ten placements match
+    /// Rectangle's spelling.
     var urlName: String {
         switch self {
         case .leftHalf: return "left-half"

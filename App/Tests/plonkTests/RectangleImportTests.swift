@@ -169,4 +169,49 @@ struct RectangleImportTests {
         RectangleImport.apply(RectangleImport.Found(gapPoints: 4000), to: &config)
         #expect(config.zoneGap == Config.gapLimit)
     }
+
+    /// Importing the same setup twice should land in the same place. A second
+    /// run reporting another displacement would mean the report describes the
+    /// config's history rather than this import.
+    @Test func applyingTheSameReadTwiceChangesNothingTheSecondTime() {
+        var config = Config()
+        let found = RectangleImport.Found(
+            bindings: [.leftHalf: Hotkey(keyCode: UInt32(kVK_ANSI_T), control: true, option: true)],
+            gapPoints: 8
+        )
+        let first = RectangleImport.apply(found, to: &config)
+        let snapshot = config.hotkeys
+        let second = RectangleImport.apply(found, to: &config)
+        #expect(first == [.captureText])
+        #expect(second.isEmpty)
+        #expect(config.hotkeys == snapshot)
+        #expect(config.zoneGap == 8)
+    }
+
+    /// An action Rectangle itself has unbound is not something this app failed
+    /// to map, so it does not belong in the list of what was left behind.
+    @Test func anUnboundFixedGridActionIsNotReportedEither() throws {
+        let data = export(shortcuts: #"""
+        {"firstThird":{"keyCode":-1,"modifierFlags":0},
+         "lastThird":{"keyCode":5,"modifierFlags":786432}}
+        """#)
+        let found = try #require(RectangleImport.read(exportedJSON: data))
+        #expect(found.unmapped == ["lastThird"])
+    }
+
+    // MARK: - The setting that survives a restart
+
+    @Test func theRectangleUrlSettingRoundTripsThroughJson() throws {
+        var config = Config()
+        config.handleRectangleURLs = true
+        let data = try JSONEncoder().encode(config)
+        #expect(try JSONDecoder().decode(Config.self, from: data).handleRectangleURLs)
+    }
+
+    /// Every field is optional on the way in, so a config written before this
+    /// setting existed decodes rather than throwing.
+    @Test func aConfigWrittenBeforeTheSettingDecodesWithItOff() throws {
+        let config = try JSONDecoder().decode(Config.self, from: Data("{}".utf8))
+        #expect(config.handleRectangleURLs == false)
+    }
 }
