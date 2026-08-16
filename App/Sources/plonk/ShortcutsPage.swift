@@ -54,6 +54,11 @@ struct ShortcutsPage: View {
             }
             Section {
                 Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
+                Button(String(localized: .keysImportRectangle)) {
+                    model.actions?.importFromRectangle()
+                }
+            } footer: {
+                Text(.keysImportRectangleHelp)
             }
         }
         .formStyle(.grouped)

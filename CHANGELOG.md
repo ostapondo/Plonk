@@ -13,6 +13,44 @@ one of those.
 
 ## Unreleased
 
+### Added
+
+- **Switching from Rectangle costs nothing now.** The ten placement shortcuts
+  were already the same keys in both apps — `⌃⌥` and an arrow, a corner letter,
+  return or C — because that is the one combination macOS leaves alone and both
+  landed on it. What was missing was everything either side of that: a changed
+  binding had to be re-entered by hand, and a `rectangle://execute-action` URL
+  sitting in a Raycast script or on a Stream Deck button did nothing at all.
+
+  **Shortcuts → Import from Rectangle** reads the preferences of an installed
+  copy, or a `RectangleConfig.json` exported from an old machine, and takes the
+  bindings that mean the same thing here: the halves, the corners, maximize,
+  centre, restore, and the window gap. Rectangle's thirds, sixths, eighths and
+  ninths are deliberately left behind and named instead of imported. They are a
+  fixed grid; the equivalent here is a zone set, and there is no way to know
+  which numbered zone a "first third" should be without knowing what set that
+  screen is wearing. Guessing would put windows somewhere wrong on every screen
+  not using Thirds. If an imported key was already doing something — `⌃⌥T` copies
+  text out of a region — the imported binding wins and the app says what lost it.
+
+  URLs answer to the same verb and the same names:
+  `open -g "plonk://execute-action?name=left-half"`. The ten placements are
+  spelled exactly as Rectangle spells them and `restore` is accepted alongside
+  `unsnap`, so an existing script is one `sed` away. Past that the vocabulary is
+  this app's own: `zone-1` to `zone-9`, `zone-set-1` to `zone-set-9`,
+  `cycle-zone`, `focus-left`, `capture-text`, `ruler`, and one name for every
+  other shortcut. Asking for a fixed-grid action, or for `next-display`, says so
+  on screen rather than failing quietly — the nearest thing to `next-display`
+  here moves the pointer and not the window, and answering to the name while
+  doing something else would be worse than not answering.
+
+  Plonk does not register `rectangle://` itself. Two apps claiming one scheme
+  leaves macOS choosing between them, and the copy of Rectangle still installed
+  would be the one that quietly stopped working.
+
+  [docs/from-rectangle.md](docs/from-rectangle.md) is the whole of it, including
+  what happens when both apps are running and hold the same key.
+
 ### Changed
 
 - **Every word the app says now lives in one file.** The text was written into

@@ -12,6 +12,9 @@ protocol AppActions: AnyObject {
     func setHotkey(_ action: HotkeyAction, to hotkey: Hotkey)
     func clearHotkey(_ action: HotkeyAction)
     func resetHotkeys()
+    /// Take whatever bindings an installed or exported Rectangle has that mean
+    /// the same thing here. See RectangleImport.
+    func importFromRectangle()
     func setDragSnap(_ on: Bool)
     func setZonesRequireModifier(_ on: Bool)
     func setZonesModifier(_ name: String)

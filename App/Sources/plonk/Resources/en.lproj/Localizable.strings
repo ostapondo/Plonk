@@ -526,6 +526,12 @@
 "hud.hotkeyTaken %@ %@" = "%1$@ taken from %2$@";
 "hud.noActiveAgent" = "No active agent. Pick one from the menu bar first.";
 "hud.wentNowhere" = "That did not go anywhere";
+"hud.rectangleImported" = "Rectangle's shortcuts are in";
+"hud.rectangleNothing" = "No Rectangle settings found on this Mac";
+"hud.rectangleTook %@" = "Rectangle's shortcuts are in. %@ lost its key";
+"hud.urlUnreadable" = "That URL named no action";
+"hud.urlUnknown %@" = "Nothing here is called %@";
+"hud.urlZoneSet %@" = "%@ is a zone set here. Use zone-1 to zone-9";
 "hud.waitingFor %@ %@" = "Waiting for %1$@ to connect: %2$@";
 "hud.sentTo %@ %@" = "→ %1$@: %2$@";
 "hud.working %@ %@ %lld" = "%1$@ is working %2$@  %3$llds";
@@ -558,6 +564,8 @@
 "keys.palette" = "Palette";
 "keys.paletteHelp" = "Run anything in Plonk by name, over whatever you are looking at. What is not a command can be sent to the active agent as a sentence, with ⌘return. Press the key again to close it.";
 "keys.restoreDefaults" = "Restore Defaults";
+"keys.importRectangle" = "Import from Rectangle";
+"keys.importRectangleHelp" = "Takes the halves, corners, maximize, centre and restore bindings from Rectangle, whether it is installed or you exported its settings. Thirds and the other fixed fractions are a zone set here, so those are left alone.";
 "keys.setOnPage %@" = "Set on the %@ page";
 "palette.askTheAgent" = "ask the agent";
 

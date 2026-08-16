@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let agents = AgentRegistry()
     private let eventBroadcaster = EventBroadcaster()
     private let voice = VoiceManager()
-    private let hotkeys = HotkeyManager()
+    let hotkeys = HotkeyManager()
     private let updates = UpdateManager()
     let model = AppModel()
     private let snapMemory = SnapMemory()
@@ -268,7 +268,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func refreshHotkeyModel() {
+    func refreshHotkeyModel() {
         let bindings = store.config.resolvedHotkeys
         model.hotkeyDisplays = HotkeyAction.allCases.reduce(into: [:]) { result, action in
             result[action.rawValue] = bindings[action]?.display ?? "None"
@@ -908,7 +908,7 @@ extension AppDelegate: AppActions {
     }
 
     func setZoneGap(_ points: Double) {
-        store.update { $0.zoneGap = max(0, min(points, 40)) }
+        store.update { $0.zoneGap = max(0, min(points, Config.gapLimit)) }
         model.zoneGap = store.config.zoneGap
     }
 

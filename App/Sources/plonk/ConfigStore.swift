@@ -41,6 +41,9 @@ struct Config: Codable {
     // window. The gap is in points and applies to the placed window too, not
     // just the drawing, so zones can be given breathing room.
     var zoneGap: Double = 0
+    /// The most gap anything may set, wherever it is set from: the slider, an
+    /// agent, or a Rectangle config being read in.
+    static let gapLimit = 40.0
     var zoneOpacity: Double = 1
     /// "#RRGGBB", or nil for the system accent colour.
     var zoneColorHex: String?

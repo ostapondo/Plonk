@@ -58,6 +58,21 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<!-- plonk://execute-action?name=left-half, for a Raycast script or a
+	     Stream Deck button. Only Plonk's own scheme is claimed: registering
+	     rectangle:// as well would leave macOS choosing between this app and
+	     an installed Rectangle, and break the one the user already had. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.plonk.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>plonk</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>plonk</string>
 	<key>CFBundleIconFile</key>

@@ -23,6 +23,22 @@ extension LocalizedStringResource {
         Self.key("hud.hotkeyTaken \(keys) \(owner)")
     }
 
+    static let hudRectangleImported = Self.key("hud.rectangleImported")
+    static let hudRectangleNothing = Self.key("hud.rectangleNothing")
+    static let hudUrlUnreadable = Self.key("hud.urlUnreadable")
+
+    static func hudRectangleTook(_ owner: String) -> LocalizedStringResource {
+        Self.key("hud.rectangleTook \(owner)")
+    }
+
+    static func hudUrlUnknown(_ name: String) -> LocalizedStringResource {
+        Self.key("hud.urlUnknown \(name)")
+    }
+
+    static func hudUrlZoneSet(_ name: String) -> LocalizedStringResource {
+        Self.key("hud.urlZoneSet \(name)")
+    }
+
     static func hudWaitingFor(_ agent: String, _ note: String) -> LocalizedStringResource {
         Self.key("hud.waitingFor \(agent) \(note)")
     }
