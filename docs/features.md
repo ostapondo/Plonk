@@ -17,4 +17,5 @@ The parts that are not zones, workspaces or hotkeys.
 
 ---
 
-[Zones](zones.md) · [Workspaces](workspaces.md) · [Hotkeys](hotkeys.md) · [README](../README.md)
+[Zones](zones.md) · [Workspaces](workspaces.md) · [Hotkeys](hotkeys.md) ·
+[Coming from Rectangle](from-rectangle.md) · [README](../README.md)

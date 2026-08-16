@@ -29,9 +29,10 @@ one of those.
   ninths are deliberately left behind and named instead of imported. They are a
   fixed grid; the equivalent here is a zone set, and there is no way to know
   which numbered zone a "first third" should be without knowing what set that
-  screen is wearing. Guessing would put windows somewhere wrong on every screen
-  not using Thirds. If an imported key was already doing something — `⌃⌥T` copies
-  text out of a region — the imported binding wins and the app says what lost it.
+  screen is wearing. If an imported key was already doing something — `⌃⌥T`
+  copies text out of a region — the imported binding wins and the app says what
+  lost it, and a Rectangle whose bindings are *all* fixed-grid is told apart
+  from one that is not there at all.
 
   URLs answer to the same verb and the same names:
   `open -g "plonk://execute-action?name=left-half"`. The ten placements are

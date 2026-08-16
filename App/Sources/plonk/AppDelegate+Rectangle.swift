@@ -18,9 +18,10 @@ extension AppDelegate {
             HUD.shared.show(.hudRectangleNothing)
             return
         }
-        // Found a setup, but every binding in it is one of the fixed-grid
-        // actions. Saying nothing was found would be wrong twice over.
-        guard !found.isEmpty else {
+        // A setup with nothing bindable in it: all fixed-grid actions, or a
+        // gap and no shortcuts. Either way, saying it is in would be a lie,
+        // and saying nothing was found would be a different one.
+        guard !found.bindings.isEmpty else {
             HUD.shared.show(found.unmapped.isEmpty ? .hudRectangleNothing : .hudRectangleGridOnly)
             return
         }
