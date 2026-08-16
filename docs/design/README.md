@@ -1,0 +1,74 @@
+# Cube and colour
+
+The design the site, the README and the app share, and the scripts that render
+its assets.
+
+## Two rules
+
+**Colour is the zone number.** Zone 1 is rose, 2 plum, 3 blue, 4 mint, 5 sun,
+6 sky. The same six hues appear in the drag overlay, the zone editor, the menu
+bar grid, the desk cards, the website and the README, so a set can be read
+before anyone reads a digit — and a window that keeps its number across a set
+swap visibly keeps its colour too.
+
+| # | hex | | # | hex |
+| --- | --- | --- | --- | --- |
+| 1 | `#ff4f81` rose | | 4 | `#12d3a4` mint |
+| 2 | `#8b5cf6` plum | | 5 | `#ffc531` sun |
+| 3 | `#3a6bff` blue | | 6 | `#25c8ff` sky |
+
+Six is the ceiling: past that the hues stop being reliably distinguishable, and
+rose against mint is already the risky pair for a red-green deficiency, so the
+palette wraps and the number carries it. Rose and blue sit furthest apart on
+every kind of vision, which is why they are 1 and 3 rather than neighbours.
+
+This palette is **not** the accent. The accent is chrome — selection rings, the
+delete button, the divider handles, the pointer tools, the ruler — and one
+accent cannot tell five zones apart. Setting an explicit zone colour on the
+Zones page still overrides the whole set with one colour, exactly as before;
+only the default changed.
+
+**The cube is the only hard-edged thing.** It keeps its black outline and flat
+fills. Everything else on the site is soft: glass over a mesh mixed from the
+cube's own three faces. A flat drawing sitting on a gradient needs the light to
+agree, so the cube carries an ambient glow that drifts in hue with the mesh
+behind it, and it overlaps the edge of the glass rather than sitting inside it.
+
+## Regenerating the assets
+
+Both scripts drive the real stylesheets through Chromium, so the pictures cannot
+drift away from the design — change a colour and re-run.
+
+```sh
+npm i playwright && python3 -m pip install pillow   # once
+node docs/design/shoot.js && python3 docs/design/assemble.py   # docs/banner.gif
+node docs/design/shots.js                                       # app screenshots
+```
+
+`scene.html` is the banner animation. Every animation in it is exactly 3s long
+so the loop closes without a stutter; `shoot.js` pauses them all and steps
+`currentTime` by hand, which is what makes the frames deterministic.
+
+Two things that cost an afternoon each, both now encoded in the scripts:
+
+- `page.screenshot({ animations: 'disabled' })` **rewinds** the animations you
+  just positioned. Do not pass it when sampling frames.
+- GIF `disposal=2` defeats frame differencing. Only the window moves in the
+  banner, so leaving it off took the file from 2.5 MB to 301 KB.
+
+`mac.html` holds four full-size macOS scenes at real system metrics — 13px body
+text, an 38px unified toolbar, a 220px sidebar, 12px traffic lights — and
+`shots.js` screenshots each by element at 2×.
+
+## Not done yet
+
+- **The app's own screenshots** in `docs/` still show the old single-accent
+  overlay. They need re-shooting on a Mac once this ships.
+- **`social-preview.png`** has not been redrawn.
+- **A setting for the palette.** Right now the numbered colours are the default
+  and an explicit zone colour opts out. If that turns out to be the wrong
+  default, the honest fix is a real toggle on the Zones page rather than
+  overloading what "no colour set" means.
+- **Performance on Intel.** A gradient behind every zone is drawn on every frame
+  of every drag. It degrades gracefully — flat fills in the same six hues keep
+  the whole idea — but it should be measured before anyone calls it done.

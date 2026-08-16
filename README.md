@@ -1,17 +1,22 @@
+<p align="center">
+  <img src="docs/banner.gif" width="640"
+       alt="The Plonk cube drops a window into the second of four gradient-filled zones, which frames it with a visible gap">
+</p>
+
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>A Mac window manager with zones you draw yourself. Put a
-window in one by dragging it, by shortcut, by voice, or by asking an agent over
-MCP.</strong><br>
+<p align="center"><strong>Give every window a place to live. Draw the boxes you
+actually want, then drop windows into them — with a drag, a key, or by saying so
+out loud.</strong><br>
 <sub>To plonk is to set a thing down exactly where it belongs.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/github/v/release/ostapondo/Plonk?style=flat-square&color=8b7cf6&label=version">
-  <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
-  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
-  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
-  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-20_tools-8957e5?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/github/v/release/ostapondo/Plonk?style=flat-square&color=8b5cf6&label=version">
+  <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-3a6bff?style=flat-square">
+  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-ff4f81?style=flat-square">
+  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-12d3a4?style=flat-square">
+  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-ffc531?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-20_tools-8b5cf6?style=flat-square">
 </p>
 
 <p align="center">
@@ -52,6 +57,11 @@ are settled. The MCP tool names and the HTTP API are not, and can still change
 between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 
 ## Three ways to move a window
+
+<p align="center">
+  <img src="docs/ways.svg" width="720"
+       alt="Four cards, one per way to move a window: drag it and the zones light up, hold ⌘ for two at once; ⌃⌥1 to ⌃⌥9 for the numbered zones with ⌃⌥0 as the oops key; ⌃⌥V to say it, offline and on-device; or ask an agent, through twenty MCP tools">
+</p>
 
 **Drag it.** Zones light up as you move a window, and it drops into one. Hold
 `⌘` too and it takes two of them at once. Turn on grab-and-move to pull a window
