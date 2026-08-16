@@ -1,11 +1,25 @@
 import AppKit
+import SwiftUI
 
 // The menu bar item. A plain click opens the Plonk window; the dropdown moves
 // to right-click and keeps only what is worth doing without opening anything.
+//
+// The dropdown opens with the live zone set drawn across the top, and every
+// rectangle in it sends the front window there. That is the fourth way to place
+// a window: no shortcut to have learned, and nothing to be dragging.
 
 final class StatusMenuController: NSObject {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
+    /// Rebuilt every time the menu opens, so the grid is the set that is live
+    /// on the screen right now rather than the one that was there at launch.
+    private let zonesHost = NSHostingView(rootView: StatusMenuZones(zones: [], summary: "",
+                                                                    snap: { _ in }))
+
+    /// The set on the main screen, and the line describing what is running.
+    var zonesOnMainScreen: () -> [ZoneRect] = { [] }
+    var setSummary: () -> String = { "" }
+    var onSnapZone: ((Int) -> Void)?
 
     var isAwakeRequested: () -> Bool = { false }
     var workspaceNames: [String] = []
@@ -32,9 +46,20 @@ final class StatusMenuController: NSObject {
     private static let agentsTag = 103
     private static let updateTag = 104
 
+    private static let zonesTag = 105
+
     override init() {
         super.init()
         menu.delegate = self
+
+        zonesHost.frame = NSRect(x: 0, y: 0, width: StatusMenuZones.width,
+                                 height: StatusMenuZones.height)
+        let zones = NSMenuItem()
+        zones.tag = Self.zonesTag
+        zones.view = zonesHost
+        menu.addItem(zones)
+        menu.addItem(.separator())
+
         menu.addItem(entry(.menuOpenPlonk, #selector(openWindow)))
         menu.addItem(.separator())
 
@@ -124,6 +149,16 @@ final class StatusMenuController: NSObject {
 
 extension StatusMenuController: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
+        zonesHost.rootView = StatusMenuZones(
+            zones: zonesOnMainScreen(),
+            summary: setSummary(),
+            snap: { [weak self] number in
+                // The menu is tracking its own event loop, so it has to be told
+                // to stop before the window it is about to move can take focus.
+                menu.cancelTracking()
+                self?.onSnapZone?(number)
+            }
+        )
         menu.item(withTag: Self.keepAwakeTag)?.state = isAwakeRequested() ? .on : .off
         if let update = menu.item(withTag: Self.updateTag) {
             let version = updateVersion()

@@ -352,6 +352,7 @@
 
 /* The menu bar item. */
 "menu.openPlonk" = "Open Plonk";
+"menu.sendToZone %lld" = "Send the front window to zone %lld";
 "menu.launchWorkspace" = "Launch Workspace";
 "menu.noWorkspaces" = "No workspaces saved yet";
 "menu.activeAgent" = "Active Agent";

@@ -7,6 +7,22 @@
      code's to guess. Keys here belong to the same table as Localizable.strings
      and are looked up the same way. -->
 <dict>
+	<key>menu.displayCount %lld</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@displays@</string>
+		<key>displays</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>1 display</string>
+			<key>other</key>
+			<string>%lld displays</string>
+		</dict>
+	</dict>
 	<key>zoneSet.zoneCount %lld</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

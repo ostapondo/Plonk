@@ -17,6 +17,16 @@ extension LocalizedStringResource {
     static let menuReportBug = Self.key("menu.reportBug")
     static let menuQuit = Self.key("menu.quit")
 
+    /// The zone grid at the head of the menu: what it is running, and what one
+    /// of its rectangles does.
+    static func menuDisplayCount(_ count: Int) -> LocalizedStringResource {
+        Self.key("menu.displayCount \(count)")
+    }
+
+    static func menuSendToZone(_ number: Int) -> LocalizedStringResource {
+        Self.key("menu.sendToZone \(number)")
+    }
+
     static func menuUpdateTo(_ version: String) -> LocalizedStringResource {
         Self.key("menu.updateTo \(version)")
     }
