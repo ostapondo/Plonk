@@ -25,6 +25,7 @@ extension LocalizedStringResource {
 
     static let hudRectangleImported = Self.key("hud.rectangleImported")
     static let hudRectangleNothing = Self.key("hud.rectangleNothing")
+    static let hudRectangleGridOnly = Self.key("hud.rectangleGridOnly")
     static let hudUrlUnreadable = Self.key("hud.urlUnreadable")
 
     static func hudRectangleTook(_ owner: String) -> LocalizedStringResource {

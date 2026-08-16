@@ -45,22 +45,31 @@ enum RectangleURLs {
 
     /// Take the scheme, or give it back. A no-op when the answer already
     /// matches, so it is safe to call repeatedly.
-    static func setHandled(_ wanted: Bool) {
+    ///
+    /// `settled` carries who holds the scheme once macOS has answered, which is
+    /// not the same tick: reading `isHandler` straight after this returns still
+    /// gives the old holder.
+    static func setHandled(_ wanted: Bool, settled: @escaping (Bool) -> Void = { _ in }) {
         switch move(wanted: wanted, isHandler: isHandler, rectangleInstalled: installed != nil) {
-        case .take: hand(to: Bundle.main.bundleURL)
-        case .giveBack: if let rectangle = installed { hand(to: rectangle) }
-        case .nothing: break
+        case .take:
+            hand(to: Bundle.main.bundleURL, settled: settled)
+        case .giveBack:
+            guard let rectangle = installed else { return settled(isHandler) }
+            hand(to: rectangle, settled: settled)
+        case .nothing:
+            settled(isHandler)
         }
     }
 
     /// macOS prompts before a default handler changes for http, https and
-    /// html. A private scheme is not on that list, so this runs unprompted and
-    /// the only way to confirm it took is to ask again with `isHandler`.
-    private static func hand(to app: URL) {
+    /// html. A private scheme is not on that list, so this runs unprompted, and
+    /// the only way to know it took is to ask again once it has finished.
+    private static func hand(to app: URL, settled: @escaping (Bool) -> Void) {
         NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: scheme) { error in
             if let error {
                 NSLog("Plonk: could not hand \(scheme):// to \(app.lastPathComponent): \(error)")
             }
+            DispatchQueue.main.async { settled(isHandler) }
         }
     }
 }

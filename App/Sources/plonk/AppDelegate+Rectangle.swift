@@ -14,8 +14,14 @@ extension AppDelegate {
     /// `RectangleConfig.json` is the fallback, which covers someone who
     /// exported on an old machine and never installed Rectangle on this one.
     func importFromRectangle() {
-        guard let found = readRectangleSetup(), !found.isEmpty else {
+        guard let found = readRectangleSetup() else {
             HUD.shared.show(.hudRectangleNothing)
+            return
+        }
+        // Found a setup, but every binding in it is one of the fixed-grid
+        // actions. Saying nothing was found would be wrong twice over.
+        guard !found.isEmpty else {
+            HUD.shared.show(found.unmapped.isEmpty ? .hudRectangleNothing : .hudRectangleGridOnly)
             return
         }
         var displaced: [HotkeyAction] = []
@@ -47,11 +53,14 @@ extension AppDelegate {
     // MARK: - URLs
 
     /// Ask macOS to send `rectangle://` here too, or hand it back.
+    ///
+    /// The switch shows what macOS settled on rather than what was asked of it,
+    /// which is why the model is written from the callback and not from `on`.
     func setRectangleURLs(_ on: Bool) {
         store.update { $0.handleRectangleURLs = on }
-        RectangleURLs.setHandled(on)
-        // Read back rather than assume: the switch shows what macOS did.
-        model.handleRectangleURLs = RectangleURLs.isHandler
+        RectangleURLs.setHandled(on) { [weak self] holding in
+            self?.model.handleRectangleURLs = holding
+        }
     }
 
     /// `open -g "plonk://execute-action?name=left-half"`.
@@ -60,18 +69,23 @@ extension AppDelegate {
     /// script with nowhere to receive an error, so the screen is the only place
     /// left to report one.
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls {
-            returnRectangleURLsIfUnwanted(url)
-            switch URLCommand.parse(url) {
-            case .success(.action(let action)):
-                perform(action)
-            case .failure(.fixedGridAction(let name)):
-                HUD.shared.show(.hudUrlZoneSet(name))
-            case .failure(.unknownAction(let name)):
-                HUD.shared.show(.hudUrlUnknown(name))
-            case .failure(.missingName), .failure(.unknownHost), .failure(.unknownScheme):
-                HUD.shared.show(.hudUrlUnreadable)
-            }
+        // A URL that launched the app can arrive before applicationDidFinish-
+        // Launching has read the config or built the managers these actions go
+        // through. One hop puts it after both.
+        DispatchQueue.main.async { [weak self] in urls.forEach { self?.open($0) } }
+    }
+
+    private func open(_ url: URL) {
+        returnRectangleURLsIfUnwanted(url)
+        switch URLCommand.parse(url) {
+        case .success(.action(let action)):
+            perform(action)
+        case .failure(.fixedGridAction(let name)):
+            HUD.shared.show(.hudUrlZoneSet(name))
+        case .failure(.unknownAction(let name)):
+            HUD.shared.show(.hudUrlUnknown(name))
+        case .failure(.missingName), .failure(.unknownHost), .failure(.unknownScheme):
+            HUD.shared.show(.hudUrlUnreadable)
         }
     }
 
@@ -83,7 +97,8 @@ extension AppDelegate {
     private func returnRectangleURLsIfUnwanted(_ url: URL) {
         guard url.scheme?.lowercased() == RectangleURLs.scheme,
               !store.config.handleRectangleURLs else { return }
-        RectangleURLs.setHandled(false)
-        model.handleRectangleURLs = RectangleURLs.isHandler
+        RectangleURLs.setHandled(false) { [weak self] holding in
+            self?.model.handleRectangleURLs = holding
+        }
     }
 }
