@@ -7,9 +7,9 @@ import Foundation
 // Alfred workflow or a Stream Deck button, and the names in those should keep
 // working after the scheme is swapped; docs/from-rectangle.md is one sed away.
 //
-// Plonk does not register `rectangle://` itself. Two apps claiming one scheme
-// leaves macOS to pick between them, and the copy of Rectangle still installed
-// would be the one that stops working — silently, and by our doing.
+// Both schemes are answered here. Whether macOS actually hands this app a
+// `rectangle://` URL is a different question, decided out loud in RectangleURLs
+// rather than left to whichever bundle LaunchServices registered last.
 //
 // Everything past the shared vocabulary is named after the action, so the zones
 // and the tools are reachable too.
@@ -17,7 +17,9 @@ import Foundation
 enum URLCommand: Equatable {
     case action(HotkeyAction)
 
-    enum Failure: Equatable {
+    enum Failure: Error, Equatable {
+        /// A scheme this app does not answer to at all.
+        case unknownScheme(String)
         /// Right scheme, wrong verb: not `execute-action`.
         case unknownHost(String)
         /// No `name` at all.
@@ -28,10 +30,15 @@ enum URLCommand: Equatable {
         case fixedGridAction(String)
     }
 
-    static let scheme = "plonk"
+    /// Both are declared in the bundle. Whether this app is what macOS hands
+    /// a `rectangle://` URL to is a separate question, and one the user
+    /// answers; see RectangleURLs.
+    static let schemes: Set<String> = ["plonk", RectangleURLs.scheme]
     static let host = "execute-action"
 
     static func parse(_ url: URL) -> Result<URLCommand, Failure> {
+        let scheme = url.scheme?.lowercased() ?? ""
+        guard schemes.contains(scheme) else { return .failure(.unknownScheme(scheme)) }
         guard url.host() == host else { return .failure(.unknownHost(url.host() ?? "")) }
         let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         guard let name = query.first(where: { $0.name == "name" })?.value, !name.isEmpty else {

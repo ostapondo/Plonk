@@ -44,9 +44,14 @@ one of those.
   here moves the pointer and not the window, and answering to the name while
   doing something else would be worse than not answering.
 
-  Plonk does not register `rectangle://` itself. Two apps claiming one scheme
-  leaves macOS choosing between them, and the copy of Rectangle still installed
-  would be the one that quietly stopped working.
+  `rectangle://` is declared as well, but answering it is a switch on the
+  Shortcuts page and it is off. A scheme belongs to one app at a time, so
+  turning it on takes those URLs from an installed Rectangle and its own stop
+  working, with nothing to say so. Off is not passive: declaring a scheme is
+  enough for macOS to hand it over on install, so a `rectangle://` URL arriving
+  while the switch is off makes Plonk give the scheme back to Rectangle and run
+  that one URL anyway. The switch reads its state back from macOS rather than
+  from config, so it shows what is true rather than what was asked for.
 
   [docs/from-rectangle.md](docs/from-rectangle.md) is the whole of it, including
   what happens when both apps are running and hold the same key.

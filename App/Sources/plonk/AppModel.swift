@@ -15,6 +15,9 @@ protocol AppActions: AnyObject {
     /// Take whatever bindings an installed or exported Rectangle has that mean
     /// the same thing here. See RectangleImport.
     func importFromRectangle()
+    /// Ask macOS to send rectangle:// URLs here too, or hand them back to an
+    /// installed Rectangle. See RectangleURLs.
+    func setRectangleURLs(_ on: Bool)
     func setDragSnap(_ on: Bool)
     func setZonesRequireModifier(_ on: Bool)
     func setZonesModifier(_ name: String)
@@ -122,6 +125,9 @@ final class AppModel: ObservableObject {
     @Published var zonesRequireModifier = true
     @Published var zonesModifier = "shift"
     @Published var zoneGap = 0.0
+    /// Whether macOS currently opens rectangle:// URLs with this app. Read back
+    /// from the system, not from config, so the switch cannot show a wish.
+    @Published var handleRectangleURLs = false
     @Published var zoneOpacity = 1.0
     @Published var zoneColorHex: String?
     @Published var zoneNumbersVisible = true

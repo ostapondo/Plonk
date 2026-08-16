@@ -57,6 +57,11 @@ struct ShortcutsPage: View {
                 Button(String(localized: .keysImportRectangle)) {
                     model.actions?.importFromRectangle()
                 }
+                Toggle(isOn: model.binding(\.handleRectangleURLs,
+                                           set: { $0.setRectangleURLs($1) })) {
+                    Text(LocalizedStringResource.keysRectangleURLs)
+                    Text(.keysRectangleURLsHelp)
+                }
             } footer: {
                 Text(.keysImportRectangleHelp)
             }

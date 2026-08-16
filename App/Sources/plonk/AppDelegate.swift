@@ -268,17 +268,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    func refreshHotkeyModel() {
-        let bindings = store.config.resolvedHotkeys
-        model.hotkeyDisplays = HotkeyAction.allCases.reduce(into: [:]) { result, action in
-            result[action.rawValue] = bindings[action]?.display ?? "None"
-        }
-        model.hotkeyParts = HotkeyAction.allCases.reduce(into: [:]) { result, action in
-            result[action.rawValue] = bindings[action]?.parts ?? []
-        }
-        model.unavailableHotkeys = hotkeys.unavailable.map(\.rawValue)
-    }
-
     private func setupDragSnap() {
         dragSnap = DragSnapManager(windows: windows)
         dragSnap.enabled = store.config.dragSnapEnabled

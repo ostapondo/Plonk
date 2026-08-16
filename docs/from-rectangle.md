@@ -82,9 +82,21 @@ screen rather than failing silently:
   pointer, and answering to the name while doing something else is worse than
   not answering.
 
-Plonk does not register `rectangle://` itself, on purpose. Two apps claiming
-one scheme leaves macOS to pick between them, and the copy of Rectangle you
-still have installed would be the one that quietly stopped working.
+### Or let Plonk answer `rectangle://` directly
+
+**Shortcuts → Answer rectangle:// URLs too** skips the substitution. Your
+existing scripts keep the URLs they have and Plonk receives them.
+
+It is off by default, and the reason is worth reading before you turn it on. A
+URL scheme belongs to one app at a time. Turning this on takes `rectangle://`
+from an installed Rectangle, and *its* URLs stop working from that moment —
+silently, because nothing tells an app it has lost a scheme. If you have
+removed Rectangle there is nobody to lose it and the switch costs nothing.
+
+Off is not passive either. Merely declaring the scheme is enough for macOS to
+hand it over on install, so if a `rectangle://` URL ever arrives while the
+switch is off, Plonk hands the scheme back to Rectangle and runs that one URL
+anyway. The switch shows what macOS actually does, not what was asked for.
 
 ## Running both at once
 

@@ -96,6 +96,10 @@ struct Config: Codable {
     // The only setting that decides whether the app ever opens an outbound
     // connection. Off means no release check, automatic or otherwise.
     var updateCheckAutomatically = true
+    // Whether to ask macOS to send rectangle:// URLs here as well. Off, because
+    // a scheme is one per machine and the loser would be a Rectangle the user
+    // still has installed. See RectangleURLs.
+    var handleRectangleURLs = false
     // Which MCP client the user picked as the active agent (by client name),
     // and whether only that agent may change windows and settings.
     var selectedAgent: String?
@@ -160,6 +164,7 @@ struct Config: Codable {
             ?? EdgeDetector.defaultTolerance
         launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
         updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
+        handleRectangleURLs = try c.decodeIfPresent(Bool.self, forKey: .handleRectangleURLs) ?? false
         selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
         agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
         voiceLocalCommands = try c.decodeIfPresent(Bool.self, forKey: .voiceLocalCommands) ?? true

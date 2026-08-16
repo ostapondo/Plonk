@@ -49,6 +49,15 @@ extension AppDelegate {
 
     // MARK: - URLs
 
+    /// Ask macOS to send `rectangle://` here too, or hand it back.
+    func setRectangleURLs(_ on: Bool) {
+        store.update { $0.handleRectangleURLs = on }
+        RectangleURLs.setHandled(on)
+        // Read the answer back rather than assuming it: the switch should show
+        // what macOS did, not what was asked of it.
+        model.handleRectangleURLs = RectangleURLs.isHandler
+    }
+
     /// `open -g "plonk://execute-action?name=left-half"`, which is how a
     /// Raycast script, an Alfred workflow or a Stream Deck button drives this.
     ///
@@ -56,7 +65,8 @@ extension AppDelegate {
     /// a script with nowhere to put an error, so the screen is the only place
     /// left to say that the key did nothing.
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where url.scheme?.lowercased() == URLCommand.scheme {
+        for url in urls {
+            returnRectangleURLsIfUnwanted(url)
             switch URLCommand.parse(url) {
             case .success(.action(let action)):
                 perform(action)
@@ -64,9 +74,23 @@ extension AppDelegate {
                 HUD.shared.show(.hudUrlZoneSet(name))
             case .failure(.unknownAction(let name)):
                 HUD.shared.show(.hudUrlUnknown(name))
-            case .failure(.missingName), .failure(.unknownHost):
+            case .failure(.missingName), .failure(.unknownHost), .failure(.unknownScheme):
                 HUD.shared.show(.hudUrlUnreadable)
             }
         }
+    }
+
+    /// A `rectangle://` URL arriving while the setting is off means the scheme
+    /// was won by accident — declaring it is enough for LaunchServices to hand
+    /// it over on install. Give it back, and still run this one, since dropping
+    /// it would help nobody.
+    ///
+    /// This is the only moment the mistake can matter, so it is the only place
+    /// that has to check.
+    private func returnRectangleURLsIfUnwanted(_ url: URL) {
+        guard url.scheme?.lowercased() == RectangleURLs.scheme,
+              !store.config.handleRectangleURLs else { return }
+        RectangleURLs.setHandled(false)
+        model.handleRectangleURLs = RectangleURLs.isHandler
     }
 }

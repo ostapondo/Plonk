@@ -56,6 +56,18 @@ struct URLCommandTests {
         #expect(parse("plonk://execute-action?name=") == .failure(.missingName))
     }
 
+    /// Both schemes parse the same. Whether macOS actually delivers a
+    /// rectangle:// URL here is a separate question, and the user's.
+    @Test func bothSchemesAreUnderstood() {
+        #expect(parse("rectangle://execute-action?name=left-half") == .success(.action(.leftHalf)))
+        #expect(parse("PLONK://execute-action?name=left-half") == .success(.action(.leftHalf)))
+    }
+
+    @Test func aSchemeThisAppDoesNotAnswerToIsRefused() {
+        #expect(parse("spectacle://execute-action?name=left-half")
+            == .failure(.unknownScheme("spectacle")))
+    }
+
     @Test func anotherVerbIsRefused() {
         #expect(parse("plonk://execute-task?name=ignore-app") == .failure(.unknownHost("execute-task")))
     }
