@@ -36,13 +36,22 @@ behind it, and it overlaps the edge of the glass rather than sitting inside it.
 
 ## Regenerating the assets
 
-Both scripts drive the real stylesheets through Chromium, so the pictures cannot
-drift away from the design — change a colour and re-run.
+Every one of these drives the real stylesheets through Chromium, so the pictures
+cannot drift away from the design — change a colour and re-run.
 
 ```sh
 npm i playwright && python3 -m pip install pillow   # once
 node docs/design/shoot.js && python3 docs/design/assemble.py   # docs/banner.gif
 node docs/design/shots.js                                       # app screenshots
+
+# docs/social-preview.png, 640x320 at 2x. Chrome directly, because one still
+# frame is not worth a playwright install, and the flags are part of the
+# recipe: two runs with these are byte-identical, and dropping --disable-gpu
+# rasterises differently and produces a different file.
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless --disable-gpu --hide-scrollbars \
+  --force-device-scale-factor=2 --window-size=640,320 \
+  --screenshot=docs/social-preview.png docs/design/social.html
 ```
 
 `scene.html` is the banner animation. It carries no `animation-delay`: a
@@ -65,6 +74,11 @@ Two things that cost an afternoon each, both now encoded in the scripts:
   size. Both are now switched off in `assemble.py` itself, which is the
   point: the script has to reproduce the committed file, or the claim that
   the assets cannot drift is not true.
+
+`social.html` is that same drawing at rest: the card GitHub, Slack and every
+other chat window draw when someone pastes the link. One frame needs no
+pipeline, so Chrome writes the PNG straight out. Keep it 1280x640 — what GitHub
+asks for, and what the file it replaced already was.
 
 `mac.html` holds four full-size macOS scenes at real system metrics — 13px body
 text, a 38px unified toolbar, a 220px sidebar, 12px traffic lights — and
@@ -97,9 +111,15 @@ git clone --branch claude/plonk-design-system-3uuj2h --single-branch \
 
 ## Not done yet
 
-- **The app's own screenshots** in `docs/` still show the old single-accent
-  overlay. They need re-shooting on a Mac once this ships.
-- **`social-preview.png`** has not been redrawn.
+- **The site shows the mockups, not the app.** `docs/index.html` now displays
+  `shots/s-zones.jpg` and `shots/s-menu.jpg`; the real screenshots it used
+  before predated this design and are deleted rather than left to contradict
+  it. Re-shoot from the built app once the screens match, and point the site
+  back at real captures — a mockup is the target, not the product.
+- **`shots.js` does not reproduce what is committed.** It writes PNGs at 2x;
+  `shots/` holds JPEGs downscaled to 1600px wide, and the step between them is
+  somebody's hands. Either put the resize in the script or commit what it
+  actually writes.
 - **A setting for the palette.** Right now the numbered colours are the default
   and an explicit zone colour opts out. If that turns out to be the wrong
   default, the honest fix is a real toggle on the Zones page rather than

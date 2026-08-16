@@ -97,11 +97,14 @@ node scripts/check-zone-sets.mjs
 
 all pass, and each screen matches its shot in `docs/design/shots/`.
 
-Then re-shoot `docs/app-home-light.png`, `docs/app-zones-dark.png` and
-`docs/demo.gif` from the real app — `docs/index.html` displays all three, and
-they currently show the old single-accent overlay, which is the last thing on
-the site contradicting the design. `docs/social-preview.png` needs redrawing
-too.
+The site no longer contradicts the design: `docs/index.html` shows
+`design/shots/s-zones.jpg` and `design/shots/s-menu.jpg`, and the screenshots
+that predated it — `app-home-light.png`, `app-zones-dark.png`, `demo.gif` and
+the three `.mp4`s nothing linked to — are deleted. `social-preview.png` is
+redrawn from `design/social.html`.
+
+So the one thing left is the real thing: shoot these screens from the built
+app and put those captures on the site in place of the mockups.
 
 Finally, work through the rest of [HANDOFF.md](HANDOFF.md) and delete it. Its
 links are private and this repository is public.

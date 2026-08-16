@@ -6,7 +6,11 @@ const IDS = ['s-zones', 's-desks', 's-drag', 's-menu'];
 (async () => {
   fs.rmSync(out, { recursive: true, force: true });
   fs.mkdirSync(out, { recursive: true });
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  // Same fallback as shoot.js: a pinned Chromium on the image that drafted
+  // this, playwright's own download anywhere else.
+  const pinned = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+  const browser = await chromium.launch(
+    fs.existsSync(pinned) ? { executablePath: pinned } : {});
   const ctx = await browser.newContext({ viewport: { width: 1700, height: 1100 }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   await page.goto('file://' + path.join(__dirname, 'mac.html'));

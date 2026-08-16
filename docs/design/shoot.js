@@ -15,11 +15,13 @@ const outDir = path.join(__dirname, 'frames');
   fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });
 
-  // The installed playwright pins a newer build than the image ships, so
-  // point it at the Chromium that is actually here.
-  const browser = await chromium.launch({
-    executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  });
+  // The image this was drafted on ships a Chromium that the installed
+  // playwright does not pin, so it has to be pointed at the one that is
+  // actually there. That path does not exist on a Mac, where playwright
+  // downloads its own — hence the fallback rather than a hard path.
+  const pinned = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+  const browser = await chromium.launch(
+    fs.existsSync(pinned) ? { executablePath: pinned } : {});
   const ctx = await browser.newContext({
     viewport: { width: W, height: H },
     deviceScaleFactor: SCALE,

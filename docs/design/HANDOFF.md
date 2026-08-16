@@ -77,11 +77,14 @@ tools read it, and they should stay one colour.
 4. **Measure the overlay on an Intel Mac** if one is reachable. A gradient
    behind every zone is drawn on every frame of a drag. If it costs frames,
    drop to flat fills in the same six hues; the idea survives intact.
-5. **Re-shoot the app screenshots.** `docs/app-home-light.png`,
-   `docs/app-zones-dark.png` and `docs/demo.gif` still show the old
-   single-accent overlay, and `docs/index.html` displays all three. They are
-   the last thing on the site that contradicts the design.
-6. **Redraw `docs/social-preview.png`** to match the new banner.
+5. **Re-shoot the app screenshots.** Half done. The stale ones —
+   `docs/app-home-light.png`, `docs/app-zones-dark.png`, `docs/demo.gif` and
+   the unlinked `.mp4`s — are deleted, and `docs/index.html` shows the
+   mockups from `docs/design/shots/` in their place, so nothing on the site
+   contradicts the design any more. What is still owed is captures from the
+   built app, which the mockups are only standing in for.
+6. ~~**Redraw `docs/social-preview.png`**~~ — done, from
+   `docs/design/social.html`.
 7. **Decide about the default.** Numbered colours are the default now, and
    setting an explicit colour opts out. If that is the wrong way round, the
    honest fix is a real toggle on the Zones page rather than overloading what

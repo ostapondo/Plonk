@@ -253,6 +253,11 @@ h1,h2,h3{text-wrap:balance}
 figure.shot{margin:24px 0 0}
 figure.shot img{border-radius:18px;border:1px solid var(--line);display:block;width:100%}
 figure.shot figcaption{margin-top:11px;font-size:13.5px;color:var(--dimmer);line-height:1.45}
+/* A window and a desktop are not the same shape, so side by side their
+   captions start at different heights. Pushing them to the bottom of the
+   cell lines them up without cropping either picture. */
+.split figure.shot{display:flex;flex-direction:column;height:100%}
+.split figure.shot figcaption{margin-top:auto;padding-top:11px}
 .split{display:grid;gap:16px}
 /* Grid and flex children default to min-width:auto, so a <pre> refuses to
    shrink below its longest line and pushes the page sideways, overflow-x
@@ -549,14 +554,14 @@ pre .c{color:#9c96b8}
     <p class="lead">Anything the app can do has a name you can type. The theme is yours to pick, and the zone overlay and the heads-up display follow it.</p>
     <div class="split">
       <figure class="shot" style="margin-top:0">
-        <img src="app-home-light.png" width="1400" height="980" loading="lazy"
-             alt="Plonk's Home page in the light theme: a sidebar with Home, Layout, Capture, Automation and Settings, a card showing the zone layout of the main screen, and rows of quick actions with their shortcuts">
-        <figcaption>Home, light theme. The picture is your screen's real zone set.</figcaption>
+        <img src="design/shots/s-zones.jpg" width="1600" height="1105" loading="lazy"
+             alt="Plonk's Zones page: a sidebar grouped into Layout, Tools and Automation, a row of zone-set tabs, the Priority set drawn full width in five colours with each zone's fraction printed in it, and grouped settings for dragging, gaps and overlay numbers">
+        <figcaption>Zones. The set you are editing is the page, not a separate window &mdash; and the colour is the number.</figcaption>
       </figure>
       <figure class="shot" style="margin-top:0">
-        <img src="app-zones-dark.png" width="1400" height="980" loading="lazy"
-             alt="Plonk's Zones page in the dark theme: a row of zone-set tabs, a large preview of the selected set, and cards for dragging behaviour and shortcuts">
-        <figcaption>Zones, dark theme. The set you are editing is the page, not a separate window.</figcaption>
+        <img src="design/shots/s-menu.jpg" width="1600" height="1000" loading="lazy"
+             alt="The Plonk menu bar panel open over a desktop: the current zone set drawn in its five colours, two saved desks with their shortcuts, the capture and ruler tools, and a keep-awake timer">
+        <figcaption>The menu bar. The same set, the same desks, without opening the window.</figcaption>
       </figure>
     </div>
     <div class="grid2">
