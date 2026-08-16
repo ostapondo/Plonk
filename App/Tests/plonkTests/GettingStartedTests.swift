@@ -6,38 +6,48 @@ import Testing
 /// set up, so they are worth pinning down.
 struct GettingStartedTests {
 
-    private func guide(accessibility: Bool = false, snapped: Bool = false,
-                       agent: Bool = false) -> GettingStarted {
-        GettingStarted(accessibilityGranted: accessibility, snapped: snapped, agentConnected: agent)
+    private func guide(accessibility: Bool = false, recording: Bool = false,
+                       snapped: Bool = false, agent: Bool = false) -> GettingStarted {
+        GettingStarted(accessibilityGranted: accessibility, screenRecordingGranted: recording,
+                       snapped: snapped, agentConnected: agent)
     }
 
-    @Test func aFreshInstallHasThreeThingsToDo() {
+    @Test func aFreshInstallHasFourThingsToDo() {
         let fresh = guide()
-        #expect(fresh.steps.count == 3)
+        #expect(fresh.steps.count == 4)
         #expect(fresh.doneCount == 0)
         #expect(!fresh.isComplete)
         #expect(fresh.next?.id == "grant")
     }
 
+    /// The two permissions are separate steps: they buy different halves of the
+    /// app and macOS asks for them at different moments, so one being granted
+    /// must never tick the other.
+    @Test func thePermissionsTickSeparately() {
+        #expect(guide(accessibility: true).next?.id == "record")
+        #expect(guide(recording: true).next?.id == "grant")
+        #expect(guide(accessibility: true, recording: true).next?.id == "snap")
+    }
+
     /// The next step is the first undone one, not the first one — otherwise the
     /// card keeps pointing at a permission that was granted minutes ago.
     @Test func theNextStepSkipsWhatIsDone() {
-        #expect(guide(accessibility: true).next?.id == "snap")
-        #expect(guide(accessibility: true, snapped: true).next?.id == "agent")
-        #expect(guide(accessibility: true, snapped: true, agent: true).next == nil)
+        #expect(guide(accessibility: true, recording: true).next?.id == "snap")
+        #expect(guide(accessibility: true, recording: true, snapped: true).next?.id == "agent")
+        #expect(guide(accessibility: true, recording: true, snapped: true, agent: true).next == nil)
     }
 
-    @Test func allThreeDoneMeansComplete() {
-        let done = guide(accessibility: true, snapped: true, agent: true)
+    @Test func allOfThemDoneMeansComplete() {
+        let done = guide(accessibility: true, recording: true, snapped: true, agent: true)
         #expect(done.isComplete)
-        #expect(done.doneCount == 3)
+        #expect(done.doneCount == 4)
     }
 
     /// Out of order is normal: an agent can be connected before the user has
     /// ever pressed a shortcut.
     @Test func stepsTickIndependently() {
-        let partial = guide(accessibility: true, agent: true)
-        #expect(partial.doneCount == 2)
+        let partial = guide(accessibility: true, recording: true, agent: true)
+        #expect(partial.doneCount == 3)
         #expect(!partial.isComplete)
         #expect(partial.next?.id == "snap")
     }

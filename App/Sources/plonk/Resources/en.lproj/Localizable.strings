@@ -283,7 +283,10 @@
 "start.hide" = "Hide";
 "start.hideHelp" = "Hide this until the next version";
 "start.grant" = "Grant Accessibility";
-"start.grantDetail" = "The only way macOS lets one app move another's windows";
+"start.grantDetail" = "So Plonk can move another app's windows. macOS allows that no other way.";
+"start.record" = "Grant Screen Recording";
+"start.recordDetail" = "So a screenshot, the text off the screen and the ruler have something to read. Asked for the first time you use one.";
+"start.neverAsked" = "Never asked for: Full Disk Access, Automation, your Keychain, your contacts, your network. Nothing you do here leaves the Mac.";
 "start.snap" = "Snap a window";
 "start.snapDetail" = "Press ⌃⌥← with any window in front, or drag one to the side of the screen";
 "start.agent" = "Let an agent drive it";

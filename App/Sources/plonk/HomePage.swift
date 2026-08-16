@@ -13,6 +13,7 @@ struct HomePage: View {
 
     private var guide: GettingStarted {
         GettingStarted(accessibilityGranted: model.accessibilityGranted,
+                       screenRecordingGranted: model.screenRecordingGranted,
                        snapped: model.sawFirstSnap,
                        agentConnected: model.sawFirstAgent)
     }

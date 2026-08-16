@@ -5,12 +5,19 @@ import SwiftUI
 //
 // An installed window manager that has never moved a window is indistinguishable
 // from one that does not work, and the part people never find on their own is
-// that an agent can drive this one. So the Home page opens with three steps —
-// grant, snap, connect — and stops showing them once they are done.
+// that an agent can drive this one. So the Home page opens with the steps —
+// the two permissions, a first snap, an agent — and stops showing them once
+// they are done.
+//
+// Both permissions say what they buy rather than what they are called. A dialog
+// that asks for Accessibility explains nothing; "so Plonk can move another
+// app's windows" is the same sentence a person would use, and the one that
+// decides whether they press Allow. Underneath is the shorter list that matters
+// more: everything Plonk never asks for at all.
 //
 // Each step latches: it stays ticked once it has happened, because an agent
 // that quits is not a step the user has to do again. The card disappears on
-// its own when all three are ticked, and can be dismissed before that.
+// its own when every step is ticked, and can be dismissed before that.
 
 /// Which of the three first steps are done, and what to say about the next one.
 /// Pure, so the copy and the logic can be tested without a window.
@@ -23,6 +30,7 @@ struct GettingStarted: Equatable {
     }
 
     var accessibilityGranted: Bool
+    var screenRecordingGranted: Bool
     var snapped: Bool
     var agentConnected: Bool
 
@@ -31,6 +39,11 @@ struct GettingStarted: Equatable {
             Step(id: "grant", title: .startGrant,
                  detail: .startGrantDetail,
                  done: accessibilityGranted),
+            // Second, and never bundled with the first: it buys a different
+            // half of the app, and it is asked for at a different moment.
+            Step(id: "record", title: .startRecord,
+                 detail: .startRecordDetail,
+                 done: screenRecordingGranted),
             Step(id: "snap", title: .startSnap,
                  detail: .startSnapDetail,
                  done: snapped),
@@ -59,6 +72,7 @@ struct GettingStartedCard: View {
 
     private var guide: GettingStarted {
         GettingStarted(accessibilityGranted: model.accessibilityGranted,
+                       screenRecordingGranted: model.screenRecordingGranted,
                        snapped: model.sawFirstSnap,
                        agentConnected: model.sawFirstAgent)
     }
@@ -74,6 +88,7 @@ struct GettingStartedCard: View {
             }
             .background(RoundedRectangle(cornerRadius: 9).fill(Color.primary.opacity(0.04)))
             .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Color.primary.opacity(0.08)))
+            neverAsked
         }
         .padding(14)
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.08)))
@@ -94,6 +109,21 @@ struct GettingStartedCard: View {
                 .buttonStyle(.link)
                 .font(.caption)
                 .help(String(localized: .startHideHelp))
+        }
+    }
+
+    /// The shorter list, and the one nobody else prints: what is never asked
+    /// for. Two permissions is the whole of it, and this is what makes that
+    /// number mean something.
+    private var neverAsked: some View {
+        HStack(alignment: .top, spacing: 7) {
+            Image(systemName: "eye.slash")
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+            Text(.startNeverAsked)
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -124,7 +154,11 @@ struct GettingStartedCard: View {
         switch step.id {
         case "grant":
             Button(String(localized: .startGrantButton)) {
-                open("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+                PrivacySettings.openAccessibility()
+            }
+        case "record":
+            Button(String(localized: .startGrantButton)) {
+                PrivacySettings.openScreenRecording()
             }
         case "snap":
             Button(String(localized: .startShowZones)) { model.actions?.flashZones() }
@@ -141,10 +175,5 @@ struct GettingStartedCard: View {
                     .font(.caption)
             }
         }
-    }
-
-    private func open(_ string: String) {
-        guard let url = URL(string: string) else { return }
-        NSWorkspace.shared.open(url)
     }
 }
