@@ -1,7 +1,7 @@
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>A Mac window manager with zones you draw yourself.
-Drag a window into one, press a key, say it out loud, or let an agent do it over
+<p align="center"><strong>A Mac window manager with zones you draw yourself. Put a
+window in one by dragging it, by shortcut, by voice, or by asking an agent over
 MCP.</strong><br>
 <sub>To plonk is to set a thing down exactly where it belongs.</sub></p>
 
@@ -26,27 +26,26 @@ MCP.</strong><br>
 ## Why another one
 
 You most likely already have Rectangle, Magnet, Loop or Raycast. If a fixed grid
-of halves and thirds is all you want, keep it. Plonk is for three things those
-do not do.
+of halves and thirds is all you want, they do it well. Plonk is for three things
+they do not do.
 
 **Zones you draw.** Not a preset grid. Any number of zones, any size, a
 different set per monitor, overlapping if that suits you. Click a zone to split
-it, `⇧`-click to split the other way. A narrow rail for chat, a wide middle
+it, `⇧`-click to split the other way: a narrow rail for chat, a wide middle
 split in two, a strip for the terminal.
 
 **Workspaces that remember which monitor.** Save the desk: the apps, every
 window's frame, and the display each one belongs on. Launch it onto an empty
 desktop and it rebuilds itself, on the right screens.
 
-**An agent can drive all of it.** Plonk ships an MCP server over its whole
-surface: layouts, workspaces, zones, keep-awake, screenshots, on-device OCR,
-measuring. There are generic macOS automation servers that can nudge a window
-around. This is the window manager itself, so "browser on the left 60%, terminal
-top right, save that as a workspace called review" is one sentence rather than a
-script.
+**An agent can drive all of it.** Plonk ships an MCP server that covers its
+whole surface: layouts, workspaces, zones, keep-awake, screenshots, on-device
+OCR, measuring. Generic macOS automation servers can nudge a window around. This
+is the window manager itself, so "browser on the left 60%, terminal top right,
+save that as a workspace called review" is one sentence rather than a script.
 
-The rest of what it does, OCR and a ruler and keep-awake and the others, is
-there for one reason: each was otherwise another icon in the menu bar.
+The other seven tools, OCR and a ruler and keep-awake among them, are there
+because each was otherwise its own icon in the menu bar.
 
 **It is early.** Version 0.2.x, one author. Shortcuts, zone files and workspaces
 are settled. The MCP tool names and the HTTP API are not, and can still change
@@ -64,9 +63,9 @@ on that screen. `⌃⌥0` puts a window back where it was before Plonk touched i
 **Say it.** Hold `⌃⌥V` and name the place: "snap this left", "zone three". That
 runs in the app, offline, on-device.
 
-Five zone sets ship with it. Past those you cut your own, one set per monitor.
-Swap the set on a screen and windows already in a numbered zone move to wherever
-that number is now.
+Five zone sets ship with it, and past those you draw your own. Swap the set on a
+screen and any window already in a numbered zone moves to wherever that number
+is now.
 
 <p align="center">
   <img src="docs/zones.gif" width="720"
@@ -93,11 +92,11 @@ Automation, no Keychain.
 Plonk is signed but not notarized, so macOS holds a copy you download by hand.
 The cask takes care of that for you.
 
-Running it alongside Rectangle or Magnet is fine as long as their shortcuts do
+Running it alongside Rectangle or Magnet is fine, as long as their shortcuts do
 not collide.
 
 <details>
-<summary>By hand, on Intel, next to another window manager, and how to remove it</summary>
+<summary>Installing by hand, Intel Macs, tiling managers, and removing it</summary>
 
 <br>
 
@@ -106,8 +105,8 @@ than an Apple Developer ID, because notarizing needs a paid Apple account and
 this project does not have one. macOS cannot vouch for who built it, and says
 so. The cask skips that check by clearing the quarantine flag for you.
 
-That is a check being skipped on your behalf, so here is a stronger one to run
-instead, before you open anything:
+That is a check skipped on your behalf, so here is a stronger one to run before
+you open anything:
 
 ```sh
 gh attestation verify $(brew --cache)/downloads/*--Plonk-*.zip \
@@ -132,44 +131,43 @@ Settings, Privacy & Security, scroll to Security, **Open Anyway**.
 path and windows of newly launched apps stop being seen. Remove Plonk from
 Privacy & Security, Accessibility, and grant it again.
 
-**On an Intel Mac.** Releases are built arm64 only, so the download will not run
-on one. Building from source works (see [Build](#build)), and reports either way
-are welcome in [issues][hw].
+**On an Intel Mac.** Releases are built for Apple silicon only, so the download
+will not run. Building from source ought to work, see [Build](#build), but
+nobody has tried it and a report either way is welcome in [issues][hw].
 
-**Next to another window manager.** Two apps bound to the same shortcut will
-fight over it, so unbind one side. Tiling managers that own every window on
-screen, like yabai or Amethyst, will pull windows straight back out of a zone.
-Run one or the other.
+**Next to a tiling manager.** yabai and Amethyst own every window on screen and
+will pull windows straight back out of a zone. Run one or the other.
 
 **Removing it.** `brew uninstall --cask plonk`, or quit Plonk and drag it to the
-trash. Then delete `~/Library/Application Support/Plonk/`. The login item
-unregisters itself with the app, and nothing else was written anywhere.
+trash. Then delete `~/Library/Application Support/Plonk/`. The login item goes
+with the app, and nothing was written anywhere else.
 
 </details>
 
 ## What you get
 
-The window manager is four things.
+The window manager is four things, and this is the part of each that the
+sections above left out.
 
 | | |
 | --- | --- |
-| **[Zones](docs/zones.md)** | Any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows return to their zone after a display is unplugged and plugged back in |
-| **[Workspaces](docs/workspaces.md)** | Save the desk and put it away: the apps, every window's frame, the monitor each belongs on, what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself |
+| **[Zones](docs/zones.md)** | Overlap them, gap them, hide the numbers, keep a list of apps Plonk never touches. Windows return to their zone after a display is unplugged and plugged back in |
+| **[Workspaces](docs/workspaces.md)** | Files, folders or URLs each app should open on the way up, so a desk comes back with the right documents and not just the right apps. Monitors are keyed by UUID, so unplugging one does not scramble them |
 | **Focus that follows the layout** | `⌃⌥⇧←` goes to the window actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
 | **Voice** | Hold `⌃⌥V` and say it. Common commands run in the app, offline. Anything bigger goes to your agent. Recognition is on-device |
 
-Plus the [MCP server](#for-agents), which is all of the above and the rest of
-this list, as tools an agent can call.
+And the [MCP server](#for-agents), which is every one of these as a tool an
+agent can call.
 
 <details>
-<summary>And seven smaller things, each of which was otherwise a separate menu bar icon</summary>
+<summary>Seven smaller things, behind the same menu bar icon</summary>
 
 <br>
 
 | | |
 | --- | --- |
 | **Text off the screen** | `⌃⌥T` selects an area and copies the words in it: a screenshot, a paused video, a dialog that will not let you select. On-device |
-| **A ruler** | `⌃⌥R`, then hover. It reads the pixels and tells you how far the pointer can go each way before it meets an edge: the width of a row, the height of a bar, the gap between two things. Drag for a distance. Points and pixels both |
+| **A ruler** | `⌃⌥R`, then hover: how far the pointer can go each way before it meets an edge, read off the pixels. The width of a row, the height of a bar, the gap between two things. Drag for a straight-line distance. Points and pixels both |
 | **Pin part of the screen** | Float a live crop above everything else. A build log, a chart, a call, visible in a corner while you work over it |
 | **Keep awake** | Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or when a process exits |
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |
@@ -183,9 +181,9 @@ Longer versions: [Zones](docs/zones.md) · [Workspaces](docs/workspaces.md) ·
 
 ## For agents
 
-Plonk exposes its whole surface over MCP, so an agent can read the desk,
-rearrange it, save the result, and read the screen back without a screenshot
-round trip for anything that is really just words.
+An agent can read the desk, rearrange it, save the result, and read text back
+off the screen, with no screenshot round trip for anything that is really just
+words.
 
 ```
 browser on the left 60%, terminal top right, notes bottom right
