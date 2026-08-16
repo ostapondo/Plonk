@@ -47,10 +47,12 @@ body{
   26%,72%{opacity:1;transform:scale(1)}
   86%,100%{opacity:.4;transform:scale(.96)}
 }
+/* No animation-delay anywhere. A delayed animation has not started at
+   currentTime 0, so frame 0 rendered un-animated and flashed once per loop;
+   and its phase at t=3s no longer matches its phase at t=0, so the loop
+   would not close even with a fill mode. The stagger was invisible at this
+   frame rate anyway. */
 .z{animation:lift 3s ease infinite}
-.z1{animation-delay:.03s}
-.z3{animation-delay:.06s}
-.z4{animation-delay:.09s}
 
 /* the window the cube is carrying — same outline as the cube */
 /* Rest position sits beside the cube, clear of the wordmark. It lands

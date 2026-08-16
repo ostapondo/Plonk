@@ -45,16 +45,26 @@ node docs/design/shoot.js && python3 docs/design/assemble.py   # docs/banner.gif
 node docs/design/shots.js                                       # app screenshots
 ```
 
-`scene.html` is the banner animation. Every animation in it is exactly 3s long
-so the loop closes without a stutter; `shoot.js` pauses them all and steps
-`currentTime` by hand, which is what makes the frames deterministic.
+`scene.html` is the banner animation. It carries no `animation-delay`: a
+delayed animation has not begun at `currentTime` 0, so frame 0 came out
+un-animated and flashed once per loop, and its phase at 3s no longer matched
+its phase at 0 — a fill mode hides the first fault but not the second.
+50 frames at 60 ms is exactly 3000 ms; GIF stores delays in centiseconds, so
+a frame time that is not a multiple of 10 ms silently rounds and the loop
+drifts. Every animation in the scene is exactly 3s long so the loop closes
+without a stutter, and `shoot.js` pauses them all and steps `currentTime` by
+hand, which is what makes the frames deterministic.
 
 Two things that cost an afternoon each, both now encoded in the scripts:
 
 - `page.screenshot({ animations: 'disabled' })` **rewinds** the animations you
   just positioned. Do not pass it when sampling frames.
 - GIF `disposal=2` defeats frame differencing. Only the window moves in the
-  banner, so leaving it off took the file from 2.5 MB to 301 KB.
+  banner, so leaving it off took the file from 3.5 MB to 357 KB. Dithering
+  costs another 500 KB on a flat mesh for banding nobody can see at this
+  size. Both are now switched off in `assemble.py` itself, which is the
+  point: the script has to reproduce the committed file, or the claim that
+  the assets cannot drift is not true.
 
 `mac.html` holds four full-size macOS scenes at real system metrics — 13px body
 text, an 38px unified toolbar, a 220px sidebar, 12px traffic lights — and

@@ -353,8 +353,13 @@ pre .c{color:#9c96b8}
 .links a:hover{color:var(--ink);border-bottom-color:var(--z2)}
 
 @media (prefers-reduced-motion:reduce){
-  .mesh i,.cubey,.cubey .eye,.holder::before,.rail,.win.fly,.lift,.toast,
-  .swap .k1,.swap .k2,.swap .k3,.swap .k4,.swap .k5,.setlab{animation:none}
+  /* Selectors here have to outrank the ones that set the animation:
+     .mesh i (0,1,1) loses to .mesh .a (0,2,0), and .setlab loses to
+     .setlab.l1, so both kept moving for anyone who asked for less. */
+  .mesh .a,.mesh .b,.mesh .c,.mesh .d,
+  .cubey,.cubey .eye,.holder::before,.rail,.win.fly,.lift,.toast,
+  .swap .k1,.swap .k2,.swap .k3,.swap .k4,.swap .k5,
+  .setlab.l1,.setlab.l2,.setlab.l3{animation:none}
   .win.fly{left:35%;top:8%;width:36%;height:84%}
   .lift{opacity:1;transform:none}
   .toast{opacity:1}

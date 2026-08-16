@@ -5,7 +5,10 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const W = 640, H = 340, PERIOD = 3000, FRAMES = 36, SCALE = 2;
+// 50 frames over 3000 ms is 60 ms each. GIF stores frame delays in
+// centiseconds, so only multiples of 10 ms survive the container — 36
+// frames wanted 83 ms and got 80, making the loop 2.88 s, not 3.
+const W = 640, H = 340, PERIOD = 3000, FRAMES = 50, SCALE = 2;
 const outDir = path.join(__dirname, 'frames');
 
 (async () => {

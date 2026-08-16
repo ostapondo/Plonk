@@ -89,7 +89,7 @@ tools read it, and they should stay one colour.
 8. **Delete this file**, and drop the links from any commit body that quotes
    them.
 
-## Two traps already paid for
+## Three traps already paid for
 
 Both are encoded in `docs/design/`, but they cost an afternoon each and are
 easy to walk back into:
@@ -97,4 +97,6 @@ easy to walk back into:
 - `page.screenshot({ animations: 'disabled' })` **rewinds** the animations you
   just positioned by hand. The first run produced 36 identical frames.
 - GIF `disposal=2` defeats frame differencing. Only the window moves in the
-  banner; leaving disposal off took the file from 2.5 MB to 301 KB.
+  banner; leaving disposal off took the file from 3.5 MB to 357 KB.
+- A positive `animation-delay` leaves frame 0 un-animated and stops the loop
+  closing. There is none in `scene.html` now; do not add one back.
