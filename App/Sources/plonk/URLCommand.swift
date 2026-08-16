@@ -45,7 +45,7 @@ enum URLCommand: Equatable {
             guard !heldDown.contains(action) else { return .failure(.heldDownAction(wanted)) }
             return .success(.action(action))
         }
-        if fixedGrid.contains(wanted) { return .failure(.fixedGridAction(wanted)) }
+        if isFixedGrid(wanted) { return .failure(.fixedGridAction(wanted)) }
         return .failure(.unknownAction(wanted))
     }
 
@@ -56,6 +56,12 @@ enum URLCommand: Equatable {
     /// moves the pointer instead.
     static let aliases: [String: HotkeyAction] = [
         "restore": .unsnap,
+        // Rectangle answers to a second name for each half, so a script may
+        // hold either. WindowAction.aliasName is where they come from.
+        "left-side": .leftHalf,
+        "right-side": .rightHalf,
+        "top-side": .topHalf,
+        "bottom-side": .bottomHalf,
     ]
 
     /// Actions that run for as long as a key is held. Voice finishes on the
@@ -63,23 +69,9 @@ enum URLCommand: Equatable {
     /// microphone listening with nothing to close it.
     static let heldDown: Set<HotkeyAction> = [.voice]
 
-    /// Rectangle actions that are a zone set here rather than a fixed fraction
-    /// of the screen. Listed so a script asking for one gets told why.
-    static let fixedGrid: Set<String> = [
-        "first-third", "center-third", "last-third",
-        "first-two-thirds", "last-two-thirds", "center-two-thirds",
-        "first-fourth", "second-fourth", "third-fourth", "last-fourth",
-        "first-three-fourths", "center-three-fourths", "last-three-fourths",
-        "top-left-sixth", "top-center-sixth", "top-right-sixth",
-        "bottom-left-sixth", "bottom-center-sixth", "bottom-right-sixth",
-        "top-left-ninth", "top-center-ninth", "top-right-ninth",
-        "middle-left-ninth", "middle-center-ninth", "middle-right-ninth",
-        "bottom-left-ninth", "bottom-center-ninth", "bottom-right-ninth",
-        "top-left-third", "top-right-third", "bottom-left-third", "bottom-right-third",
-        "top-left-eighth", "top-center-left-eighth", "top-center-right-eighth",
-        "top-right-eighth", "bottom-left-eighth", "bottom-center-left-eighth",
-        "bottom-center-right-eighth", "bottom-right-eighth",
-    ]
+    /// Rectangle's fixed fractions, which are a zone set here. One spelling of
+    /// the rule, shared with the importer.
+    static func isFixedGrid(_ name: String) -> Bool { RectangleImport.isFixedGrid(name) }
 }
 
 extension HotkeyAction {

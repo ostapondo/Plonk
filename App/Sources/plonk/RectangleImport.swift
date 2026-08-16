@@ -45,7 +45,32 @@ enum RectangleImport {
 
     static let defaultsSuite = "com.knollsoft.Rectangle"
 
-    /// Where Rectangle's Settings tab leaves its export.
+    /// Whether a Rectangle action name is one of its fixed fractions of the
+    /// screen, which is a zone set here.
+    ///
+    /// Matched on the end of the name rather than against a copy of
+    /// Rectangle's enum, which has grown twelfths, sixteenths and vertical
+    /// thirds and will grow more. Case and hyphens are ignored so the same
+    /// rule reads `firstThird` from a config file and `first-third` from a URL.
+    ///
+    /// Halves are missing on purpose: four of the five end in `Half` and all
+    /// four are imported. Rectangle's own centre half is the exception, and it
+    /// is named.
+    static func isFixedGrid(_ name: String) -> Bool {
+        let plain = name.lowercased().replacingOccurrences(of: "-", with: "")
+        if plain == "centerhalf" || plain == "centersection" { return true }
+        return fractions.contains { plain.hasSuffix($0) || plain.hasSuffix($0 + "s") }
+    }
+
+    private static let fractions = [
+        "third", "fourth", "fifth", "sixth", "eighth", "ninth", "twelfth", "sixteenth",
+    ]
+
+    /// The path Rectangle itself reads a config back from on launch.
+    ///
+    /// Not where its export button writes: that opens a save panel, so the
+    /// file lands wherever the user pointed it. This is the one path both apps
+    /// agree on, which is why docs/from-rectangle.md says to move it here.
     static var exportedConfigURL: URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("Rectangle", isDirectory: true)

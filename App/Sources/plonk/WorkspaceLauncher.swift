@@ -303,10 +303,6 @@ final class WorkspaceLauncher {
         let updated = statuses
         lock.unlock()
 
-        if Thread.isMainThread {
-            onProgress?(workspace, updated)
-        } else {
-            DispatchQueue.main.async { self.onProgress?(workspace, updated) }
-        }
+        OnMain.run { self.onProgress?(workspace, updated) }
     }
 }

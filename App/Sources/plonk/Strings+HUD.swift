@@ -28,6 +28,14 @@ extension LocalizedStringResource {
     static let hudRectangleGridOnly = Self.key("hud.rectangleGridOnly")
     static let hudUrlUnreadable = Self.key("hud.urlUnreadable")
 
+    static func hudRectangleLeftBehind(_ names: String) -> LocalizedStringResource {
+        Self.key("hud.rectangleLeftBehind \(names)")
+    }
+
+    static func hudRectangleNoneMatched(_ names: String) -> LocalizedStringResource {
+        Self.key("hud.rectangleNoneMatched \(names)")
+    }
+
     static func hudRectangleTook(_ owner: String) -> LocalizedStringResource {
         Self.key("hud.rectangleTook \(owner)")
     }

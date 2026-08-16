@@ -41,8 +41,25 @@ struct URLCommandTests {
     /// A script asking for thirds is not broken, it is asking for something
     /// that is a zone set here. It gets told which of the two it is.
     @Test func aFixedGridActionSaysWhatItIs() {
-        #expect(parse("plonk://execute-action?name=first-third") == .failure(.fixedGridAction("first-third")))
-        #expect(parse("plonk://execute-action?name=top-left-ninth") == .failure(.fixedGridAction("top-left-ninth")))
+        for name in ["first-third", "top-left-ninth", "last-two-thirds", "second-fourth"] {
+            #expect(parse("plonk://execute-action?name=\(name)") == .failure(.fixedGridAction(name)))
+        }
+    }
+
+    /// Rectangle keeps adding fractions — twelfths and sixteenths are already
+    /// there — and a hand-kept list would answer "nothing is called that" for
+    /// each new one, which is the least useful thing it could say.
+    @Test func fractionsRectangleAddedLaterAreStillRecognised() {
+        for name in ["top-left-twelfth", "bottom-right-sixteenth", "top-vertical-third"] {
+            #expect(parse("plonk://execute-action?name=\(name)") == .failure(.fixedGridAction(name)))
+        }
+    }
+
+    /// Rectangle answers to both names for a half, so a script may hold either
+    /// and the documented one-line swap has to carry both.
+    @Test func rectanglesOtherNameForEachHalfWorks() {
+        #expect(parse("plonk://execute-action?name=left-side") == .success(.action(.leftHalf)))
+        #expect(parse("plonk://execute-action?name=bottom-side") == .success(.action(.bottomHalf)))
     }
 
     /// Moving a window to the next display is a different thing from moving the
@@ -109,8 +126,8 @@ struct URLCommandTests {
         for alias in URLCommand.aliases.keys {
             #expect(!names.contains(alias))
         }
-        for name in URLCommand.fixedGrid {
-            #expect(!names.contains(name))
+        for name in names {
+            #expect(!URLCommand.isFixedGrid(name))
         }
     }
 

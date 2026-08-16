@@ -33,41 +33,48 @@ struct ShortcutsPage: View {
                     Text(.keysHotkeysDetail)
                 }
             }
-            Section {
-                ShortcutRows(model: model, actions: [.shortcutGuide])
-            } header: {
-                Text(.shortcutGroupGuide)
-            } footer: {
-                Text(.keysGuideHelp)
-            }
-            Section {
-                ShortcutRows(model: model, actions: [.commandPalette])
-            } header: {
-                Text(.keysPalette)
-            } footer: {
-                Text(.keysPaletteHelp)
-            }
-            ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
-                Section(String(localized: group.name)) {
-                    ForEach(group.actions) { row($0) }
+            // Dimmed together when the keys are off. The URL switch below is
+            // not in here: a URL runs its action whatever that switch says, so
+            // greying it would misdescribe the surface SECURITY.md documents.
+            Group {
+                Section {
+                    ShortcutRows(model: model, actions: [.shortcutGuide])
+                } header: {
+                    Text(.shortcutGroupGuide)
+                } footer: {
+                    Text(.keysGuideHelp)
+                }
+                Section {
+                    ShortcutRows(model: model, actions: [.commandPalette])
+                } header: {
+                    Text(.keysPalette)
+                } footer: {
+                    Text(.keysPaletteHelp)
+                }
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                    Section(String(localized: group.name)) {
+                        ForEach(group.actions) { row($0) }
+                    }
+                }
+                Section {
+                    Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
+                    Button(String(localized: .keysImportRectangle)) {
+                        model.actions?.importFromRectangle()
+                    }
+                } footer: {
+                    Text(.keysImportRectangleHelp)
                 }
             }
+            .opacity(model.hotkeysEnabled ? 1 : 0.5)
             Section {
-                Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
-                Button(String(localized: .keysImportRectangle)) {
-                    model.actions?.importFromRectangle()
-                }
                 Toggle(isOn: model.binding(\.handleRectangleURLs,
                                            set: { $0.setRectangleURLs($1) })) {
                     Text(LocalizedStringResource.keysRectangleURLs)
                     Text(.keysRectangleURLsHelp)
                 }
-            } footer: {
-                Text(.keysImportRectangleHelp)
             }
         }
         .formStyle(.grouped)
-        .opacity(model.hotkeysEnabled ? 1 : 0.5)
     }
 
     private func row(_ action: HotkeyAction) -> some View {

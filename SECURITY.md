@@ -226,7 +226,11 @@ What it cannot reach:
 - **The microphone.** `voice` is push-to-talk and ends when the key comes back
   up, which a URL has no way of doing, so it is refused outright rather than
   started with nothing to stop it.
-- **Settings.** No action changes a preference, a zone set or a workspace.
+- **Settings, with one exception.** No action edits a preference, draws a zone
+  set or touches a workspace. `zone-set-1` to `zone-set-9` do write one thing:
+  which of your existing sets the screen under the cursor is wearing, the same
+  as `⌃⌥⇧1`–`⌃⌥⇧9`. It is saved, so it outlives a restart. Nothing is created
+  or deleted, and switching back is another URL.
 
 The scheme is `plonk`. `rectangle` is also declared, so the app can answer the
 URLs of the window manager many people are arriving from, but it does not take

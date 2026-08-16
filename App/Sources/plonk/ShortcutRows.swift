@@ -156,7 +156,11 @@ final class RecorderView: NSView {
         switch Int(event.keyCode) {
         case kVK_Escape:
             onFinish?(nil)
-        case kVK_Delete, kVK_ForwardDelete:
+        // Bare delete clears the row. Held with a modifier it is a key like any
+        // other: Rectangle's own restore is ⌃⌥⌫, and an imported binding the
+        // recorder refuses to take back is worse than no shortcut at all.
+        case kVK_Delete, kVK_ForwardDelete
+            where event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty:
             onClear?()
         default:
             // A bare key would fire while typing anywhere, so it is refused

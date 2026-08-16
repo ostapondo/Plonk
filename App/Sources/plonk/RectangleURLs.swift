@@ -20,11 +20,16 @@ enum RectangleURLs {
     }
 
     /// Whether this app is what macOS currently opens a `rectangle://` URL with.
+    ///
+    /// By bundle identifier, not by path. The same app answers from different
+    /// URLs depending on symlinks, a `/private` prefix, or App Translocation
+    /// running a quarantined copy from a shadow mount, and comparing paths
+    /// would read as "not us" and quietly stop handing the scheme back.
     static var isHandler: Bool {
         guard let probe = URL(string: "\(scheme)://\(URLCommand.host)?name=left-half"),
               let handler = NSWorkspace.shared.urlForApplication(toOpen: probe)
         else { return false }
-        return handler.standardizedFileURL == Bundle.main.bundleURL.standardizedFileURL
+        return Bundle(url: handler)?.bundleIdentifier == Bundle.main.bundleIdentifier
     }
 
     enum Move: Equatable {
@@ -55,32 +60,31 @@ enum RectangleURLs {
     /// answer is the setting rather than the holder, and the switch can be
     /// turned back off instead of springing on again.
     static func setHandled(_ wanted: Bool, settled: @escaping (Bool) -> Void = { _ in }) {
-        switch move(wanted: wanted, isHandler: isHandler, rectangleInstalled: installed != nil) {
+        let rectangle = installed
+        switch move(wanted: wanted, isHandler: isHandler, rectangleInstalled: rectangle != nil) {
         case .take:
-            hand(to: Bundle.main.bundleURL, settled: settled)
+            hand(to: Bundle.main.bundleURL, wanted: wanted, settled: settled)
         case .giveBack:
-            guard let rectangle = installed else { return main { settled(wanted) } }
-            hand(to: rectangle, settled: settled)
+            // move only says this when there was somewhere to hand it to.
+            hand(to: rectangle ?? Bundle.main.bundleURL, wanted: wanted, settled: settled)
         case .nothing:
-            main { settled(wanted) }
+            OnMain.run { settled(wanted) }
         }
     }
 
-    /// Every answer arrives on the main queue, whichever branch produced it,
-    /// so a caller can write to the model without checking which one it was.
-    private static func main(_ work: @escaping () -> Void) {
-        if Thread.isMainThread { work() } else { DispatchQueue.main.async(execute: work) }
-    }
-
     /// macOS prompts before a default handler changes for http, https and
-    /// html. A private scheme is not on that list, so this runs unprompted, and
-    /// the only way to know it took is to ask again once it has finished.
-    private static func hand(to app: URL, settled: @escaping (Bool) -> Void) {
+    /// html. A private scheme is not on that list, so this runs unprompted.
+    ///
+    /// The answer is whether the request was accepted, not a fresh reading of
+    /// who holds the scheme: LaunchServices caches its replies in-process, so
+    /// asking again this soon can still name the previous holder and the
+    /// switch would spring back to where it started.
+    private static func hand(to app: URL, wanted: Bool, settled: @escaping (Bool) -> Void) {
         NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: scheme) { error in
             if let error {
                 NSLog("Plonk: could not hand \(scheme):// to \(app.lastPathComponent): \(error)")
             }
-            main { settled(isHandler) }
+            OnMain.run { settled(error == nil ? wanted : !wanted) }
         }
     }
 }

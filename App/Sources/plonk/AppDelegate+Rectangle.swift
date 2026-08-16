@@ -37,12 +37,33 @@ extension AppDelegate {
     private func outcome(
         of found: RectangleImport.Found, displaced: [HotkeyAction]
     ) -> LocalizedStringResource {
-        if found.bindings.isEmpty { return .hudRectangleGridOnly }
-        guard !displaced.isEmpty else { return .hudRectangleImported }
-        // All of them, not the first: every one of these is a key that has
-        // stopped working, and the page promises none go quietly.
-        let names = displaced.map { String(localized: $0.title) }
-        return .hudRectangleTook(ListFormatter.localizedString(byJoining: names))
+        let left = found.unmapped.map(Self.readable)
+        if found.bindings.isEmpty {
+            // Nothing bound. Which kind of nothing matters: pointing someone at
+            // the zone sets is only useful if the grid is what they lost.
+            return found.unmapped.allSatisfy(RectangleImport.isFixedGrid)
+                ? .hudRectangleGridOnly
+                : .hudRectangleNoneMatched(ListFormatter.localizedString(byJoining: left))
+        }
+        // A key that has stopped working outranks a key that never started, and
+        // all of them are named either way: the page promises none go quietly.
+        if !displaced.isEmpty {
+            let names = displaced.map { String(localized: $0.title) }
+            return .hudRectangleTook(ListFormatter.localizedString(byJoining: names))
+        }
+        if !left.isEmpty {
+            return .hudRectangleLeftBehind(ListFormatter.localizedString(byJoining: left))
+        }
+        return .hudRectangleImported
+    }
+
+    /// Rectangle's own key for an action, as words. The config stores
+    /// `firstThird`, and that is not what anybody calls it.
+    private static func readable(_ name: String) -> String {
+        name.reduce(into: "") { text, character in
+            if character.isUppercase, !text.isEmpty { text.append(" ") }
+            text.append(Character(character.lowercased()))
+        }
     }
 
     private func readRectangleSetup() -> RectangleImport.Found? {
@@ -66,8 +87,12 @@ extension AppDelegate {
     /// which is why the model is written from the callback and not from `on`.
     func setRectangleURLs(_ on: Bool) {
         store.update { $0.handleRectangleURLs = on }
-        RectangleURLs.setHandled(on) { [weak self] holding in
-            self?.model.handleRectangleURLs = holding
+        // Asking who holds a scheme is a round trip to lsd, and this runs from
+        // a SwiftUI setter. The answer comes back on the main queue.
+        DispatchQueue.global(qos: .userInitiated).async {
+            RectangleURLs.setHandled(on) { [weak self] holding in
+                self?.model.handleRectangleURLs = holding
+            }
         }
     }
 

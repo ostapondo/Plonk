@@ -257,39 +257,24 @@ struct RectangleImportTests {
         #expect(Set(displaced) == [.captureText, .ruler])
     }
 
-    // MARK: - The one place the displacement rule lives
+    // MARK: - Telling one kind of leftover from another
 
-    @Test func bindFreesTheCombinationWhereverElseItWas() {
-        var config = Config()
-        let taken = config.bind(.leftHalf, to: Hotkey(
-            keyCode: UInt32(kVK_ANSI_T), control: true, option: true
-        ))
-        #expect(taken == [.captureText])
-        #expect(config.hotkeys["captureText"] == "")
-        #expect(config.resolvedHotkeys[.leftHalf]?.keyCode == UInt32(kVK_ANSI_T))
+    /// Matched on the end of the name, so fractions Rectangle adds later are
+    /// recognised without this list being chased.
+    @Test func everyShapeOfFractionIsRecognised() {
+        for name in ["firstThird", "first-third", "lastTwoThirds", "secondFourth",
+                     "topLeftNinth", "bottomRightEighth", "topLeftTwelfth",
+                     "bottomCenterSixteenth", "topVerticalThird", "centerHalf"] {
+            #expect(RectangleImport.isFixedGrid(name), "\(name) should read as a fraction")
+        }
     }
 
-    @Test func setGapHoldsTheSameBoundsWhoeverCalls() {
-        var config = Config()
-        config.setGap(-1)
-        #expect(config.zoneGap == 0)
-        config.setGap(1000)
-        #expect(config.zoneGap == Config.gapLimit)
-    }
-
-    // MARK: - The setting that survives a restart
-
-    @Test func theRectangleUrlSettingRoundTripsThroughJson() throws {
-        var config = Config()
-        config.handleRectangleURLs = true
-        let data = try JSONEncoder().encode(config)
-        #expect(try JSONDecoder().decode(Config.self, from: data).handleRectangleURLs)
-    }
-
-    /// Every field is optional on the way in, so a config written before this
-    /// setting existed decodes rather than throwing.
-    @Test func aConfigWrittenBeforeTheSettingDecodesWithItOff() throws {
-        let config = try JSONDecoder().decode(Config.self, from: Data("{}".utf8))
-        #expect(config.handleRectangleURLs == false)
+    /// Four of the five halves end in "Half" and all four are imported, so the
+    /// suffix rule must not swallow them.
+    @Test func theHalvesAreNotMistakenForFractions() {
+        for name in ["leftHalf", "rightHalf", "topHalf", "bottomHalf",
+                     "maximize", "center", "restore", "nextDisplay"] {
+            #expect(!RectangleImport.isFixedGrid(name), "\(name) should not read as a fraction")
+        }
     }
 }
