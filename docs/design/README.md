@@ -67,8 +67,33 @@ Two things that cost an afternoon each, both now encoded in the scripts:
   the assets cannot drift is not true.
 
 `mac.html` holds four full-size macOS scenes at real system metrics — 13px body
-text, an 38px unified toolbar, a 220px sidebar, 12px traffic lights — and
-`shots.js` screenshots each by element at 2×.
+text, a 38px unified toolbar, a 220px sidebar, 12px traffic lights — and
+`shots.js` screenshots each by element at 2×. Its output is committed beside it
+in `shots/`, downscaled to 1600px wide:
+
+| | |
+| --- | --- |
+| `shots/s-zones.jpg` | the window: sidebar, unified toolbar, the set, the canvas, grouped settings |
+| `shots/s-desks.jpg` | the Desks page, four cards |
+| `shots/s-drag.jpg`  | the desktop mid-drag, overlay translucent over real windows |
+| `shots/s-menu.jpg`  | the desktop at rest with the menu bar panel open |
+
+**If you are writing the SwiftUI, `mac.html` is the spec and `shots/` is the
+target.** Take the numbers from the stylesheet, not the markup: the glass is
+`backdrop-filter` here and `NSVisualEffectView` there, and the zone gradients
+are already `Ink.zoneGradient(_:)` in the app. Nothing else in `mac.html` is a
+reference implementation.
+
+The rest of the mockups — the directions that were not chosen, the site
+variants, the app screens with their reasoning — are HTML on branch
+`claude/plonk-design-system-3uuj2h` of **ostapondo/ostapondo**, under
+`design/plonk/`. That is a different repository from this one, which has caught
+two people out already:
+
+```sh
+git clone --branch claude/plonk-design-system-3uuj2h --single-branch \
+  https://github.com/ostapondo/ostapondo ~/plonk-design
+```
 
 ## Not done yet
 
