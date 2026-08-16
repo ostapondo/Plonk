@@ -67,11 +67,15 @@ struct ZoneCanvas: View {
     }
 
     private func zoneView(_ z: ZoneRect, index: Int, shown: [ZoneRect], size: CGSize) -> some View {
-        ZStack {
+        // Colour is the zone number, so this rectangle looks the same here, in
+        // the drag overlay and in the menu bar. The accent stays on the chrome:
+        // the selection ring, the delete button and the divider handles.
+        let hue = Ink.zone(index)
+        return ZStack {
             RoundedRectangle(cornerRadius: fullscreen ? 8 : 3)
-                .fill(Color.accentColor.opacity(fullscreen ? 0.22 : 0.16))
+                .fill(hue.opacity(fullscreen ? 0.22 : 0.16))
             RoundedRectangle(cornerRadius: fullscreen ? 8 : 3)
-                .strokeBorder(Color.accentColor.opacity(0.75), lineWidth: fullscreen ? 2 : 1)
+                .strokeBorder(hue.opacity(0.75), lineWidth: fullscreen ? 2 : 1)
             if fullscreen {
                 VStack(spacing: 2) {
                     Text("\(index + 1)")
@@ -79,7 +83,7 @@ struct ZoneCanvas: View {
                     Text("\(Int(z.w * size.width)) × \(Int(z.h * size.height))")
                         .font(.callout.monospacedDigit())
                 }
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(hue)
             }
         }
         .overlay(alignment: .topTrailing) {

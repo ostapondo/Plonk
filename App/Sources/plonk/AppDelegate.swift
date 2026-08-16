@@ -9,7 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = ConfigStore()
     private let windows = WindowManager()
     let awake = AwakeManager()
-    private let agents = AgentRegistry()
+    let agents = AgentRegistry()
     private let eventBroadcaster = EventBroadcaster()
     private let voice = VoiceManager()
     private let hotkeys = HotkeyManager()
@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     lazy var commands = WindowCommands(windows: windows, memory: snapMemory)
     private lazy var launcher = WorkspaceLauncher(windows: windows)
     lazy var presenter = WindowPresenter(model: model)
-    private var statusMenu: StatusMenuController!
+    var statusMenu: StatusMenuController!
     var dragSnap: DragSnapManager!
     private var grabMove: GrabMove!
     private var newWindows: NewWindowWatcher!
@@ -112,35 +112,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         presenter.onCancelWorkspaceLaunch = { [weak self] in self?.launcher.cancel() }
         presenter.onZonePickerClosed = { [weak self] in self?.clearPreview() }
         presenter.onFullscreenEditorClosed = { [weak self] in self?.clearPreview() }
-    }
-
-    private func setupStatusMenu() {
-        statusMenu = StatusMenuController()
-        statusMenu.isAwakeRequested = { [weak self] in self?.awake.requested ?? false }
-        statusMenu.onOpenWindow = { [weak self] in self?.openMainWindow() }
-        statusMenu.onCaptureRegion = { [weak self] in self?.runCapture(.region, openEditor: true) }
-        statusMenu.onToggleAwake = { [weak self] in self?.awake.toggle() }
-        statusMenu.onLaunchWorkspace = { [weak self] name in self?.launchWorkspace(named: name, onScreen: nil) }
-        statusMenu.onReportBug = { [weak self] in self?.reportBug() }
-        statusMenu.agentEntries = { [weak self] in
-            guard let self else { return [] }
-            var names = agents.onlineNames()
-            for adapter in store.config.agentAdapters where !names.contains(adapter.name) {
-                names.append(adapter.name)
-            }
-            if let selected = store.config.selectedAgent, !names.contains(selected) {
-                names.append(selected)
-            }
-            return names.map { ($0, $0 == self.store.config.selectedAgent) }
-        }
-        statusMenu.isExclusive = { [weak self] in self?.store.config.agentExclusive ?? false }
-        statusMenu.hasSelection = { [weak self] in self?.store.config.selectedAgent != nil }
-        statusMenu.onSelectAgent = { [weak self] name in self?.selectAgent(name) }
-        statusMenu.onToggleExclusive = { [weak self] in
-            guard let self else { return }
-            setAgentExclusive(!store.config.agentExclusive)
-        }
-        refreshStatusMenu()
     }
 
     private func setupAwake() {
@@ -686,7 +657,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.zonesModifier = store.config.zonesModifier
     }
 
-    private func refreshStatusMenu() {
+    func refreshStatusMenu() {
         statusMenu.refresh(
             icon: awake.isOn ? StatusIcon.awake : StatusIcon.idle,
             tooltip: String(localized: .menuTooltip(String(localized: awake.statusText))),

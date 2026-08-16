@@ -1,5 +1,8 @@
 import SwiftUI
 
+// What is installed, what is on offer, and the one outbound connection the app
+// is allowed to make.
+
 struct UpdatePage: View {
     @ObservedObject var model: AppModel
 
@@ -10,64 +13,65 @@ struct UpdatePage: View {
     private var hasUpdate: Bool { !model.updateAvailableVersion.isEmpty }
 
     var body: some View {
-        Form {
-            Section {
-                LabeledContent {
+        PageShell(title: .pageUpdate, subtitle: .updateInstallHelp) {
+            SettingsCard {
+                SettingRow(title: .updateInstalled) {
                     Text(model.appVersion.isEmpty
                          ? String(localized: .updateUnbundled) : model.appVersion)
-                } label: {
-                    Text(.updateInstalled)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(.secondary)
                 }
                 if hasUpdate {
-                    LabeledContent {
+                    SettingRow(title: .updateAvailable) {
                         Text(model.updateAvailableVersion)
-                    } label: {
-                        Text(.updateAvailable)
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
-                if !model.updateStatus.isEmpty {
-                    Text(model.updateStatus)
-                        .foregroundStyle(model.updatePhase == "failed" ? .red : .secondary)
-                        .font(.callout)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                if model.updatePhase == "downloading" {
-                    ProgressView(value: model.updateProgress)
-                }
-                HStack {
-                    if hasUpdate {
-                        Button(String(localized: .updateInstallAndRelaunch)) { model.actions?.installUpdate() }
+                SettingBlock {
+                    if !model.updateStatus.isEmpty {
+                        Text(model.updateStatus)
+                            .font(.system(size: 12))
+                            .foregroundStyle(model.updatePhase == "failed" ? .red : .secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if model.updatePhase == "downloading" {
+                        ProgressView(value: model.updateProgress)
+                    }
+                    HStack(spacing: 8) {
+                        if hasUpdate {
+                            Button(String(localized: .updateInstallAndRelaunch)) {
+                                model.actions?.installUpdate()
+                            }
                             .buttonStyle(.borderedProminent)
                             .disabled(isBusy)
+                        }
+                        Button(String(localized: .updateCheckNow)) { model.actions?.checkForUpdates() }
+                            .disabled(isBusy)
+                        Button(String(localized: .updateReleaseNotes)) { model.actions?.openReleasePage() }
                     }
-                    Button(String(localized: .updateCheckNow)) { model.actions?.checkForUpdates() }
-                        .disabled(isBusy)
-                    Button(String(localized: .updateReleaseNotes)) { model.actions?.openReleasePage() }
+                    .controlSize(.small)
                 }
-            } footer: {
-                Text(.updateInstallHelp)
             }
             if hasUpdate && !model.updateNotes.isEmpty {
-                Section(String(localized: .updateWhatsNew(model.updateAvailableVersion))) {
-                    ScrollView {
-                        Text(model.updateNotes)
-                            .font(.callout)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .textSelection(.enabled)
+                SettingsCard(title: .updateWhatsNew(model.updateAvailableVersion)) {
+                    SettingBlock {
+                        ScrollView {
+                            Text(model.updateNotes)
+                                .font(.system(size: 12))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .textSelection(.enabled)
+                        }
+                        .frame(maxHeight: 180)
                     }
-                    .frame(maxHeight: 180)
                 }
             }
-            Section {
-                Toggle(isOn: model.binding(\.updateCheckAutomatically,
-                                           set: { $0.setUpdateCheckAutomatically($1) })) {
-                    Text(LocalizedStringResource.updateAutomatically)
-                    Text(.updateAutomaticallyDetail)
-                }
-            } footer: {
-                Text(.updatePrivacy)
+            SettingsCard(note: .updatePrivacy) {
+                ToggleRow(title: .updateAutomatically,
+                          detail: .updateAutomaticallyDetail,
+                          isOn: model.binding(\.updateCheckAutomatically,
+                                              set: { $0.setUpdateCheckAutomatically($1) }))
             }
         }
-        .formStyle(.grouped)
     }
 }

@@ -51,7 +51,7 @@ struct AppearancePage: View {
                         .foregroundStyle(selected ? model.accent : Color.secondary)
                     Text(theme.title).font(.system(size: 12.5, weight: .medium))
                     Spacer(minLength: 4)
-                    Text(theme.note).font(.system(size: 10.5)).foregroundStyle(.tertiary)
+                    Text(theme.note).font(.system(size: 10.5)).muted()
                 }
             }
             .padding(10)

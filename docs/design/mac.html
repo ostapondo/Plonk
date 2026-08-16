@@ -1,0 +1,468 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+/* ============================================================
+   PLONK AS AN ACTUAL macOS APP
+   Real proportions and real system sizes: 13px body text, 11px
+   secondary, a 28px unified toolbar, a 220px vibrant sidebar,
+   12px traffic lights. Everything is at 1x here and rendered at
+   2x, so this is what a screenshot would look like.
+   ============================================================ */
+:root{
+  --z1:#ff4f81;--z2:#8b5cf6;--z3:#3a6bff;--z4:#12d3a4;--z5:#ffc531;
+  --ink:#12101c;--dim:#66627a;--dimmer:#95919f;
+  --sep:rgba(18,16,28,.1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --disp:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#20202a;font-family:var(--ui);-webkit-font-smoothing:antialiased}
+.shot{position:relative;overflow:hidden}
+
+/* ---------- desktop ---------- */
+.desk{width:1600px;height:1000px;
+  background:
+    radial-gradient(80% 70% at 12% 8%,#4b2a63,transparent 60%),
+    radial-gradient(70% 60% at 92% 22%,#1d3f8a,transparent 62%),
+    radial-gradient(90% 70% at 60% 100%,#123f52,transparent 60%),
+    linear-gradient(160deg,#241a33,#0e1220 60%,#101a22)}
+.menubar{position:absolute;left:0;right:0;top:0;height:26px;background:rgba(18,16,28,.42);
+  -webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  display:flex;align-items:center;gap:19px;padding:0 14px;color:#fff;font-size:13px}
+.menubar .apple{width:14px;height:16px;display:block;flex:none}
+.menubar b{font-weight:700}
+.menubar .sp{margin-left:auto;display:flex;align-items:center;gap:15px;font-size:12.5px}
+.menubar .plonk{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.16);
+  border-radius:5px;padding:2px 7px;margin:0 -3px}
+.menubar .plonk svg{width:14px;height:16px}
+.dock{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);display:flex;gap:9px;
+  background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
+  border:1px solid rgba(255,255,255,.16);border-radius:20px;padding:8px 11px}
+.dock i{width:46px;height:46px;border-radius:11px;display:block;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.dock .d1{background:linear-gradient(150deg,#5ec8ff,#1b6fe0)}
+.dock .d2{background:linear-gradient(150deg,#39424f,#12161c)}
+.dock .d3{background:linear-gradient(150deg,#ffe07a,#f0a92c)}
+.dock .d4{background:linear-gradient(150deg,#ff8fb0,#e83f74)}
+.dock .d5{background:linear-gradient(150deg,#a4f0d8,#12b48a)}
+.dock .cube{background:#fffdf9;display:flex;align-items:center;justify-content:center}
+.dock .cube svg{width:36px;height:40px}
+
+/* ---------- a generic app window on the desktop ---------- */
+.app{position:absolute;border-radius:11px;overflow:hidden;background:#fff;
+  box-shadow:0 26px 70px rgba(0,0,0,.5),0 0 0 .5px rgba(0,0,0,.35)}
+.app .tb{height:38px;background:#f3f2f6;border-bottom:.5px solid rgba(18,16,28,.13);
+  display:flex;align-items:center;gap:8px;padding:0 13px;font-size:12.5px;color:var(--dim);font-weight:600}
+.lights{display:flex;gap:8px;margin-right:7px}
+.lights i{width:12px;height:12px;border-radius:50%;display:block}
+.lights .tl-r{background:#ff5f57}.lights .tl-y{background:#febc2e}.lights .tl-g{background:#28c840}
+.app .body{padding:14px;display:flex;flex-direction:column;gap:8px}
+.app .body u{display:block;height:8px;border-radius:4px;background:#e8e6ef;text-decoration:none}
+.app.term{background:#12101c}
+.app.term .tb{background:#1c1a28;border-bottom-color:rgba(255,255,255,.1);color:#a9a4bd}
+.app.term .body{font-family:var(--mono);font-size:12px;line-height:1.75;color:#8ef0c4;gap:0}
+.app.term .body span{display:block;white-space:nowrap}
+.app.term .body span.d{color:#6f6a86}
+
+/* ---------- zone overlay on the desktop ---------- */
+.zone{position:absolute;border-radius:12px;display:flex;align-items:flex-end;padding:11px;
+  font:600 15px var(--mono);color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45)}
+.zone.n1{background:linear-gradient(160deg,rgba(255,127,164,.34),rgba(255,79,129,.38))}
+.zone.n2{background:linear-gradient(160deg,rgba(169,140,255,.6),rgba(139,92,246,.66));
+  box-shadow:0 0 0 3px rgba(255,255,255,.85),0 20px 50px rgba(139,92,246,.5)}
+.zone.n3{background:linear-gradient(160deg,rgba(111,146,255,.34),rgba(58,107,255,.38))}
+.zone.n4{background:linear-gradient(160deg,rgba(95,240,205,.34),rgba(18,211,164,.38));color:#04241b}
+.zone.n5{background:linear-gradient(160deg,rgba(255,224,138,.34),rgba(255,197,49,.38));color:#1c1400}
+.zone .frac{position:absolute;top:11px;right:13px;font-size:12px;font-weight:500;opacity:.85}
+.hud{position:absolute;left:50%;transform:translateX(-50%);bottom:104px;background:rgba(18,16,28,.9);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:11px 20px;color:#fff;
+  font-size:14px;font-weight:600;display:flex;align-items:center;gap:9px}
+.hud b{color:#c4b5ff}
+.hud .k{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.14);border-radius:5px;padding:3px 7px;font-weight:500}
+
+/* ---------- the Plonk menu bar panel ---------- */
+.panel{position:absolute;width:336px;border-radius:13px;overflow:hidden;
+  background:rgba(248,247,252,.82);-webkit-backdrop-filter:blur(40px) saturate(1.7);backdrop-filter:blur(40px) saturate(1.7);
+  border:.5px solid rgba(0,0,0,.16);box-shadow:0 20px 54px rgba(0,0,0,.45);padding:9px}
+.panel .h{display:flex;align-items:center;justify-content:space-between;padding:4px 7px 8px}
+.panel .h b{font-size:13px;font-weight:700;color:var(--ink)}
+.panel .h span{font-size:11px;color:var(--dim);font-family:var(--mono)}
+.panel .grid{display:grid;grid-template-columns:.8fr 1.5fr .9fr;grid-template-rows:1fr 1fr;gap:5px;height:104px;padding:0 3px 8px}
+.panel .grid b{border-radius:8px;display:flex;align-items:flex-end;padding:6px;font:600 11px var(--mono);color:#fff}
+.panel .grid b:nth-child(2){grid-row:span 2}
+.panel .it{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:7px;font-size:13px;color:var(--ink)}
+.panel .it.on{background:linear-gradient(115deg,var(--z2),#6f4ae0);color:#fff;font-weight:600}
+.panel .it .s{font-family:var(--mono);font-size:11px;color:var(--dimmer)}
+.panel .it.on .s{color:rgba(255,255,255,.75)}
+.panel .it .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--z4);margin-right:6px}
+.panel .sep{height:.5px;background:var(--sep);margin:5px 8px}
+
+/* ============================================================
+   THE PLONK WINDOW ITSELF
+   ============================================================ */
+.win{width:1180px;height:790px;border-radius:11px;overflow:hidden;display:grid;
+  grid-template-columns:220px 1fr;background:#fbfaff;
+  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 .5px rgba(0,0,0,.32)}
+.win.solo{box-shadow:0 30px 80px rgba(0,0,0,.34),0 0 0 .5px rgba(0,0,0,.16)}
+
+/* sidebar — vibrant, as NSVisualEffectView already gives you */
+.sb{background:rgba(240,238,248,.86);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);
+  border-right:.5px solid var(--sep);padding:0 10px 10px;display:flex;flex-direction:column}
+.sb .top{height:38px;display:flex;align-items:center;padding:0 3px}
+.sb .search{background:rgba(18,16,28,.06);border-radius:7px;padding:5px 9px;font-size:12.5px;color:var(--dimmer);
+  display:flex;justify-content:space-between;align-items:center;margin:2px 0 12px}
+.sb .search em{font-family:var(--mono);font-style:normal;font-size:11px}
+.sb .sec{font-size:11px;font-weight:700;color:var(--dimmer);letter-spacing:.04em;padding:9px 8px 4px;text-transform:uppercase}
+.sb .it{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;font-size:13px;color:var(--ink);margin-bottom:1px}
+.sb .it .ic{width:15px;height:15px;flex:none;color:var(--dim);opacity:.85}
+.sb .it.on .ic{color:#fff;opacity:1}
+.sb .it.on{background:linear-gradient(115deg,var(--z2),#6f4ae0);color:#fff;font-weight:600}
+.sb .it .n{margin-left:auto;font-size:11px;color:var(--dimmer);font-family:var(--mono)}
+.sb .it.on .n{color:rgba(255,255,255,.75)}
+.sb .foot{margin-top:auto;display:flex;align-items:center;gap:7px;padding:8px 6px 0;border-top:.5px solid var(--sep);
+  font-size:11px;color:var(--dimmer)}
+.sb .foot svg{width:16px;height:18px}
+
+/* content */
+.ct{display:flex;flex-direction:column;min-width:0}
+.ct .tb{height:38px;border-bottom:.5px solid var(--sep);display:flex;align-items:center;
+  justify-content:space-between;padding:0 14px;background:rgba(251,250,255,.8);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.ct .tb h1{font-size:13px;font-weight:700;color:var(--ink)}
+.ct .tb .actions{display:flex;gap:7px}
+.ct .tb .btn{font-size:12px;font-weight:600;color:var(--ink);background:rgba(18,16,28,.06);
+  border-radius:6px;padding:4px 10px}
+.ct .tb .btn.p{background:linear-gradient(115deg,var(--z2),#6f4ae0);color:#fff}
+.ct .in{padding:18px 20px;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+
+.h2{font-family:var(--disp);font-size:26px;font-weight:800;letter-spacing:-.028em;color:var(--ink)}
+.h2 + .sub{font-size:12.5px;color:var(--dim);margin-top:-3px}
+
+.tabs{display:flex;gap:5px;flex-wrap:wrap}
+.tab{font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(18,16,28,.06);color:var(--dim)}
+.tab.on{background:var(--ink);color:#fff}
+
+.canvas{border-radius:12px;background:rgba(18,16,28,.05);padding:8px;position:relative;height:288px}
+.canvas .z{position:absolute;border-radius:9px;display:flex;align-items:flex-end;padding:9px;
+  font:600 13px var(--mono);color:#fff}
+.canvas .z.n1{background:linear-gradient(160deg,#ff7fa4,var(--z1))}
+.canvas .z.n2{background:linear-gradient(160deg,#a98cff,var(--z2))}
+.canvas .z.n3{background:linear-gradient(160deg,#6f92ff,var(--z3))}
+.canvas .z.n4{background:linear-gradient(160deg,#5ff0cd,var(--z4));color:#04241b}
+.canvas .z.n5{background:linear-gradient(160deg,#ffe08a,var(--z5));color:#1c1400}
+.canvas .z .frac{position:absolute;top:9px;right:10px;font-size:10.5px;font-weight:500;opacity:.85}
+.canvas .z.sel{box-shadow:0 0 0 2.5px #fff,0 0 0 5px var(--z2)}
+
+/* grouped settings, the way System Settings does it */
+.group{background:#fff;border-radius:10px;border:.5px solid var(--sep);overflow:hidden}
+.r{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 13px;border-bottom:.5px solid var(--sep)}
+.r:last-child{border-bottom:0}
+.r .t{font-size:13px;color:var(--ink)}
+.r .s{font-size:11.5px;color:var(--dim);margin-top:1px;line-height:1.3}
+.tog{width:38px;height:22px;border-radius:999px;background:linear-gradient(115deg,var(--z4),#0aa87f);position:relative;flex:none}
+.tog::after{content:"";position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.tog.off{background:#d5d2de}.tog.off::after{right:auto;left:2px}
+.kb{font-family:var(--mono);font-size:11.5px;background:rgba(18,16,28,.06);border-radius:5px;padding:3px 7px;color:var(--ink)}
+.stepper{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink)}
+.stepper b{font-family:var(--mono);font-weight:500}
+.stepper i{width:17px;height:17px;border-radius:4px;background:rgba(18,16,28,.07);display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-style:normal;color:var(--dim)}
+
+/* desks */
+.desks{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.dk{background:#fff;border:.5px solid var(--sep);border-radius:11px;padding:12px}
+.dk .t{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
+.dk .t b{font-size:13.5px;font-weight:700;color:var(--ink)}
+.dk .t span{font-family:var(--mono);font-size:11px;color:var(--dimmer)}
+.dk .mon{display:flex;gap:5px;height:62px;margin-bottom:9px}
+.dk .mon i{border-radius:7px;display:block}
+.dk .ap{display:flex;flex-wrap:wrap;gap:4px}
+.dk .ap span{font-size:11px;background:rgba(18,16,28,.05);border-radius:6px;padding:3px 7px;color:var(--dim)}
+</style>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="cube" viewBox="0 0 100 112">
+    <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
+    <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
+    <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
+    <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
+  </symbol>
+  <symbol id="i-home" viewBox="0 0 16 16"><path d="M2.6 7.2 8 2.8l5.4 4.4V13a.6.6 0 0 1-.6.6H3.2a.6.6 0 0 1-.6-.6z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-zones" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.2" y="2.2" width="4.4" height="5.2" rx="1"/><rect x="8.4" y="2.2" width="5.4" height="11.6" rx="1"/><rect x="2.2" y="9.2" width="4.4" height="4.6" rx="1"/></g></symbol>
+  <symbol id="i-desks" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3.4" width="12" height="7.6" rx="1.1"/><path d="M5.6 13.4h4.8" stroke-linecap="round"/></g></symbol>
+  <symbol id="i-cap" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.8" y="4.2" width="12.4" height="8.4" rx="1.6"/><circle cx="8" cy="8.4" r="2.5"/><path d="M5.6 4.2 6.6 2.6h2.8l1 1.6"/></g></symbol>
+  <symbol id="i-awake" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="3.2"/><path d="M8 1.4v1.6M8 13v1.6M1.4 8H3M13 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" stroke-linecap="round"/></g></symbol>
+  <symbol id="i-ptr" viewBox="0 0 16 16"><path d="M3.4 2.2 12.4 8l-3.9.9-1.7 3.8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.4" y="4.8" width="11.2" height="8.2" rx="2"/><path d="M8 2v2.8" stroke-linecap="round"/><path d="M5.9 8.4v1.4M10.1 8.4v1.4" stroke-linecap="round"/></g></symbol>
+  <symbol id="i-set" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2 4.6h12M2 8h12M2 11.4h12"/><circle cx="10.4" cy="4.6" r="1.5" fill="none"/><circle cx="5.4" cy="8" r="1.5"/><circle cx="9.4" cy="11.4" r="1.5"/></g></symbol>
+  <symbol id="i-apple" viewBox="0 0 16 16"><path d="M11.9 8.5c0-1.6 1.3-2.3 1.35-2.4-.75-1.1-1.9-1.25-2.3-1.27-.98-.1-1.9.57-2.4.57-.5 0-1.26-.55-2.07-.54-1.06.02-2.05.62-2.6 1.57-1.1 1.93-.28 4.78.8 6.35.53.77 1.16 1.63 1.99 1.6.8-.03 1.1-.52 2.07-.52.96 0 1.24.52 2.08.5.86-.01 1.4-.78 1.93-1.55.6-.88.85-1.74.86-1.78-.02-.01-1.65-.64-1.67-2.53zM10.3 3.85c.44-.53.73-1.27.65-2.01-.63.026-1.4.42-1.85.95-.4.47-.75 1.22-.66 1.94.7.055 1.42-.36 1.86-.88z"/></symbol>
+  <symbol id="cube-w" viewBox="0 0 100 112">
+    <polygon fill="#ffffff" points="12,34 50,12 88,34 50,56"/>
+    <polygon fill="#ffffff" opacity=".72" points="12,34 50,56 50,100 12,78"/>
+    <polygon fill="#ffffff" opacity=".45" points="88,34 50,56 50,100 88,78"/>
+  </symbol>
+</svg>
+
+<!-- ============================================================
+     SHOT 1 — the Plonk window on its own, Zones page
+     ============================================================ -->
+<div class="shot" id="s-zones" style="width:1260px;height:870px;background:linear-gradient(150deg,#efeaf8,#e6ecf7 60%,#eef0f6);display:flex;align-items:center;justify-content:center">
+  <div class="win solo">
+    <aside class="sb">
+      <div class="top"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span></div>
+      <div class="search">Run a command <em>⌃⌥A</em></div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-home"/></svg>Home</div>
+      <div class="sec">Layout</div>
+      <div class="it on"><svg class="ic" viewBox="0 0 16 16"><use href="#i-zones"/></svg>Zones <span class="n">Priority</span></div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-desks"/></svg>Desks <span class="n">4</span></div>
+      <div class="sec">Tools</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-cap"/></svg>Capture</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-awake"/></svg>Keep awake</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-ptr"/></svg>Pointer</div>
+      <div class="sec">Automation</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-bot"/></svg>Agents <span class="n">MCP</span></div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-set"/></svg>Settings</div>
+      <div class="foot"><svg viewBox="0 0 100 112"><use href="#cube"/></svg> Plonk 0.2.4 · up to date</div>
+    </aside>
+
+    <main class="ct">
+      <div class="tb">
+        <h1>Zones</h1>
+        <div class="actions"><span class="btn">Duplicate</span><span class="btn">Manage…</span><span class="btn p">Edit set</span></div>
+      </div>
+      <div class="in">
+        <div>
+          <div class="h2">Priority</div>
+          <div class="sub">Studio Display · 5120 × 2880 · 5 zones · gap 8 px</div>
+        </div>
+        <div class="tabs">
+          <span class="tab">60 / 40</span><span class="tab">Halves</span><span class="tab on">Priority</span>
+          <span class="tab">Quarters</span><span class="tab">Thirds</span><span class="tab">Edge snapping</span><span class="tab">+ New set</span>
+        </div>
+        <div class="canvas">
+          <div class="z n1" style="left:1.2%;top:2.5%;width:22%;height:46%">1<span class="frac">0.22 × 0.5</span></div>
+          <div class="z n2 sel" style="left:24.6%;top:2.5%;width:46%;height:95%">2<span class="frac">0.46 × 1</span></div>
+          <div class="z n3" style="left:72.4%;top:2.5%;width:26.4%;height:46%">3<span class="frac">0.26 × 0.5</span></div>
+          <div class="z n4" style="left:1.2%;top:51.5%;width:22%;height:46%">4<span class="frac">0.22 × 0.5</span></div>
+          <div class="z n5" style="left:72.4%;top:51.5%;width:26.4%;height:46%">5<span class="frac">0.26 × 0.5</span></div>
+        </div>
+        <div class="group">
+          <div class="r"><div><div class="t">Drag a window into a zone</div><div class="s">Zones appear while you drag, and at the screen edges</div></div><span class="tog"></span></div>
+          <div class="r"><div><div class="t">Show zones</div><div class="s">Holding the modifier inverts this</div></div><span class="kb">⇧ Shift</span></div>
+          <div class="r"><div><div class="t">Gap around each window</div><div class="s">Real space, kept on every side</div></div>
+            <span class="stepper"><i>−</i><b>8 px</b><i>+</i></span></div>
+          <div class="r"><div><div class="t">Numbers on the overlay</div><div class="s">Turn off to leave only the colours</div></div><span class="tog"></span></div>
+          <div class="r"><div><div class="t">Apps Plonk never touches</div><div class="s">Games, remote desktops, anything that manages its own geometry</div></div><span class="kb">6 apps</span></div>
+        </div>
+        <div class="group">
+          <div class="r"><div><div class="t">Left half</div><div class="s">Zone 1 on this screen</div></div><span class="kb">⌃⌥←</span></div>
+          <div class="r"><div><div class="t">Maximize</div><div class="s">The whole visible area, minus the gap</div></div><span class="kb">⌃⌥↩</span></div>
+          <div class="r"><div><div class="t">Put it back</div><div class="s">The frame the window had before Plonk first moved it</div></div><span class="kb">⌃⌥0</span></div>
+          <div class="r"><div><div class="t">Swap the set on this screen</div><div class="s">Windows follow their numbers across</div></div><span class="kb">⌃⌥⇧1—9</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     SHOT 2 — the Desks page
+     ============================================================ -->
+<div class="shot" id="s-desks" style="width:1260px;height:870px;background:linear-gradient(150deg,#efeaf8,#e6ecf7 60%,#eef0f6);display:flex;align-items:center;justify-content:center">
+  <div class="win solo">
+    <aside class="sb">
+      <div class="top"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span></div>
+      <div class="search">Run a command <em>⌃⌥A</em></div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-home"/></svg>Home</div>
+      <div class="sec">Layout</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-zones"/></svg>Zones <span class="n">Priority</span></div>
+      <div class="it on"><svg class="ic" viewBox="0 0 16 16"><use href="#i-desks"/></svg>Desks <span class="n">4</span></div>
+      <div class="sec">Tools</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-cap"/></svg>Capture</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-awake"/></svg>Keep awake</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-ptr"/></svg>Pointer</div>
+      <div class="sec">Automation</div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-bot"/></svg>Agents <span class="n">MCP</span></div>
+      <div class="it"><svg class="ic" viewBox="0 0 16 16"><use href="#i-set"/></svg>Settings</div>
+      <div class="foot"><svg viewBox="0 0 100 112"><use href="#cube"/></svg> Plonk 0.2.4 · up to date</div>
+    </aside>
+
+    <main class="ct">
+      <div class="tb">
+        <h1>Desks</h1>
+        <div class="actions"><span class="btn">Import…</span><span class="btn p">Save this desk</span></div>
+      </div>
+      <div class="in">
+        <div>
+          <div class="h2">Four desks</div>
+          <div class="sub">Each remembers the apps, every window's frame, and the display it belongs on</div>
+        </div>
+        <div class="desks">
+          <div class="dk">
+            <div class="t"><b>review</b><span>⌃⌥⇧R</span></div>
+            <div class="mon">
+              <i style="flex:1.3;background:linear-gradient(160deg,#ff7fa4,var(--z1))"></i>
+              <i style="flex:2;background:linear-gradient(160deg,#a98cff,var(--z2))"></i>
+              <i style="flex:1;background:linear-gradient(160deg,#6f92ff,var(--z3))"></i>
+            </div>
+            <div class="ap"><span>Safari · 6 tabs</span><span>Terminal</span><span>Notes</span><span>2 displays</span></div>
+          </div>
+          <div class="dk">
+            <div class="t"><b>writing</b><span>⌃⌥⇧W</span></div>
+            <div class="mon">
+              <i style="flex:2.4;background:linear-gradient(160deg,#5ff0cd,var(--z4))"></i>
+              <i style="flex:1;background:linear-gradient(160deg,#ffe08a,var(--z5))"></i>
+            </div>
+            <div class="ap"><span>iA Writer · ~/drafts</span><span>Music</span><span>1 display</span></div>
+          </div>
+          <div class="dk">
+            <div class="t"><b>calls</b><span>⌃⌥⇧C</span></div>
+            <div class="mon">
+              <i style="flex:1;background:linear-gradient(160deg,#6f92ff,var(--z3))"></i>
+              <i style="flex:1.6;background:linear-gradient(160deg,#ff7fa4,var(--z1))"></i>
+            </div>
+            <div class="ap"><span>Zoom</span><span>Calendar</span><span>Notes</span></div>
+          </div>
+          <div class="dk">
+            <div class="t"><b>debug</b><span>⌃⌥⇧D</span></div>
+            <div class="mon">
+              <i style="flex:1.2;background:linear-gradient(160deg,#a98cff,var(--z2))"></i>
+              <i style="flex:1;background:linear-gradient(160deg,#ffe08a,var(--z5))"></i>
+              <i style="flex:1;background:linear-gradient(160deg,#5ff0cd,var(--z4))"></i>
+            </div>
+            <div class="ap"><span>Xcode</span><span>Console</span><span>Simulator</span></div>
+          </div>
+        </div>
+        <div class="group">
+          <div class="r"><div><div class="t">Move apps that are already open</div><div class="s">Off leaves them alone and opens only what is missing</div></div><span class="tog"></span></div>
+          <div class="r"><div><div class="t">Pull the whole desk onto one screen</div><div class="s">For when the second monitor is not there</div></div><span class="tog off"></span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     SHOT 3 — the desktop, mid-drag, with the overlay up
+     ============================================================ -->
+<div class="shot desk" id="s-drag">
+  <div class="menubar">
+    <svg class="apple" viewBox="0 0 16 16" fill="#fff"><use href="#i-apple"/></svg><b>Safari</b><span>File</span><span>Edit</span><span>View</span><span>History</span><span>Window</span><span>Help</span>
+    <span class="sp">
+      <span class="plonk"><svg viewBox="0 0 100 112"><use href="#cube-w"/></svg> 2</span>
+      <span>&#9679;</span><span>&#9673;</span><span>100%</span><span>Sat 16 Aug&nbsp; 14:22</span>
+    </span>
+  </div>
+
+  <!-- windows already parked in zones 1, 3 and 4 -->
+  <div class="app" style="left:36px;top:64px;width:352px;height:394px">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Notes</div>
+    <div class="body"><u style="width:72%"></u><u style="width:94%"></u><u style="width:58%"></u><u style="width:86%"></u><u style="width:40%"></u></div>
+  </div>
+  <div class="app term" style="left:36px;top:490px;width:352px;height:394px">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Terminal</div>
+    <div class="body">
+      <span>$ npm run build</span>
+      <span class="d">vite v6.0.1 building…</span>
+      <span class="d">✓ 412 modules transformed</span>
+      <span>$ plonk state</span>
+      <span class="d">2 screens · 5 zones · 11 windows</span>
+    </div>
+  </div>
+  <div class="app" style="left:1148px;top:64px;width:416px;height:394px">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Calendar</div>
+    <div class="body"><u style="width:64%"></u><u style="width:88%"></u><u style="width:46%"></u><u style="width:78%"></u></div>
+  </div>
+
+  <!-- the overlay Plonk draws while a window is in the hand -->
+  <div class="zone n1" style="left:26px;top:56px;width:372px;height:410px">1</div>
+  <div class="zone n4" style="left:26px;top:482px;width:372px;height:410px">4</div>
+  <div class="zone n3" style="left:1138px;top:56px;width:436px;height:410px">3</div>
+  <div class="zone n5" style="left:1138px;top:482px;width:436px;height:410px">5</div>
+  <div class="zone n2" style="left:414px;top:56px;width:708px;height:836px">2<span class="frac">0.46 × 1</span></div>
+
+  <!-- the window being dragged, landing inside zone 2 with the gap showing -->
+  <div class="app" style="left:446px;top:88px;width:644px;height:772px;transform:rotate(-.6deg)">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Safari — Plonk</div>
+    <div class="body" style="gap:11px">
+      <u style="width:38%;height:15px"></u>
+      <u style="width:92%"></u><u style="width:86%"></u><u style="width:94%"></u><u style="width:52%"></u>
+      <u style="width:100%;height:150px;border-radius:9px"></u>
+      <u style="width:88%"></u><u style="width:70%"></u>
+    </div>
+  </div>
+
+  <div class="hud">release for <b>zone 2</b><span class="k">⌘</span>takes two<span class="k">⌃⌥0</span>puts it back</div>
+
+  <div class="dock">
+    <i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i><i class="d5"></i>
+    <i class="cube"><svg viewBox="0 0 100 112"><use href="#cube"/></svg></i>
+  </div>
+</div>
+
+<!-- ============================================================
+     SHOT 4 — the desktop at rest, menu bar panel open
+     ============================================================ -->
+<div class="shot desk" id="s-menu">
+  <div class="menubar">
+    <svg class="apple" viewBox="0 0 16 16" fill="#fff"><use href="#i-apple"/></svg><b>Finder</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span>
+    <span class="sp">
+      <span class="plonk"><svg viewBox="0 0 100 112"><use href="#cube-w"/></svg> 2</span>
+      <span>&#9679;</span><span>&#9673;</span><span>100%</span><span>Sat 16 Aug&nbsp; 14:22</span>
+    </span>
+  </div>
+
+  <div class="app" style="left:26px;top:56px;width:372px;height:410px">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Notes</div>
+    <div class="body"><u style="width:72%"></u><u style="width:94%"></u><u style="width:58%"></u><u style="width:86%"></u><u style="width:40%"></u></div>
+  </div>
+  <div class="app term" style="left:26px;top:482px;width:372px;height:410px">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Terminal</div>
+    <div class="body">
+      <span>$ plonk awake while npm run build</span>
+      <span class="d">assertion held · 4m 12s</span>
+      <span>$ plonk state --json</span>
+      <span class="d">{ "screens": 2, "set": "Priority" }</span>
+    </div>
+  </div>
+  <div class="app" style="left:414px;top:56px;width:708px;height:836px">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Safari — Plonk</div>
+    <div class="body" style="gap:11px">
+      <u style="width:38%;height:15px"></u>
+      <u style="width:92%"></u><u style="width:86%"></u><u style="width:94%"></u><u style="width:52%"></u>
+      <u style="width:100%;height:170px;border-radius:9px"></u>
+      <u style="width:88%"></u><u style="width:70%"></u><u style="width:80%"></u>
+    </div>
+  </div>
+  <div class="app" style="left:1138px;top:56px;width:436px;height:410px">
+    <div class="tb"><span class="lights"><i class="tl-r"></i><i class="tl-y"></i><i class="tl-g"></i></span> Calendar</div>
+    <div class="body"><u style="width:64%"></u><u style="width:88%"></u><u style="width:46%"></u><u style="width:78%"></u></div>
+  </div>
+
+  <div class="panel" style="right:14px;top:34px">
+    <div class="h"><b>Plonk</b><span>2 displays · Priority</span></div>
+    <div class="grid">
+      <b style="background:linear-gradient(160deg,#ff7fa4,var(--z1))">1</b>
+      <b style="background:linear-gradient(160deg,#a98cff,var(--z2))">2</b>
+      <b style="background:linear-gradient(160deg,#6f92ff,var(--z3))">3</b>
+      <b style="background:linear-gradient(160deg,#5ff0cd,var(--z4));color:#04241b">4</b>
+      <b style="background:linear-gradient(160deg,#ffe08a,var(--z5));color:#1c1400">5</b>
+    </div>
+    <div class="it on">Desk “review” <span class="s">⌃⌥⇧R</span></div>
+    <div class="it">Desk “writing” <span class="s">⌃⌥⇧W</span></div>
+    <div class="sep"></div>
+    <div class="it">Text off the screen <span class="s">⌃⌥T</span></div>
+    <div class="it">Grab a region <span class="s">⌃⌥S</span></div>
+    <div class="it">Ruler <span class="s">⌃⌥R</span></div>
+    <div class="sep"></div>
+    <div class="it"><span><span class="dot"></span>Keep awake · 41 min left</span><span class="s">stop</span></div>
+    <div class="it">Command palette <span class="s">⌃⌥A</span></div>
+    <div class="it">Settings… <span class="s">⌘,</span></div>
+  </div>
+
+  <div class="dock">
+    <i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i><i class="d5"></i>
+    <i class="cube"><svg viewBox="0 0 100 112"><use href="#cube"/></svg></i>
+  </div>
+</div>

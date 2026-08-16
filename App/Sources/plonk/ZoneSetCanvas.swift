@@ -7,6 +7,9 @@ import SwiftUI
 // a shape; naming it and hiding the shape behind a menu made the one thing the
 // page is about invisible, and the editor that produces the shapes was a window
 // somewhere else entirely.
+//
+// The set names itself in display weight, says what it is under that, and the
+// sets to switch to are pills — the shape of a segmented choice, not of a list.
 
 struct ZoneSetCanvas: View {
     @ObservedObject var model: AppModel
@@ -29,15 +32,70 @@ struct ZoneSetCanvas: View {
         return model.zoneSets[assigned] ?? []
     }
 
+    private var size: String {
+        model.screenDescriptions.indices.contains(screen) ? model.screenDescriptions[screen] : ""
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 11) {
+        VStack(alignment: .leading, spacing: 12) {
+            header
             tabs
-            ZonePreview(zones: zones, accent: model.accent)
-                .frame(height: 250)
+            canvas
+            hint
+        }
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(assigned ?? String(localized: .zoneSetEdgeSnapping))
+                    .font(.system(size: 26, weight: .heavy))
+                    .kerning(-0.7)
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
             actions
         }
-        .padding(12)
-        .card()
+    }
+
+    /// What this screen is running, in the order it is asked about: how big it
+    /// is, how many zones are on it, and how much air each window keeps.
+    private var subtitle: String {
+        guard assigned != nil else {
+            return String(localized: .zoneSetScreenWithSize(screen + 1, size))
+        }
+        return String(localized: .zoneSetSummary(screen + 1, size,
+                                                 String(localized: .zoneSetZoneCount(zones.count)),
+                                                 Int(model.zoneGap)))
+    }
+
+    private var actions: some View {
+        HStack(spacing: 7) {
+            if let assigned {
+                Button(String(localized: .zoneSetPreview)) {
+                    model.actions?.togglePreview(zoneSet: assigned, onScreen: screen)
+                }
+                .help(String(localized: .zoneSetPreviewHelp))
+                Button(String(localized: .zoneSetDuplicate)) {
+                    model.actions?.editZoneSet(nextSetName, seed: zones, onScreen: screen)
+                }
+            }
+            Button(String(localized: .zoneSetManage)) { model.actions?.openZonePicker() }
+                .help(String(localized: .zoneSetManageHelp))
+            if let assigned {
+                Button(String(localized: .zoneSetEdit)) {
+                    model.actions?.editZoneSet(assigned, seed: nil, onScreen: screen)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .controlSize(.small)
     }
 
     // MARK: - Tabs
@@ -45,17 +103,16 @@ struct ZoneSetCanvas: View {
     private var tabs: some View {
         HStack(spacing: 6) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     ForEach(model.zoneSetNames, id: \.self) { name in
-                        tab(name, selected: assigned == name, icon: "square.grid.2x2") {
+                        tab(name, selected: assigned == name) {
                             model.actions?.assignZoneSet(name, toScreen: screen)
                         }
                     }
-                    tab(String(localized: .zoneSetEdgeSnapping), selected: assigned == nil,
-                        icon: "rectangle.split.2x1") {
+                    tab(String(localized: .zoneSetEdgeSnapping), selected: assigned == nil) {
                         model.actions?.assignZoneSet("", toScreen: screen)
                     }
-                    tab(String(localized: .zoneSetNewSet), selected: false, icon: "plus", dashed: true) {
+                    tab(String(localized: .zoneSetNewSet), selected: false, plus: true) {
                         model.actions?.editZoneSet(nextSetName, seed: [ZoneRect(0, 0, 1, 1)],
                                                    onScreen: screen)
                     }
@@ -75,28 +132,22 @@ struct ZoneSetCanvas: View {
         }
     }
 
-    private func tab(_ title: String, selected: Bool, icon: String, dashed: Bool = false,
+    /// The selected pill is ink rather than the accent: the accent is already
+    /// the selected row in the sidebar, and two accents on one screen stop
+    /// meaning "this one".
+    private func tab(_ title: String, selected: Bool, plus: Bool = false,
                      action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: icon).font(.system(size: 11))
-                Text(title).font(.system(size: 11.5)).lineLimit(1)
+            HStack(spacing: 5) {
+                if plus { Image(systemName: "plus").font(.system(size: 10, weight: .bold)) }
+                Text(title).font(.system(size: 12.5, weight: .semibold)).lineLimit(1)
             }
-            .foregroundStyle(selected ? Color.white : Color.secondary)
-            .padding(.horizontal, 11)
-            .frame(height: 26)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(selected ? AnyShapeStyle(Ink.gradient(model.accent))
-                                   : AnyShapeStyle(Ink.raised(scheme)))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(Ink.stroke(scheme),
-                                  style: StrokeStyle(lineWidth: 1, dash: dashed ? [3, 3] : []))
-                    .opacity(selected ? 0 : 1)
-            )
-            .contentShape(Rectangle())
+            .foregroundStyle(selected ? AnyShapeStyle(Ink.page(scheme)) : AnyShapeStyle(.secondary))
+            .padding(.horizontal, 12)
+            .frame(height: 25)
+            .background(Capsule().fill(selected ? AnyShapeStyle(Color.primary.opacity(0.92))
+                                                : AnyShapeStyle(Ink.capFill)))
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .help(title)
@@ -109,28 +160,66 @@ struct ZoneSetCanvas: View {
         return "Set \(index)"
     }
 
-    // MARK: - Actions
+    // MARK: - Canvas
 
-    private var actions: some View {
-        HStack(spacing: 9) {
-            Text(assigned == nil
-                 ? String(localized: .zoneSetEdgeHint)
-                 : String(localized: .zoneSetZoneHint))
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-            Spacer(minLength: 8)
-            if let assigned {
-                Button(String(localized: .zoneSetPreview)) { model.actions?.togglePreview(zoneSet: assigned, onScreen: screen) }
-                    .help(String(localized: .zoneSetPreviewHelp))
-                Button(String(localized: .zoneSetDuplicate)) {
-                    model.actions?.editZoneSet(nextSetName, seed: zones, onScreen: screen)
+    private var canvas: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                ForEach(Array(zones.enumerated()), id: \.offset) { index, zone in
+                    tile(index: index, zone: zone, in: geo.size)
                 }
-                Button(String(localized: .zoneSetEdit)) { model.actions?.editZoneSet(assigned, seed: nil, onScreen: screen) }
-                    .buttonStyle(.borderedProminent)
+                if zones.isEmpty {
+                    Text(.homeEdgeSnapping)
+                        .font(.system(size: 12.5))
+                        .muted()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
-            Button(String(localized: .zoneSetManage)) { model.actions?.openZonePicker() }
-                .help(String(localized: .zoneSetManageHelp))
         }
-        .controlSize(.small)
+        .frame(height: 288)
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(Color.primary.opacity(0.05)))
+    }
+
+    private func tile(index: Int, zone: ZoneRect, in size: CGSize) -> some View {
+        // Colour is the zone number, and the fraction printed on it is the same
+        // number an agent sends over MCP, so the picture and the API agree.
+        RoundedRectangle(cornerRadius: 9, style: .continuous)
+            .fill(Ink.zoneGradient(index))
+            .overlay(alignment: .bottomLeading) {
+                Text("\(index + 1)")
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Ink.zoneInk(index))
+                    .padding(9)
+            }
+            .overlay(alignment: .topTrailing) {
+                Text(Self.fraction(zone.w, zone.h))
+                    .font(.system(size: 10.5, design: .monospaced))
+                    .foregroundStyle(Ink.zoneInk(index).opacity(0.85))
+                    .padding(9)
+            }
+            .frame(width: max(zone.w * size.width - 5, 1),
+                   height: max(zone.h * size.height - 5, 1))
+            .offset(x: zone.x * size.width + 2.5, y: zone.y * size.height + 2.5)
+    }
+
+    /// "0.22 × 0.5". Two decimals, and no trailing zeros to read past.
+    static func fraction(_ width: Double, _ height: Double) -> String {
+        func trim(_ value: Double) -> String {
+            let text = String(format: "%.2f", value)
+            guard text.contains(".") else { return text }
+            var trimmed = text
+            while trimmed.hasSuffix("0") { trimmed.removeLast() }
+            if trimmed.hasSuffix(".") { trimmed.removeLast() }
+            return trimmed
+        }
+        return "\(trim(width)) × \(trim(height))"
+    }
+
+    private var hint: some View {
+        Text(assigned == nil ? .zoneSetEdgeHint : .zoneSetZoneHint)
+            .font(.caption)
+            .muted()
     }
 }

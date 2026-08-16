@@ -283,7 +283,10 @@
 "start.hide" = "Hide";
 "start.hideHelp" = "Hide this until the next version";
 "start.grant" = "Grant Accessibility";
-"start.grantDetail" = "The only way macOS lets one app move another's windows";
+"start.grantDetail" = "So Plonk can move another app's windows. macOS allows that no other way.";
+"start.record" = "Grant Screen Recording";
+"start.recordDetail" = "So a screenshot, the text off the screen and the ruler have something to read. Asked for the first time you use one.";
+"start.neverAsked" = "Never asked for: Full Disk Access, Automation, your Keychain, your contacts, your network. Nothing you do here leaves the Mac.";
 "start.snap" = "Snap a window";
 "start.snapDetail" = "Press ⌃⌥← with any window in front, or drag one to the side of the screen";
 "start.agent" = "Let an agent drive it";
@@ -323,16 +326,14 @@
 /* The window itself: sidebar, top bar, and the names of the pages. */
 "app.name" = "Plonk";
 "app.version %@" = "Version %@";
+"app.nameVersion %@" = "Plonk %@";
 "app.runACommand" = "Run a command";
 "app.workspaces" = "Workspaces";
 "app.launchWorkspace %@" = "Launch %@";
 "app.reportBug" = "Report a Bug";
-"app.report" = "Report";
-"app.themePicker" = "Light, dark, or whatever macOS is using";
 "app.allPermissionsGranted" = "All permissions granted";
 "app.accessibility" = "Accessibility";
 "app.screenRecording" = "Screen Recording";
-"app.title %@ %@" = "%1$@ · %2$@";
 
 "group.home" = "Home";
 "group.layout" = "Layout";
@@ -354,6 +355,7 @@
 
 /* The menu bar item. */
 "menu.openPlonk" = "Open Plonk";
+"menu.sendToZone %lld" = "Send the front window to zone %lld";
 "menu.launchWorkspace" = "Launch Workspace";
 "menu.noWorkspaces" = "No workspaces saved yet";
 "menu.activeAgent" = "Active Agent";
@@ -437,6 +439,7 @@
 "zoneSet.newSet" = "New set";
 "zoneSet.screen %lld" = "Screen %lld";
 "zoneSet.screenWithSize %lld %@" = "Screen %1$lld — %2$@";
+"zoneSet.summary %lld %@ %@ %lld" = "Screen %1$lld · %2$@ · %3$@ · gap %4$lld px";
 "zoneSet.edgeHint" = "Windows dropped near an edge fill that half of the screen.";
 "zoneSet.zoneHint" = "Drop a window on a zone while dragging, or press ⌃⌥ and its number.";
 "zoneSet.preview" = "Preview";

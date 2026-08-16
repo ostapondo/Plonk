@@ -26,37 +26,31 @@ struct ShortcutsPage: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                Toggle(isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) })) {
-                    Text(LocalizedStringResource.keysHotkeys)
-                    Text(.keysHotkeysDetail)
+        PageShell(title: .pageShortcuts, subtitle: .keysHotkeysDetail) {
+            SettingsCard {
+                ToggleRow(title: .keysHotkeys,
+                          isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
+            }
+            SettingsCard(title: .shortcutGroupGuide, note: .keysGuideHelp) {
+                SettingBlock {
+                    ShortcutRows(model: model, actions: [.shortcutGuide])
                 }
             }
-            Section {
-                ShortcutRows(model: model, actions: [.shortcutGuide])
-            } header: {
-                Text(.shortcutGroupGuide)
-            } footer: {
-                Text(.keysGuideHelp)
-            }
-            Section {
-                ShortcutRows(model: model, actions: [.commandPalette])
-            } header: {
-                Text(.keysPalette)
-            } footer: {
-                Text(.keysPaletteHelp)
+            SettingsCard(title: .keysPalette, note: .keysPaletteHelp) {
+                SettingBlock {
+                    ShortcutRows(model: model, actions: [.commandPalette])
+                }
             }
             ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
-                Section(String(localized: group.name)) {
-                    ForEach(group.actions) { row($0) }
+                SettingsCard(title: group.name) {
+                    ForEach(group.actions) { action in
+                        SettingBlock { row(action) }
+                    }
                 }
             }
-            Section {
-                Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
-            }
+            Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
+                .controlSize(.small)
         }
-        .formStyle(.grouped)
         .opacity(model.hotkeysEnabled ? 1 : 0.5)
     }
 
@@ -65,7 +59,7 @@ struct ShortcutsPage: View {
             model.selectedPage = action.page
         } label: {
             HStack(spacing: 10) {
-                Text(action.title)
+                Text(action.title).font(.system(size: 12.5))
                 Spacer(minLength: 12)
                 if model.unavailableHotkeys.contains(action.rawValue) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -76,7 +70,7 @@ struct ShortcutsPage: View {
                 KeyCaps(parts: model.hotkeyParts[action.rawValue] ?? [], showsNone: true)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .muted()
             }
             .contentShape(Rectangle())
         }

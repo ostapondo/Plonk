@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" role="img"
+     aria-label="A sentence typed to an agent becomes a desk: browser on the left 60 percent, terminal top right, notes bottom right, saved as a workspace called review. The result is drawn as three zones, the browser filling the left, the terminal top right and the notes bottom right">
+  <title>One sentence to an agent, and the desk is laid out</title>
+  <!-- Left: what is typed. Right: what lands. The fractions are the ones the
+       MCP tools actually take, origin top-left, so the picture and the API
+       say the same thing. Palette is the zone palette. -->
+  <defs>
+    <linearGradient id="a1" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#ff7fa4"/><stop offset="1" stop-color="#ff4f81"/>
+    </linearGradient>
+    <linearGradient id="a2" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#a98cff"/><stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="a3" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#6f92ff"/><stop offset="1" stop-color="#3a6bff"/>
+    </linearGradient>
+    <marker id="desk-tip" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b949e"/>
+    </marker>
+    <style>
+      .frame { fill: none; stroke: #8b949e; stroke-opacity: .55; stroke-width: 1.5 }
+      .said { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+              font-size: 14px; fill: #8b949e }
+      .lead { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+              font-size: 14px; fill: #8b5cf6; font-weight: 700 }
+      .name { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-weight: 700; font-size: 15px }
+      .frac { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+              font-size: 12px; opacity: .85 }
+      .cap { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+             font-weight: 600; font-size: 14px; fill: #8b949e }
+    </style>
+  </defs>
+
+  <!-- what is typed -->
+  <rect class="frame" x="1" y="40" width="318" height="200" rx="14"/>
+  <text class="lead" x="20" y="82">&gt;</text>
+  <text class="said" x="38" y="82">browser on the left 60%,</text>
+  <text class="said" x="38" y="106">terminal top right,</text>
+  <text class="said" x="38" y="130">notes bottom right</text>
+  <text class="lead" x="20" y="178">&gt;</text>
+  <text class="said" x="38" y="178">save that as a workspace</text>
+  <text class="said" x="38" y="202">called “review”</text>
+
+  <line x1="336" y1="140" x2="384" y2="140" stroke="#8b949e" stroke-opacity=".7"
+        stroke-width="1.5" marker-end="url(#desk-tip)"/>
+
+  <!-- what lands -->
+  <rect class="frame" x="401" y="40" width="318" height="200" rx="14"/>
+  <rect x="413" y="52" width="172" height="176" rx="9" fill="url(#a1)"/>
+  <text class="name" x="427" y="140" fill="#ffffff">Browser</text>
+  <text class="frac" x="427" y="160" fill="#ffffff">0.6 × 1</text>
+  <rect x="593" y="52" width="114" height="84" rx="9" fill="url(#a2)"/>
+  <text class="name" x="605" y="98" fill="#ffffff">Terminal</text>
+  <text class="frac" x="605" y="118" fill="#ffffff">0.4 × 0.5</text>
+  <rect x="593" y="144" width="114" height="84" rx="9" fill="url(#a3)"/>
+  <text class="name" x="605" y="190" fill="#ffffff">Notes</text>
+  <text class="frac" x="605" y="210" fill="#ffffff">0.4 × 0.5</text>
+
+  <text class="cap" x="0" y="278">What you type</text>
+  <text class="cap" x="401" y="278">Where the windows land, and what “review” now rebuilds</text>
+</svg>

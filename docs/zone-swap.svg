@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" role="img"
+     aria-label="Two zone sets on the same screen. In the first, zone 1 is a narrow left rail, zone 2 the wide middle and zone 3 the right column. Pressing control option shift 2 swaps the set, and the windows follow their numbers: zone 1 is now the top left box, zone 2 the whole bottom, zone 3 the top right">
+  <title>Swap the set, and a window keeps its number</title>
+  <!-- The tiles carry the colour; the screen around them is a hairline in
+       GitHub's neutral grey, which is the one colour that reads the same in
+       its light theme and its dark one. Palette is the zone palette:
+       1 rose, 2 plum, 3 blue. -->
+  <defs>
+    <linearGradient id="s1" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#ff7fa4"/><stop offset="1" stop-color="#ff4f81"/>
+    </linearGradient>
+    <linearGradient id="s2" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#a98cff"/><stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="s3" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#6f92ff"/><stop offset="1" stop-color="#3a6bff"/>
+    </linearGradient>
+    <marker id="swap-tip" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b949e"/>
+    </marker>
+    <style>
+      .frame { fill: none; stroke: #8b949e; stroke-opacity: .55; stroke-width: 1.5 }
+      .num { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+             font-weight: 600; font-size: 15px }
+      .cap { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+             font-weight: 600; font-size: 14px; fill: #8b949e }
+      .key { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+             font-size: 13px; fill: #8b949e }
+    </style>
+  </defs>
+
+  <!-- before -->
+  <rect class="frame" x="1" y="40" width="318" height="200" rx="14"/>
+  <rect x="13" y="52" width="72" height="176" rx="9" fill="url(#s1)"/>
+  <text class="num" x="25" y="218" fill="#ffffff">1</text>
+  <rect x="93" y="52" width="140" height="176" rx="9" fill="url(#s2)"/>
+  <text class="num" x="105" y="218" fill="#ffffff">2</text>
+  <rect x="241" y="52" width="66" height="176" rx="9" fill="url(#s3)"/>
+  <text class="num" x="253" y="218" fill="#ffffff">3</text>
+
+  <!-- the swap -->
+  <line x1="336" y1="140" x2="384" y2="140" stroke="#8b949e" stroke-opacity=".7"
+        stroke-width="1.5" marker-end="url(#swap-tip)"/>
+  <text class="key" x="360" y="126" text-anchor="middle">⌃⌥⇧2</text>
+
+  <!-- after: the same three numbers, a different shape -->
+  <rect class="frame" x="401" y="40" width="318" height="200" rx="14"/>
+  <rect x="413" y="52" width="176" height="96" rx="9" fill="url(#s1)"/>
+  <text class="num" x="425" y="138" fill="#ffffff">1</text>
+  <rect x="597" y="52" width="110" height="96" rx="9" fill="url(#s3)"/>
+  <text class="num" x="609" y="138" fill="#ffffff">3</text>
+  <rect x="413" y="156" width="294" height="72" rx="9" fill="url(#s2)"/>
+  <text class="num" x="425" y="218" fill="#ffffff">2</text>
+
+  <text class="cap" x="0" y="278">One set</text>
+  <text class="cap" x="401" y="278">Another, and the window in 2 is still in 2</text>
+</svg>

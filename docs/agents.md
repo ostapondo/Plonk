@@ -9,7 +9,7 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 "left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
 
 <p align="center">
-  <img src="agents.gif" alt="Four sentences typed to an agent: a layout is applied across the desk, the result is saved as a workspace called review and the Mac held awake until a build finishes, everything is then closed to an empty desktop and rebuilt from that workspace, and finally a line of error text is read off the screen" width="720">
+  <img src="agent-desk.svg" alt="A sentence typed to an agent becomes a desk: the browser takes the left 0.6 of the screen, the terminal the top right and the notes the bottom right, and the result is saved as a workspace called review" width="720">
 </p>
 
 ## The tools

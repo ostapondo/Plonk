@@ -41,7 +41,7 @@ struct HomeStatus: View {
                     Spacer()
                     Text(driving(name) ? LocalizedStringResource.homeDriving : .homeIdle)
                         .font(.system(size: 11.5))
-                        .foregroundStyle(.tertiary)
+                        .muted()
                 }
             }
             row {
@@ -79,7 +79,7 @@ struct HomeStatus: View {
                         .foregroundStyle(.orange)
                         .help(warning)
                 } else {
-                    Text(.homeListening).font(.system(size: 11.5)).foregroundStyle(.tertiary)
+                    Text(.homeListening).font(.system(size: 11.5)).muted()
                 }
             }
             // Shown, never copied: a token on the pasteboard is a token every
@@ -90,7 +90,7 @@ struct HomeStatus: View {
                 Spacer()
                 Text(.homeTokenStored)
                     .font(.system(size: 11.5))
-                    .foregroundStyle(.tertiary)
+                    .muted()
                 Button(String(localized: .homeReveal)) { revealToken() }
                     .buttonStyle(.link)
                     .font(.system(size: 12))
@@ -98,7 +98,7 @@ struct HomeStatus: View {
             row {
                 Text(.homeLoopbackOnly)
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .muted()
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
@@ -117,7 +117,7 @@ struct HomeStatus: View {
             Text(String(localized: title).uppercased())
                 .font(.system(size: 10, weight: .bold))
                 .kerning(0.8)
-                .foregroundStyle(.tertiary)
+                .muted()
             Spacer()
         }
         .padding(.horizontal, 12)

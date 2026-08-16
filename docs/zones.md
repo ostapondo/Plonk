@@ -1,7 +1,7 @@
 # Zones
 
 <p align="center">
-  <img src="zones.gif" alt="Five clicks in the zone editor cut one screen into six zones, six windows fill them, and ⌃⌥⇧2 then swaps the whole set for another while the windows already in it follow their numbers across" width="720">
+  <img src="zone-swap.svg" alt="The same screen under two zone sets. In the first, zone 1 is a narrow left rail, zone 2 the wide middle, zone 3 the right column; after ⌃⌥⇧2 the shape is different but the numbers are not, so the window in zone 2 is still in zone 2" width="720">
 </p>
 
 <p align="center">
