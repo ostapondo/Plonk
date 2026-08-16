@@ -323,16 +323,14 @@
 /* The window itself: sidebar, top bar, and the names of the pages. */
 "app.name" = "Plonk";
 "app.version %@" = "Version %@";
+"app.nameVersion %@" = "Plonk %@";
 "app.runACommand" = "Run a command";
 "app.workspaces" = "Workspaces";
 "app.launchWorkspace %@" = "Launch %@";
 "app.reportBug" = "Report a Bug";
-"app.report" = "Report";
-"app.themePicker" = "Light, dark, or whatever macOS is using";
 "app.allPermissionsGranted" = "All permissions granted";
 "app.accessibility" = "Accessibility";
 "app.screenRecording" = "Screen Recording";
-"app.title %@ %@" = "%1$@ · %2$@";
 
 "group.home" = "Home";
 "group.layout" = "Layout";
