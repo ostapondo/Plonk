@@ -115,6 +115,7 @@ struct Hotkey: Equatable {
         (kVK_UpArrow, "up", "↑"), (kVK_DownArrow, "down", "↓"),
         (kVK_Return, "return", "↩"), (kVK_ANSI_KeypadEnter, "enter", "⌤"),
         (kVK_Space, "space", "␣"), (kVK_Tab, "tab", "⇥"),
+        (kVK_Delete, "delete", "⌫"),
         (kVK_ANSI_Minus, "minus", "-"), (kVK_ANSI_Equal, "equal", "="),
         (kVK_ANSI_LeftBracket, "leftbracket", "["), (kVK_ANSI_RightBracket, "rightbracket", "]"),
         (kVK_ANSI_Comma, "comma", ","), (kVK_ANSI_Period, "period", "."),

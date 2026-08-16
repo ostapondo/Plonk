@@ -199,6 +199,84 @@ struct RectangleImportTests {
         #expect(found.unmapped == ["lastThird"])
     }
 
+    /// Rectangle's own default restore is ⌃⌥⌫, and delete had no name in
+    /// Hotkey's table, so the one binding the docs promise by name could not be
+    /// represented at all and was dropped without a word.
+    @Test func rectanglesDefaultRestoreImports() throws {
+        let data = export(shortcuts: #"{"restore":{"keyCode":51,"modifierFlags":786432}}"#)
+        let found = try #require(RectangleImport.read(exportedJSON: data))
+        #expect(found.bindings[.unsnap] == Hotkey(
+            keyCode: UInt32(kVK_Delete), control: true, option: true
+        ))
+        #expect(found.unmapped.isEmpty)
+    }
+
+    /// A key with no name here cannot be drawn or re-recorded, so it is not
+    /// imported — but it was bound in Rectangle, so it is reported rather than
+    /// dropped in silence.
+    @Test func aBindingOnAKeyWithNoNameIsReported() throws {
+        let data = export(shortcuts: #"{"leftHalf":{"keyCode":90,"modifierFlags":786432}}"#)
+        let found = try #require(RectangleImport.read(exportedJSON: data))
+        #expect(found.bindings.isEmpty)
+        #expect(found.unmapped == ["leftHalf"])
+        #expect(!found.isEmpty)
+    }
+
+    /// A setup that binds nothing here is still a setup. Reporting it as
+    /// absent is what sent the caller looking for a Rectangle they still have.
+    @Test func aGridOnlySetupIsNotAnAbsence() throws {
+        let data = export(shortcuts: #"{"firstThird":{"keyCode":2,"modifierFlags":786432}}"#)
+        let found = try #require(RectangleImport.read(exportedJSON: data))
+        #expect(found.bindings.isEmpty)
+        #expect(!found.isEmpty)
+    }
+
+    /// Two imported actions on one combination: the first is cleared by the
+    /// second and never gets a key back, so it has to be reported. Testing
+    /// membership of the import instead of the result hid exactly this.
+    @Test func anImportedActionLeftWithNoKeyIsStillReported() {
+        var config = Config()
+        let shared = Hotkey(keyCode: UInt32(kVK_ANSI_X), control: true, option: true)
+        let displaced = RectangleImport.apply(
+            RectangleImport.Found(bindings: [.leftHalf: shared, .rightHalf: shared]),
+            to: &config
+        )
+        #expect(displaced == [.leftHalf])
+        #expect(config.resolvedHotkeys[.leftHalf] == nil)
+        #expect(config.resolvedHotkeys[.rightHalf] == shared)
+    }
+
+    /// Every displaced action, not just the first: each one is a key that has
+    /// stopped working, and from-rectangle.md promises none go quietly.
+    @Test func everyDisplacedActionIsReported() {
+        var config = Config()
+        let displaced = RectangleImport.apply(RectangleImport.Found(bindings: [
+            .leftHalf: Hotkey(keyCode: UInt32(kVK_ANSI_T), control: true, option: true),
+            .rightHalf: Hotkey(keyCode: UInt32(kVK_ANSI_R), control: true, option: true),
+        ]), to: &config)
+        #expect(Set(displaced) == [.captureText, .ruler])
+    }
+
+    // MARK: - The one place the displacement rule lives
+
+    @Test func bindFreesTheCombinationWhereverElseItWas() {
+        var config = Config()
+        let taken = config.bind(.leftHalf, to: Hotkey(
+            keyCode: UInt32(kVK_ANSI_T), control: true, option: true
+        ))
+        #expect(taken == [.captureText])
+        #expect(config.hotkeys["captureText"] == "")
+        #expect(config.resolvedHotkeys[.leftHalf]?.keyCode == UInt32(kVK_ANSI_T))
+    }
+
+    @Test func setGapHoldsTheSameBoundsWhoeverCalls() {
+        var config = Config()
+        config.setGap(-1)
+        #expect(config.zoneGap == 0)
+        config.setGap(1000)
+        #expect(config.zoneGap == Config.gapLimit)
+    }
+
     // MARK: - The setting that survives a restart
 
     @Test func theRectangleUrlSettingRoundTripsThroughJson() throws {

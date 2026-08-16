@@ -14,15 +14,8 @@ extension AppDelegate {
     /// `RectangleConfig.json` is the fallback, which covers someone who
     /// exported on an old machine and never installed Rectangle on this one.
     func importFromRectangle() {
-        guard let found = readRectangleSetup() else {
+        guard let found = readRectangleSetup(), !found.isEmpty else {
             HUD.shared.show(.hudRectangleNothing)
-            return
-        }
-        // A setup with nothing bindable in it: all fixed-grid actions, or a
-        // gap and no shortcuts. Either way, saying it is in would be a lie,
-        // and saying nothing was found would be a different one.
-        guard !found.bindings.isEmpty else {
-            HUD.shared.show(found.unmapped.isEmpty ? .hudRectangleNothing : .hudRectangleGridOnly)
             return
         }
         var displaced: [HotkeyAction] = []
@@ -32,19 +25,33 @@ extension AppDelegate {
         hotkeys.bindings = store.config.resolvedHotkeys
         model.zoneGap = store.config.zoneGap
         refreshHotkeyModel()
-        // Named rather than counted: which key went is the useful half.
-        if let taken = displaced.first {
-            HUD.shared.show(.hudRectangleTook(String(localized: taken.title)))
-        } else {
-            HUD.shared.show(.hudRectangleImported)
-        }
+        HUD.shared.show(outcome(of: found, displaced: displaced))
+    }
+
+    /// What to say about an import that has already happened.
+    ///
+    /// A setup can be found and still bind nothing here — everything in it is
+    /// one of the fixed-grid actions, or on a key this app has no name for.
+    /// That is not the same as finding nothing, and saying so would send the
+    /// user looking for a Rectangle they still have.
+    private func outcome(
+        of found: RectangleImport.Found, displaced: [HotkeyAction]
+    ) -> LocalizedStringResource {
+        if found.bindings.isEmpty { return .hudRectangleGridOnly }
+        guard !displaced.isEmpty else { return .hudRectangleImported }
+        // All of them, not the first: every one of these is a key that has
+        // stopped working, and the page promises none go quietly.
+        let names = displaced.map { String(localized: $0.title) }
+        return .hudRectangleTook(ListFormatter.localizedString(byJoining: names))
     }
 
     private func readRectangleSetup() -> RectangleImport.Found? {
+        // Bindings, not merely something: an installed Rectangle whose only
+        // stored value is a gap should not shadow an export that has the keys.
         if let domain = UserDefaults(suiteName: RectangleImport.defaultsSuite)?
             .dictionaryRepresentation() {
             let found = RectangleImport.read(defaults: domain)
-            if !found.isEmpty { return found }
+            if !found.bindings.isEmpty || !found.unmapped.isEmpty { return found }
         }
         guard let url = RectangleImport.exportedConfigURL,
               let data = try? Data(contentsOf: url) else { return nil }
@@ -85,6 +92,8 @@ extension AppDelegate {
             HUD.shared.show(.hudUrlZoneSet(name))
         case .failure(.unknownAction(let name)):
             HUD.shared.show(.hudUrlUnknown(name))
+        case .failure(.heldDownAction(let name)):
+            HUD.shared.show(.hudUrlHeldDown(name))
         case .failure(.missingName), .failure(.unknownHost), .failure(.unknownScheme):
             HUD.shared.show(.hudUrlUnreadable)
         }
@@ -98,8 +107,10 @@ extension AppDelegate {
     private func returnRectangleURLsIfUnwanted(_ url: URL) {
         guard url.scheme?.lowercased() == RectangleURLs.scheme,
               !store.config.handleRectangleURLs else { return }
-        RectangleURLs.setHandled(false) { [weak self] holding in
-            self?.model.handleRectangleURLs = holding
+        DispatchQueue.global(qos: .utility).async {
+            RectangleURLs.setHandled(false) { [weak self] holding in
+                self?.model.handleRectangleURLs = holding
+            }
         }
     }
 }

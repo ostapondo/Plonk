@@ -46,19 +46,30 @@ enum RectangleURLs {
     /// Take the scheme, or give it back. A no-op when the answer already
     /// matches, so it is safe to call repeatedly.
     ///
-    /// `settled` carries who holds the scheme once macOS has answered, which is
-    /// not the same tick: reading `isHandler` straight after this returns still
-    /// gives the old holder.
+    /// `settled` carries whether the request is now honoured, once macOS has
+    /// answered — which is not the same tick, so reading `isHandler` straight
+    /// after this returns still gives the old holder.
+    ///
+    /// Nothing to do means it already was. That includes wanting the scheme
+    /// gone with no Rectangle to take it: there is nowhere to put it, so the
+    /// answer is the setting rather than the holder, and the switch can be
+    /// turned back off instead of springing on again.
     static func setHandled(_ wanted: Bool, settled: @escaping (Bool) -> Void = { _ in }) {
         switch move(wanted: wanted, isHandler: isHandler, rectangleInstalled: installed != nil) {
         case .take:
             hand(to: Bundle.main.bundleURL, settled: settled)
         case .giveBack:
-            guard let rectangle = installed else { return settled(isHandler) }
+            guard let rectangle = installed else { return main { settled(wanted) } }
             hand(to: rectangle, settled: settled)
         case .nothing:
-            settled(isHandler)
+            main { settled(wanted) }
         }
+    }
+
+    /// Every answer arrives on the main queue, whichever branch produced it,
+    /// so a caller can write to the model without checking which one it was.
+    private static func main(_ work: @escaping () -> Void) {
+        if Thread.isMainThread { work() } else { DispatchQueue.main.async(execute: work) }
     }
 
     /// macOS prompts before a default handler changes for http, https and
@@ -69,7 +80,7 @@ enum RectangleURLs {
             if let error {
                 NSLog("Plonk: could not hand \(scheme):// to \(app.lastPathComponent): \(error)")
             }
-            DispatchQueue.main.async { settled(isHandler) }
+            main { settled(isHandler) }
         }
     }
 }

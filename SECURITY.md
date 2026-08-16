@@ -202,6 +202,41 @@ out one app at a time, and an open port handed Plonk's to anything running as
 you. `/state` was the same shape more quietly: it lists the title of every
 open window.
 
+## The URL scheme
+
+`plonk://execute-action?name=left-half` runs the same actions the hotkeys do,
+so a Raycast script or a Stream Deck button can drive the app without one. It
+is a second control surface and it does **not** carry the token above. That is
+deliberate — a URL a user pastes into a Shortcuts action has nowhere to keep a
+secret — but it means the guarantee here is narrower than the API's, and worth
+stating rather than leaving to be discovered.
+
+What it can reach: every action that has a keyboard shortcut, which is to say
+window placement, zones, focus, the ruler, the crop and the palette. Anything
+running as you can invoke those, and so can a web page, behind the "Open in
+Plonk?" prompt the browser puts up first.
+
+What it cannot reach:
+
+- **Nothing the API guards.** There is no URL for `/shot/capture`, `/shot/text`
+  or `/state`, so the silent capture, the screen read and the window list stay
+  behind the token. `capture-region` and `capture-text` open the interactive
+  picker and wait for you to drag a rectangle, the same as the shortcut does;
+  neither returns anything to the caller.
+- **The microphone.** `voice` is push-to-talk and ends when the key comes back
+  up, which a URL has no way of doing, so it is refused outright rather than
+  started with nothing to stop it.
+- **Settings.** No action changes a preference, a zone set or a workspace.
+
+The scheme is `plonk`. `rectangle` is also declared, so the app can answer the
+URLs of the window manager many people are arriving from, but it does not take
+that scheme unless you turn on **Shortcuts → Answer rectangle:// URLs too**,
+and it hands it back to an installed Rectangle if it is ever handed it without
+being asked. See [docs/from-rectangle.md](docs/from-rectangle.md).
+
+If you want none of it: quit Plonk and the scheme goes with it, since a URL
+scheme belongs to an installed bundle rather than to a running process.
+
 `/ping` stays open on purpose, so a client can tell a closed app from a stale
 token. It answers whether Plonk is running and nothing else.
 

@@ -32,6 +32,10 @@ extension LocalizedStringResource {
         Self.key("hud.rectangleTook \(owner)")
     }
 
+    static func hudUrlHeldDown(_ name: String) -> LocalizedStringResource {
+        Self.key("hud.urlHeldDown \(name)")
+    }
+
     static func hudUrlUnknown(_ name: String) -> LocalizedStringResource {
         Self.key("hud.urlUnknown \(name)")
     }

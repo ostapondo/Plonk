@@ -43,7 +43,11 @@ The names are `left-half`, `right-half`, `top-half`, `bottom-half`,
 `zone-set-palette`, `cycle-zone`, `cycle-zone-back`, `focus-left`,
 `focus-right`, `focus-up`, `focus-down`, `show-zones`, `capture-region`,
 `capture-text`, `crop-live`, `crop-still`, `ruler`, `find-cursor`,
-`jump-cursor`, `shortcut-guide`, `command-palette` and `voice`.
+`jump-cursor`, `shortcut-guide` and `command-palette`.
+
+`voice` is not one of them. Holding `⌃⌥V` talks and letting go stops, and a URL
+has no second half, so one would leave the microphone listening with nothing to
+close it. Asking for it says so rather than starting it.
 
 The first ten are spelled the way Rectangle spells them, and `restore` is
 accepted for `unsnap`, so a config written against `rectangle://` works after

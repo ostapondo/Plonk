@@ -528,7 +528,8 @@
 "hud.wentNowhere" = "That did not go anywhere";
 "hud.rectangleImported" = "Rectangle's shortcuts are in";
 "hud.rectangleNothing" = "No Rectangle settings found on this Mac";
-"hud.rectangleGridOnly" = "Rectangle's bindings here are all thirds and quarters. Those are zone sets, on ⌃⌥1 to ⌃⌥9";
+"hud.rectangleGridOnly" = "Rectangle's bindings here are all thirds, fourths and the rest of the fixed grid. Those are zone sets, on ⌃⌥1 to ⌃⌥9";
+"hud.urlHeldDown %@" = "%@ runs while a key is held, so a URL cannot drive it";
 "hud.rectangleTook %@" = "Rectangle's shortcuts are in. %@ lost its key";
 "hud.urlUnreadable" = "That URL named no action";
 "hud.urlUnknown %@" = "Nothing here is called %@";

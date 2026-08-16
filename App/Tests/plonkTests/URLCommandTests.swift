@@ -51,6 +51,19 @@ struct URLCommandTests {
         #expect(parse("plonk://execute-action?name=next-display") == .failure(.unknownAction("next-display")))
     }
 
+    /// Push-to-talk finishes on the key coming back up. A URL has no second
+    /// half, so starting the microphone from one would never stop it.
+    @Test func voiceIsRefusedRatherThanLeftListening() {
+        #expect(parse("plonk://execute-action?name=voice") == .failure(.heldDownAction("voice")))
+    }
+
+    /// It still has a name, because the hotkey and the command palette use it.
+    /// Refusing it is a property of the URL surface, not of the action.
+    @Test func theRefusedActionStillHasAName() {
+        #expect(HotkeyAction.voice.urlName == "voice")
+        #expect(URLCommand.heldDown == [.voice])
+    }
+
     @Test func aMissingOrEmptyNameIsItsOwnAnswer() {
         #expect(parse("plonk://execute-action") == .failure(.missingName))
         #expect(parse("plonk://execute-action?name=") == .failure(.missingName))

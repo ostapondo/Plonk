@@ -23,6 +23,9 @@ enum URLCommand: Equatable {
         case unknownAction(String)
         /// One of Rectangle's fixed-grid actions, which is a zone set here.
         case fixedGridAction(String)
+        /// An action that ends when a key comes back up, which a URL has no
+        /// way of doing.
+        case heldDownAction(String)
     }
 
     static let schemes: Set<String> = ["plonk", RectangleURLs.scheme]
@@ -37,10 +40,11 @@ enum URLCommand: Equatable {
             return .failure(.missingName)
         }
         let wanted = name.lowercased()
-        if let action = HotkeyAction.allCases.first(where: { $0.urlName == wanted }) {
+        if let action = HotkeyAction.allCases.first(where: { $0.urlName == wanted })
+            ?? aliases[wanted] {
+            guard !heldDown.contains(action) else { return .failure(.heldDownAction(wanted)) }
             return .success(.action(action))
         }
-        if let action = aliases[wanted] { return .success(.action(action)) }
         if fixedGrid.contains(wanted) { return .failure(.fixedGridAction(wanted)) }
         return .failure(.unknownAction(wanted))
     }
@@ -53,6 +57,11 @@ enum URLCommand: Equatable {
     static let aliases: [String: HotkeyAction] = [
         "restore": .unsnap,
     ]
+
+    /// Actions that run for as long as a key is held. Voice finishes on the
+    /// key coming back up, and a URL has no second half, so one would leave the
+    /// microphone listening with nothing to close it.
+    static let heldDown: Set<HotkeyAction> = [.voice]
 
     /// Rectangle actions that are a zone set here rather than a fixed fraction
     /// of the screen. Listed so a script asking for one gets told why.

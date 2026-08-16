@@ -16,13 +16,16 @@ enum RectangleImport {
     /// What one read of a Rectangle setup found.
     struct Found: Equatable {
         var bindings: [HotkeyAction: Hotkey] = [:]
-        /// Rectangle actions that hold a usable key but have no counterpart
-        /// here, by Rectangle's own name.
+        /// Rectangle actions that were bound to something and did not come
+        /// across, by Rectangle's own name. Either there is no counterpart
+        /// here, or the key itself has no name in `Hotkey`'s table.
         var unmapped: [String] = []
         /// Rectangle's window gap, in points.
         var gapPoints: Double?
 
-        var isEmpty: Bool { bindings.isEmpty && gapPoints == nil }
+        /// Nothing was found at all — as opposed to something being found and
+        /// none of it coming across, which `unmapped` is how you tell.
+        var isEmpty: Bool { bindings.isEmpty && unmapped.isEmpty && gapPoints == nil }
     }
 
     static let equivalents: [String: HotkeyAction] = [
@@ -84,24 +87,28 @@ enum RectangleImport {
         for (name, value) in shortcuts.sorted(by: { $0.key < $1.key }) {
             guard let entry = value as? [String: Any],
                   let keyCode = (entry["keyCode"] as? NSNumber)?.intValue,
-                  let flags = (entry["modifierFlags"] as? NSNumber)?.uintValue,
-                  let hotkey = hotkey(keyCode: keyCode, modifierFlags: flags)
+                  let flags = (entry["modifierFlags"] as? NSNumber)?.uintValue
             else { continue }
-            if let action = equivalents[name] {
-                found.bindings[action] = hotkey
-            } else {
+            // Rectangle writes a negative key code for an action it has
+            // unbound. Nothing was there, so nothing is missing.
+            if keyCode < 0 { continue }
+            guard let action = equivalents[name],
+                  let hotkey = hotkey(keyCode: keyCode, modifierFlags: flags)
+            else {
                 found.unmapped.append(name)
+                continue
             }
+            found.bindings[action] = hotkey
         }
         return found
     }
 
     /// One Rectangle binding as a Plonk one, or nil when it cannot be.
     ///
-    /// Rectangle writes a negative key code for an action it has unbound. Its
-    /// flags carry whatever else AppKit reported at the time — caps lock, the
-    /// function bit an arrow key sets — so only the four a global hotkey can
-    /// hold are read, and a key with no name in Hotkey's table is dropped.
+    /// The flags carry whatever else AppKit reported at the time — caps lock,
+    /// the function bit an arrow key sets — so only the four a global hotkey
+    /// can hold are read. A key with no name in Hotkey's table cannot be shown
+    /// or re-recorded, so it is refused here and reported by the caller.
     static func hotkey(keyCode: Int, modifierFlags: UInt) -> Hotkey? {
         guard keyCode >= 0, keyCode <= Int(UInt32.max) else { return nil }
         let code = UInt32(keyCode)
@@ -134,17 +141,16 @@ enum RectangleImport {
     static func apply(_ found: Found, to config: inout Config) -> [HotkeyAction] {
         var displaced: [HotkeyAction] = []
         for (action, hotkey) in found.bindings.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
-            for other in HotkeyAction.allCases
-            where other != action && config.resolvedHotkeys[other] == hotkey {
-                config.hotkeys[other.rawValue] = ""
-                if !displaced.contains(other) { displaced.append(other) }
+            for other in config.bind(action, to: hotkey) where !displaced.contains(other) {
+                displaced.append(other)
             }
-            config.hotkeys[action.rawValue] = hotkey.spec
         }
-        displaced.removeAll { found.bindings[$0] != nil }
-        if let points = found.gapPoints {
-            config.zoneGap = max(0, min(points, Config.gapLimit))
-        }
+        // Whether an action still has a key, not whether it was in the import:
+        // two imported actions sharing a combination leaves the earlier one
+        // cleared, and it deserves the same notice as anything else.
+        let resolved = config.resolvedHotkeys
+        displaced.removeAll { resolved[$0] != nil }
+        if let points = found.gapPoints { config.setGap(points) }
         return displaced
     }
 }
