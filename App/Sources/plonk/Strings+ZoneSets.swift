@@ -37,6 +37,17 @@ extension LocalizedStringResource {
         Self.key("zoneSet.screenWithSize \(number) \(size)")
     }
 
+    /// The line under the set's name: the screen, its size, how many zones and
+    /// how much air each window keeps.
+    static func zoneSetSummary(_ number: Int, _ size: String, _ zones: String,
+                               _ gap: Int) -> LocalizedStringResource {
+        Self.key("zoneSet.summary \(number) \(size) \(zones) \(gap)")
+    }
+
+    static func zoneSetZoneCount(_ count: Int) -> LocalizedStringResource {
+        Self.key("zoneSet.zoneCount \(count)")
+    }
+
     static let zoneEditorName = Self.key("zoneEditor.name")
     static let zoneEditorSplit = Self.key("zoneEditor.split")
     static let zoneEditorResize = Self.key("zoneEditor.resize")

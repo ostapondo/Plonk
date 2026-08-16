@@ -55,6 +55,15 @@ extension Ink {
                        startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
+    /// What reads on top of a zone fill. Mint and sun are bright enough that
+    /// white on them fails contrast at label sizes, so those two carry near
+    /// black and the other four carry white. Same two exceptions as the site.
+    static func zoneInk(_ index: Int) -> Color {
+        [3, 4].contains(max(0, index) % 6)
+            ? Color(red: 0.02, green: 0.10, blue: 0.08)
+            : .white
+    }
+
     /// Toward white, in HSB, so a mint stays mint instead of turning grey the
     /// way a straight blend with white would.
     static func lighter(_ color: Color) -> Color {

@@ -435,6 +435,7 @@
 "zoneSet.newSet" = "New set";
 "zoneSet.screen %lld" = "Screen %lld";
 "zoneSet.screenWithSize %lld %@" = "Screen %1$lld — %2$@";
+"zoneSet.summary %lld %@ %@ %lld" = "Screen %1$lld · %2$@ · %3$@ · gap %4$lld px";
 "zoneSet.edgeHint" = "Windows dropped near an edge fill that half of the screen.";
 "zoneSet.zoneHint" = "Drop a window on a zone while dragging, or press ⌃⌥ and its number.";
 "zoneSet.preview" = "Preview";
