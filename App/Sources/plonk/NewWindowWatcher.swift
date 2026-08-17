@@ -24,6 +24,11 @@ final class NewWindowWatcher {
 
     var enabled = false
     var isExcluded: ((NSRunningApplication) -> Bool)?
+
+    /// Take the settings as they now stand.
+    func apply(_ config: Config) {
+        enabled = config.placeNewWindows
+    }
     /// Where this app's windows have been going, if anywhere: a fraction and
     /// the display it was on.
     var placement: ((NSRunningApplication) -> (frac: FracRect, screenIndex: Int)?)?

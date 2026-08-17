@@ -53,9 +53,8 @@ final class ShotRoutes {
         capture(mode, annotate) { [weak self] image in
             guard let self else { return }
             guard let image else {
-                respond(HTTPResponse(status: 409, json: [
-                    "error": "capture was cancelled, or Screen Recording permission is missing",
-                ]))
+                respond(.conflict(
+                    "capture was cancelled, or Screen Recording permission is missing"))
                 return
             }
             self.finish(image, body: body, annotate: annotate, respond: respond)
@@ -91,7 +90,7 @@ final class ShotRoutes {
                 case .nothingAsked: respond(.badRequest(message))
                 case .noMatch: respond(.notFound(message))
                 case .notPermitted, .captureFailed:
-                    respond(HTTPResponse(status: 409, json: ["error": message]))
+                    respond(.conflict(message))
                 case .shuttingDown: respond(.failed(message))
                 }
             }
@@ -212,9 +211,8 @@ final class ShotRoutes {
         let mode = CaptureMode(rawValue: (body["mode"] as? String) ?? "region") ?? .region
         capture(mode, false) { image in
             guard let image else {
-                respond(HTTPResponse(status: 409, json: [
-                    "error": "capture was cancelled, or Screen Recording permission is missing",
-                ]))
+                respond(.conflict(
+                    "capture was cancelled, or Screen Recording permission is missing"))
                 return
             }
             read(image)

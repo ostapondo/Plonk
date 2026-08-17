@@ -45,8 +45,7 @@ struct ShotPage: View {
             }
             SettingsCard(title: .shotOutput) {
                 ToggleRow(title: .shotCopyOnSave,
-                          isOn: model.binding(\.shotCopyToClipboard,
-                                              set: { $0.setShotCopyToClipboard($1) }))
+                          isOn: model.binding(\.shotCopyToClipboard))
                 SettingRow(title: .shotSaveFolder) {
                     HStack(spacing: 7) {
                         // Committed on Return or when focus leaves, so typing a
@@ -67,8 +66,8 @@ struct ShotPage: View {
                 }
             }
         }
-        .onAppear { folderDraft = model.shotFolder }
-        .onChange(of: model.shotFolder) { folderDraft = $0 }
+        .onAppear { folderDraft = model.config.shotFolder }
+        .onChange(of: model.config.shotFolder) { folderDraft = $0 }
         .onDisappear(perform: commitFolder)
     }
 
@@ -76,15 +75,15 @@ struct ShotPage: View {
     /// that know they are looking at two.
     private var language: Binding<String> {
         Binding(
-            get: { model.textLanguages.first ?? "" },
-            set: { model.actions?.setTextLanguages($0.isEmpty ? [] : [$0]) }
+            get: { model.config.textLanguages.first ?? "" },
+            set: { model.actions?.update(\.textLanguages, to: $0.isEmpty ? [] : [$0]) }
         )
     }
 
     private func commitFolder() {
         let folder = folderDraft.trimmingCharacters(in: .whitespaces)
-        guard !folder.isEmpty, folder != model.shotFolder else { return }
-        model.actions?.setShotFolder(folder)
+        guard !folder.isEmpty, folder != model.config.shotFolder else { return }
+        model.actions?.update(\.shotFolder, to: folder)
     }
 
     private func chooseFolder() {
@@ -93,7 +92,7 @@ struct ShotPage: View {
         panel.canChooseFiles = false
         if panel.runModal() == .OK, let url = panel.url {
             folderDraft = url.path
-            model.actions?.setShotFolder(url.path)
+            model.actions?.update(\.shotFolder, to: url.path)
         }
     }
 }

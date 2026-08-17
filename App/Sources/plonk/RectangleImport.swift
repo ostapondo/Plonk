@@ -175,7 +175,9 @@ enum RectangleImport {
         // cleared, and it deserves the same notice as anything else.
         let resolved = config.resolvedHotkeys
         displaced.removeAll { resolved[$0] != nil }
-        if let points = found.gapPoints { config.setGap(points) }
+        // Held to Plonk's own bounds by ConfigStore.update, like every other
+        // write; Rectangle's limits are not ours.
+        if let points = found.gapPoints { config.zoneGap = points }
         return displaced
     }
 }

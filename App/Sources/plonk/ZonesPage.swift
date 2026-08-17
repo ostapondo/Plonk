@@ -39,14 +39,13 @@ struct ZonesPage: View {
                      note: .zonesDraggingHelp) {
             ToggleRow(title: .zonesDragToSnap,
                       detail: .zonesDragToSnapDetail,
-                      isOn: model.binding(\.dragSnapEnabled, set: { $0.setDragSnap($1) }))
+                      isOn: model.binding(\.dragSnapEnabled))
             SegmentedRow(title: .zonesShowZones,
-                         selection: model.binding(\.zonesRequireModifier,
-                                                  set: { $0.setZonesRequireModifier($1) }),
+                         selection: model.binding(\.zonesRequireShift),
                          options: [(.zonesWhileDragging, false), (.zonesWithTheModifier, true)],
                          stacked: true)
             SegmentedRow(title: .zonesModifier,
-                         selection: model.binding(\.zonesModifier, set: { $0.setZonesModifier($1) }),
+                         selection: model.binding(\.zonesModifier),
                          options: [(.zonesModifierShift, "shift"),
                                    (.zonesModifierOption, "option"),
                                    (.zonesModifierControl, "control")])
@@ -97,11 +96,10 @@ struct ZonesPage: View {
         SettingsCard(title: .zonesDesktopChanges) {
             ToggleRow(title: .zonesRestoreOnDisplayChange,
                       detail: .zonesRestoreOnDisplayChangeDetail,
-                      isOn: model.binding(\.restoreZonesOnScreenChange,
-                                          set: { $0.setRestoreZonesOnScreenChange($1) }))
+                      isOn: model.binding(\.restoreZonesOnScreenChange))
             ToggleRow(title: .zonesPlaceNewWindows,
                       detail: .zonesPlaceNewWindowsDetail,
-                      isOn: model.binding(\.placeNewWindows, set: { $0.setPlaceNewWindows($1) }))
+                      isOn: model.binding(\.placeNewWindows))
         }
     }
 }

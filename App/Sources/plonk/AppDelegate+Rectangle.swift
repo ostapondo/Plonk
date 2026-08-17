@@ -3,7 +3,7 @@ import AppKit
 // The two ways a Rectangle setup reaches this app: its shortcuts, read once,
 // and its URLs, answered as they arrive.
 //
-// Split out of AppDelegate, which is over the line limit and may only shrink.
+// One module, one file beside AppDelegate; see AGENTS.md, "Layout".
 
 extension AppDelegate {
     // MARK: - Shortcuts
@@ -52,9 +52,6 @@ extension AppDelegate {
             config.rectangleOfferSettled = true
         }
         model.rectangleFound = false
-        hotkeys.bindings = store.config.resolvedHotkeys
-        model.zoneGap = store.config.zoneGap
-        refreshHotkeyModel()
         HUD.shared.show(outcome(of: found, displaced: displaced))
     }
 
@@ -125,7 +122,7 @@ extension AppDelegate {
         // a SwiftUI setter. The answer comes back on the main queue.
         DispatchQueue.global(qos: .userInitiated).async {
             RectangleURLs.setHandled(on) { [weak self] holding in
-                self?.model.handleRectangleURLs = holding
+                self?.model.holdsRectangleURLs = holding
             }
         }
     }
@@ -173,7 +170,7 @@ extension AppDelegate {
     private func returnRectangleURLs() {
         DispatchQueue.global(qos: .utility).async {
             RectangleURLs.setHandled(false) { [weak self] holding in
-                self?.model.handleRectangleURLs = holding
+                self?.model.holdsRectangleURLs = holding
             }
         }
     }

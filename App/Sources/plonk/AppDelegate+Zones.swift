@@ -18,13 +18,11 @@ extension AppDelegate {
 
     func assignZoneSet(_ name: String?, toScreen index: Int) {
         store.update { $0.assignZoneSet(name, forKeys: ScreenIdentity.keys(forIndex: index)) }
-        refreshZoneModel()
         commands.relayout(screenIndex: index)
     }
 
     func updateZoneSet(_ name: String, zones: [ZoneRect]) {
         store.update { $0.zoneSets[name] = zones }
-        refreshZoneModel()
         for index in NSScreen.screens.indices
         where store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: index)) == name {
             commands.relayout(screenIndex: index)
@@ -42,13 +40,11 @@ extension AppDelegate {
             $0.zoneSets[new] = zones
             $0.screenZoneSets = $0.screenZoneSets.mapValues { $0 == old ? new : $0 }
         }
-        refreshZoneModel()
         return true
     }
 
     func deleteZoneSet(_ name: String) {
         store.update { $0.forgetZoneSet(named: name) }
-        refreshZoneModel()
     }
 
     func togglePreview(zoneSet name: String, onScreen index: Int) {

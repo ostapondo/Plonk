@@ -17,11 +17,11 @@ struct ExcludedApps: View {
     @State private var typed = ""
 
     var body: some View {
-        if model.excludedApps.isEmpty {
+        if model.config.excludedApps.isEmpty {
             Text(.excludedNone)
                 .foregroundStyle(.secondary)
         }
-        ForEach(model.excludedApps, id: \.self) { pattern in
+        ForEach(model.config.excludedApps, id: \.self) { pattern in
             row(for: pattern)
         }
         HStack(spacing: 8) {
@@ -74,7 +74,7 @@ struct ExcludedApps: View {
             }
             Spacer()
             Button {
-                model.actions?.setExcludedApps(model.excludedApps.filter { $0 != pattern })
+                model.actions?.update(\.excludedApps, to: model.config.excludedApps.filter { $0 != pattern })
             } label: {
                 Image(systemName: "minus.circle.fill")
             }
@@ -107,11 +107,11 @@ struct ExcludedApps: View {
 
     private func add(_ raw: String) {
         let pattern = raw.trimmingCharacters(in: .whitespaces)
-        guard !pattern.isEmpty, !model.excludedApps.contains(pattern) else {
+        guard !pattern.isEmpty, !model.config.excludedApps.contains(pattern) else {
             typed = ""
             return
         }
-        model.actions?.setExcludedApps(model.excludedApps + [pattern])
+        model.actions?.update(\.excludedApps, to: model.config.excludedApps + [pattern])
         typed = ""
     }
 

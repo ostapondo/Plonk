@@ -33,11 +33,4 @@ extension AppDelegate {
             HUD.shared.show(failure.localizedDescription)
         }
     }
-
-    func setRulerTolerance(_ value: Int) {
-        let clamped = min(max(value, EdgeDetector.toleranceRange.lowerBound),
-                          EdgeDetector.toleranceRange.upperBound)
-        store.update { $0.rulerEdgeTolerance = clamped }
-        model.rulerEdgeTolerance = clamped
-    }
 }

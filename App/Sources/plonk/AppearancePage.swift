@@ -35,9 +35,9 @@ struct AppearancePage: View {
     }
 
     private func card(_ theme: AppearanceSettings.Theme) -> some View {
-        let selected = model.appearance.resolvedTheme == theme
+        let selected = model.config.appearance.resolvedTheme == theme
         return Button {
-            model.actions?.setTheme(theme.rawValue)
+            model.actions?.update(\.appearance.theme, to: theme.rawValue)
         } label: {
             VStack(alignment: .leading, spacing: 9) {
                 ThemePreview(theme: theme)
@@ -68,6 +68,14 @@ struct AppearancePage: View {
 
     // MARK: - Accent
 
+    /// Set the accent and show it. The zone overlay tints itself with the
+    /// accent unless it was given a colour of its own, so a flash is how the
+    /// choice is seen on something other than this page.
+    private func chooseAccent(_ hex: String?) {
+        model.actions?.update(\.appearance.accentHex, to: hex)
+        model.actions?.flashZones()
+    }
+
     private var accents: some View {
         HStack(spacing: 9) {
             ForEach(AppearanceSettings.accentChoices, id: \.self) { hex in
@@ -76,8 +84,8 @@ struct AppearancePage: View {
             Spacer(minLength: 8)
             Text(.appearanceMatchSystemAccent).font(.system(size: 12)).foregroundStyle(.secondary)
             Toggle("", isOn: Binding(
-                get: { model.appearance.accentHex == nil },
-                set: { model.actions?.setAccent($0 ? nil : AppearanceSettings.accentChoices.last) }
+                get: { model.config.appearance.accentHex == nil },
+                set: { chooseAccent($0 ? nil : AppearanceSettings.accentChoices.last) }
             ))
             .labelsHidden().toggleStyle(.switch).controlSize(.small)
             .help(String(localized: .appearanceFollowSystemAccent))
@@ -87,10 +95,10 @@ struct AppearancePage: View {
     }
 
     private func swatch(_ hex: String) -> some View {
-        let selected = model.appearance.accentHex?.caseInsensitiveCompare(hex) == .orderedSame
+        let selected = model.config.appearance.accentHex?.caseInsensitiveCompare(hex) == .orderedSame
         let colour = Color(nsColor: ZoneAppearance.color(fromHex: hex) ?? .controlAccentColor)
         return Button {
-            model.actions?.setAccent(hex)
+            chooseAccent(hex)
         } label: {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(colour)

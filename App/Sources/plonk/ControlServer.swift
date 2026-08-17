@@ -28,6 +28,9 @@ struct HTTPResponse {
     static func ok(_ json: [String: Any]) -> HTTPResponse { HTTPResponse(status: 200, json: json) }
     static func badRequest(_ message: String) -> HTTPResponse { HTTPResponse(status: 400, json: ["error": message]) }
     static func notFound(_ message: String) -> HTTPResponse { HTTPResponse(status: 404, json: ["error": message]) }
+    /// The request was understood and refused: a name already taken, a setting
+    /// the user turned off, an agent that is not the one in charge.
+    static func conflict(_ message: String) -> HTTPResponse { HTTPResponse(status: 409, json: ["error": message]) }
     static func failed(_ message: String) -> HTTPResponse { HTTPResponse(status: 500, json: ["error": message]) }
     /// Gives the raw connection to `attach`, which owns it from then on.
     static func stream(_ attach: @escaping (NWConnection) -> Void) -> HTTPResponse {

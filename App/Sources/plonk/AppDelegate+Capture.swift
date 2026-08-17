@@ -60,4 +60,44 @@ extension AppDelegate {
             }
         }
     }
+
+    func runCapture(_ mode: CaptureMode, openEditor: Bool,
+                            completion: @escaping (NSImage?) -> Void = { _ in }) {
+        let hidden = hideOwnWindows()
+        ScreenshotManager.capture(mode) { [weak self] image in
+            self?.showOwnWindows(hidden)
+            if let image, openEditor { self?.presenter.showShotEditor(image: image) }
+            completion(image)
+        }
+    }
+
+    /// Everything Plonk has on screen, ordered out so it cannot end up in a
+    /// capture: settings and editors, but also the crosshairs and any pinned
+    /// crop, which are floating over exactly the area being photographed.
+    func hideOwnWindows() -> [NSWindow] {
+        // Counted, because a capture can start while a pinned crop is still
+        // choosing its region: the first one to finish must not put the
+        // overlays back into the other one's photograph.
+        captureDepth += 1
+        mouse.suspend()
+        let hidden = (presenter.visible + crops.visibleWindows + [guidePanel].compactMap { $0 })
+            .filter { $0.isVisible }
+        hidden.forEach { $0.orderOut(nil) }
+        return hidden
+    }
+
+    func showOwnWindows(_ hidden: [NSWindow]) {
+        captureDepth = max(0, captureDepth - 1)
+        hidden.forEach { $0.orderFront(nil) }
+        guard captureDepth == 0 else { return }
+        mouse.resume()
+    }
+
+    func finishShot(copied: Bool, path: String?) {
+        if let path, store.config.shotCopyToClipboard, !copied,
+           let saved = NSImage(contentsOfFile: path) {
+            ScreenshotManager.copyToClipboard(saved)
+        }
+        model.shotStatus = String(localized: path.map { .hudSavedTo($0) } ?? .hudCopiedToClipboard)
+    }
 }

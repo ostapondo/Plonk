@@ -11,9 +11,9 @@ struct ZonesTuning: View {
     /// hand-edited file stays readable.
     private var zoneColor: Binding<Color> {
         Binding(
-            get: { Color(nsColor: ZoneAppearance.color(fromHex: model.zoneColorHex)
-                         ?? model.appearance.accent) },
-            set: { model.actions?.setZoneColor(ZoneAppearance.hex(from: NSColor($0))) }
+            get: { Color(nsColor: ZoneAppearance.color(fromHex: model.config.zoneColorHex)
+                         ?? model.config.appearance.accent) },
+            set: { model.actions?.update(\.zoneColorHex, to: ZoneAppearance.hex(from: NSColor($0))) }
         )
     }
 
@@ -23,8 +23,8 @@ struct ZonesTuning: View {
             grabMove
             exclusions
         }
-        .onAppear { opacityDraft = model.zoneOpacity }
-        .onChange(of: model.zoneOpacity) { opacityDraft = $0 }
+        .onAppear { opacityDraft = model.config.zoneOpacity }
+        .onChange(of: model.config.zoneOpacity) { opacityDraft = $0 }
     }
 
     // MARK: - Appearance
@@ -34,34 +34,34 @@ struct ZonesTuning: View {
                      note: .zonesOverlayHelp) {
             SettingBlock {
                 PointsField(title: .zonesGap, help: .zonesGapHelp,
-                            placeholder: "0", range: 0...Int(Config.gapLimit), value: model.zoneGap) {
-                    model.actions?.setZoneGap($0)
+                            placeholder: "0", range: 0...Int(Config.gapLimit), value: model.config.zoneGap) {
+                    model.actions?.update(\.zoneGap, to: $0)
                 }
             }
             SettingRow(title: .zonesOpacity, stacked: true) {
-                Slider(value: $opacityDraft, in: 0.1...1) { editing in
-                    if !editing { model.actions?.setZoneOpacity(opacityDraft) }
+                Slider(value: $opacityDraft, in: Config.opacityRange) { editing in
+                    if !editing { model.actions?.update(\.zoneOpacity, to: opacityDraft) }
                 }
             }
             SettingRow(title: .zonesColour,
-                       detail: model.zoneColorHex == nil
+                       detail: model.config.zoneColorHex == nil
                            ? LocalizedStringResource.zonesColourFollowsAccent : nil) {
                 HStack(spacing: 10) {
                     ColorPicker("", selection: zoneColor, supportsOpacity: false).labelsHidden()
-                    Button(String(localized: .zonesUseTheAccent)) { model.actions?.setZoneColor(nil) }
+                    Button(String(localized: .zonesUseTheAccent)) { model.actions?.update(\.zoneColorHex, to: nil) }
                         .controlSize(.small)
-                        .disabled(model.zoneColorHex == nil)
+                        .disabled(model.config.zoneColorHex == nil)
                 }
             }
             ToggleRow(title: .zonesNumberTheZones,
-                      isOn: model.binding(\.zoneNumbersVisible, set: { $0.setZoneNumbersVisible($1) }))
+                      isOn: model.binding(\.zoneNumbersVisible))
             ToggleRow(title: .zonesEveryMonitor,
-                      isOn: model.binding(\.zonesOnAllMonitors, set: { $0.setZonesOnAllMonitors($1) }))
+                      isOn: model.binding(\.zonesOnAllMonitors))
             SettingBlock {
                 PointsField(title: .zonesEdgeSpanning,
                             help: .zonesEdgeSpanningHelp,
-                            placeholder: "16", range: 0...60, value: model.zoneEdgeSpan) {
-                    model.actions?.setZoneEdgeSpan($0)
+                            placeholder: "16", range: 0...Int(Config.edgeSpanLimit), value: model.config.zoneEdgeSpanPoints) {
+                    model.actions?.update(\.zoneEdgeSpanPoints, to: $0)
                 }
             }
         }
@@ -74,23 +74,21 @@ struct ZonesTuning: View {
                      note: .zonesGrabMoveHelp) {
             ToggleRow(title: .zonesGrabAnywhere,
                       detail: .zonesGrabAnywhereDetail,
-                      isOn: model.binding(\.grabMoveEnabled, set: { $0.setGrabMove($1) }))
+                      isOn: model.binding(\.grabMoveEnabled))
             Group {
                 SegmentedRow(title: .zonesHold,
-                             selection: model.binding(\.grabMoveModifier,
-                                                      set: { $0.setGrabMoveModifier($1) }),
+                             selection: model.binding(\.grabMoveModifier),
                              options: [(.zonesModifierOption, "option"),
                                        (.zonesModifierCommand, "command"),
                                        (.zonesModifierControl, "control")])
                 ToggleRow(title: .zonesRightDragResizes,
                           detail: .zonesRightDragResizesDetail,
-                          isOn: model.binding(\.grabMoveResize, set: { $0.setGrabMoveResize($1) }))
+                          isOn: model.binding(\.grabMoveResize))
                 ToggleRow(title: .zonesShowSizeWhileDragging,
-                          isOn: model.binding(\.grabMoveShowGeometry,
-                                              set: { $0.setGrabMoveShowGeometry($1) }))
+                          isOn: model.binding(\.grabMoveShowGeometry))
             }
-            .disabled(!model.grabMoveEnabled)
-            .opacity(model.grabMoveEnabled ? 1 : 0.5)
+            .disabled(!model.config.grabMoveEnabled)
+            .opacity(model.config.grabMoveEnabled ? 1 : 0.5)
         }
     }
 

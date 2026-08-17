@@ -1,245 +1,8 @@
 import Foundation
 
-// Config lives in ~/Library/Application Support/Plonk/config.json as plain
-// JSON, so it stays easy to edit or sync by hand.
-
-struct LayoutItemSpec: Codable {
-    var app: String
-    var title: String?
-    var screen: Int?
-    var x: Double
-    var y: Double
-    var w: Double
-    var h: Double
-
-    init?(dict: [String: Any]) {
-        guard let app = dict["app"] as? String,
-              let frac = FracRect.parse(dict["frame"]) else { return nil }
-        self.app = app
-        self.title = dict["title"] as? String
-        self.screen = (dict["screen"] as? NSNumber)?.intValue
-        self.x = frac.x; self.y = frac.y; self.w = frac.w; self.h = frac.h
-    }
-
-    init(app: String, title: String? = nil, screen: Int? = nil, x: Double, y: Double, w: Double, h: Double) {
-        self.app = app; self.title = title; self.screen = screen
-        self.x = x; self.y = y; self.w = w; self.h = h
-    }
-}
-
-struct Config: Codable {
-    var hotkeysEnabled = true
-    /// Action id to key spec, e.g. "leftHalf": "control+option+left". Missing
-    /// entries use the action's default; an empty string means unbound.
-    var hotkeys: [String: String] = [:]
-    var dragSnapEnabled = true
-    // Named after the modifier it used to be hard-wired to. Renaming the key
-    // would silently reset the setting for everyone, so it stays.
-    var zonesRequireShift = true
-    var zonesModifier = "shift"  // shift | option | control
-    // How the zone overlay looks and how much room it leaves around a snapped
-    // window. The gap is in points and applies to the placed window too, not
-    // just the drawing, so zones can be given breathing room.
-    var zoneGap: Double = 0
-    var zoneOpacity: Double = 1
-    /// "#RRGGBB", or nil for the system accent colour.
-    var zoneColorHex: String?
-    var zoneNumbersVisible = true
-    var zonesOnAllMonitors = false
-    /// How near the shared edge of two zones the cursor has to come, in points,
-    /// before a drop covers both. Zero switches it off.
-    var zoneEdgeSpanPoints: Double = 16
-    // Move and resize a window by dragging anywhere inside it with a modifier
-    // held. Off by default: option-drag already means something inside a lot
-    // of Mac apps, so this is a choice rather than a surprise.
-    var grabMoveEnabled = false
-    var grabMoveModifier = "option"  // option | command | control
-    var grabMoveResize = true
-    var grabMoveShowGeometry = true
-    // The pointer tools. Each is independent and each is off until asked for.
-    // Finding the pointer is a shortcut rather than a toggle, so it has none.
-    var highlightClicksEnabled = false
-    var crosshairsEnabled = false
-    // Apps drag snapping and the placement hotkeys leave alone; see
-    // AppExclusions. Explicit placement through the API is never filtered.
-    var excludedApps: [String] = []
-    // Whether windows Plonk placed are put back where they were after a
-    // display is plugged in or unplugged.
-    var restoreZonesOnScreenChange = true
-    // Whether a newly opened window goes where that app's windows have been
-    // going. Off by default: it moves windows nobody asked it to.
-    var placeNewWindows = false
-    // BCP-47 tags for text recognition, e.g. ["uk-UA", "en-US"]. Empty lets
-    // Vision pick, which follows the system language.
-    var textLanguages: [String] = []
-    var awakeAllowOnBattery = true
-    var awakeAutoWhileCharging = false
-    var awakeKeepDisplayOn = true
-    var awakeTimeoutMinutes = 0
-    // Whether keep-awake was on when the app last quit, so it survives a
-    // relaunch. Unix epoch seconds; nil means the session had no limit.
-    var awakeRequested = false
-    var awakeSessionEnd: Double?
-    // Stay active. The schedule and the app list are settings; whether it was
-    // switched on by hand is not restored, because a hold made yesterday says
-    // nothing about today.
-    var activeSchedule = ActiveSchedule()
-    var activeApps: [String] = []
-    var activeAllowOnBattery = false
-    var activeTimeoutMinutes = 0
-    var shotFolder = "~/Desktop"
-    var shotCopyToClipboard = true
-    // How different two neighbouring pixels have to be, on one channel of 255,
-    // before the screen ruler treats the boundary between them as an edge. See
-    // EdgeDetector. The key is not the "rulerTolerance" a pre-release build
-    // wrote: that number was a distance from the pixel under the pointer, which
-    // is a different measurement, so carrying it over would mean honouring a
-    // setting nobody chose.
-    var rulerEdgeTolerance = EdgeDetector.defaultTolerance
-    var launchAtLogin = true
-    // The only setting that decides whether the app ever opens an outbound
-    // connection. Off means no release check, automatic or otherwise.
-    var updateCheckAutomatically = true
-    // Whether Home has already offered to take a Rectangle setup. Set by taking
-    // the offer or by turning it down; either way it is not asked again.
-    var rectangleOfferSettled = false
-    // Whether to ask macOS to send rectangle:// URLs here as well. Off, because
-    // a scheme is one per machine and the loser would be a Rectangle the user
-    // still has installed. See RectangleURLs.
-    var handleRectangleURLs = false
-    // Which MCP client the user picked as the active agent (by client name),
-    // and whether only that agent may change windows and settings.
-    var selectedAgent: String?
-    var agentExclusive = false
-    // Whether a spoken sentence that is plainly one of the dozen common
-    // commands runs here instead of going to an agent. See VoiceCommands.
-    var voiceLocalCommands = true
-    // What the Getting Started card on the Home page has already seen happen.
-    // Both latch: a step stays done once it has been done, so the card does not
-    // un-tick itself the moment an agent's session ends.
-    var sawFirstSnap = false
-    var sawFirstAgent = false
-    var gettingStartedHidden = false
-    // Agents Plonk can launch itself instead of queueing a task for a live MCP
-    // session, e.g. "claude -p {prompt}". The prompt reaches the command
-    // through the environment, never as text in the line; see
-    // AgentAdapter.invocation. Edited in config.json for now.
-    var agentAdapters: [AgentAdapter] = []
-    /// Theme and accent; see AppearanceSettings.
-    var appearance = AppearanceSettings()
-    var workspaces: [String: Workspace] = [:]
-    var zoneSets: [String: [ZoneRect]] = [:]
-    // Keyed by display UUID; configs written before that used the screen index,
-    // which is why lookups take a list of candidate keys.
-    var screenZoneSets: [String: String] = [:]
-
-    init() {}
-
-    // Tolerate missing keys so old config files survive new fields.
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        hotkeysEnabled = try c.decodeIfPresent(Bool.self, forKey: .hotkeysEnabled) ?? true
-        hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? [:]
-        dragSnapEnabled = try c.decodeIfPresent(Bool.self, forKey: .dragSnapEnabled) ?? true
-        zonesRequireShift = try c.decodeIfPresent(Bool.self, forKey: .zonesRequireShift) ?? true
-        zonesModifier = try c.decodeIfPresent(String.self, forKey: .zonesModifier) ?? "shift"
-        zoneGap = try c.decodeIfPresent(Double.self, forKey: .zoneGap) ?? 0
-        zoneOpacity = try c.decodeIfPresent(Double.self, forKey: .zoneOpacity) ?? 1
-        zoneColorHex = try c.decodeIfPresent(String.self, forKey: .zoneColorHex)
-        zoneNumbersVisible = try c.decodeIfPresent(Bool.self, forKey: .zoneNumbersVisible) ?? true
-        zonesOnAllMonitors = try c.decodeIfPresent(Bool.self, forKey: .zonesOnAllMonitors) ?? false
-        zoneEdgeSpanPoints = try c.decodeIfPresent(Double.self, forKey: .zoneEdgeSpanPoints) ?? 16
-        grabMoveEnabled = try c.decodeIfPresent(Bool.self, forKey: .grabMoveEnabled) ?? false
-        grabMoveModifier = try c.decodeIfPresent(String.self, forKey: .grabMoveModifier) ?? "option"
-        grabMoveResize = try c.decodeIfPresent(Bool.self, forKey: .grabMoveResize) ?? true
-        grabMoveShowGeometry = try c.decodeIfPresent(Bool.self, forKey: .grabMoveShowGeometry) ?? true
-        highlightClicksEnabled = try c.decodeIfPresent(Bool.self, forKey: .highlightClicksEnabled) ?? false
-        crosshairsEnabled = try c.decodeIfPresent(Bool.self, forKey: .crosshairsEnabled) ?? false
-        excludedApps = try c.decodeIfPresent([String].self, forKey: .excludedApps) ?? []
-        restoreZonesOnScreenChange = try c.decodeIfPresent(Bool.self, forKey: .restoreZonesOnScreenChange) ?? true
-        placeNewWindows = try c.decodeIfPresent(Bool.self, forKey: .placeNewWindows) ?? false
-        textLanguages = try c.decodeIfPresent([String].self, forKey: .textLanguages) ?? []
-        awakeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .awakeAllowOnBattery) ?? true
-        awakeAutoWhileCharging = try c.decodeIfPresent(Bool.self, forKey: .awakeAutoWhileCharging) ?? false
-        awakeKeepDisplayOn = try c.decodeIfPresent(Bool.self, forKey: .awakeKeepDisplayOn) ?? true
-        awakeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .awakeTimeoutMinutes) ?? 0
-        awakeRequested = try c.decodeIfPresent(Bool.self, forKey: .awakeRequested) ?? false
-        awakeSessionEnd = try c.decodeIfPresent(Double.self, forKey: .awakeSessionEnd)
-        activeSchedule = try c.decodeIfPresent(ActiveSchedule.self, forKey: .activeSchedule) ?? ActiveSchedule()
-        activeApps = try c.decodeIfPresent([String].self, forKey: .activeApps) ?? []
-        activeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .activeAllowOnBattery) ?? false
-        activeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .activeTimeoutMinutes) ?? 0
-        shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
-        shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
-        rulerEdgeTolerance = try c.decodeIfPresent(Int.self, forKey: .rulerEdgeTolerance)
-            ?? EdgeDetector.defaultTolerance
-        launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
-        updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
-        handleRectangleURLs = try c.decodeIfPresent(Bool.self, forKey: .handleRectangleURLs) ?? false
-        rectangleOfferSettled = try c.decodeIfPresent(Bool.self, forKey: .rectangleOfferSettled) ?? false
-        selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
-        agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
-        voiceLocalCommands = try c.decodeIfPresent(Bool.self, forKey: .voiceLocalCommands) ?? true
-        sawFirstSnap = try c.decodeIfPresent(Bool.self, forKey: .sawFirstSnap) ?? false
-        sawFirstAgent = try c.decodeIfPresent(Bool.self, forKey: .sawFirstAgent) ?? false
-        gettingStartedHidden = try c.decodeIfPresent(Bool.self, forKey: .gettingStartedHidden) ?? false
-        agentAdapters = try c.decodeIfPresent([AgentAdapter].self, forKey: .agentAdapters) ?? []
-        appearance = try c.decodeIfPresent(AppearanceSettings.self, forKey: .appearance) ?? AppearanceSettings()
-        if let current = try c.decodeIfPresent([String: Workspace].self, forKey: .workspaces) {
-            workspaces = current
-        } else {
-            let legacy = try decoder.container(keyedBy: LegacyKeys.self)
-            workspaces = (try legacy.decodeIfPresent([String: [WorkspaceItem]].self, forKey: .layouts) ?? [:])
-                .mapValues { Workspace(items: $0) }
-        }
-        zoneSets = try c.decodeIfPresent([String: [ZoneRect]].self, forKey: .zoneSets) ?? [:]
-        screenZoneSets = try c.decodeIfPresent([String: String].self, forKey: .screenZoneSets) ?? [:]
-    }
-
-    /// Configs written before workspaces hold bare item arrays under "layouts".
-    /// Every field workspaces added is optional, so those still decode.
-    private enum LegacyKeys: String, CodingKey {
-        case layouts
-    }
-
-    /// Assigned set name for a screen, or nil when it has no assignment.
-    /// An empty string means edge snapping.
-    func zoneAssignment(forKeys keys: [String]) -> String? {
-        for key in keys {
-            if let name = screenZoneSets[key] { return name }
-        }
-        return nil
-    }
-
-    func zones(forKeys keys: [String]) -> [ZoneRect] {
-        guard let name = zoneAssignment(forKeys: keys) else {
-            return BuiltinZoneSets.all[BuiltinZoneSets.defaultName] ?? []
-        }
-        if name.isEmpty { return [] }
-        return zoneSets[name] ?? BuiltinZoneSets.all[name] ?? []
-    }
-
-    mutating func assignZoneSet(_ name: String?, forKeys keys: [String]) {
-        keys.forEach { screenZoneSets.removeValue(forKey: $0) }
-        if let name, let primary = keys.first { screenZoneSets[primary] = name }
-    }
-
-    /// Resolved bindings: what the user chose, otherwise the default.
-    var resolvedHotkeys: [HotkeyAction: Hotkey] {
-        HotkeyAction.allCases.reduce(into: [:]) { result, action in
-            guard let spec = hotkeys[action.rawValue] else {
-                result[action] = action.defaultHotkey
-                return
-            }
-            if let hotkey = Hotkey(spec: spec) { result[action] = hotkey }
-        }
-    }
-
-    mutating func forgetZoneSet(named name: String) {
-        zoneSets.removeValue(forKey: name)
-        screenZoneSets = screenZoneSets.filter { $0.value != name }
-    }
-}
+// The one way a setting is written. update() clamps, saves, and tells
+// whoever is listening, which is how a change reaches the managers; see
+// AppDelegate.applyConfig.
 
 final class ConfigStore {
     private(set) var config = Config()
@@ -263,7 +26,9 @@ final class ConfigStore {
     func load() {
         guard let data = try? Data(contentsOf: url) else { return }
         do {
-            config = try JSONDecoder().decode(Config.self, from: data)
+            config = try Config.decode(data)
+            // A file edited by hand is as much a caller as the slider is.
+            config.clamp()
         } catch {
             // Keep the unreadable file instead of overwriting it on the next
             // save, so saved layouts can still be recovered by hand.
@@ -286,6 +51,7 @@ final class ConfigStore {
 
     func update(_ mutate: (inout Config) -> Void) {
         mutate(&config)
+        config.clamp()
         save()
         didMutate?()
     }

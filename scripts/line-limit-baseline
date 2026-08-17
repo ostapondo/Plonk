@@ -8,13 +8,8 @@
 # delete the line once it is under the limit.
 #
 # lines  path
-1027  App/Sources/plonk/AppDelegate.swift
-580   App/Sources/plonk/Router.swift
 489   App/Tests/plonkTests/ConfigTests.swift
 444   App/Tests/plonkTests/RouterTests.swift
-428   App/Sources/plonk/WindowManager.swift
-351   App/Sources/plonk/DragSnapManager.swift
-349   App/Sources/plonk/GrabMove.swift
-333   App/Sources/plonk/UpdateManager.swift
+312   App/Sources/plonk/GrabMove.swift
 308   App/Sources/plonk/WorkspaceLauncher.swift
 306   mcp/src/api.ts

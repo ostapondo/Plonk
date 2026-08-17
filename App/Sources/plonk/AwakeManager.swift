@@ -24,12 +24,29 @@ final class AwakeManager {
     /// there. Long enough to be free, short enough that nobody notices.
     private static let processPollSeconds: TimeInterval = 5
 
-    var allowOnBattery = true { didSet { reevaluate() } }
-    var autoWhileCharging = false { didSet { reevaluate() } }
+    // Each guards on the value actually changing. `apply` hands over the whole
+    // config after any setting is written, so most of these are set to what
+    // they already held; re-taking the power assertion for a change to some
+    // other page's setting is not something the sleep timer should feel.
+    var allowOnBattery = true { didSet { if allowOnBattery != oldValue { reevaluate() } } }
+    var autoWhileCharging = false { didSet { if autoWhileCharging != oldValue { reevaluate() } } }
     var keepDisplayOn = true {
-        didSet { if isOn { releaseAssertion(); reevaluate() } }
+        didSet {
+            guard keepDisplayOn != oldValue, isOn else { return }
+            releaseAssertion()
+            reevaluate()
+        }
     }
     var timeoutMinutes = 0
+
+    /// Take the settings as they now stand. Called after every config change,
+    /// so it has to be cheap and safe to run when nothing it reads moved.
+    func apply(_ config: Config) {
+        allowOnBattery = config.awakeAllowOnBattery
+        autoWhileCharging = config.awakeAutoWhileCharging
+        keepDisplayOn = config.awakeKeepDisplayOn
+        timeoutMinutes = config.awakeTimeoutMinutes
+    }
 
     var isOnAC: Bool { Self.isOnAC }
 

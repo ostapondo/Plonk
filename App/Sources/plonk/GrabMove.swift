@@ -25,9 +25,9 @@ import ApplicationServices
 final class GrabMove {
     /// Screen-relative thirds decide the grab handle: the middle band is an
     /// edge, the ends are corners.
-    private static let cornerFraction: CGFloat = 0.3
+    static let cornerFraction: CGFloat = 0.3
     /// A window narrower than this cannot be usefully resized any further.
-    private static let minimumSide: CGFloat = 80
+    static let minimumSide: CGFloat = 80
     /// Travel before a press counts as a drag rather than a click.
     private static let dragThreshold: CGFloat = 4
     /// Stamped on events this class posts itself, so the tap can tell them from
@@ -92,6 +92,17 @@ final class GrabMove {
 
     /// Starts the tap. Silently does nothing without Accessibility, which is
     /// the same permission everything else here needs.
+    /// Take the settings as they now stand, and arm or disarm accordingly. An
+    /// event tap that can swallow clicks has no business existing while the
+    /// feature is off, so the tap follows the setting rather than the launch.
+    func apply(_ config: Config) {
+        enabled = config.grabMoveEnabled
+        modifierFlag = config.grabMoveModifierFlag
+        allowResize = config.grabMoveResize
+        showGeometry = config.grabMoveShowGeometry
+        if config.grabMoveEnabled { start() } else { stop() }
+    }
+
     func start() {
         guard tap == nil, windows.isTrusted else { return }
         let mask: CGEventMask =
@@ -297,53 +308,5 @@ final class GrabMove {
             event.setIntegerValueField(.eventSourceUserData, value: Self.replayMarker)
             event.post(tap: .cgSessionEventTap)
         }
-    }
-
-    // MARK: - Geometry
-
-    /// Which edges a right-drag starting at this point takes hold of. The
-    /// middle third of a side is that edge alone; the ends are its corners.
-    static func handle(for point: CGPoint, in frame: CGRect) -> Handle {
-        guard frame.width > 0, frame.height > 0 else { return Handle() }
-        let fx = (point.x - frame.minX) / frame.width
-        let fy = (point.y - frame.minY) / frame.height
-        var handle = Handle()
-        handle.left = fx < cornerFraction
-        handle.right = fx > 1 - cornerFraction
-        handle.top = fy < cornerFraction
-        handle.bottom = fy > 1 - cornerFraction
-        // Dead centre still resizes — from the nearest side, so a drag in the
-        // middle of a window is never a no-op the user has to think about.
-        if handle.isEmpty {
-            if min(fx, 1 - fx) < min(fy, 1 - fy) {
-                handle.left = fx < 0.5
-                handle.right = !handle.left
-            } else {
-                handle.top = fy < 0.5
-                handle.bottom = !handle.top
-            }
-        }
-        return handle
-    }
-
-    /// The frame after pulling those edges by that much, never smaller than
-    /// the minimum and never inside out.
-    static func resized(_ frame: CGRect, by delta: CGVector, pulling handle: Handle) -> CGRect {
-        var result = frame
-        if handle.left {
-            let dx = min(delta.dx, frame.width - minimumSide)
-            result.origin.x += dx
-            result.size.width -= dx
-        } else if handle.right {
-            result.size.width = max(frame.width + delta.dx, minimumSide)
-        }
-        if handle.top {
-            let dy = min(delta.dy, frame.height - minimumSide)
-            result.origin.y += dy
-            result.size.height -= dy
-        } else if handle.bottom {
-            result.size.height = max(frame.height + delta.dy, minimumSide)
-        }
-        return result
     }
 }

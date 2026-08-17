@@ -28,9 +28,25 @@ final class MouseTools {
 
     var highlightEnabled = false
     var crosshairsEnabled = false {
-        didSet { refreshPersistent() }
+        didSet { if crosshairsEnabled != oldValue { refreshPersistent() } }
     }
     var tint: NSColor = .controlAccentColor
+
+    /// Take the settings as they now stand. Called after every config change,
+    /// so it stops only a tap that is actually running: `stop` also hides the
+    /// overlay, and a find-the-cursor flash is on screen without any tap
+    /// behind it. Tearing that down because some other page's setting moved is
+    /// a spotlight that blinks out under the user's hand.
+    func apply(_ config: Config) {
+        tint = ZoneAppearance(config).tint
+        highlightEnabled = config.highlightClicksEnabled
+        crosshairsEnabled = config.crosshairsEnabled
+        if config.highlightClicksEnabled || config.crosshairsEnabled {
+            start()
+        } else if tap != nil {
+            stop()
+        }
+    }
 
     func start() {
         guard tap == nil else { return }

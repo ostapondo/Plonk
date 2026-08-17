@@ -167,7 +167,7 @@ struct RouterTests {
     @Test func workspaceChangesNotifyTheUI() {
         let h = Harness()
         var notifications = 0
-        h.router.didChangeLayouts = { notifications += 1 }
+        h.store.didMutate = { notifications += 1 }
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
         _ = h.post("/workspaces/delete", ["name": "work"])
         #expect(notifications == 2)
@@ -436,7 +436,7 @@ struct RouterTests {
     @Test func agentChangesNotifyTheUI() {
         let h = Harness()
         var notifications = 0
-        h.router.didChangeAgents = { notifications += 1 }
+        h.store.didMutate = { notifications += 1 }
         _ = h.post("/agents/select", ["name": "claude-code"])
         _ = h.post("/agents/exclusive", ["on": true])
         #expect(notifications == 2)

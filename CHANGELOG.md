@@ -76,6 +76,19 @@ one of those.
 
 ### Changed
 
+- **A hand-edited `config.json` is held to the same limits the sliders are.**
+  A gap of 100, an opacity of 0.02 or an edge span of 200 used to be honoured
+  verbatim and could leave zones you could not see or windows with nothing left
+  of them. They are now brought inside the same bounds on load, wherever the
+  value came from. Nothing else about the file changed: it is written exactly
+  as before.
+- **A `null` in `config.json` costs you that one setting, not all of them.**
+  Any field written as `null` — by hand, or by a tool that spells "unset" that
+  way — used to make the whole file unreadable, which set it aside and reset
+  every setting, workspace and zone set you had. It now reads as "not set" and
+  falls back to that field's default, which is what a missing key has always
+  done.
+
 - **The window looks like the rest of Plonk now.** Colour is the zone number
   everywhere it is drawn, so the sidebar, the Zones page, the website and the
   README all say the same thing the same way. The sidebar lists every page under

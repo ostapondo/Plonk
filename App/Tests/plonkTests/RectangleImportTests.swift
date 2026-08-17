@@ -161,12 +161,16 @@ struct RectangleImportTests {
     }
 
     /// The gap arrives from a file, so it gets the same bounds the slider has
-    /// rather than whatever number happened to be in there.
+    /// rather than whatever number happened to be in there. The import writes
+    /// it and `clamp` holds it, which is the one path every writer takes;
+    /// ConfigStore.update runs the second half for the real caller.
     @Test func theGapIsHeldInsideTheSameBoundsAsTheSlider() {
         var config = Config()
         RectangleImport.apply(RectangleImport.Found(gapPoints: -4), to: &config)
+        config.clamp()
         #expect(config.zoneGap == 0)
         RectangleImport.apply(RectangleImport.Found(gapPoints: 4000), to: &config)
+        config.clamp()
         #expect(config.zoneGap == Config.gapLimit)
     }
 

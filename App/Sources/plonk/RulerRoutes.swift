@@ -63,7 +63,7 @@ final class RulerRoutes {
         case .failure(let failure):
             // Nothing here is the caller's mistake: the permission is missing,
             // the user walked away, or the screen would not photograph.
-            return HTTPResponse(status: 409, json: ["error": failure.localizedDescription])
+            return .conflict(failure.localizedDescription)
         }
     }
 

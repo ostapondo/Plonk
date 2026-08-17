@@ -29,7 +29,7 @@ struct ShortcutsPage: View {
         PageShell(title: .pageShortcuts, subtitle: .keysHotkeysDetail) {
             SettingsCard {
                 ToggleRow(title: .keysHotkeys,
-                          isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
+                          isOn: model.binding(\.hotkeysEnabled))
             }
             // Second on the page, not last. Someone who came from Rectangle is
             // here to move their setup over, and a button under nine groups of
@@ -58,8 +58,8 @@ struct ShortcutsPage: View {
                 Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
                     .controlSize(.small)
             }
-            .opacity(model.hotkeysEnabled ? 1 : 0.5)
-            .disabled(!model.hotkeysEnabled)
+            .opacity(model.config.hotkeysEnabled ? 1 : 0.5)
+            .disabled(!model.config.hotkeysEnabled)
         }
     }
 
@@ -75,11 +75,11 @@ struct ShortcutsPage: View {
                     model.actions?.importFromRectangle()
                 }
             }
-            .opacity(model.hotkeysEnabled ? 1 : 0.5)
-            .disabled(!model.hotkeysEnabled)
+            .opacity(model.config.hotkeysEnabled ? 1 : 0.5)
+            .disabled(!model.config.hotkeysEnabled)
             ToggleRow(title: .keysRectangleURLs,
                       detail: .keysRectangleURLsHelp,
-                      isOn: model.binding(\.handleRectangleURLs,
+                      isOn: model.binding(\.holdsRectangleURLs,
                                           set: { $0.setRectangleURLs($1) }))
         }
     }

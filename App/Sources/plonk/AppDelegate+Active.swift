@@ -10,10 +10,7 @@ import Foundation
 
 extension AppDelegate {
     func setupActive() {
-        active.schedule = store.config.activeSchedule
-        active.apps = store.config.activeApps
-        active.allowOnBattery = store.config.activeAllowOnBattery
-        active.timeoutMinutes = store.config.activeTimeoutMinutes
+        active.apply(store.config)
         active.onChange = { [weak self] in
             guard let self else { return }
             refreshActiveModel()
@@ -24,42 +21,16 @@ extension AppDelegate {
         active.startWatching()
     }
 
+    /// What the manager is doing now. The settings behind it are read off
+    /// `model.config` directly, so there is nothing here to keep in step.
     func refreshActiveModel() {
         model.activeOn = active.isOn
         model.activeRequested = active.wants
         model.activeStatus = active.statusText
         model.activeTrusted = active.isTrusted
-        model.activeSchedule = store.config.activeSchedule
-        model.activeApps = store.config.activeApps
-        model.activeAllowOnBattery = store.config.activeAllowOnBattery
-        model.activeTimeoutMinutes = store.config.activeTimeoutMinutes
     }
 
     func setActive(_ on: Bool) { active.set(on) }
-
-    func setActiveTimeout(minutes: Int) {
-        store.update { $0.activeTimeoutMinutes = minutes }
-        model.activeTimeoutMinutes = minutes
-        active.timeoutMinutes = minutes
-    }
-
-    func setActiveSchedule(_ schedule: ActiveSchedule) {
-        store.update { $0.activeSchedule = schedule }
-        model.activeSchedule = schedule
-        active.schedule = schedule
-    }
-
-    func setActiveApps(_ bundleIDs: [String]) {
-        store.update { $0.activeApps = bundleIDs }
-        model.activeApps = bundleIDs
-        active.apps = bundleIDs
-    }
-
-    func setActiveAllowOnBattery(_ on: Bool) {
-        store.update { $0.activeAllowOnBattery = on }
-        model.activeAllowOnBattery = on
-        active.allowOnBattery = on
-    }
 
     func openAccessibilitySettings() { PrivacySettings.openAccessibility() }
 }

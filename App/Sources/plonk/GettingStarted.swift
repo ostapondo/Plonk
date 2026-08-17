@@ -73,8 +73,8 @@ struct GettingStartedCard: View {
     private var guide: GettingStarted {
         GettingStarted(accessibilityGranted: model.accessibilityGranted,
                        screenRecordingGranted: model.screenRecordingGranted,
-                       snapped: model.sawFirstSnap,
-                       agentConnected: model.sawFirstAgent)
+                       snapped: model.config.sawFirstSnap,
+                       agentConnected: model.config.sawFirstAgent)
     }
 
     var body: some View {
@@ -105,7 +105,7 @@ struct GettingStartedCard: View {
                 .padding(.vertical, 2)
                 .background(Capsule().fill(Color.primary.opacity(0.07)))
             Spacer()
-            Button(String(localized: .startHide)) { model.actions?.hideGettingStarted() }
+            Button(String(localized: .startHide)) { model.actions?.update(\.gettingStartedHidden, to: true) }
                 .buttonStyle(.link)
                 .font(.caption)
                 .help(String(localized: .startHideHelp))

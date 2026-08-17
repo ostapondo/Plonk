@@ -86,7 +86,7 @@ struct WorkspacesPage: View {
 
     @ViewBuilder
     private func desk(_ name: String) -> some View {
-        let items = model.workspaces[name]?.items ?? []
+        let items = model.config.workspaces[name]?.items ?? []
         VStack(alignment: .leading, spacing: 9) {
             if renaming == name {
                 rename(name)
@@ -158,7 +158,7 @@ struct WorkspacesPage: View {
             }
             Toggle(String(localized: .workspacesMoveExisting),
                    isOn: Binding(
-                    get: { model.workspaces[name]?.moveExisting ?? true },
+                    get: { model.config.workspaces[name]?.moveExisting ?? true },
                     set: { model.actions?.setWorkspaceMoveExisting($0, for: name) }
                    ))
             Divider()
