@@ -75,6 +75,21 @@ struct ConfigBindingTests {
         #expect(config.appearance.accentHex == Config().appearance.accentHex)
     }
 
+    /// An explicit null is a missing key, not a value. Reaching the decoder it
+    /// would throw on any field that is not Optional, and that costs the whole
+    /// file: ConfigStore sets an unreadable config aside, taking every
+    /// workspace and zone set in it along with the one bad field.
+    @Test func anExplicitNullFallsBackToTheDefault() throws {
+        let config = try Config.decode(Data(#"""
+        {"zoneGap": null, "zonesModifier": "option", "appearance": {"theme": null}}
+        """#.utf8))
+        #expect(config.zoneGap == 0)
+        #expect(config.appearance.theme == Config().appearance.theme)
+        // The keys either side of it still arrive, so this is a fallback and
+        // not the file being thrown away.
+        #expect(config.zonesModifier == "option")
+    }
+
     /// A file that is valid JSON but not an object is as unreadable as one that
     /// is not JSON at all, and ConfigStore has to hear about it either way:
     /// that is what sets the file aside instead of overwriting it.
