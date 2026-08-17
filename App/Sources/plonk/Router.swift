@@ -7,6 +7,7 @@ import Network
 //   GET  /ping              liveness, cheap: touches neither AX nor the screen
 //   GET  /state
 //   POST /awake             { on?, minutes?, until?, pid? }
+//   POST /active            { on?, minutes?, until? }   the idle timer, not sleep
 //   POST /layout            { items: [{ app, title?, screen?, frame: {x,y,w,h} }] }
 //   POST /workspaces/save   { name, items?, move_existing? }  no items = snapshot the desktop
 //   POST /workspaces/launch { name, screen? }   screen pulls it onto one monitor
@@ -39,7 +40,8 @@ import Network
 final class Router {
     private let store: ConfigStore
     private let windows: WindowManager
-    private let awake: AwakeManager
+    let awake: AwakeManager
+    let active: ActiveManager
     let agents: AgentRegistry
     let changes: ChangeBus
     /// The `/shot` routes, which answer after the request has been left behind.
@@ -66,10 +68,12 @@ final class Router {
     var didChangeAgents: (() -> Void)?
 
     init(store: ConfigStore, windows: WindowManager, awake: AwakeManager,
+         active: ActiveManager = ActiveManager(),
          agents: AgentRegistry = AgentRegistry(), changes: ChangeBus = ChangeBus()) {
         self.store = store
         self.windows = windows
         self.awake = awake
+        self.active = active
         self.agents = agents
         self.changes = changes
         self.shots = ShotRoutes(store: store)
@@ -104,22 +108,10 @@ final class Router {
             respond(.ok(state()))
 
         case ("POST", "/awake"):
-            let on = (body["on"] as? Bool) ?? !awake.requested
-            var until: Date?
-            if let raw = trimmedName(body["until"]) {
-                guard let parsed = Self.parseDeadline(raw) else {
-                    respond(.badRequest("\"until\" must be a time of day like \"17:00\" or an "
-                                        + "ISO-8601 timestamp like \"2026-08-08T17:00:00Z\""))
-                    return
-                }
-                until = parsed
-            }
-            if let error = awake.set(on, minutes: (body["minutes"] as? NSNumber)?.intValue,
-                                     until: until, pid: (body["pid"] as? NSNumber)?.intValue) {
-                respond(.badRequest(error))
-                return
-            }
-            respond(.ok(["ok": true, "awake": awake.isOn, "status": String(localized: awake.statusText)]))
+            handleAwake(body: body, respond: respond)
+
+        case ("POST", "/active"):
+            handleActive(body: body, respond: respond)
 
         case ("POST", "/layout"):
             guard let items = body["items"] as? [[String: Any]], !items.isEmpty else {
@@ -413,7 +405,7 @@ final class Router {
     /// Everything that changes windows or config. Reads and screenshots stay
     /// open to every agent; hello must stay open or nobody could register.
     // /update is guarded because installing one quits and relaunches the app.
-    private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake", "/update"]
+    private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake", "/active", "/update"]
     // /agents/ask is guarded too: a prompt is a way to move windows by proxy,
     // and it can launch an adapter's shell command outright.
     private static let guardedPaths: Set<String> = ["/agents/select", "/agents/exclusive", "/agents/ask"]
@@ -452,16 +444,9 @@ final class Router {
         var state: [String: Any] = [
             "rev": changes.rev,
             "awake": awake.isOn,
-            "awake_details": [
-                "requested": awake.requested,
-                "status": String(localized: awake.statusText),
-                "power": awake.isOnAC ? "ac" : "battery",
-                "allow_on_battery": awake.allowOnBattery,
-                "auto_while_charging": awake.autoWhileCharging,
-                "keep_display_on": awake.keepDisplayOn,
-                "session_ends": awake.sessionEnd.map { ISO8601DateFormatter().string(from: $0) } ?? "",
-                "bound_pid": awake.boundPID ?? 0,
-            ],
+            "awake_details": awakeState(),
+            "active": active.isOn,
+            "active_details": activeState(),
             "accessibility_granted": windows.isTrusted,
             "excluded_apps": store.config.excludedApps,
             "text_languages": store.config.textLanguages,
@@ -588,7 +573,7 @@ final class Router {
         return .ok(["ok": true, "app": app, "screen": screen, "zone": number, "zones": zones.count])
     }
 
-    private func trimmedName(_ value: Any?) -> String? {
+    func trimmedName(_ value: Any?) -> String? {
         guard let name = (value as? String)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return nil }
         return name
     }

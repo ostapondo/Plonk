@@ -36,6 +36,37 @@
 "awake.autoWhileCharging" = "Automatically while charging";
 "awake.autoWhileChargingHelp" = "Keeps the Mac awake whenever it is plugged in";
 
+/* Stay active. */
+"active.subtitle" = "Chat apps read how long it is since you last touched the keyboard. This resets that clock.";
+"active.stayActive" = "Stay active now";
+"active.stayActiveHelp" = "Sends a Shift keypress every two minutes, which also keeps the Mac awake";
+"active.turnOffAfter" = "Turn off after";
+"active.never" = "Never";
+"active.after30Minutes" = "30 minutes";
+"active.after1Hour" = "1 hour";
+"active.after4Hours" = "4 hours";
+"active.after8Hours" = "8 hours";
+"active.schedule" = "Schedule";
+"active.onASchedule" = "On a schedule";
+"active.onAScheduleHelp" = "Switches itself on inside these hours, and off again after them";
+"active.from" = "From";
+"active.to" = "To";
+"active.days" = "Days";
+"active.sameTimeHelp" = "Set two different times for the schedule to run";
+"active.apps" = "Apps";
+"active.appsHelp" = "Stay active runs while any of these is open, and stops when the last one quits";
+"active.noApps" = "No apps yet";
+"active.power" = "Power";
+"active.allowOnBattery" = "Allow on battery";
+"active.allowOnBatteryHelp" = "Off: stay active pauses when unplugged and resumes on power";
+"active.needsAccessibility" = "Plonk needs Accessibility to post the keypress. Without it nothing is sent.";
+"active.openSettings" = "Open Settings";
+"active.chooseApp" = "Choose app";
+"active.addRunning" = "Add running app";
+"active.unnamed" = "Unnamed";
+"active.prompt" = "Watch";
+"active.remove" = "Stop watching this app";
+
 /* Screenshots. */
 "shot.capture" = "Capture";
 "shot.captureRegion" = "Capture Region";
@@ -351,6 +382,7 @@
 "page.appearance" = "Appearance";
 "page.shortcuts" = "Keyboard";
 "page.awake" = "Keep awake";
+"page.active" = "Stay active";
 "page.update" = "Updates";
 
 /* The menu bar item. */
@@ -613,6 +645,15 @@
 "awake.statusAutoCharging" = "auto (charging)";
 "awake.statusUntilProcess %lld" = "on until process %lld exits";
 "awake.statusPausedOnBattery" = "paused on battery";
+
+/* Stay active, in one phrase, for the page and for an agent asking. */
+"active.statusOn" = "on";
+"active.statusOff" = "off";
+"active.statusSchedule" = "on for the scheduled hours";
+"active.statusApp" = "on while a watched app is running";
+"active.statusUntil %@" = "on until %@";
+"active.statusPausedOnBattery" = "paused on battery";
+"active.statusNoAccessibility" = "off: Accessibility not granted";
 "menu.tooltip %@" = "Plonk — keep-awake: %@";
 
 /* Stand-in for an app that will not say what it is called. */

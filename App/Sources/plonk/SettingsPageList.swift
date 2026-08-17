@@ -54,6 +54,9 @@ enum SettingsPages {
         SettingsPage(id: "awake", title: .pageAwake, icon: "cup.and.saucer", parent: "settings") {
             AnyView(AwakePage(model: $0))
         },
+        SettingsPage(id: "active", title: .pageActive, icon: "person.wave.2", parent: "settings") {
+            AnyView(ActivePage(model: $0))
+        },
         SettingsPage(id: "update", title: .pageUpdate, icon: "arrow.down.circle", parent: "settings") {
             AnyView(UpdatePage(model: $0))
         },

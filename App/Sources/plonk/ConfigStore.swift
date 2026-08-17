@@ -80,6 +80,13 @@ struct Config: Codable {
     // relaunch. Unix epoch seconds; nil means the session had no limit.
     var awakeRequested = false
     var awakeSessionEnd: Double?
+    // Stay active. The schedule and the app list are settings; whether it was
+    // switched on by hand is not restored, because a hold made yesterday says
+    // nothing about today.
+    var activeSchedule = ActiveSchedule()
+    var activeApps: [String] = []
+    var activeAllowOnBattery = false
+    var activeTimeoutMinutes = 0
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
     // How different two neighbouring pixels have to be, on one channel of 255,
@@ -151,6 +158,10 @@ struct Config: Codable {
         awakeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .awakeTimeoutMinutes) ?? 0
         awakeRequested = try c.decodeIfPresent(Bool.self, forKey: .awakeRequested) ?? false
         awakeSessionEnd = try c.decodeIfPresent(Double.self, forKey: .awakeSessionEnd)
+        activeSchedule = try c.decodeIfPresent(ActiveSchedule.self, forKey: .activeSchedule) ?? ActiveSchedule()
+        activeApps = try c.decodeIfPresent([String].self, forKey: .activeApps) ?? []
+        activeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .activeAllowOnBattery) ?? false
+        activeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .activeTimeoutMinutes) ?? 0
         shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
         shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
         rulerEdgeTolerance = try c.decodeIfPresent(Int.self, forKey: .rulerEdgeTolerance)

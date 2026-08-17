@@ -31,7 +31,10 @@ final class AwakeManager {
     }
     var timeoutMinutes = 0
 
-    var isOnAC: Bool {
+    var isOnAC: Bool { Self.isOnAC }
+
+    /// Shared with ActiveManager, which needs the same battery guard.
+    static var isOnAC: Bool {
         // IOPSGetProvidingPowerSourceType returns "AC Power", "Battery Power" or
         // "UPS Power". A "Get" function, so the string is not ours to release.
         let type = IOPSGetProvidingPowerSourceType(nil)?.takeUnretainedValue() as String?

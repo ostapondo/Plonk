@@ -58,6 +58,7 @@ config to tell two sessions of the same client apart.
 | `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops that reopen their apps and restore every window |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, assigned per monitor |
 | `set_awake` | Keep-awake, optionally time-limited |
+| `set_active` | Stay active, so chat apps do not show you as Away |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
 | `select_agent` | Make an agent the active one, optionally the only one allowed to control |
 | `check_for_update` · `install_update` | Ask GitHub for a newer release and install it |
