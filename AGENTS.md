@@ -10,17 +10,25 @@ Rules for AI agents working in this repo.
 
 Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
 
-- `Router` owns every HTTP route. `AppDelegate` owns lifecycle, windows and the
-  status menu, and nothing else. It is over the line limit and may only shrink,
-  so anything new goes in an extension of its own — see `AppDelegate+Shell`.
+- `Router` owns the route table and nothing else: every case is one line to the
+  module that handles it, in a `Router+*` file of its own. `AppDelegate` owns
+  lifecycle, windows and the status menu. It is over the line limit and may only
+  shrink, so anything new goes in an extension of its own — see
+  `AppDelegate+Shell`.
+- `ConfigStore` is the only way a setting is written. `update` clamps and saves
+  it, then `didMutate` fires and `AppDelegate.applyConfig` hands the whole
+  config to every manager. Nothing pushes a single field at a manager itself.
 - `Ink` holds the surfaces, the radius and the accent gradient every page draws
   with, and `SettingRows` the rows a settings card is made of. Pages compose
   those instead of spelling out colours.
 - `Resources/en.lproj/Localizable.strings` holds every word the user reads, and
   the `Strings+*.swift` files declare the keys that reach it. Views hold keys,
   never sentences — see "Text" below.
-- `AppActions` is the full list of things the UI can ask the app to do.
-  `AppModel` is state only; views never reach past it.
+- `AppActions` is what the UI can ask the app to *do*: commands, not settings.
+  A setting needs nothing there — `update(\.field, to:)` writes any field of
+  `Config`. `AppModel` holds that config plus the state config cannot answer:
+  what a manager is doing now, what macOS has granted, what is on screen.
+  Views never reach past it.
 - `ScreenIdentity` turns a screen index into the keys config is stored under.
 
 ## Adding a module
@@ -28,14 +36,24 @@ Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
 Plonk is a suite; each capability (workspaces, zones, keep-awake, screenshots, …)
 is a module. A new module touches five places, nothing else:
 
-1. A manager type in `App/Sources/plonk/` owning the behavior.
-2. Methods on `AppActions`, implemented in the `AppDelegate` extension.
-3. A `SettingsPage` entry in `SettingsPages.all`, naming the `SettingsGroup` it
+1. A manager type in `App/Sources/plonk/` owning the behavior, with an
+   `apply(_ config: Config)` taking its settings. It is called after every
+   config change, so it must be cheap and safe to run when nothing moved —
+   guard any `didSet` that does real work on the value having changed.
+2. A `SettingsPage` entry in `SettingsPages.all`, naming the `SettingsGroup` it
    belongs under as its `parent` (that is what the sidebar draws), plus any
    status-menu items in `StatusMenuController`.
-4. HTTP routes under its own path prefix in `Router.handle` (e.g. `/shot/*`).
-5. An MCP tool file `mcp/src/tools/<module>.ts` with a `register(server)`
+3. A `Router+<Module>.swift` holding its route handlers, and one line per route
+   in `Router.handle` under its own path prefix (e.g. `/shot/*`).
+4. An MCP tool file `mcp/src/tools/<module>.ts` with a `register(server)`
    function, wired in `mcp/src/server.ts`.
+5. A call to the manager's `apply` in `AppDelegate.applyConfig`.
+
+Only a command belongs on `AppActions` — something the app *does*, like taking
+a screenshot or launching a workspace. A setting is a field on `Config` and a
+row bound with `model.binding(\.field)`; no method, no mirrored property, and
+no push at a manager. Anything that has to be held inside bounds gets a line in
+`Config.clamp`, which runs on every write and on load.
 
 Config lives as new fields on `Config` with `decodeIfPresent` defaults so old
 config files keep working. Anything stored per monitor is keyed by display UUID
