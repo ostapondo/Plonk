@@ -610,7 +610,9 @@
 "keys.palette" = "Palette";
 "keys.paletteHelp" = "Run anything in Plonk by name, over whatever you are looking at. What is not a command can be sent to the active agent as a sentence, with ⌘return. Press the key again to close it.";
 "keys.restoreDefaults" = "Restore Defaults";
+"keys.fromRectangle" = "From Rectangle";
 "keys.importRectangle" = "Import from Rectangle";
+"keys.importRectangleButton" = "Import";
 "keys.importRectangleHelp" = "Takes the halves, corners, maximize, centre and restore bindings from Rectangle, whether it is installed or you exported its settings. Thirds and the other fixed fractions are a zone set here, so those are left alone.";
 "keys.rectangleURLs" = "Answer rectangle:// URLs too";
 "keys.rectangleURLsHelp" = "A URL scheme belongs to one app at a time, so turning this on takes rectangle:// from an installed Rectangle and its own URLs stop working. Off, Plonk still answers plonk://execute-action with the same action names.";

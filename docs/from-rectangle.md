@@ -32,9 +32,9 @@ Home page opens with the offer on it: **Take its shortcuts**. Taking it or
 turning it down settles it, and it is not asked again. With no Rectangle on the
 Mac nothing is shown at all.
 
-The same thing lives permanently under **Shortcuts → Import from Rectangle**.
-Either one reads the setup you have and takes the bindings that mean the same
-thing in both apps.
+The same thing lives permanently under **Shortcuts → From Rectangle**, at the
+top of the page rather than under the shortcut list. Either one reads the setup
+you have and takes the bindings that mean the same thing in both apps.
 
 It looks in two places, in this order: the preferences of an installed
 Rectangle, and then `~/Library/Application Support/Rectangle/RectangleConfig.json`
@@ -90,8 +90,9 @@ screen rather than failing silently:
 
 ### Or let Plonk answer `rectangle://` directly
 
-**Shortcuts → Answer rectangle:// URLs too** skips the substitution. Your
-existing scripts keep the URLs they have and Plonk receives them.
+**Shortcuts → From Rectangle → Answer rectangle:// URLs too** skips the
+substitution. Your existing scripts keep the URLs they have and Plonk receives
+them.
 
 It is off by default, and the reason is worth reading before you turn it on. A
 URL scheme belongs to one app at a time. Turning this on takes `rectangle://`

@@ -31,9 +31,10 @@ struct ShortcutsPage: View {
                 ToggleRow(title: .keysHotkeys,
                           isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
             }
-            // Dimmed together when the keys are off. The URL card below is not
-            // in here: a URL runs its action whatever the keys are doing, so
-            // greying it would misdescribe the surface SECURITY.md documents.
+            // Second on the page, not last. Someone who came from Rectangle is
+            // here to move their setup over, and a button under nine groups of
+            // shortcuts is a button they scroll past.
+            fromRectangle
             Group {
                 SettingsCard(title: .shortcutGroupGuide, note: .keysGuideHelp) {
                     SettingBlock {
@@ -52,34 +53,34 @@ struct ShortcutsPage: View {
                         }
                     }
                 }
-                buttons
+                // Last, and only here: it throws away every binding above, so
+                // it belongs after them rather than beside the way in.
+                Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
+                    .controlSize(.small)
             }
             .opacity(model.hotkeysEnabled ? 1 : 0.5)
             .disabled(!model.hotkeysEnabled)
-            SettingsCard(note: .keysRectangleURLsHelp) {
-                ToggleRow(title: .keysRectangleURLs,
-                          isOn: model.binding(\.handleRectangleURLs,
-                                              set: { $0.setRectangleURLs($1) }))
-            }
         }
     }
 
-    /// Restore and import sit under the last card rather than in one of their
-    /// own: they act on every binding above, not on any one group of them.
-    private var buttons: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 8) {
-                Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
-                Button(String(localized: .keysImportRectangle)) {
+    /// The two halves of moving over, in one card.
+    ///
+    /// Only the import is dimmed with the keys. A URL runs its action whatever
+    /// the keys are doing, so greying the switch would misdescribe the surface
+    /// SECURITY.md documents.
+    private var fromRectangle: some View {
+        SettingsCard(title: .keysFromRectangle) {
+            SettingRow(title: .keysImportRectangle, detail: .keysImportRectangleHelp) {
+                Button(String(localized: .keysImportRectangleButton)) {
                     model.actions?.importFromRectangle()
                 }
             }
-            .controlSize(.small)
-            Text(.keysImportRectangleHelp)
-                .font(.caption)
-                .muted()
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 3)
+            .opacity(model.hotkeysEnabled ? 1 : 0.5)
+            .disabled(!model.hotkeysEnabled)
+            ToggleRow(title: .keysRectangleURLs,
+                      detail: .keysRectangleURLsHelp,
+                      isOn: model.binding(\.handleRectangleURLs,
+                                          set: { $0.setRectangleURLs($1) }))
         }
     }
 
