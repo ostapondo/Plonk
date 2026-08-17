@@ -10,8 +10,6 @@
 # lines  path
 489   App/Tests/plonkTests/ConfigTests.swift
 444   App/Tests/plonkTests/RouterTests.swift
-428   App/Sources/plonk/WindowManager.swift
-351   App/Sources/plonk/DragSnapManager.swift
 349   App/Sources/plonk/GrabMove.swift
 333   App/Sources/plonk/UpdateManager.swift
 308   App/Sources/plonk/WorkspaceLauncher.swift
