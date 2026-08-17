@@ -37,6 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Display UUIDs seen at the last screen-parameter change, so a Dock
     /// resize can be told apart from a monitor being plugged in.
     var knownDisplays: Set<String> = []
+    /// What applyConfig last handed out, so the few settings whose apply
+    /// costs a round trip to macOS run only when they moved.
+    var appliedConfig: Config?
+    var applyingConfig = false
+    var configApplyPending = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Before anything is on screen: a second copy would add its own menu bar
@@ -65,10 +70,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupRuler()
         setupServer()
         setupUpdates()
+        watchConfig()
         refreshModel()
-
-        applyLaunchAtLogin(store.config.launchAtLogin)
-        model.loginItemRegistered = isLaunchAtLoginEnabled
 
         knownDisplays = Self.attachedDisplays()
         watchForAccessibility()

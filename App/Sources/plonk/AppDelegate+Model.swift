@@ -12,9 +12,9 @@ extension AppDelegate {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
 
-    /// The whole model, for a window about to open. Everything config decides
-    /// goes through applyConfig; what is left is fixed for the run or comes
-    /// from macOS.
+    /// The whole model, once, at launch. Everything config decides goes
+    /// through applyConfig; what is left is fixed for the run or comes from
+    /// macOS.
     func refreshModel() {
         model.appVersion = appVersion
         model.configWarning = store.loadFailure
@@ -22,7 +22,19 @@ extension AppDelegate {
         model.settingsGroups = SettingsPages.groups
         model.settingsPages = SettingsPages.all
         refreshPermissions()
+        refreshScreenModel()
         applyConfig()
+    }
+
+    /// Hang applyConfig off the store. Its own step in the launch order, after
+    /// every manager it reaches exists and independent of the HTTP server, so
+    /// nothing about which writes get applied rides on where setupServer sits.
+    func watchConfig() {
+        store.didMutate = { [weak self] in
+            guard let self else { return }
+            applyConfig()
+            router.changes.bump("config")
+        }
     }
 
     /// Everything a config change has to reach, in one place, run after every
@@ -33,8 +45,27 @@ extension AppDelegate {
     /// so none of them has to be told which setting it cares about. That costs
     /// a few assignments per change and buys the guarantee that a saved
     /// setting is an applied one.
+    ///
+    /// A manager's apply can write config itself (keep-awake persisting a
+    /// session it just ended), which lands back here mid-run. That inner call
+    /// is deferred until this one has finished, so every manager sees the
+    /// newest config in order rather than a stale snapshot after a newer one.
     func applyConfig() {
+        guard !applyingConfig else {
+            configApplyPending = true
+            return
+        }
+        applyingConfig = true
+        defer {
+            applyingConfig = false
+            if configApplyPending {
+                configApplyPending = false
+                applyConfig()
+            }
+        }
+
         let config = store.config
+        let previous = appliedConfig
         model.config = config
 
         applyAppearance()
@@ -46,13 +77,20 @@ extension AppDelegate {
         active.apply(config)
         newWindows.apply(config)
         updates.apply(config)
+        applyLoginItem(config, previous: previous)
+        applyRectangleURLs(config, previous: previous)
+        appliedConfig = config
 
-        // What the config implies rather than states: the names in it, sorted
-        // for the lists, and what each manager makes of its new settings.
+        // What the config implies rather than states, and what each manager
+        // makes of its new settings. The zone and workspace lists are computed
+        // off model.config; only what also depends on the screens is refreshed
+        // here, and only when the part of config it reads has moved.
+        statusMenu.workspaceNames = model.workspaceNames
+        if previous?.screenZoneSets != config.screenZoneSets {
+            refreshScreenAssignments()
+        }
         refreshAwakeModel()
         refreshActiveModel()
-        refreshWorkspaceModel()
-        refreshZoneModel()
         refreshHotkeyModel()
         refreshAgentModel()
         refreshUpdateModel()
@@ -66,7 +104,9 @@ extension AppDelegate {
 
     func refreshAgentModel() {
         model.connectedAgents = agents.onlineNames()
-        if !model.connectedAgents.isEmpty {
+        // Checked here first: markGettingStarted copies the whole config to
+        // find out, and this runs on every write.
+        if !model.connectedAgents.isEmpty, !store.config.sawFirstAgent {
             markGettingStarted { $0.sawFirstAgent = true }
         }
     }
@@ -85,18 +125,17 @@ extension AppDelegate {
         }
     }
 
-    func refreshWorkspaceModel() {
-        model.workspaceNames = store.config.workspaces.keys.sorted()
-        statusMenu.workspaceNames = model.workspaceNames
-    }
-
-    func refreshZoneModel() {
-        let custom = store.config.zoneSets.keys.sorted()
-        model.customZoneSetNames = custom
-        model.zoneSetNames = custom + BuiltinZoneSets.all.keys.sorted().filter { !custom.contains($0) }
-        model.zoneSets = BuiltinZoneSets.all.merging(store.config.zoneSets) { _, user in user }
+    /// What the displays are, which config has no say in: at launch and when
+    /// a screen comes or goes.
+    func refreshScreenModel() {
         model.screenCount = NSScreen.screens.count
         model.screenDescriptions = NSScreen.screens.map { "\(Int($0.frame.width)) × \(Int($0.frame.height))" }
+        refreshScreenAssignments()
+    }
+
+    /// Which set each screen wears: config keyed by display UUID, resolved
+    /// against the screens attached now.
+    func refreshScreenAssignments() {
         model.screenAssignments = NSScreen.screens.indices.reduce(into: [:]) { result, index in
             result[index] = store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: index))
         }

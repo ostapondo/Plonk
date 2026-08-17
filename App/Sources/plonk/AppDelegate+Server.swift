@@ -12,18 +12,8 @@ extension AppDelegate {
             self?.eventBroadcaster.attach(conn, rev: rev)
         }
         // Every source of change funnels into the bus at its own choke point,
-        // so no caller has to remember to announce itself.
-        //
-        // Config is the widest of them: a settings row, an agent over the API
-        // and an imported Rectangle setup all end at ConfigStore.update, so
-        // applying a change is hung there rather than at each of the three.
-        // Set here, once the managers applyConfig reaches all exist — writes
-        // before this point are startup reading its own defaults back.
-        store.didMutate = { [weak self] in
-            guard let self else { return }
-            applyConfig()
-            router.changes.bump("config")
-        }
+        // so no caller has to remember to announce itself. Config, the widest
+        // of them, is wired in AppDelegate.watchConfig.
         windows.onDidPlace = { [weak self] in
             self?.router.changes.bump("windows")
             self?.markGettingStarted { $0.sawFirstSnap = true }
