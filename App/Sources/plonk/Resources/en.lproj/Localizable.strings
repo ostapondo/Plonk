@@ -30,9 +30,9 @@
 "awake.after2Hours" = "2 hours";
 "awake.power" = "Power";
 "awake.keepDisplayOn" = "Keep the display on";
-"awake.keepDisplayOnHelp" = "Off: only the system stays awake, the screen may still sleep";
+"awake.keepDisplayOnHelp" = "When off, only the system stays awake and the screen may still sleep";
 "awake.allowOnBattery" = "Allow on battery";
-"awake.allowOnBatteryHelp" = "Off: keep-awake pauses when unplugged and resumes on power";
+"awake.allowOnBatteryHelp" = "When off, keep-awake pauses while unplugged and resumes when you plug in";
 "awake.autoWhileCharging" = "Automatically while charging";
 "awake.autoWhileChargingHelp" = "Keeps the Mac awake whenever it is plugged in";
 
@@ -58,7 +58,7 @@
 "active.noApps" = "No apps yet";
 "active.power" = "Power";
 "active.allowOnBattery" = "Allow on battery";
-"active.allowOnBatteryHelp" = "Off: stay active pauses when unplugged and resumes on power";
+"active.allowOnBatteryHelp" = "When off, stay active pauses while unplugged and resumes when you plug in";
 "active.needsAccessibility" = "Plonk needs Accessibility to post the keypress. Without it nothing is sent.";
 "active.openSettings" = "Open Settings";
 "active.chooseApp" = "Choose app";

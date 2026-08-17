@@ -1,8 +1,8 @@
 import AppKit
 
 // Wiring for the menu bar item: what its dropdown asks the app for, and what
-// each entry in it does. Split out of AppDelegate, which is over the line
-// limit and may only shrink.
+// each entry in it does. One module, one file beside AppDelegate; see
+// AGENTS.md.
 
 extension AppDelegate {
     func setupStatusMenu() {

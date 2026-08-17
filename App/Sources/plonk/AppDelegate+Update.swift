@@ -16,7 +16,7 @@ extension AppDelegate {
         updates.onProgress = { [weak self] in
             self?.model.updateProgress = self?.updates.progress ?? 0
         }
-        updates.automatic = store.config.updateCheckAutomatically
+        updates.apply(store.config)
         statusMenu.updateVersion = { [weak self] in self?.updates.available?.version.text }
         statusMenu.onOpenUpdate = { [weak self] in self?.openPage("update") }
 

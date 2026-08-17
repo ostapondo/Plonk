@@ -80,7 +80,7 @@ struct ShortcutsPage: View {
             ToggleRow(title: .keysRectangleURLs,
                       detail: .keysRectangleURLsHelp,
                       isOn: model.binding(\.holdsRectangleURLs,
-                                          set: { $0.setRectangleURLs($1) }))
+                                          set: { $0.update(\.handleRectangleURLs, to: $1) }))
         }
     }
 

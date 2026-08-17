@@ -215,7 +215,8 @@ struct HomePage: View {
             Divider()
             switchRow(.homeLaunchAtLogin, "power",
                       detail: .homeLaunchAtLoginDetail,
-                      toggle: model.binding(\.loginItemRegistered, set: { $0.setLaunchAtLogin($1) }))
+                      toggle: model.binding(\.loginItemRegistered,
+                                            set: { $0.update(\.launchAtLogin, to: $1) }))
         }
         .card()
     }

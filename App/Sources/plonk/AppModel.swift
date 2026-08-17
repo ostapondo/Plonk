@@ -5,8 +5,7 @@ import SwiftUI
 //
 // A plain setting needs nothing here. `update` writes any field of `Config`
 // and every manager re-reads, so the list below is only the things that are
-// not a stored value: commands, and the few settings whose write also has to
-// tell macOS something.
+// not a stored value: commands.
 protocol AppActions: AnyObject {
     /// Write one setting. The single path a value takes from the UI to disk:
     /// `ConfigStore` clamps it, saves it, and every manager re-reads. Adding a
@@ -31,12 +30,6 @@ protocol AppActions: AnyObject {
     func importFromRectangle()
     /// Turn down the offer on Home, for good. See RectangleOffer.
     func dismissRectangleOffer()
-    /// Ask macOS to send rectangle:// URLs here too, or hand them back to an
-    /// installed Rectangle. Registers a scheme, so it is not a plain write.
-    func setRectangleURLs(_ on: Bool)
-    /// Asks macOS to register the login item, and reports what it settled on.
-    func setLaunchAtLogin(_ on: Bool)
-
     /// Hands the user the ruler: hover to size what is under the pointer, drag
     /// for a distance.
     func startRuler()
@@ -111,15 +104,9 @@ final class AppModel: ObservableObject {
     @Published var rectangleFound = false
 
     @Published var supportedTextLanguages: [String] = []
-    @Published var workspaceNames: [String] = []
     /// Non-empty only while a workspace is coming up.
     @Published var launchingWorkspace: String?
     @Published var launchStatuses: [LaunchStatus] = []
-    @Published var zoneSetNames: [String] = []
-    /// Every set that can be drawn, the built-in templates included, which is
-    /// more than `config.zoneSets` holds: that is only the ones the user made.
-    @Published var zoneSets: [String: [ZoneRect]] = [:]
-    @Published var customZoneSetNames: [String] = []
     @Published var previewedZoneSet: String?
     @Published var screenAssignments: [Int: String] = [:]
     @Published var screenCount = 1
@@ -135,9 +122,8 @@ final class AppModel: ObservableObject {
     @Published var shotStatus = ""
     // What macOS settled on, rather than what config asked for: a scheme is one
     // per machine and a login item can be refused, so the toggle shows what is
-    // actually true. Named apart from the config fields they answer for, so
-    // that `binding(\.launchAtLogin)` cannot quietly mean the wrong one: the
-    // Config overload writes the setting and never tells macOS.
+    // actually true. The write goes to config like any setting; applyConfig
+    // tells macOS and reads back what it did.
     @Published var loginItemRegistered = true
     @Published var holdsRectangleURLs = false
     @Published var connectedAgents: [String] = []
@@ -174,6 +160,24 @@ extension AppModel {
     /// The colour the app draws itself with, ready to hand to SwiftUI.
     var accent: Color { Color(nsColor: config.appearance.accent) }
 
+    // The lists, worked out from `config` when read rather than kept in step
+    // with it: a copy would need refreshing after every write, and one write
+    // path forgetting is a list that shows yesterday's names.
+    var workspaceNames: [String] { config.workspaces.keys.sorted() }
+    /// The sets the user made, by name.
+    var customZoneSetNames: [String] { config.zoneSets.keys.sorted() }
+    /// Every set that can be drawn: the user's first, then the built-in
+    /// templates they have not shadowed.
+    var zoneSetNames: [String] {
+        let custom = customZoneSetNames
+        return custom + BuiltinZoneSets.all.keys.sorted().filter { !custom.contains($0) }
+    }
+    /// Every set that can be drawn, the built-in templates included, which is
+    /// more than `config.zoneSets` holds: that is only the ones the user made.
+    var zoneSets: [String: [ZoneRect]] {
+        BuiltinZoneSets.all.merging(config.zoneSets) { _, user in user }
+    }
+
     /// A zone set name nobody has taken, which is `base` itself when it is free.
     func freeZoneSetName(base: String) -> String {
         if zoneSets[base] == nil { return base }
@@ -203,8 +207,8 @@ extension AppModel {
         )
     }
 
-    /// State a manager owns rather than the config, written through the command
-    /// that owns it: keep-awake, stay-active, the login item.
+    /// State a manager or macOS owns rather than the config, written through
+    /// the command that owns it: keep-awake, stay-active, the login item.
     func binding<Value>(_ keyPath: KeyPath<AppModel, Value>,
                         set: @escaping (AppActions, Value) -> Void) -> Binding<Value> {
         Binding(

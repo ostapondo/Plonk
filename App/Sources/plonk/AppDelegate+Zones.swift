@@ -1,8 +1,8 @@
 import AppKit
 
 // Everything the app does to a zone set: which screen wears it, what is in it,
-// and the two windows that edit it. Split out of AppDelegate, which is over
-// the line limit and may only shrink.
+// and the two windows that edit it. One module, one file beside AppDelegate;
+// see AGENTS.md.
 
 extension AppDelegate {
     /// "2 displays · Priority" — what the menu bar says it is running, above

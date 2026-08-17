@@ -115,13 +115,20 @@ extension AppDelegate {
 
     // MARK: - URLs
 
-    /// Ask macOS to send `rectangle://` here too, or hand it back.
-    func setRectangleURLs(_ on: Bool) {
-        store.update { $0.handleRectangleURLs = on }
-        // Asking who holds a scheme is a round trip to lsd, and this runs from
-        // a SwiftUI setter. The answer comes back on the main queue.
+    /// Make what macOS does about `rectangle://` match `config.handleRectangleURLs`.
+    ///
+    /// Asked when the setting moves and once at launch, not on every write:
+    /// asking costs a round trip to `lsd`, and nothing on the launch path may
+    /// wait on another process, so it goes off the main queue and the answer
+    /// comes back on it. Launch matters because it can drift either way while
+    /// the app is not running: LaunchServices hands the scheme over on install
+    /// without being asked, and hands it back when Rectangle is reinstalled or
+    /// the database is rebuilt. Neither is something the app is told about.
+    func applyRectangleURLs(_ config: Config, previous: Config?) {
+        let wanted = config.handleRectangleURLs
+        guard previous?.handleRectangleURLs != wanted else { return }
         DispatchQueue.global(qos: .userInitiated).async {
-            RectangleURLs.setHandled(on) { [weak self] holding in
+            RectangleURLs.setHandled(wanted) { [weak self] holding in
                 self?.model.holdsRectangleURLs = holding
             }
         }

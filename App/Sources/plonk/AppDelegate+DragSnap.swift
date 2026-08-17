@@ -16,7 +16,6 @@ extension AppDelegate {
             guard let self else { return [] }
             return store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
         }
-        dragSnap.appearance = { [weak self] in self?.zoneAppearance ?? ZoneAppearance() }
         dragSnap.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
         dragSnap.onSnap = { [weak self] window, before, frac, screenIndex in
             guard let self else { return }
@@ -28,7 +27,6 @@ extension AppDelegate {
         dragSnap.apply(store.config)
         dragSnap.start()
     }
-
 
     var zoneAppearance: ZoneAppearance { ZoneAppearance(store.config) }
 
@@ -63,7 +61,6 @@ extension AppDelegate {
         grabMove.apply(store.config)
     }
 
-
     /// Which numbered zone a dropped fraction corresponds to, so editing the
     /// set later can move the window with its number. Nil for a span or an
     /// edge snap, which match no single zone.
@@ -77,7 +74,7 @@ extension AppDelegate {
 
     func setupNewWindows() {
         newWindows = NewWindowWatcher(windows: windows)
-        newWindows.enabled = store.config.placeNewWindows
+        newWindows.apply(store.config)
         newWindows.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
         newWindows.zoneGap = { [weak self] in CGFloat(self?.store.config.zoneGap ?? 0) }
         newWindows.placement = { [weak self] app in

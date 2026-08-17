@@ -7,7 +7,7 @@ extension AppDelegate {
     @objc func screensChanged() {
         dragSnap.screensChanged()
         model.previewedZoneSet = nil
-        refreshZoneModel()
+        refreshScreenModel()
 
         // This notification also fires for a resolution change, a display
         // waking, and the Dock being resized or auto-hidden. Only a display

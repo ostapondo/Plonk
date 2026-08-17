@@ -33,8 +33,10 @@ final class UpdateManager {
     /// one update would bury every listener on /events under its own progress.
     var onProgress: (() -> Void)?
     /// Whether launch and the schedule check on their own. The user's
-    /// setting; a check they ask for explicitly always runs.
-    var automatic = true {
+    /// setting; a check they ask for explicitly always runs. Off until
+    /// applied, the same as the schedule behind it, so the first apply of an
+    /// "on" reaches it.
+    var automatic = false {
         didSet { if automatic != oldValue { schedule.automatic = automatic } }
     }
 
@@ -83,7 +85,6 @@ final class UpdateManager {
     // MARK: - Checking
 
     func start() {
-        schedule.automatic = automatic
         guard automatic else { return }
         check()
     }
