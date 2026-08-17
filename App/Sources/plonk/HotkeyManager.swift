@@ -28,10 +28,12 @@ final class HotkeyManager {
     var onActionUp: ((HotkeyAction) -> Void)?
 
     /// Take the settings as they now stand. Both halves guard on the value
-    /// changing, so this is safe after every config write.
+    /// changing, so this is safe after every config write. Bindings first:
+    /// enabling registers whatever is bound, and it should be the new set, not
+    /// the old one for a moment.
     func apply(_ config: Config) {
-        setEnabled(config.hotkeysEnabled)
         bindings = config.resolvedHotkeys
+        setEnabled(config.hotkeysEnabled)
     }
 
     func setEnabled(_ on: Bool) {

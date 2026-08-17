@@ -40,9 +40,8 @@ final class DragSnapManager {
     var requireModifier = true
     var modifierFlag: NSEvent.ModifierFlags = .shift
     var zonesForScreen: ((Int) -> [ZoneRect])?
-    /// Looks and spacing, read fresh on every drag so a settings change shows
-    /// up without restarting anything.
-    var appearance: (() -> ZoneAppearance)?
+    /// Looks and spacing, taken from config in `apply`.
+    var look = ZoneAppearance()
     /// Draw every screen's zones during a drag, not just the one under the
     /// cursor. Costs an overlay per display.
     var showOnAllMonitors = false
@@ -66,6 +65,7 @@ final class DragSnapManager {
         modifierFlag = config.zonesModifierFlag
         showOnAllMonitors = config.zonesOnAllMonitors
         edgeSpanPoints = config.zoneEdgeSpanPoints
+        look = ZoneAppearance(config)
     }
 
     func start() {
@@ -163,8 +163,6 @@ final class DragSnapManager {
         windows.apply(frac: zone.frac, toWindow: win, screenIndex: zone.screenIndex, gap: look.gap)
         onSnap?(win, startFrame, zone.frac, zone.screenIndex)
     }
-
-    var look: ZoneAppearance { appearance?() ?? ZoneAppearance() }
 
     // MARK: - Drags Plonk is driving itself
 

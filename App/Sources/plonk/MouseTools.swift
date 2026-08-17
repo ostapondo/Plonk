@@ -38,18 +38,25 @@ final class MouseTools {
     /// behind it. Tearing that down because some other page's setting moved is
     /// a spotlight that blinks out under the user's hand.
     func apply(_ config: Config) {
+        let wasTint = tint
         tint = ZoneAppearance(config).tint
         highlightEnabled = config.highlightClicksEnabled
         crosshairsEnabled = config.crosshairsEnabled
         if config.highlightClicksEnabled || config.crosshairsEnabled {
             start()
+            // A crosshair already on screen is repainted in the new colour
+            // now rather than on the next mouse move.
+            if tint != wasTint { refreshPersistent() }
         } else if tap != nil {
             stop()
         }
     }
 
+    /// Nothing without Accessibility: the tap would fail to create, and this
+    /// runs after every config write, so it would fail and log on each. The
+    /// grant watcher applies the config again once it lands.
     func start() {
-        guard tap == nil else { return }
+        guard tap == nil, WindowAccess.isTrusted else { return }
         let mask: CGEventMask =
             (1 << CGEventType.leftMouseDown.rawValue) |
             (1 << CGEventType.rightMouseDown.rawValue) |
