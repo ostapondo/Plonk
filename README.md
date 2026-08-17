@@ -29,6 +29,11 @@ You most likely already have Rectangle, Magnet, Loop or Raycast. If a fixed grid
 of halves and thirds is all you want, they do it well. Plonk is for three things
 they do not do.
 
+Coming from one of them costs nothing: the ten placement shortcuts are the same
+keys, one button takes the rest, and an existing `rectangle://` script is one
+substitution away. [Coming from Rectangle](docs/from-rectangle.md) is the whole
+of it.
+
 **Zones you draw.** Not a preset grid. Any number of zones, any size, a
 different set per monitor, overlapping if that suits you. Click a zone to split
 it, `⇧`-click to split the other way: a narrow rail for chat, a wide middle
@@ -181,7 +186,8 @@ agent can call.
 </details>
 
 Longer versions: [Zones](docs/zones.md) · [Workspaces](docs/workspaces.md) ·
-[Hotkeys](docs/hotkeys.md) · [Everything else](docs/features.md)
+[Hotkeys](docs/hotkeys.md) · [Everything else](docs/features.md) ·
+[Coming from Rectangle](docs/from-rectangle.md)
 
 ## For agents
 

@@ -31,6 +31,9 @@ struct HomePage: View {
                         .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.10)))
                         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.orange.opacity(0.35)))
                 }
+                if model.rectangleFound {
+                    RectangleOffer(model: model)
+                }
                 if GettingStarted.isVisible(hidden: model.gettingStartedHidden, complete: guide.isComplete) {
                     GettingStartedCard(model: model)
                 }

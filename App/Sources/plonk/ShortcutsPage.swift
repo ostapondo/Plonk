@@ -31,27 +31,57 @@ struct ShortcutsPage: View {
                 ToggleRow(title: .keysHotkeys,
                           isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
             }
-            SettingsCard(title: .shortcutGroupGuide, note: .keysGuideHelp) {
-                SettingBlock {
-                    ShortcutRows(model: model, actions: [.shortcutGuide])
-                }
-            }
-            SettingsCard(title: .keysPalette, note: .keysPaletteHelp) {
-                SettingBlock {
-                    ShortcutRows(model: model, actions: [.commandPalette])
-                }
-            }
-            ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
-                SettingsCard(title: group.name) {
-                    ForEach(group.actions) { action in
-                        SettingBlock { row(action) }
+            // Second on the page, not last. Someone who came from Rectangle is
+            // here to move their setup over, and a button under nine groups of
+            // shortcuts is a button they scroll past.
+            fromRectangle
+            Group {
+                SettingsCard(title: .shortcutGroupGuide, note: .keysGuideHelp) {
+                    SettingBlock {
+                        ShortcutRows(model: model, actions: [.shortcutGuide])
                     }
                 }
+                SettingsCard(title: .keysPalette, note: .keysPaletteHelp) {
+                    SettingBlock {
+                        ShortcutRows(model: model, actions: [.commandPalette])
+                    }
+                }
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                    SettingsCard(title: group.name) {
+                        ForEach(group.actions) { action in
+                            SettingBlock { row(action) }
+                        }
+                    }
+                }
+                // Last, and only here: it throws away every binding above, so
+                // it belongs after them rather than beside the way in.
+                Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
+                    .controlSize(.small)
             }
-            Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
-                .controlSize(.small)
+            .opacity(model.hotkeysEnabled ? 1 : 0.5)
+            .disabled(!model.hotkeysEnabled)
         }
-        .opacity(model.hotkeysEnabled ? 1 : 0.5)
+    }
+
+    /// The two halves of moving over, in one card.
+    ///
+    /// Only the import is dimmed with the keys. A URL runs its action whatever
+    /// the keys are doing, so greying the switch would misdescribe the surface
+    /// SECURITY.md documents.
+    private var fromRectangle: some View {
+        SettingsCard(title: .keysFromRectangle) {
+            SettingRow(title: .keysImportRectangle, detail: .keysImportRectangleHelp) {
+                Button(String(localized: .keysImportRectangleButton)) {
+                    model.actions?.importFromRectangle()
+                }
+            }
+            .opacity(model.hotkeysEnabled ? 1 : 0.5)
+            .disabled(!model.hotkeysEnabled)
+            ToggleRow(title: .keysRectangleURLs,
+                      detail: .keysRectangleURLsHelp,
+                      isOn: model.binding(\.handleRectangleURLs,
+                                          set: { $0.setRectangleURLs($1) }))
+        }
     }
 
     private func row(_ action: HotkeyAction) -> some View {

@@ -153,16 +153,22 @@ final class RecorderView: NSView {
 
     override func keyDown(with event: NSEvent) {
         guard recording else { super.keyDown(with: event); return }
-        switch Int(event.keyCode) {
-        case kVK_Escape:
+        let key = Int(event.keyCode)
+        let held = event.modifierFlags.intersection([.command, .control, .option, .shift])
+        if key == kVK_Escape {
             onFinish?(nil)
-        case kVK_Delete, kVK_ForwardDelete:
+        } else if key == kVK_Delete || key == kVK_ForwardDelete, held.isEmpty {
+            // Bare delete clears the row. Held with a modifier it is a key like
+            // any other: Rectangle's own restore is ⌃⌥⌫, and an imported
+            // binding the recorder will not take back is worse than none.
             onClear?()
-        default:
+        } else if let hotkey = Hotkey(event: event) {
+            onFinish?(hotkey)
+        } else {
             // A bare key would fire while typing anywhere, so it is refused
             // rather than saved and left mysteriously dead.
-            guard let hotkey = Hotkey(event: event) else { NSSound.beep(); return }
-            onFinish?(hotkey)
+            NSSound.beep()
+            return
         }
         window?.makeFirstResponder(nil)
     }

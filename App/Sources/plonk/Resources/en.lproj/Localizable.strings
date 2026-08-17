@@ -231,6 +231,11 @@
 "home.launchAtLoginDetail" = "Plonk starts automatically when you log in";
 "home.privacy" = "Everything runs on this Mac. No account, no cloud, no telemetry.";
 "home.edgeSnapping" = "Edge snapping";
+"home.rectangleTitle" = "Rectangle is set up on this Mac";
+"home.rectangleDetail" = "Its halves, corners, maximize, centre, restore and window gap can come across as they are. Thirds and the rest of the fixed grid are zone sets here, so those are left alone.";
+"home.rectangleTake" = "Take its shortcuts";
+"home.rectangleNotNow" = "Not now";
+"home.rectangleMore" = "What else carries over";
 
 /* Zones: the page, and the tuning below it. */
 "zones.dragging" = "Dragging";
@@ -561,6 +566,18 @@
 "hud.hotkeyTaken %@ %@" = "%1$@ taken from %2$@";
 "hud.noActiveAgent" = "No active agent. Pick one from the menu bar first.";
 "hud.wentNowhere" = "That did not go anywhere";
+"hud.rectangleImported" = "Rectangle's shortcuts are in";
+"hud.rectangleNothing" = "No Rectangle settings found on this Mac";
+"hud.rectangleGridOnly" = "Rectangle's bindings here are all thirds, fourths and the rest of the fixed grid. Those are zone sets, on ⌃⌥1 to ⌃⌥9";
+"hud.urlHeldDown %@" = "%@ runs while a key is held, so a URL cannot drive it";
+"hud.rectangleTook %@" = "Rectangle's shortcuts are in. Keys taken from %@";
+"hud.rectangleLeftBehind %@" = "Rectangle's shortcuts are in. Not these: %@";
+"hud.rectangleTookAndLeft %@ %@" = "Rectangle's shortcuts are in. Keys taken from %1$@; not imported: %2$@";
+"hud.rectangleUrlsOff" = "Answering rectangle:// URLs is off, on the Shortcuts page";
+"hud.rectangleNoneMatched %@" = "Nothing in Rectangle's setup has a counterpart here: %@";
+"hud.urlUnreadable" = "That URL named no action";
+"hud.urlUnknown %@" = "Nothing here is called %@";
+"hud.urlZoneSet %@" = "%@ is a zone set here. Use zone-1 to zone-9";
 "hud.waitingFor %@ %@" = "Waiting for %1$@ to connect: %2$@";
 "hud.sentTo %@ %@" = "→ %1$@: %2$@";
 "hud.working %@ %@ %lld" = "%1$@ is working %2$@  %3$llds";
@@ -593,6 +610,12 @@
 "keys.palette" = "Palette";
 "keys.paletteHelp" = "Run anything in Plonk by name, over whatever you are looking at. What is not a command can be sent to the active agent as a sentence, with ⌘return. Press the key again to close it.";
 "keys.restoreDefaults" = "Restore Defaults";
+"keys.fromRectangle" = "From Rectangle";
+"keys.importRectangle" = "Import from Rectangle";
+"keys.importRectangleButton" = "Import";
+"keys.importRectangleHelp" = "Takes the halves, corners, maximize, centre and restore bindings from Rectangle, whether it is installed or you exported its settings. Thirds and the other fixed fractions are a zone set here, so those are left alone.";
+"keys.rectangleURLs" = "Answer rectangle:// URLs too";
+"keys.rectangleURLsHelp" = "A URL scheme belongs to one app at a time, so turning this on takes rectangle:// from an installed Rectangle and its own URLs stop working. Off, Plonk still answers plonk://execute-action with the same action names.";
 "keys.setOnPage %@" = "Set on the %@ page";
 "palette.askTheAgent" = "ask the agent";
 

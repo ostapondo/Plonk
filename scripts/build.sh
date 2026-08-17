@@ -58,6 +58,30 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<!-- plonk://execute-action?name=left-half, for a Raycast script or a
+	     Stream Deck button. rectangle:// is declared as well, which makes this
+	     app an eligible handler for it and nothing more: whether macOS actually
+	     sends those here is a switch on the Shortcuts page, off by default, and
+	     RectangleURLs hands the scheme back if it is ever won by accident. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.plonk.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>plonk</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.plonk.app.rectangle</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>rectangle</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>plonk</string>
 	<key>CFBundleIconFile</key>

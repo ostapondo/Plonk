@@ -23,6 +23,43 @@ extension LocalizedStringResource {
         Self.key("hud.hotkeyTaken \(keys) \(owner)")
     }
 
+    static let hudRectangleImported = Self.key("hud.rectangleImported")
+    static let hudRectangleNothing = Self.key("hud.rectangleNothing")
+    static let hudRectangleGridOnly = Self.key("hud.rectangleGridOnly")
+    static let hudUrlUnreadable = Self.key("hud.urlUnreadable")
+
+    static let hudRectangleUrlsOff = Self.key("hud.rectangleUrlsOff")
+
+    static func hudRectangleTookAndLeft(
+        _ taken: String, _ left: String
+    ) -> LocalizedStringResource {
+        Self.key("hud.rectangleTookAndLeft \(taken) \(left)")
+    }
+
+    static func hudRectangleLeftBehind(_ names: String) -> LocalizedStringResource {
+        Self.key("hud.rectangleLeftBehind \(names)")
+    }
+
+    static func hudRectangleNoneMatched(_ names: String) -> LocalizedStringResource {
+        Self.key("hud.rectangleNoneMatched \(names)")
+    }
+
+    static func hudRectangleTook(_ owner: String) -> LocalizedStringResource {
+        Self.key("hud.rectangleTook \(owner)")
+    }
+
+    static func hudUrlHeldDown(_ name: String) -> LocalizedStringResource {
+        Self.key("hud.urlHeldDown \(name)")
+    }
+
+    static func hudUrlUnknown(_ name: String) -> LocalizedStringResource {
+        Self.key("hud.urlUnknown \(name)")
+    }
+
+    static func hudUrlZoneSet(_ name: String) -> LocalizedStringResource {
+        Self.key("hud.urlZoneSet \(name)")
+    }
+
     static func hudWaitingFor(_ agent: String, _ note: String) -> LocalizedStringResource {
         Self.key("hud.waitingFor \(agent) \(note)")
     }

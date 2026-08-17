@@ -64,6 +64,12 @@ extension LocalizedStringResource {
     static let keysPalette = Self.key("keys.palette")
     static let keysPaletteHelp = Self.key("keys.paletteHelp")
     static let keysRestoreDefaults = Self.key("keys.restoreDefaults")
+    static let keysFromRectangle = Self.key("keys.fromRectangle")
+    static let keysImportRectangle = Self.key("keys.importRectangle")
+    static let keysImportRectangleButton = Self.key("keys.importRectangleButton")
+    static let keysImportRectangleHelp = Self.key("keys.importRectangleHelp")
+    static let keysRectangleURLs = Self.key("keys.rectangleURLs")
+    static let keysRectangleURLsHelp = Self.key("keys.rectangleURLsHelp")
 
     static func keysSetOnPage(_ page: String) -> LocalizedStringResource {
         Self.key("keys.setOnPage \(page)")

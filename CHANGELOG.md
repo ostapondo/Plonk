@@ -15,6 +15,53 @@ one of those.
 
 ### Added
 
+- **Switching from Rectangle costs nothing now.** The ten placement shortcuts
+  were already the same keys in both apps — `⌃⌥` and an arrow, a corner letter,
+  return or C — because that is the one combination macOS leaves alone and both
+  landed on it. What was missing was everything either side of that: a changed
+  binding had to be re-entered by hand, and a `rectangle://execute-action` URL
+  sitting in a Raycast script or on a Stream Deck button did nothing at all.
+
+  Plonk looks once at launch, and a Mac with a Rectangle setup on it gets the
+  offer on the Home page rather than a button on a settings page nobody opens
+  first. Taking it or turning it down settles it for good, and a Mac with no
+  Rectangle is shown nothing.
+
+  **Shortcuts → Import from Rectangle** reads the preferences of an installed
+  copy, or a `RectangleConfig.json` exported from an old machine, and takes the
+  bindings that mean the same thing here: the halves, the corners, maximize,
+  centre, restore, and the window gap. Rectangle's thirds, sixths, eighths and
+  ninths are deliberately left behind and named instead of imported. They are a
+  fixed grid; the equivalent here is a zone set, and there is no way to know
+  which numbered zone a "first third" should be without knowing what set that
+  screen is wearing. If an imported key was already doing something — `⌃⌥T`
+  copies text out of a region — the imported binding wins and the app says what
+  lost it, and a Rectangle whose bindings are *all* fixed-grid is told apart
+  from one that is not there at all.
+
+  URLs answer to the same verb and the same names:
+  `open -g "plonk://execute-action?name=left-half"`. The ten placements are
+  spelled exactly as Rectangle spells them and `restore` is accepted alongside
+  `unsnap`, so an existing script is one `sed` away. Past that the vocabulary is
+  this app's own: `zone-1` to `zone-9`, `zone-set-1` to `zone-set-9`,
+  `cycle-zone`, `focus-left`, `capture-text`, `ruler`, and one name for every
+  other shortcut. Asking for a fixed-grid action, or for `next-display`, says so
+  on screen rather than failing quietly — the nearest thing to `next-display`
+  here moves the pointer and not the window, and answering to the name while
+  doing something else would be worse than not answering.
+
+  `rectangle://` is declared as well, but answering it is a switch on the
+  Shortcuts page and it is off. A scheme belongs to one app at a time, so
+  turning it on takes those URLs from an installed Rectangle and its own stop
+  working, with nothing to say so. Off is not passive: declaring a scheme is
+  enough for macOS to hand it over on install, so a `rectangle://` URL arriving
+  while the switch is off makes Plonk give the scheme back to Rectangle and run
+  that one URL anyway. The switch reads its state back from macOS rather than
+  from config, so it shows what is true rather than what was asked for.
+
+  [docs/from-rectangle.md](docs/from-rectangle.md) is the whole of it, including
+  what happens when both apps are running and hold the same key.
+
 - **Stay active**, a page of its own under Settings, for the thing keep-awake
   was never able to do: stop Slack and Teams showing you as Away. They do not
   ask whether the Mac is asleep, they ask how long it is since the last

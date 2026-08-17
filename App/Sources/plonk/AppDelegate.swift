@@ -12,8 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let active = ActiveManager()
     let agents = AgentRegistry()
     private let eventBroadcaster = EventBroadcaster()
-    private let voice = VoiceManager()
-    private let hotkeys = HotkeyManager()
+    let voice = VoiceManager()
+    let hotkeys = HotkeyManager()
     private let updates = UpdateManager()
     let model = AppModel()
     private let snapMemory = SnapMemory()
@@ -136,17 +136,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func setupHotkeys() {
-        hotkeys.onAction = { [weak self] action in self?.perform(action) }
-        hotkeys.onActionUp = { [weak self] action in
-            guard action == .voice else { return }
-            self?.voice.finishCapture()
-        }
-        hotkeys.bindings = store.config.resolvedHotkeys
-        if store.config.hotkeysEnabled { hotkeys.setEnabled(true) }
-        refreshHotkeyModel()
-    }
-
     func perform(_ action: HotkeyAction) {
         switch action {
         case .showZones:
@@ -217,17 +206,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 HUD.shared.show(.hudSentTo(agent, text))
             }
         }
-    }
-
-    private func refreshHotkeyModel() {
-        let bindings = store.config.resolvedHotkeys
-        model.hotkeyDisplays = HotkeyAction.allCases.reduce(into: [:]) { result, action in
-            result[action.rawValue] = bindings[action]?.display ?? "None"
-        }
-        model.hotkeyParts = HotkeyAction.allCases.reduce(into: [:]) { result, action in
-            result[action.rawValue] = bindings[action]?.parts ?? []
-        }
-        model.unavailableHotkeys = hotkeys.unavailable.map(\.rawValue)
     }
 
     private func setupDragSnap() {
@@ -792,15 +770,10 @@ extension AppDelegate: AppActions {
     }
 
     func setHotkey(_ action: HotkeyAction, to hotkey: Hotkey) {
-        // A combination can only drive one action, so taking it frees it
-        // wherever it was, possibly on a page the user is not looking at.
-        let stolen = HotkeyAction.allCases.filter {
-            $0 != action && store.config.resolvedHotkeys[$0] == hotkey
-        }
-        store.update { config in
-            for other in stolen { config.hotkeys[other.rawValue] = "" }
-            config.hotkeys[action.rawValue] = hotkey.spec
-        }
+        // Taking a combination frees it wherever it was, possibly on a page
+        // the user is not looking at. Config.bind is where that rule lives.
+        var stolen: [HotkeyAction] = []
+        store.update { stolen = $0.bind(action, to: hotkey) }
         if let taken = stolen.first {
             HUD.shared.show(.hudHotkeyTaken(hotkey.display, String(localized: taken.title)))
         }
@@ -839,7 +812,7 @@ extension AppDelegate: AppActions {
     }
 
     func setZoneGap(_ points: Double) {
-        store.update { $0.zoneGap = max(0, min(points, 40)) }
+        store.update { $0.setGap(points) }
         model.zoneGap = store.config.zoneGap
     }
 

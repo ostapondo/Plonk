@@ -31,4 +31,5 @@ it.
 
 ---
 
-[Workspaces](workspaces.md) · [Hotkeys](hotkeys.md) · [Everything else](features.md) · [README](../README.md)
+[Workspaces](workspaces.md) · [Hotkeys](hotkeys.md) · [Everything else](features.md) ·
+[Coming from Rectangle](from-rectangle.md) · [README](../README.md)

@@ -25,6 +25,11 @@ extension LocalizedStringResource {
     static let homeLaunchAtLoginDetail = Self.key("home.launchAtLoginDetail")
     static let homePrivacy = Self.key("home.privacy")
     static let homeEdgeSnapping = Self.key("home.edgeSnapping")
+    static let homeRectangleTitle = Self.key("home.rectangleTitle")
+    static let homeRectangleDetail = Self.key("home.rectangleDetail")
+    static let homeRectangleTake = Self.key("home.rectangleTake")
+    static let homeRectangleNotNow = Self.key("home.rectangleNotNow")
+    static let homeRectangleMore = Self.key("home.rectangleMore")
 
     static func homeHotkeysTaken(_ names: String) -> LocalizedStringResource {
         Self.key("home.hotkeysTaken \(names)")

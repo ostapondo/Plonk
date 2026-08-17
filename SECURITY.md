@@ -202,6 +202,48 @@ out one app at a time, and an open port handed Plonk's to anything running as
 you. `/state` was the same shape more quietly: it lists the title of every
 open window.
 
+## The URL scheme
+
+`plonk://execute-action?name=left-half` runs the same actions the hotkeys do,
+so a Raycast script or a Stream Deck button can drive the app without one. It
+is a second control surface and it does **not** carry the token above. That is
+deliberate — a URL a user pastes into a Shortcuts action has nowhere to keep a
+secret — but it means the guarantee here is narrower than the API's, and worth
+stating rather than leaving to be discovered.
+
+What it can reach: every action that has a keyboard shortcut, which is to say
+window placement, zones, focus, the ruler, the crop and the palette. Anything
+running as you can invoke those, and so can a web page, behind the "Open in
+Plonk?" prompt the browser puts up first.
+
+What it cannot reach:
+
+- **Nothing the API guards.** There is no URL for `/shot/capture`, `/shot/text`
+  or `/state`, so the silent capture, the screen read and the window list stay
+  behind the token. `capture-region` and `capture-text` open the interactive
+  picker and wait for you to drag a rectangle, the same as the shortcut does,
+  and neither returns anything to the caller. `capture-text` does put what it
+  read on the clipboard, which anything running as you can then read — the
+  same as pressing `⌃⌥T`, but worth knowing about a surface a page can poke.
+- **The microphone.** `voice` is push-to-talk and ends when the key comes back
+  up, which a URL has no way of doing, so it is refused outright rather than
+  started with nothing to stop it.
+- **Settings, with one exception.** No action edits a preference, draws a zone
+  set or touches a workspace. `zone-set-1` to `zone-set-9` do write one thing:
+  which of your existing sets the screen under the cursor is wearing, the same
+  as `⌃⌥⇧1`–`⌃⌥⇧9`. It is saved, so it outlives a restart. Nothing is created
+  or deleted, and switching back is another URL.
+
+The scheme is `plonk`. `rectangle` is also declared, so the app can answer the
+URLs of the window manager many people are arriving from, but it does not take
+that scheme unless you turn on **Shortcuts → Answer rectangle:// URLs too**,
+and it hands it back to an installed Rectangle if it is ever handed it without
+being asked. See [docs/from-rectangle.md](docs/from-rectangle.md).
+
+Quitting does not turn it off. A URL scheme belongs to an installed bundle
+rather than to a running process, so a `plonk://` URL launches the app and then
+runs the action. Removing Plonk is what removes the scheme.
+
 `/ping` stays open on purpose, so a client can tell a closed app from a stale
 token. It answers whether Plonk is running and nothing else.
 
