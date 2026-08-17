@@ -38,15 +38,14 @@ extension AppDelegate {
         model.config = config
 
         applyAppearance()
-        hotkeys.setEnabled(config.hotkeysEnabled)
-        hotkeys.bindings = config.resolvedHotkeys
-        applyDragSnapSettings()
-        applyGrabMoveSettings()
-        applyMouseSettings()
+        hotkeys.apply(config)
+        dragSnap.apply(config)
+        grabMove.apply(config)
+        mouse.apply(config)
         awake.apply(config)
         active.apply(config)
-        newWindows.enabled = config.placeNewWindows
-        updates.automatic = config.updateCheckAutomatically
+        newWindows.apply(config)
+        updates.apply(config)
 
         // What the config implies rather than states: the names in it, sorted
         // for the lists, and what each manager makes of its new settings.

@@ -56,7 +56,6 @@ extension AppDelegate: AppActions {
 
     func deleteWorkspace(named name: String) {
         store.update { $0.workspaces.removeValue(forKey: name) }
-        refreshWorkspaceModel()
     }
 
     func renameWorkspace(_ old: String, to new: String) -> Bool {
@@ -66,7 +65,6 @@ extension AppDelegate: AppActions {
             guard let workspace = $0.workspaces.removeValue(forKey: old) else { return }
             $0.workspaces[new] = workspace
         }
-        refreshWorkspaceModel()
         return true
     }
 
@@ -75,12 +73,10 @@ extension AppDelegate: AppActions {
         guard !items.isEmpty else { return }
         let moveExisting = store.config.workspaces[name]?.moveExisting ?? true
         store.update { $0.workspaces[name] = Workspace(items: items, moveExisting: moveExisting) }
-        refreshWorkspaceModel()
     }
 
     func setWorkspaceMoveExisting(_ on: Bool, for name: String) {
         store.update { $0.workspaces[name]?.moveExisting = on }
-        refreshWorkspaceModel()
     }
 
     func updateWorkspaceItem(_ index: Int, in name: String, urls: [String], args: [String]) {
@@ -89,7 +85,6 @@ extension AppDelegate: AppActions {
             $0.workspaces[name]?.items[index].urls = urls.isEmpty ? nil : urls
             $0.workspaces[name]?.items[index].args = args.isEmpty ? nil : args
         }
-        refreshWorkspaceModel()
     }
 
     func removeWorkspaceItem(_ index: Int, from name: String) {
@@ -97,7 +92,6 @@ extension AppDelegate: AppActions {
             guard $0.workspaces[name]?.items.indices.contains(index) == true else { return }
             $0.workspaces[name]?.items.remove(at: index)
         }
-        refreshWorkspaceModel()
     }
 
     func cancelWorkspaceLaunch() {

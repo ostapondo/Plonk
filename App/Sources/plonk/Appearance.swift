@@ -71,7 +71,14 @@ struct AppearanceSettings: Codable, Equatable {
     }
 
     /// Applies to every window at once, including the ones already on screen.
+    ///
+    /// Which is why it checks first: this runs after every config change, and
+    /// assigning the appearance makes every open window re-resolve and redraw.
+    /// Dragging the zone colour writes config per tick, and the whole UI must
+    /// not repaint at drag frequency for a setting that did not move.
     func apply(to app: NSApplication) {
-        app.appearance = resolvedTheme.nsAppearance
+        let wanted = resolvedTheme.nsAppearance
+        guard app.appearance != wanted else { return }
+        app.appearance = wanted
     }
 }

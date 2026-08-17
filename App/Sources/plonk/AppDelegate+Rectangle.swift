@@ -3,7 +3,7 @@ import AppKit
 // The two ways a Rectangle setup reaches this app: its shortcuts, read once,
 // and its URLs, answered as they arrive.
 //
-// Split out of AppDelegate, which is over the line limit and may only shrink.
+// One module, one file beside AppDelegate; see AGENTS.md, "Layout".
 
 extension AppDelegate {
     // MARK: - Shortcuts

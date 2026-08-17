@@ -15,6 +15,26 @@ struct ZoneAppearance: Equatable {
     var color: NSColor?
     var showNumbers = true
 
+    /// How the overlay is drawn, worked out from the settings. One place, so
+    /// the zone drawing and the pointer tools cannot end up a different
+    /// colour from each other.
+    init(_ config: Config) {
+        gap = CGFloat(config.zoneGap)
+        opacity = CGFloat(config.zoneOpacity)
+        // Falls back to the app's accent, which itself falls back to the
+        // system one, so the overlay is part of the theme.
+        color = Self.color(fromHex: config.zoneColorHex)
+            ?? Self.color(fromHex: config.appearance.accentHex)
+        showNumbers = config.zoneNumbersVisible
+    }
+
+    init(gap: CGFloat = 0, opacity: CGFloat = 1, color: NSColor? = nil, showNumbers: Bool = true) {
+        self.gap = gap
+        self.opacity = opacity
+        self.color = color
+        self.showNumbers = showNumbers
+    }
+
     /// One colour, for the things that are not a zone: the ruler and the
     /// pointer tools share it so the desk stays one colour.
     var tint: NSColor { color ?? .controlAccentColor }

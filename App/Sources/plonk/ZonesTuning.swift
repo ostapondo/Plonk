@@ -39,7 +39,7 @@ struct ZonesTuning: View {
                 }
             }
             SettingRow(title: .zonesOpacity, stacked: true) {
-                Slider(value: $opacityDraft, in: 0.1...1) { editing in
+                Slider(value: $opacityDraft, in: Config.opacityRange) { editing in
                     if !editing { model.actions?.update(\.zoneOpacity, to: opacityDraft) }
                 }
             }
@@ -60,7 +60,7 @@ struct ZonesTuning: View {
             SettingBlock {
                 PointsField(title: .zonesEdgeSpanning,
                             help: .zonesEdgeSpanningHelp,
-                            placeholder: "16", range: 0...60, value: model.config.zoneEdgeSpanPoints) {
+                            placeholder: "16", range: 0...Int(Config.edgeSpanLimit), value: model.config.zoneEdgeSpanPoints) {
                     model.actions?.update(\.zoneEdgeSpanPoints, to: $0)
                 }
             }

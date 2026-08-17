@@ -25,27 +25,12 @@ extension AppDelegate {
                               zoneIndex: zoneIndex(of: frac, onScreen: screenIndex),
                               appKey: windows.app(ofWindow: window)?.bundleIdentifier)
         }
-        applyDragSnapSettings()
+        dragSnap.apply(store.config)
         dragSnap.start()
     }
 
-    func applyDragSnapSettings() {
-        dragSnap.enabled = store.config.dragSnapEnabled
-        dragSnap.requireModifier = store.config.zonesRequireShift
-        dragSnap.modifierFlag = Self.modifierFlag(store.config.zonesModifier)
-        dragSnap.showOnAllMonitors = store.config.zonesOnAllMonitors
-        dragSnap.edgeSpanPoints = store.config.zoneEdgeSpanPoints
-    }
 
-    var zoneAppearance: ZoneAppearance {
-        ZoneAppearance(gap: CGFloat(store.config.zoneGap),
-                       opacity: CGFloat(store.config.zoneOpacity),
-                       // Falls back to the app's accent, which itself falls back
-                       // to the system one, so the overlay is part of the theme.
-                       color: ZoneAppearance.color(fromHex: store.config.zoneColorHex)
-                           ?? ZoneAppearance.color(fromHex: store.config.appearance.accentHex),
-                       showNumbers: store.config.zoneNumbersVisible)
-    }
+    var zoneAppearance: ZoneAppearance { ZoneAppearance(store.config) }
 
     func setupGrabMove() {
         grabMove = GrabMove(windows: windows)
@@ -75,22 +60,9 @@ extension AppDelegate {
             }
             router?.changes.bump("windows")
         }
-        applyGrabMoveSettings()
+        grabMove.apply(store.config)
     }
 
-    /// An event tap that can swallow clicks has no business existing while the
-    /// feature is off, so the tap follows the setting rather than the launch.
-    func applyGrabMoveSettings() {
-        grabMove.enabled = store.config.grabMoveEnabled
-        grabMove.modifierFlag = Self.modifierFlag(store.config.grabMoveModifier)
-        grabMove.allowResize = store.config.grabMoveResize
-        grabMove.showGeometry = store.config.grabMoveShowGeometry
-        if store.config.grabMoveEnabled {
-            grabMove.start()
-        } else {
-            grabMove.stop()
-        }
-    }
 
     /// Which numbered zone a dropped fraction corresponds to, so editing the
     /// set later can move the window with its number. Nil for a span or an
@@ -133,12 +105,4 @@ extension AppDelegate {
         newWindows.start()
     }
 
-    static func modifierFlag(_ name: String) -> NSEvent.ModifierFlags {
-        switch name {
-        case "option": return .option
-        case "control": return .control
-        case "command": return .command
-        default: return .shift
-        }
-    }
 }

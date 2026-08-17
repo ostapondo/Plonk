@@ -58,6 +58,16 @@ final class DragSnapManager {
         self.windows = windows
     }
 
+    /// Take the settings as they now stand. Called after every config change,
+    /// so nothing here may cost more than a few assignments.
+    func apply(_ config: Config) {
+        enabled = config.dragSnapEnabled
+        requireModifier = config.zonesRequireShift
+        modifierFlag = config.zonesModifierFlag
+        showOnAllMonitors = config.zonesOnAllMonitors
+        edgeSpanPoints = config.zoneEdgeSpanPoints
+    }
+
     func start() {
         if let m = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged, handler: { [weak self] event in
             self?.handleDrag(event)
@@ -188,8 +198,6 @@ final class DragSnapManager {
         drop(win, startFrame: startFrame, into: zone)
         return true
     }
-
-    // MARK: - Edge fallback geometry
 
     // MARK: - Overlays
 

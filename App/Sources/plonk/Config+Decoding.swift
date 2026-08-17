@@ -26,7 +26,10 @@ extension Config {
         }
         let defaults = try JSONSerialization
             .jsonObject(with: JSONEncoder().encode(Config())) as? [String: Any] ?? [:]
-        let merged = Self.merging(defaults, under: Self.withoutNulls(Self.migrated(stored)))
+        // Nulls go first: `migrated` asks whether a key is present, and an
+        // explicit null is present as far as a dictionary is concerned. Asking
+        // after they are gone is the only way that question means what it says.
+        let merged = Self.merging(defaults, under: Self.migrated(Self.withoutNulls(stored)))
         return try JSONDecoder().decode(
             Config.self, from: JSONSerialization.data(withJSONObject: merged))
     }
@@ -59,14 +62,25 @@ extension Config {
     /// with it.
     private static func withoutNulls(_ value: [String: Any]) -> [String: Any] {
         value.reduce(into: [String: Any]()) { result, pair in
-            switch pair.value {
-            case is NSNull:
-                return
-            case let nested as [String: Any]:
-                result[pair.key] = withoutNulls(nested)
-            default:
-                result[pair.key] = pair.value
-            }
+            guard let cleaned = withoutNulls(any: pair.value) else { return }
+            result[pair.key] = cleaned
+        }
+    }
+
+    /// Nil for a null, which is how a dictionary key is dropped and how an
+    /// array element is skipped. Lists matter as much as objects here: a
+    /// workspace's items, a zone set's rects and the excluded-app patterns are
+    /// all arrays, and one null in any of them is a whole config file.
+    private static func withoutNulls(any value: Any) -> Any? {
+        switch value {
+        case is NSNull:
+            return nil
+        case let nested as [String: Any]:
+            return withoutNulls(nested)
+        case let list as [Any]:
+            return list.compactMap { withoutNulls(any: $0) }
+        default:
+            return value
         }
     }
 

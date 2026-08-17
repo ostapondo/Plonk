@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 // The rules about changing a config that more than one caller needs, kept here
 // rather than at each call site. The settings page, an agent and the Rectangle
@@ -41,12 +41,29 @@ extension Config {
                                  EdgeDetector.toleranceRange.upperBound)
         awakeTimeoutMinutes = max(0, awakeTimeoutMinutes)
         activeTimeoutMinutes = max(0, activeTimeoutMinutes)
-        // Only when Vision answered. It reports nothing when it cannot start,
-        // and dropping every language the user chose because a framework was
-        // unavailable this once would be a setting silently thrown away.
-        let supported = TextExtractor.supportedLanguages
-        if !supported.isEmpty {
-            textLanguages = textLanguages.filter(supported.contains)
+    }
+
+    /// The key a modifier name stands for. Config stores the name because that
+    /// is what a person reads in the file; what it means is Config's to say, so
+    /// drag snapping and grab-and-move cannot disagree about it. Anything
+    /// unrecognised is shift, which a hand-edited file can produce.
+    static func modifierFlag(_ name: String) -> NSEvent.ModifierFlags {
+        switch name {
+        case "option": return .option
+        case "control": return .control
+        case "command": return .command
+        default: return .shift
         }
     }
+
+    var zonesModifierFlag: NSEvent.ModifierFlags { Self.modifierFlag(zonesModifier) }
+    var grabMoveModifierFlag: NSEvent.ModifierFlags { Self.modifierFlag(grabMoveModifier) }
+
+    // textLanguages is deliberately not here. What Vision will recognise is a
+    // fact about this Mac, not a bound on the setting: config.json is meant to
+    // be synced by hand, and a language chosen on a Mac that has the model
+    // would be deleted from the file by the first save on a Mac that does not.
+    // The picker only offers what is supported, and TextExtractor.recognize
+    // names an unsupported tag back to the caller, which is a better answer
+    // than a setting that quietly disappears.
 }

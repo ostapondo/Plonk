@@ -27,6 +27,13 @@ final class HotkeyManager {
     /// Fires when a bound key is released — what makes push-to-talk possible.
     var onActionUp: ((HotkeyAction) -> Void)?
 
+    /// Take the settings as they now stand. Both halves guard on the value
+    /// changing, so this is safe after every config write.
+    func apply(_ config: Config) {
+        setEnabled(config.hotkeysEnabled)
+        bindings = config.resolvedHotkeys
+    }
+
     func setEnabled(_ on: Bool) {
         guard on != enabled else { return }
         enabled = on

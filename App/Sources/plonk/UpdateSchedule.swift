@@ -30,8 +30,15 @@ final class UpdateSchedule {
     /// Fires on the main queue when a check is due.
     var onDue: (() -> Void)?
 
+    /// Guarded on the value changing. `start` restarts the countdown from
+    /// zero, and applyConfig re-sends every setting after each write, so an
+    /// unguarded assignment here would mean a Mac whose settings are touched
+    /// once a day never reaches the deadline and never checks at all.
     var automatic = false {
-        didSet { automatic ? start() : stop() }
+        didSet {
+            guard automatic != oldValue else { return }
+            automatic ? start() : stop()
+        }
     }
 
     /// Set when a check gives up with a network error, cleared by the next

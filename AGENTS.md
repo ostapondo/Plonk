@@ -60,10 +60,15 @@ row bound with `model.binding(\.field)`; no method, no mirrored property, and
 no push at a manager. Anything that has to be held inside bounds gets a line in
 `Config.clamp`, which runs on every write and on load.
 
-Config lives as new fields on `Config` with `decodeIfPresent` defaults so old
-config files keep working. Anything stored per monitor is keyed by display UUID
-via `ScreenIdentity.keys(forIndex:)`, never by the bare index: indices shift
-when a display is unplugged.
+A setting is a new field on `Config` with a default, and that is the whole of
+it. `Config.decode` merges the file over the defaults before decoding, so an
+old config file keeps working without a line written anywhere; never hand-write
+an `init(from:)` on `Config`, because it would bypass that merge and take the
+tolerance with it.
+
+Anything stored per monitor is keyed by display UUID via
+`ScreenIdentity.keys(forIndex:)`, never by the bare index: indices shift when a
+display is unplugged.
 
 ## Build & verify
 

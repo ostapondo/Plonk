@@ -25,20 +25,4 @@ extension AppDelegate {
         }
     }
 
-    func setupMouseTools() {
-        applyMouseSettings()
-    }
-
-    /// Same rule as grab-and-move: no tap unless something needs one. Finding
-    /// the pointer is a shortcut and draws without watching anything.
-    func applyMouseSettings() {
-        mouse.highlightEnabled = store.config.highlightClicksEnabled
-        mouse.crosshairsEnabled = store.config.crosshairsEnabled
-        mouse.tint = zoneAppearance.tint
-        if store.config.highlightClicksEnabled || store.config.crosshairsEnabled {
-            mouse.start()
-        } else {
-            mouse.stop()
-        }
-    }
 }

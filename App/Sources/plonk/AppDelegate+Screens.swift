@@ -39,8 +39,10 @@ extension AppDelegate {
             }
             guard windows.isTrusted else { return }
             timer.invalidate()
-            applyGrabMoveSettings()
-            applyMouseSettings()
+            // The whole config, not the three managers that happen to need a
+            // grant today: a hand-picked subset here drifts the moment another
+            // manager is added.
+            applyConfig()
             newWindows.start()
             refreshPermissions()
         }

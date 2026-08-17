@@ -2,7 +2,7 @@ import Foundation
 
 // Turning what someone typed into a moment in time.
 //
-// Kept out of Router, which is over the line limit and owns routes rather than
+// Kept out of Router, which owns the route table rather than
 // parsers. /awake is the only route that takes a deadline today; keep-awake
 // "until 17:00" is the same question wherever it is asked from.
 

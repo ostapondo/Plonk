@@ -97,4 +97,35 @@ struct ConfigBindingTests {
         #expect(throws: (any Error).self) { try Config.decode(Data("[1,2]".utf8)) }
         #expect(throws: (any Error).self) { try Config.decode(Data("not json".utf8)) }
     }
+
+    /// Arrays hold the data worth losing: a workspace's items, a zone set's
+    /// rects, the excluded-app patterns. A null in any of them used to throw,
+    /// and a throw is the whole file set aside rather than one field reset.
+    @Test func anExplicitNullInsideAnArrayIsSkipped() throws {
+        let config = try Config.decode(Data(#"{"excludedApps": ["Finder", null], "zoneGap": 7}"#.utf8))
+        #expect(config.excludedApps == ["Finder"])
+        #expect(config.zoneGap == 7)
+    }
+
+    /// Nulls are stripped before the rename runs, because a key set to null is
+    /// present as far as a dictionary is concerned. Asking after they are gone
+    /// is the only way "has this file been migrated already" means what it says.
+    @Test func aNullWorkspacesKeyStillMigratesLegacyLayouts() throws {
+        let json = #"""
+        {"workspaces": null, "layouts": {"dev": [{"app": "Safari", "x": 0, "y": 0, "w": 1, "h": 1}]}}
+        """#
+        let config = try Config.decode(Data(json.utf8))
+        #expect(config.workspaces["dev"]?.items.count == 1)
+    }
+
+    /// The merge has to recurse for a type whose defaults are not nil, which is
+    /// what makes this different from the appearance case above: ActiveSchedule
+    /// has a synthesized decoder and non-zero defaults, so a partial object
+    /// without the recursion throws and costs the whole file.
+    @Test func aPartialNestedObjectKeepsNonNilDefaults() throws {
+        let config = try Config.decode(Data(#"{"activeSchedule": {"enabled": true}}"#.utf8))
+        #expect(config.activeSchedule.enabled)
+        #expect(config.activeSchedule.start == ActiveSchedule().start)
+        #expect(config.activeSchedule.end == ActiveSchedule().end)
+    }
 }

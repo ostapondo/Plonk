@@ -1,7 +1,6 @@
 import AppKit
 
-// The keys, and what the shortcuts pages read. Moved out of AppDelegate,
-// which is over the line limit and may only shrink.
+// The keys, and what the shortcuts pages read.
 
 extension AppDelegate {
     func setupHotkeys() {

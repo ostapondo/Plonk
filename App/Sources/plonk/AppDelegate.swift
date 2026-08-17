@@ -1,7 +1,4 @@
 import AppKit
-import CoreGraphics
-import ServiceManagement
-import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static let issuesURL = "https://github.com/ostapondo/plonk/issues/new"
@@ -65,7 +62,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupDragSnap()
         setupGrabMove()
         setupNewWindows()
-        setupMouseTools()
         setupRuler()
         setupServer()
         setupUpdates()
