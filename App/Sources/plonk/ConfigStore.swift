@@ -264,6 +264,8 @@ final class ConfigStore {
         guard let data = try? Data(contentsOf: url) else { return }
         do {
             config = try JSONDecoder().decode(Config.self, from: data)
+            // A file edited by hand is as much a caller as the slider is.
+            config.clamp()
         } catch {
             // Keep the unreadable file instead of overwriting it on the next
             // save, so saved layouts can still be recovered by hand.
@@ -286,6 +288,7 @@ final class ConfigStore {
 
     func update(_ mutate: (inout Config) -> Void) {
         mutate(&config)
+        config.clamp()
         save()
         didMutate?()
     }

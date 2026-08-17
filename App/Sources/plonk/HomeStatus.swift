@@ -49,7 +49,7 @@ struct HomeStatus: View {
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Toggle("", isOn: model.binding(\.agentExclusive, set: { $0.setAgentExclusive($1) }))
+                Toggle("", isOn: model.binding(\.agentExclusive))
                     .labelsHidden().toggleStyle(.switch).controlSize(.small)
             }
         }
@@ -59,7 +59,7 @@ struct HomeStatus: View {
     /// With no agent selected every agent may drive, so every one of them is
     /// driving; that is what an empty selection means, not "none of them".
     private func driving(_ name: String) -> Bool {
-        guard model.agentExclusive, let selected = model.selectedAgent else { return true }
+        guard model.config.agentExclusive, let selected = model.config.selectedAgent else { return true }
         return selected == name
     }
 

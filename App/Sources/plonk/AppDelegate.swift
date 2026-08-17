@@ -208,18 +208,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Wiring only: what drag snapping asks the app for, and what it reports
+    /// back. The settings it reads are applied separately, because they change
+    /// while the app is running and this does not.
     private func setupDragSnap() {
         dragSnap = DragSnapManager(windows: windows)
-        dragSnap.enabled = store.config.dragSnapEnabled
-        dragSnap.requireModifier = store.config.zonesRequireShift
-        dragSnap.modifierFlag = Self.modifierFlag(store.config.zonesModifier)
         dragSnap.zonesForScreen = { [weak self] index in
             guard let self else { return [] }
             return store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
         }
         dragSnap.appearance = { [weak self] in self?.zoneAppearance ?? ZoneAppearance() }
-        dragSnap.showOnAllMonitors = store.config.zonesOnAllMonitors
-        dragSnap.edgeSpanPoints = store.config.zoneEdgeSpanPoints
         dragSnap.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
         dragSnap.onSnap = { [weak self] window, before, frac, screenIndex in
             guard let self else { return }
@@ -228,7 +226,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                               zoneIndex: zoneIndex(of: frac, onScreen: screenIndex),
                               appKey: windows.app(ofWindow: window)?.bundleIdentifier)
         }
+        applyDragSnapSettings()
         dragSnap.start()
+    }
+
+    private func applyDragSnapSettings() {
+        dragSnap.enabled = store.config.dragSnapEnabled
+        dragSnap.requireModifier = store.config.zonesRequireShift
+        dragSnap.modifierFlag = Self.modifierFlag(store.config.zonesModifier)
+        dragSnap.showOnAllMonitors = store.config.zonesOnAllMonitors
+        dragSnap.edgeSpanPoints = store.config.zoneEdgeSpanPoints
     }
 
     var zoneAppearance: ZoneAppearance {
@@ -444,7 +451,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // Every source of change funnels into the bus at its own choke point,
         // so no caller has to remember to announce itself.
-        store.didMutate = { [weak self] in self?.router.changes.bump("config") }
+        //
+        // Config is the widest of them: a settings row, an agent over the API
+        // and an imported Rectangle setup all end at ConfigStore.update, so
+        // applying a change is hung there rather than at each of the three.
+        // Set here, once the managers applyConfig reaches all exist — writes
+        // before this point are startup reading its own defaults back.
+        store.didMutate = { [weak self] in
+            guard let self else { return }
+            applyConfig()
+            router.changes.bump("config")
+        }
         windows.onDidPlace = { [weak self] in
             self?.router.changes.bump("windows")
             self?.markGettingStarted { $0.sawFirstSnap = true }
@@ -453,12 +470,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.refreshAgentModel()
             self?.router.changes.bump("agents")
         }
-        router.didChangeAgents = { [weak self] in self?.refreshAgentModel() }
-        router.didChangeLayouts = { [weak self] in self?.refreshWorkspaceModel() }
-        router.didChangeZones = { [weak self] in
-            self?.refreshZoneModel()
-            self?.dragSnap.previewZones()
-        }
+        // Only the part that is not a config change: an agent editing zones
+        // shows them, so the user sees what it did.
+        router.didChangeZones = { [weak self] in self?.dragSnap.previewZones() }
         setupShotRoutes()
         router.launchWorkspace = { [weak self] name, workspace, screen, done in
             guard let self else { return done([["ok": false, "error": "shutting down"]]) }
@@ -493,41 +507,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
 
+    /// The whole model, for a window about to open. Everything config decides
+    /// goes through applyConfig; what is left is fixed for the run or comes
+    /// from macOS.
     func refreshModel() {
         model.appVersion = appVersion
         model.configWarning = store.loadFailure
-        refreshPermissions()
-        refreshAwakeModel()
-        refreshActiveModel()
-        model.hotkeysEnabled = store.config.hotkeysEnabled
-        model.dragSnapEnabled = store.config.dragSnapEnabled
-        model.zoneGap = store.config.zoneGap
-        model.zoneOpacity = store.config.zoneOpacity
-        model.zoneColorHex = store.config.zoneColorHex
-        model.zoneNumbersVisible = store.config.zoneNumbersVisible
-        model.zonesOnAllMonitors = store.config.zonesOnAllMonitors
-        model.zoneEdgeSpan = store.config.zoneEdgeSpanPoints
-        model.grabMoveEnabled = store.config.grabMoveEnabled
-        model.grabMoveModifier = store.config.grabMoveModifier
-        model.grabMoveResize = store.config.grabMoveResize
-        model.grabMoveShowGeometry = store.config.grabMoveShowGeometry
-        model.highlightClicksEnabled = store.config.highlightClicksEnabled
-        model.crosshairsEnabled = store.config.crosshairsEnabled
-        model.excludedApps = store.config.excludedApps
-        model.restoreZonesOnScreenChange = store.config.restoreZonesOnScreenChange
-        model.placeNewWindows = store.config.placeNewWindows
-        model.textLanguages = store.config.textLanguages
         model.supportedTextLanguages = TextExtractor.supportedLanguages
-        model.shotFolder = store.config.shotFolder
-        model.rulerEdgeTolerance = store.config.rulerEdgeTolerance
-        model.shotCopyToClipboard = store.config.shotCopyToClipboard
-        model.voiceLocalCommands = store.config.voiceLocalCommands
-        model.sawFirstSnap = store.config.sawFirstSnap
-        model.sawFirstAgent = store.config.sawFirstAgent
-        model.gettingStartedHidden = store.config.gettingStartedHidden
-        model.appearance = store.config.appearance
         model.settingsGroups = SettingsPages.groups
         model.settingsPages = SettingsPages.all
+        refreshPermissions()
+        applyConfig()
+    }
+
+    /// Everything a config change has to reach, in one place, run after every
+    /// write whoever made it: a settings row, an agent over the API, a
+    /// Rectangle setup being imported, a hotkey being rebound.
+    ///
+    /// Each manager takes the whole config rather than the field that moved,
+    /// so none of them has to be told which setting it cares about. That costs
+    /// a few assignments per change and buys the guarantee that a saved
+    /// setting is an applied one.
+    func applyConfig() {
+        let config = store.config
+        model.config = config
+
+        applyAppearance()
+        hotkeys.setEnabled(config.hotkeysEnabled)
+        hotkeys.bindings = config.resolvedHotkeys
+        applyDragSnapSettings()
+        applyGrabMoveSettings()
+        applyMouseSettings()
+        awake.apply(config)
+        active.apply(config)
+        newWindows.enabled = config.placeNewWindows
+        updates.automatic = config.updateCheckAutomatically
+
+        // What the config implies rather than states: the names in it, sorted
+        // for the lists, and what each manager makes of its new settings.
+        refreshAwakeModel()
+        refreshActiveModel()
         refreshWorkspaceModel()
         refreshZoneModel()
         refreshHotkeyModel()
@@ -542,7 +561,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func refreshUpdateModel() {
-        model.updateCheckAutomatically = store.config.updateCheckAutomatically
         model.updateAvailableVersion = updates.available?.version.text ?? ""
         model.updateNotes = updates.available?.notes ?? ""
         model.updateStatus = String(localized: updates.status)
@@ -552,8 +570,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func refreshAgentModel() {
         model.connectedAgents = agents.onlineNames()
-        model.selectedAgent = store.config.selectedAgent
-        model.agentExclusive = store.config.agentExclusive
         if !model.connectedAgents.isEmpty {
             markGettingStarted { $0.sawFirstAgent = true }
         }
@@ -570,13 +586,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard updated.sawFirstSnap != self.store.config.sawFirstSnap
                 || updated.sawFirstAgent != self.store.config.sawFirstAgent else { return }
             self.store.update(change)
-            self.model.sawFirstSnap = self.store.config.sawFirstSnap
-            self.model.sawFirstAgent = self.store.config.sawFirstAgent
         }
     }
 
     private func refreshWorkspaceModel() {
-        model.workspaces = store.config.workspaces
         model.workspaceNames = store.config.workspaces.keys.sorted()
         statusMenu.workspaceNames = model.workspaceNames
     }
@@ -591,8 +604,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.screenAssignments = NSScreen.screens.indices.reduce(into: [:]) { result, index in
             result[index] = store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: index))
         }
-        model.zonesRequireModifier = store.config.zonesRequireShift
-        model.zonesModifier = store.config.zonesModifier
     }
 
     func refreshStatusMenu() {
@@ -736,38 +747,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension AppDelegate: AppActions {
 
+    /// The one path a setting takes from the UI to disk. `ConfigStore` clamps
+    /// and saves it, `applyConfig` hands it to whoever needs it. A new setting
+    /// therefore adds nothing here, and cannot be saved but left unapplied,
+    /// which is the mistake a method per setting made easy to make.
+    func update<Value>(_ path: WritableKeyPath<Config, Value>, to value: Value) {
+        store.update { $0[keyPath: path] = value }
+    }
+
+    /// Keep-awake is held by its manager, not by a stored flag: a hold made by
+    /// hand outlives the schedule that would otherwise decide.
     func setAwake(_ on: Bool) { awake.set(on) }
-
-    func setAwakeAllowOnBattery(_ on: Bool) {
-        store.update { $0.awakeAllowOnBattery = on }
-        model.awakeAllowOnBattery = on
-        awake.allowOnBattery = on
-    }
-
-    func setAwakeAutoWhileCharging(_ on: Bool) {
-        store.update { $0.awakeAutoWhileCharging = on }
-        model.awakeAutoWhileCharging = on
-        awake.autoWhileCharging = on
-    }
-
-    func setAwakeKeepDisplayOn(_ on: Bool) {
-        store.update { $0.awakeKeepDisplayOn = on }
-        model.awakeKeepDisplayOn = on
-        awake.keepDisplayOn = on
-    }
-
-    func setAwakeTimeout(minutes: Int) {
-        store.update { $0.awakeTimeoutMinutes = minutes }
-        model.awakeTimeoutMinutes = minutes
-        awake.timeoutMinutes = minutes
-    }
-
-    func setHotkeys(_ on: Bool) {
-        hotkeys.setEnabled(on)
-        store.update { $0.hotkeysEnabled = on }
-        model.hotkeysEnabled = on
-        refreshHotkeyModel()
-    }
 
     func setHotkey(_ action: HotkeyAction, to hotkey: Hotkey) {
         // Taking a combination frees it wherever it was, possibly on a page
@@ -777,146 +767,22 @@ extension AppDelegate: AppActions {
         if let taken = stolen.first {
             HUD.shared.show(.hudHotkeyTaken(hotkey.display, String(localized: taken.title)))
         }
-        hotkeys.bindings = store.config.resolvedHotkeys
-        refreshHotkeyModel()
     }
 
     func clearHotkey(_ action: HotkeyAction) {
-        store.update { $0.hotkeys[action.rawValue] = "" }
-        hotkeys.bindings = store.config.resolvedHotkeys
-        refreshHotkeyModel()
+        update(\.hotkeys[action.rawValue], to: "")
     }
 
     func resetHotkeys() {
-        store.update { $0.hotkeys = [:] }
-        hotkeys.bindings = store.config.resolvedHotkeys
-        refreshHotkeyModel()
-    }
-
-    func setDragSnap(_ on: Bool) {
-        dragSnap.enabled = on
-        store.update { $0.dragSnapEnabled = on }
-        model.dragSnapEnabled = on
-    }
-
-    func setZonesRequireModifier(_ on: Bool) {
-        dragSnap.requireModifier = on
-        store.update { $0.zonesRequireShift = on }
-        model.zonesRequireModifier = on
-    }
-
-    func setZonesModifier(_ name: String) {
-        dragSnap.modifierFlag = Self.modifierFlag(name)
-        store.update { $0.zonesModifier = name }
-        model.zonesModifier = name
-    }
-
-    func setZoneGap(_ points: Double) {
-        store.update { $0.setGap(points) }
-        model.zoneGap = store.config.zoneGap
-    }
-
-    func setZoneOpacity(_ value: Double) {
-        store.update { $0.zoneOpacity = max(0.1, min(value, 1)) }
-        model.zoneOpacity = store.config.zoneOpacity
-    }
-
-    func setZoneColor(_ hex: String?) {
-        store.update { $0.zoneColorHex = hex }
-        model.zoneColorHex = hex
-        // The pointer tools share the tint, so the desk stays one colour.
-        applyMouseSettings()
-    }
-
-    func setZoneNumbersVisible(_ on: Bool) {
-        store.update { $0.zoneNumbersVisible = on }
-        model.zoneNumbersVisible = on
-    }
-
-    func setZonesOnAllMonitors(_ on: Bool) {
-        store.update { $0.zonesOnAllMonitors = on }
-        model.zonesOnAllMonitors = on
-        dragSnap.showOnAllMonitors = on
-    }
-
-    func setZoneEdgeSpan(_ points: Double) {
-        store.update { $0.zoneEdgeSpanPoints = max(0, min(points, 60)) }
-        model.zoneEdgeSpan = store.config.zoneEdgeSpanPoints
-        dragSnap.edgeSpanPoints = store.config.zoneEdgeSpanPoints
-    }
-
-    func setGrabMove(_ on: Bool) {
-        store.update { $0.grabMoveEnabled = on }
-        model.grabMoveEnabled = on
-        applyGrabMoveSettings()
-    }
-
-    func setGrabMoveModifier(_ name: String) {
-        store.update { $0.grabMoveModifier = name }
-        model.grabMoveModifier = name
-        applyGrabMoveSettings()
-    }
-
-    func setGrabMoveResize(_ on: Bool) {
-        store.update { $0.grabMoveResize = on }
-        model.grabMoveResize = on
-        applyGrabMoveSettings()
-    }
-
-    func setGrabMoveShowGeometry(_ on: Bool) {
-        store.update { $0.grabMoveShowGeometry = on }
-        model.grabMoveShowGeometry = on
-        applyGrabMoveSettings()
-    }
-
-    func setHighlightClicks(_ on: Bool) {
-        store.update { $0.highlightClicksEnabled = on }
-        model.highlightClicksEnabled = on
-        applyMouseSettings()
-    }
-
-    func setCrosshairs(_ on: Bool) {
-        store.update { $0.crosshairsEnabled = on }
-        model.crosshairsEnabled = on
-        applyMouseSettings()
-    }
-
-    func setExcludedApps(_ patterns: [String]) {
-        store.update { $0.excludedApps = patterns }
-        model.excludedApps = patterns
-    }
-
-    func setPlaceNewWindows(_ on: Bool) {
-        store.update { $0.placeNewWindows = on }
-        model.placeNewWindows = on
-        newWindows.enabled = on
-    }
-
-    func setRestoreZonesOnScreenChange(_ on: Bool) {
-        store.update { $0.restoreZonesOnScreenChange = on }
-        model.restoreZonesOnScreenChange = on
-    }
-
-    func setTextLanguages(_ tags: [String]) {
-        let allowed = tags.filter { TextExtractor.supportedLanguages.contains($0) }
-        store.update { $0.textLanguages = allowed }
-        model.textLanguages = allowed
+        update(\.hotkeys, to: [:])
     }
 
     func setLaunchAtLogin(_ on: Bool) {
         applyLaunchAtLogin(on)
-        store.update { $0.launchAtLogin = on }
+        update(\.launchAtLogin, to: on)
+        // macOS can refuse, so the toggle shows what it settled on rather than
+        // what it was asked for.
         model.launchAtLogin = isLaunchAtLoginEnabled
-    }
-
-    func setShotFolder(_ folder: String) {
-        store.update { $0.shotFolder = folder }
-        model.shotFolder = folder
-    }
-
-    func setShotCopyToClipboard(_ on: Bool) {
-        store.update { $0.shotCopyToClipboard = on }
-        model.shotCopyToClipboard = on
     }
 
     func capture(_ mode: CaptureMode) {
@@ -985,32 +851,6 @@ extension AppDelegate: AppActions {
 
     func cancelWorkspaceLaunch() {
         launcher.cancel()
-    }
-
-    func selectAgent(_ name: String?) {
-        store.update { $0.selectedAgent = name }
-        refreshAgentModel()
-    }
-
-    func setAgentExclusive(_ on: Bool) {
-        store.update { $0.agentExclusive = on }
-        refreshAgentModel()
-    }
-
-    func setVoiceLocalCommands(_ on: Bool) {
-        store.update { $0.voiceLocalCommands = on }
-        model.voiceLocalCommands = on
-    }
-
-    func hideGettingStarted() {
-        store.update { $0.gettingStartedHidden = true }
-        model.gettingStartedHidden = true
-    }
-
-    func setUpdateCheckAutomatically(_ on: Bool) {
-        store.update { $0.updateCheckAutomatically = on }
-        updates.automatic = on
-        refreshUpdateModel()
     }
 
     func checkForUpdates() {

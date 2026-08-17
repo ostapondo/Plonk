@@ -63,9 +63,9 @@ final class Router {
     var updateState: (() -> [String: Any])?
     var checkForUpdates: (() -> Void)?
     var installUpdate: (() -> Void)?
-    var didChangeLayouts: (() -> Void)?
+    /// Show the zones an agent just changed. Only the part that is not a
+    /// config change: applying one is hung on ConfigStore, not on a route.
     var didChangeZones: (() -> Void)?
-    var didChangeAgents: (() -> Void)?
 
     init(store: ConfigStore, windows: WindowManager, awake: AwakeManager,
          active: ActiveManager = ActiveManager(),
@@ -143,7 +143,6 @@ final class Router {
                 return
             }
             store.update { $0.workspaces.removeValue(forKey: name) }
-            didChangeLayouts?()
             respond(.ok(["ok": true, "deleted": name]))
 
         case ("POST", "/workspaces/rename"):
@@ -164,7 +163,6 @@ final class Router {
                     guard let workspace = $0.workspaces.removeValue(forKey: from) else { return }
                     $0.workspaces[to] = workspace
                 }
-                didChangeLayouts?()
             }
             respond(.ok(["ok": true, "renamed": from, "to": to]))
 
@@ -242,7 +240,6 @@ final class Router {
         case ("POST", "/agents/select"):
             let name = trimmedName(body["name"])
             store.update { $0.selectedAgent = name }
-            didChangeAgents?()
             respond(.ok(name.map { ["ok": true, "selected_agent": $0] } ?? ["ok": true]))
 
         case ("POST", "/agents/exclusive"):
@@ -251,7 +248,6 @@ final class Router {
                 return
             }
             store.update { $0.agentExclusive = on }
-            didChangeAgents?()
             respond(.ok(["ok": true, "exclusive": on]))
 
         case ("POST", "/agents/ask"):
@@ -500,7 +496,6 @@ final class Router {
         let moveExisting = (body["move_existing"] as? Bool)
             ?? store.config.workspaces[name]?.moveExisting ?? true
         store.update { $0.workspaces[name] = Workspace(items: items, moveExisting: moveExisting) }
-        didChangeLayouts?()
         return .ok(["ok": true, "saved": name, "items": items.count, "apps": Workspace(items: items).apps])
     }
 

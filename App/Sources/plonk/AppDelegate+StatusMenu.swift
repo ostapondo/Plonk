@@ -34,10 +34,10 @@ extension AppDelegate {
         }
         statusMenu.isExclusive = { [weak self] in self?.store.config.agentExclusive ?? false }
         statusMenu.hasSelection = { [weak self] in self?.store.config.selectedAgent != nil }
-        statusMenu.onSelectAgent = { [weak self] name in self?.selectAgent(name) }
+        statusMenu.onSelectAgent = { [weak self] name in self?.update(\.selectedAgent, to: name) }
         statusMenu.onToggleExclusive = { [weak self] in
             guard let self else { return }
-            setAgentExclusive(!store.config.agentExclusive)
+            update(\.agentExclusive, to: !store.config.agentExclusive)
         }
         refreshStatusMenu()
     }

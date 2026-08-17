@@ -28,7 +28,7 @@ final class MouseTools {
 
     var highlightEnabled = false
     var crosshairsEnabled = false {
-        didSet { refreshPersistent() }
+        didSet { if crosshairsEnabled != oldValue { refreshPersistent() } }
     }
     var tint: NSColor = .controlAccentColor
 

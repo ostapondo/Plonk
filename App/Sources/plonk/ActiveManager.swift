@@ -33,11 +33,21 @@ final class ActiveManager {
     /// mouse move would.
     private static let shiftKey: CGKeyCode = 56
 
-    var schedule = ActiveSchedule() { didSet { reevaluate() } }
+    // Guarded on the value changing, because `apply` re-sends the whole config
+    // after any setting is written and a hold made by hand must survive that.
+    var schedule = ActiveSchedule() { didSet { if schedule != oldValue { reevaluate() } } }
     /// Bundle ids. Stay active runs while any of them is running.
-    var apps: [String] = [] { didSet { reevaluate() } }
-    var allowOnBattery = false { didSet { reevaluate() } }
+    var apps: [String] = [] { didSet { if apps != oldValue { reevaluate() } } }
+    var allowOnBattery = false { didSet { if allowOnBattery != oldValue { reevaluate() } } }
     var timeoutMinutes = 0
+
+    /// Take the settings as they now stand. Called after every config change.
+    func apply(_ config: Config) {
+        schedule = config.activeSchedule
+        apps = config.activeApps
+        allowOnBattery = config.activeAllowOnBattery
+        timeoutMinutes = config.activeTimeoutMinutes
+    }
 
     /// nil follows the schedule and the app list. A value is the user having
     /// decided by hand, and it holds until the automatic answer itself changes

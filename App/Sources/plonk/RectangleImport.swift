@@ -175,7 +175,10 @@ enum RectangleImport {
         // cleared, and it deserves the same notice as anything else.
         let resolved = config.resolvedHotkeys
         displaced.removeAll { resolved[$0] != nil }
-        if let points = found.gapPoints { config.setGap(points) }
+        if let points = found.gapPoints { config.zoneGap = points }
+        // Rectangle's own limits are not ours, so a setup read in is held to
+        // the same bounds as anything else rather than to whatever it carried.
+        config.clamp()
         return displaced
     }
 }

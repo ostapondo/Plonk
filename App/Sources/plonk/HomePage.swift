@@ -14,8 +14,8 @@ struct HomePage: View {
     private var guide: GettingStarted {
         GettingStarted(accessibilityGranted: model.accessibilityGranted,
                        screenRecordingGranted: model.screenRecordingGranted,
-                       snapped: model.sawFirstSnap,
-                       agentConnected: model.sawFirstAgent)
+                       snapped: model.config.sawFirstSnap,
+                       agentConnected: model.config.sawFirstAgent)
     }
 
     var body: some View {
@@ -34,7 +34,7 @@ struct HomePage: View {
                 if model.rectangleFound {
                     RectangleOffer(model: model)
                 }
-                if GettingStarted.isVisible(hidden: model.gettingStartedHidden, complete: guide.isComplete) {
+                if GettingStarted.isVisible(hidden: model.config.gettingStartedHidden, complete: guide.isComplete) {
                     GettingStartedCard(model: model)
                 }
                 hero
@@ -202,11 +202,11 @@ struct HomePage: View {
                       detail: model.unavailableHotkeys.isEmpty
                           ? .homeHotkeysDetail
                           : .homeHotkeysTaken(model.unavailableHotkeys.joined(separator: ", ")),
-                      toggle: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
+                      toggle: model.binding(\.hotkeysEnabled))
             Divider()
             switchRow(.homeDragToSnap, "rectangle.3.group",
                       detail: .homeDragToSnapDetail,
-                      toggle: model.binding(\.dragSnapEnabled, set: { $0.setDragSnap($1) }))
+                      toggle: model.binding(\.dragSnapEnabled))
             Divider()
             switchRow(.homeKeepAwake, "cup.and.saucer",
                       detail: model.awakeRequested && !model.awakeOn

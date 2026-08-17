@@ -7,7 +7,7 @@ struct ActivePage: View {
     @ObservedObject var model: AppModel
 
     private var timeout: Binding<Int> {
-        model.binding(\.activeTimeoutMinutes, set: { $0.setActiveTimeout(minutes: $1) })
+        model.binding(\.activeTimeoutMinutes)
     }
 
     var body: some View {
@@ -41,7 +41,7 @@ struct ActivePage: View {
                 ToggleRow(title: .activeOnASchedule,
                           detail: .activeOnAScheduleHelp,
                           isOn: field(\.enabled))
-                if model.activeSchedule.enabled {
+                if model.config.activeSchedule.enabled {
                     SettingRow(title: .activeFrom, detail: emptyWindowHelp) {
                         DatePicker("", selection: time(\.start), displayedComponents: .hourAndMinute)
                             .labelsHidden()
@@ -63,8 +63,7 @@ struct ActivePage: View {
             SettingsCard(title: .activePower) {
                 ToggleRow(title: .activeAllowOnBattery,
                           detail: .activeAllowOnBatteryHelp,
-                          isOn: model.binding(\.activeAllowOnBattery,
-                                              set: { $0.setActiveAllowOnBattery($1) }))
+                          isOn: model.binding(\.activeAllowOnBattery))
             }
         }
     }
@@ -80,7 +79,7 @@ struct ActivePage: View {
     /// Two equal times describe no window at all rather than a whole day, so
     /// say so on the row instead of silently doing nothing.
     private var emptyWindowHelp: LocalizedStringResource? {
-        model.activeSchedule.start == model.activeSchedule.end ? .activeSameTimeHelp : nil
+        model.config.activeSchedule.start == model.config.activeSchedule.end ? .activeSameTimeHelp : nil
     }
 
     // MARK: - Days
@@ -88,7 +87,7 @@ struct ActivePage: View {
     private var days: some View {
         HStack(spacing: 5) {
             ForEach(Self.weekdays, id: \.self) { day in
-                let selected = model.activeSchedule.days.contains(day)
+                let selected = model.config.activeSchedule.days.contains(day)
                 Button(Self.symbol(for: day)) { toggle(day) }
                     .buttonStyle(.borderless)
                     .frame(width: 32, height: 22)
@@ -113,20 +112,20 @@ struct ActivePage: View {
     }
 
     private func toggle(_ day: Int) {
-        var next = model.activeSchedule
+        var next = model.config.activeSchedule
         if next.days.contains(day) { next.days.remove(day) } else { next.days.insert(day) }
-        model.actions?.setActiveSchedule(next)
+        model.actions?.update(\.activeSchedule, to: next)
     }
 
     // MARK: - Bindings
 
     private func field<Value>(_ keyPath: WritableKeyPath<ActiveSchedule, Value>) -> Binding<Value> {
         Binding(
-            get: { model.activeSchedule[keyPath: keyPath] },
+            get: { model.config.activeSchedule[keyPath: keyPath] },
             set: { value in
-                var next = model.activeSchedule
+                var next = model.config.activeSchedule
                 next[keyPath: keyPath] = value
-                model.actions?.setActiveSchedule(next)
+                model.actions?.update(\.activeSchedule, to: next)
             }
         )
     }
@@ -137,7 +136,7 @@ struct ActivePage: View {
     private func time(_ keyPath: WritableKeyPath<ActiveSchedule, Int>) -> Binding<Date> {
         Binding(
             get: {
-                let minutes = model.activeSchedule[keyPath: keyPath]
+                let minutes = model.config.activeSchedule[keyPath: keyPath]
                 return Calendar.current.date(bySettingHour: minutes / 60,
                                              minute: minutes % 60,
                                              second: 0,
@@ -145,9 +144,9 @@ struct ActivePage: View {
             },
             set: { date in
                 let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
-                var next = model.activeSchedule
+                var next = model.config.activeSchedule
                 next[keyPath: keyPath] = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
-                model.actions?.setActiveSchedule(next)
+                model.actions?.update(\.activeSchedule, to: next)
             }
         )
     }

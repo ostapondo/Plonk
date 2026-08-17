@@ -31,7 +31,7 @@ struct RulerPage: View {
                         Slider(value: $knob, in: Self.range,
                                onEditingChanged: { editing in
                                    guard !editing else { return }
-                                   model.actions?.setRulerTolerance(Int(knob.rounded()))
+                                   model.actions?.update(\.rulerEdgeTolerance, to: Int(knob.rounded()))
                                })
                             .labelsHidden()
                             .controlSize(.small)
@@ -43,7 +43,7 @@ struct RulerPage: View {
                 }
             }
         }
-        .onAppear { knob = Double(model.rulerEdgeTolerance) }
-        .onChange(of: model.rulerEdgeTolerance) { knob = Double($0) }
+        .onAppear { knob = Double(model.config.rulerEdgeTolerance) }
+        .onChange(of: model.config.rulerEdgeTolerance) { knob = Double($0) }
     }
 }

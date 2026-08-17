@@ -43,7 +43,7 @@ struct ShortcutRows: View {
                     }
                 )
             }
-            .disabled(!model.hotkeysEnabled)
+            .disabled(!model.config.hotkeysEnabled)
         }
     }
 

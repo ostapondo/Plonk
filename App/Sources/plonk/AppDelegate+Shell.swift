@@ -22,22 +22,6 @@ extension AppDelegate {
         presenter.showMainWindow()
     }
 
-    func setTheme(_ name: String) {
-        store.update { $0.appearance.theme = name }
-        applyAppearance()
-        refreshModel()
-    }
-
-    func setAccent(_ hex: String?) {
-        store.update { $0.appearance.accentHex = hex }
-        refreshModel()
-        // The overlay and the pointer tools both tint themselves with the accent
-        // unless they were given a colour of their own, so a new accent has to
-        // reach whatever is on screen now.
-        applyMouseSettings()
-        flashZones()
-    }
-
     func applyAppearance() {
         store.config.appearance.apply(to: NSApp)
     }
@@ -53,7 +37,7 @@ extension AppDelegate {
         case .cycleZone: commands.cycleZone(backwards: false)
         case .showZones: dragSnap.previewZones()
         case .awake(let minutes):
-            setAwakeTimeout(minutes: minutes ?? 0)
+            update(\.awakeTimeoutMinutes, to: minutes ?? 0)
             setAwake(true)
         case .awakeOff: setAwake(false)
         case .capture(let mode): runCapture(mode, openEditor: false)

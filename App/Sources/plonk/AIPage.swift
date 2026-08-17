@@ -11,14 +11,14 @@ struct AIPage: View {
     /// pick even when its session is gone, so it can still be cleared.
     private var agentChoices: [String] {
         var names = model.connectedAgents
-        if let selected = model.selectedAgent, !names.contains(selected) { names.append(selected) }
+        if let selected = model.config.selectedAgent, !names.contains(selected) { names.append(selected) }
         return names
     }
 
     private var selectedAgent: Binding<String> {
         Binding(
-            get: { model.selectedAgent ?? "" },
-            set: { model.actions?.selectAgent($0.isEmpty ? nil : $0) }
+            get: { model.config.selectedAgent ?? "" },
+            set: { model.actions?.update(\.selectedAgent, to: $0.isEmpty ? nil : $0) }
         )
     }
 
@@ -64,8 +64,8 @@ struct AIPage: View {
                 }
                 ToggleRow(title: .aiExclusive,
                           detail: .aiExclusiveHelp,
-                          isOn: model.binding(\.agentExclusive, set: { $0.setAgentExclusive($1) }))
-                    .disabled(model.selectedAgent == nil)
+                          isOn: model.binding(\.agentExclusive))
+                    .disabled(model.config.selectedAgent == nil)
             }
         }
     }

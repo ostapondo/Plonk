@@ -52,9 +52,6 @@ extension AppDelegate {
             config.rectangleOfferSettled = true
         }
         model.rectangleFound = false
-        hotkeys.bindings = store.config.resolvedHotkeys
-        model.zoneGap = store.config.zoneGap
-        refreshHotkeyModel()
         HUD.shared.show(outcome(of: found, displaced: displaced))
     }
 

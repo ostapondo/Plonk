@@ -5,10 +5,7 @@ import Foundation
 
 extension AppDelegate {
     func setupAwake() {
-        awake.allowOnBattery = store.config.awakeAllowOnBattery
-        awake.autoWhileCharging = store.config.awakeAutoWhileCharging
-        awake.keepDisplayOn = store.config.awakeKeepDisplayOn
-        awake.timeoutMinutes = store.config.awakeTimeoutMinutes
+        awake.apply(store.config)
         awake.onChange = { [weak self] in
             guard let self else { return }
             model.awakeOn = awake.isOn
@@ -26,13 +23,11 @@ extension AppDelegate {
         awake.reevaluate()
     }
 
+    /// What the manager is doing now. The settings behind it are read off
+    /// `model.config` directly, so there is nothing here to keep in step.
     func refreshAwakeModel() {
         model.awakeOn = awake.isOn
         model.awakeRequested = awake.requested
-        model.awakeAllowOnBattery = store.config.awakeAllowOnBattery
-        model.awakeAutoWhileCharging = store.config.awakeAutoWhileCharging
-        model.awakeKeepDisplayOn = store.config.awakeKeepDisplayOn
-        model.awakeTimeoutMinutes = store.config.awakeTimeoutMinutes
     }
 
     /// Keep-awake is a user decision, not a session detail, so it has to

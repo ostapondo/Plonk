@@ -10,11 +10,10 @@ struct MousePage: View {
             SettingsCard(title: .mousePointer) {
                 ToggleRow(title: .mouseRingClicks,
                           detail: .mouseRingClicksHelp,
-                          isOn: model.binding(\.highlightClicksEnabled,
-                                              set: { $0.setHighlightClicks($1) }))
+                          isOn: model.binding(\.highlightClicksEnabled))
                 ToggleRow(title: .mouseCrosshairs,
                           detail: .mouseCrosshairsHelp,
-                          isOn: model.binding(\.crosshairsEnabled, set: { $0.setCrosshairs($1) }))
+                          isOn: model.binding(\.crosshairsEnabled))
             }
             SettingsCard(title: .commonShortcuts, note: .mouseShortcutsHelp) {
                 SettingBlock {

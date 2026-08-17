@@ -15,8 +15,7 @@ struct VoicePage: View {
             SettingsCard(title: .voiceStraightToPlonk, note: .voiceStraightToPlonkHelp) {
                 ToggleRow(title: .voiceRunCommonHere,
                           detail: .voiceRunCommonHereHelp,
-                          isOn: model.binding(\.voiceLocalCommands,
-                                              set: { $0.setVoiceLocalCommands($1) }))
+                          isOn: model.binding(\.voiceLocalCommands))
                 SettingBlock {
                     ForEach(Array(LocalizedStringResource.voiceExamples.enumerated()),
                             id: \.offset) { _, example in

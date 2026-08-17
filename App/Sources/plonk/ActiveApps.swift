@@ -14,10 +14,10 @@ struct ActiveApps: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if model.activeApps.isEmpty {
+            if model.config.activeApps.isEmpty {
                 Text(.activeNoApps).foregroundStyle(.secondary)
             }
-            ForEach(model.activeApps, id: \.self) { id in
+            ForEach(model.config.activeApps, id: \.self) { id in
                 row(for: id)
             }
             HStack(spacing: 8) {
@@ -53,7 +53,7 @@ struct ActiveApps: View {
             }
             Spacer()
             Button {
-                model.actions?.setActiveApps(model.activeApps.filter { $0 != id })
+                model.actions?.update(\.activeApps, to: model.config.activeApps.filter { $0 != id })
             } label: {
                 Image(systemName: "minus.circle.fill")
             }
@@ -85,8 +85,8 @@ struct ActiveApps: View {
 
     private func add(_ id: String) {
         let trimmed = id.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, !model.activeApps.contains(trimmed) else { return }
-        model.actions?.setActiveApps(model.activeApps + [trimmed])
+        guard !trimmed.isEmpty, !model.config.activeApps.contains(trimmed) else { return }
+        model.actions?.update(\.activeApps, to: model.config.activeApps + [trimmed])
     }
 
     /// Name and icon for an installed bundle id. Nil once the app it named has

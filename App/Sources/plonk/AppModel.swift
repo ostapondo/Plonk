@@ -2,71 +2,41 @@ import SwiftUI
 
 // Everything the settings and zone windows can do, in one place. AppDelegate
 // implements it; views never touch the managers directly.
+//
+// A plain setting needs nothing here. `update` writes any field of `Config`
+// and every manager re-reads, so the list below is only the things that are
+// not a stored value: commands, and the few settings whose write also has to
+// tell macOS something.
 protocol AppActions: AnyObject {
+    /// Write one setting. The single path a value takes from the UI to disk:
+    /// `ConfigStore` clamps it, saves it, and every manager re-reads. Adding a
+    /// setting therefore adds no method here.
+    func update<Value>(_ path: WritableKeyPath<Config, Value>, to value: Value)
+
+    /// Keep-awake and stay-active are held by their managers, not by a stored
+    /// flag: switching either by hand holds against the schedule until the
+    /// schedule itself changes, which a config field could not express.
     func setAwake(_ on: Bool)
-    func setAwakeAllowOnBattery(_ on: Bool)
-    func setAwakeAutoWhileCharging(_ on: Bool)
-    func setAwakeKeepDisplayOn(_ on: Bool)
-    func setAwakeTimeout(minutes: Int)
-    /// Stay active: keep the system idle timer at zero so chat apps go on
-    /// showing you as available. Switching it by hand holds against the
-    /// schedule until the schedule itself changes.
     func setActive(_ on: Bool)
-    func setActiveTimeout(minutes: Int)
-    func setActiveSchedule(_ schedule: ActiveSchedule)
-    /// Bundle ids. Stay active runs while any of them is running.
-    func setActiveApps(_ bundleIDs: [String])
-    func setActiveAllowOnBattery(_ on: Bool)
     func openAccessibilitySettings()
-    func setHotkeys(_ on: Bool)
+
+    /// Binding an action frees the combination wherever else it was, so it
+    /// goes through `Config.bind` rather than a plain write. See Config+Edits.
     func setHotkey(_ action: HotkeyAction, to hotkey: Hotkey)
     func clearHotkey(_ action: HotkeyAction)
     func resetHotkeys()
+
     /// Take whatever bindings an installed or exported Rectangle has that mean
     /// the same thing here. See RectangleImport.
     func importFromRectangle()
     /// Turn down the offer on Home, for good. See RectangleOffer.
     func dismissRectangleOffer()
     /// Ask macOS to send rectangle:// URLs here too, or hand them back to an
-    /// installed Rectangle. See RectangleURLs.
+    /// installed Rectangle. Registers a scheme, so it is not a plain write.
     func setRectangleURLs(_ on: Bool)
-    func setDragSnap(_ on: Bool)
-    func setZonesRequireModifier(_ on: Bool)
-    func setZonesModifier(_ name: String)
-    /// Empty space left around each zone, in points — in the overlay and in
-    /// the window that lands there.
-    func setZoneGap(_ points: Double)
-    func setZoneOpacity(_ value: Double)
-    /// "#RRGGBB", or nil to follow the system accent colour.
-    func setZoneColor(_ hex: String?)
-    func setZoneNumbersVisible(_ on: Bool)
-    func setZonesOnAllMonitors(_ on: Bool)
-    /// How near the shared edge of two zones the cursor has to come before a
-    /// drop covers both, in points. Zero switches it off.
-    func setZoneEdgeSpan(_ points: Double)
-    /// Move and resize a window by dragging anywhere inside it with a modifier
-    /// held, instead of aiming for the title bar or the border.
-    func setGrabMove(_ on: Bool)
-    func setGrabMoveModifier(_ name: String)
-    func setGrabMoveResize(_ on: Bool)
-    func setGrabMoveShowGeometry(_ on: Bool)
-    /// Apps drag snapping and the placement shortcuts leave alone, one pattern
-    /// per line. Matched against the app's name and bundle id, case-insensitively.
-    /// A ring on every click, for screen recordings.
-    func setHighlightClicks(_ on: Bool)
-    func setCrosshairs(_ on: Bool)
-    func setExcludedApps(_ patterns: [String])
-    func setRestoreZonesOnScreenChange(_ on: Bool)
-    /// Send a newly opened window where that app's windows have been going.
-    func setPlaceNewWindows(_ on: Bool)
-    /// BCP-47 tags for text recognition; empty lets Vision choose.
-    func setTextLanguages(_ tags: [String])
+    /// Asks macOS to register the login item, and reports what it settled on.
     func setLaunchAtLogin(_ on: Bool)
-    func setShotFolder(_ folder: String)
-    func setShotCopyToClipboard(_ on: Bool)
-    /// How different a pixel has to be before the ruler calls it an edge,
-    /// on one channel of 255. See EdgeDetector.
-    func setRulerTolerance(_ value: Int)
+
     /// Hands the user the ruler: hover to size what is under the pointer, drag
     /// for a distance.
     func startRuler()
@@ -101,79 +71,50 @@ protocol AppActions: AnyObject {
     func removeWorkspaceItem(_ index: Int, from name: String)
     func cancelWorkspaceLaunch()
 
-    /// "system", "light" or "dark". Anything else reads as "system".
-    func setTheme(_ name: String)
-    /// "#RRGGBB", or nil to follow the system accent colour.
-    func setAccent(_ hex: String?)
     /// Everything the palette can run, in the order it should be offered.
     func paletteCommands() -> [PlonkCommand]
     func openCommandPalette()
 
-    /// Nil clears the selection, so any agent may drive again.
-    func selectAgent(_ name: String?)
-    func setAgentExclusive(_ on: Bool)
-    func setVoiceLocalCommands(_ on: Bool)
-    func hideGettingStarted()
-
-    func setUpdateCheckAutomatically(_ on: Bool)
     func checkForUpdates()
     /// Quits and relaunches into the new version when it succeeds.
     func installUpdate()
     func openReleasePage()
 }
 
+/// What the windows draw. `config` is every setting, held once rather than
+/// copied field by field; the published properties beside it are the things
+/// config cannot answer — what a manager is doing now, what macOS has granted,
+/// what is on screen.
 final class AppModel: ObservableObject {
+    /// The settings, as saved. Written only by AppDelegate, off ConfigStore.
+    @Published var config = Config()
+
+    // Keep-awake, as the manager has it rather than as it was last saved.
     @Published var awakeOn = false
     @Published var awakeRequested = false
-    @Published var awakeAllowOnBattery = true
-    @Published var awakeAutoWhileCharging = false
-    @Published var awakeKeepDisplayOn = true
-    @Published var awakeTimeoutMinutes = 0
+    // Stay active, likewise.
     @Published var activeOn = false
     @Published var activeRequested = false
     @Published var activeStatus: LocalizedStringResource = .activeStatusOff
     @Published var activeTrusted = true
-    @Published var activeSchedule = ActiveSchedule()
-    @Published var activeApps: [String] = []
-    @Published var activeAllowOnBattery = false
-    @Published var activeTimeoutMinutes = 0
-    @Published var hotkeysEnabled = true
+
+    // Which bindings macOS refused, and how the ones it took should read.
     @Published var unavailableHotkeys: [String] = []
     @Published var hotkeyDisplays: [String: String] = [:]
     @Published var hotkeyParts: [String: [String]] = [:]
-    @Published var dragSnapEnabled = true
-    @Published var zonesRequireModifier = true
-    @Published var zonesModifier = "shift"
-    @Published var zoneGap = 0.0
+
     /// Whether Home should offer to take a Rectangle setup: one was found on
     /// this Mac and the offer has neither been taken nor turned down.
     @Published var rectangleFound = false
-    /// Whether this app answers rectangle:// URLs. Off means it refuses them
-    /// even while still holding the scheme, which is the only reading that
-    /// stays true with no Rectangle installed to hand it back to.
-    @Published var handleRectangleURLs = false
-    @Published var zoneOpacity = 1.0
-    @Published var zoneColorHex: String?
-    @Published var zoneNumbersVisible = true
-    @Published var zonesOnAllMonitors = false
-    @Published var zoneEdgeSpan = 16.0
-    @Published var grabMoveEnabled = false
-    @Published var grabMoveModifier = "option"
-    @Published var grabMoveResize = true
-    @Published var grabMoveShowGeometry = true
-    @Published var highlightClicksEnabled = false
-    @Published var crosshairsEnabled = false
-    @Published var excludedApps: [String] = []
-    @Published var restoreZonesOnScreenChange = true
-    @Published var placeNewWindows = false
-    @Published var textLanguages: [String] = []
+
     @Published var supportedTextLanguages: [String] = []
     @Published var workspaceNames: [String] = []
-    @Published var workspaces: [String: Workspace] = [:]
     /// Non-empty only while a workspace is coming up.
     @Published var launchingWorkspace: String?
     @Published var launchStatuses: [LaunchStatus] = []
     @Published var zoneSetNames: [String] = []
+    /// Every set that can be drawn, the built-in templates included, which is
+    /// more than `config.zoneSets` holds: that is only the ones the user made.
     @Published var zoneSets: [String: [ZoneRect]] = [:]
     @Published var customZoneSetNames: [String] = []
     @Published var previewedZoneSet: String?
@@ -187,21 +128,14 @@ final class AppModel: ObservableObject {
     @Published var settingsPages: [SettingsPage] = []
     @Published var settingsGroups: [SettingsGroup] = []
     @Published var selectedPage: String?
-    @Published var appearance = AppearanceSettings()
     @Published var appVersion = ""
-    @Published var shotFolder = "~/Desktop"
-    @Published var shotCopyToClipboard = true
     @Published var shotStatus = ""
-    @Published var rulerEdgeTolerance = EdgeDetector.defaultTolerance
+    // Both are what macOS settled on rather than what config asked for: a
+    // scheme is one per machine and a login item can be refused, so the toggle
+    // has to show what is actually true.
     @Published var launchAtLogin = true
+    @Published var handleRectangleURLs = false
     @Published var connectedAgents: [String] = []
-    @Published var selectedAgent: String?
-    @Published var agentExclusive = false
-    @Published var voiceLocalCommands = true
-    @Published var sawFirstSnap = false
-    @Published var sawFirstAgent = false
-    @Published var gettingStartedHidden = false
-    @Published var updateCheckAutomatically = true
     /// Non-empty only while a newer release is on offer.
     @Published var updateAvailableVersion = ""
     @Published var updateNotes = ""
@@ -233,7 +167,7 @@ struct SettingsGroup: Identifiable {
 
 extension AppModel {
     /// The colour the app draws itself with, ready to hand to SwiftUI.
-    var accent: Color { Color(nsColor: appearance.accent) }
+    var accent: Color { Color(nsColor: config.appearance.accent) }
 
     /// A zone set name nobody has taken, which is `base` itself when it is free.
     func freeZoneSetName(base: String) -> String {
@@ -255,7 +189,17 @@ extension AppModel {
                             seed: zoneSets[name] ?? [], onScreen: index)
     }
 
-    /// Reads published state, writes through AppActions.
+    /// A setting, read straight off the config and written straight back. This
+    /// is what a settings row binds to; nothing in between needs writing.
+    func binding<Value>(_ path: WritableKeyPath<Config, Value>) -> Binding<Value> {
+        Binding(
+            get: { self.config[keyPath: path] },
+            set: { [weak self] value in self?.actions?.update(path, to: value) }
+        )
+    }
+
+    /// State a manager owns rather than the config, written through the command
+    /// that owns it: keep-awake, stay-active, the login item.
     func binding<Value>(_ keyPath: KeyPath<AppModel, Value>,
                         set: @escaping (AppActions, Value) -> Void) -> Binding<Value> {
         Binding(

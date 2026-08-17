@@ -69,8 +69,7 @@ struct UpdatePage: View {
             SettingsCard(note: .updatePrivacy) {
                 ToggleRow(title: .updateAutomatically,
                           detail: .updateAutomaticallyDetail,
-                          isOn: model.binding(\.updateCheckAutomatically,
-                                              set: { $0.setUpdateCheckAutomatically($1) }))
+                          isOn: model.binding(\.updateCheckAutomatically))
             }
         }
     }
