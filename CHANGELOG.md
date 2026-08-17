@@ -13,6 +13,20 @@ one of those.
 
 ## Unreleased
 
+### Added
+
+- **Stay active**, a page of its own under Settings, for the thing keep-awake
+  was never able to do: stop Slack and Teams showing you as Away. They do not
+  ask whether the Mac is asleep, they ask how long it is since the last
+  keypress, and a power assertion does not touch that number. Stay active
+  resets it with a Shift every two minutes. Run it by hand with a timeout, on a
+  schedule of hours and weekdays, or while a chosen app is open. The schedule is
+  read from the clock rather than fired by a timer, so a Mac that slept through
+  09:00 and woke at 11:00 is inside the window rather than waiting for tomorrow,
+  and a window may cross midnight. Off on battery unless you allow it, and it
+  needs Accessibility — without the permission the page says so instead of
+  quietly sending nothing. Agents get `set_active`.
+
 ### Changed
 
 - **The window looks like the rest of Plonk now.** Colour is the zone number

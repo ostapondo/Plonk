@@ -8,6 +8,16 @@ protocol AppActions: AnyObject {
     func setAwakeAutoWhileCharging(_ on: Bool)
     func setAwakeKeepDisplayOn(_ on: Bool)
     func setAwakeTimeout(minutes: Int)
+    /// Stay active: keep the system idle timer at zero so chat apps go on
+    /// showing you as available. Switching it by hand holds against the
+    /// schedule until the schedule itself changes.
+    func setActive(_ on: Bool)
+    func setActiveTimeout(minutes: Int)
+    func setActiveSchedule(_ schedule: ActiveSchedule)
+    /// Bundle ids. Stay active runs while any of them is running.
+    func setActiveApps(_ bundleIDs: [String])
+    func setActiveAllowOnBattery(_ on: Bool)
+    func openAccessibilitySettings()
     func setHotkeys(_ on: Bool)
     func setHotkey(_ action: HotkeyAction, to hotkey: Hotkey)
     func clearHotkey(_ action: HotkeyAction)
@@ -111,6 +121,14 @@ final class AppModel: ObservableObject {
     @Published var awakeAutoWhileCharging = false
     @Published var awakeKeepDisplayOn = true
     @Published var awakeTimeoutMinutes = 0
+    @Published var activeOn = false
+    @Published var activeRequested = false
+    @Published var activeStatus: LocalizedStringResource = .activeStatusOff
+    @Published var activeTrusted = true
+    @Published var activeSchedule = ActiveSchedule()
+    @Published var activeApps: [String] = []
+    @Published var activeAllowOnBattery = false
+    @Published var activeTimeoutMinutes = 0
     @Published var hotkeysEnabled = true
     @Published var unavailableHotkeys: [String] = []
     @Published var hotkeyDisplays: [String: String] = [:]

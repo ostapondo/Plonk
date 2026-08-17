@@ -47,5 +47,6 @@ extension LocalizedStringResource {
     static let pageAppearance = Self.key("page.appearance")
     static let pageShortcuts = Self.key("page.shortcuts")
     static let pageAwake = Self.key("page.awake")
+    static let pageActive = Self.key("page.active")
     static let pageUpdate = Self.key("page.update")
 }
