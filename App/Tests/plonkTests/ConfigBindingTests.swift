@@ -56,13 +56,30 @@ struct ConfigBindingTests {
         var config = Config()
         config.handleRectangleURLs = true
         let data = try JSONEncoder().encode(config)
-        #expect(try JSONDecoder().decode(Config.self, from: data).handleRectangleURLs)
+        #expect(try Config.decode(data).handleRectangleURLs)
     }
 
     /// Every field is optional on the way in, so a config written before this
     /// setting existed decodes rather than throwing.
     @Test func aConfigWrittenBeforeTheSettingDecodesWithItOff() throws {
-        let config = try JSONDecoder().decode(Config.self, from: Data("{}".utf8))
+        let config = try Config.decode(Data("{}".utf8))
         #expect(config.handleRectangleURLs == false)
+    }
+
+    /// The file is merged over the defaults key by key, and the merge recurses.
+    /// A nested object naming one field keeps its siblings rather than
+    /// arriving as an object with a hole in it.
+    @Test func aPartialNestedObjectKeepsTheFieldsItDoesNotName() throws {
+        let config = try Config.decode(Data(#"{"appearance": {"theme": "dark"}}"#.utf8))
+        #expect(config.appearance.theme == "dark")
+        #expect(config.appearance.accentHex == Config().appearance.accentHex)
+    }
+
+    /// A file that is valid JSON but not an object is as unreadable as one that
+    /// is not JSON at all, and ConfigStore has to hear about it either way:
+    /// that is what sets the file aside instead of overwriting it.
+    @Test func aFileThatIsNotAnObjectIsRefused() {
+        #expect(throws: (any Error).self) { try Config.decode(Data("[1,2]".utf8)) }
+        #expect(throws: (any Error).self) { try Config.decode(Data("not json".utf8)) }
     }
 }

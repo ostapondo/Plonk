@@ -42,7 +42,7 @@ struct AgentAdapterTests {
 struct ConfigTests {
 
     private func decode(_ json: String) throws -> Config {
-        try JSONDecoder().decode(Config.self, from: Data(json.utf8))
+        try Config.decode(Data(json.utf8))
     }
 
     @Test func emptyJSONYieldsDefaults() throws {
@@ -107,7 +107,7 @@ struct ConfigTests {
                           x: 0, y: 0, w: 0.5, h: 1, minimized: true,
                           urls: ["~/Projects/plonk"], args: ["--new-window"]),
         ], moveExisting: false)
-        let decoded = try JSONDecoder().decode(Config.self, from: JSONEncoder().encode(config))
+        let decoded = try Config.decode(JSONEncoder().encode(config))
         let item = try #require(decoded.workspaces["work"]?.items.first)
         #expect(item.bundleID == "com.microsoft.VSCode")
         #expect(item.windowIndex == 1)
@@ -125,7 +125,7 @@ struct ConfigTests {
         config.screenZoneSets["0"] = "Mine"
         config.awakeTimeoutMinutes = 30
         let data = try JSONEncoder().encode(config)
-        let decoded = try JSONDecoder().decode(Config.self, from: data)
+        let decoded = try Config.decode(data)
         #expect(decoded.zonesModifier == "option")
         #expect(decoded.screenZoneSets["0"] == "Mine")
         #expect(decoded.zoneSets["Mine"]?.count == 1)
@@ -136,7 +136,7 @@ struct ConfigTests {
         var config = Config()
         config.awakeRequested = true
         config.awakeSessionEnd = 1_800_000_000
-        let decoded = try JSONDecoder().decode(Config.self, from: JSONEncoder().encode(config))
+        let decoded = try Config.decode(JSONEncoder().encode(config))
         #expect(decoded.awakeRequested)
         #expect(decoded.awakeSessionEnd == 1_800_000_000)
     }

@@ -135,73 +135,6 @@ struct Config: Codable {
 
     init() {}
 
-    // Tolerate missing keys so old config files survive new fields.
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        hotkeysEnabled = try c.decodeIfPresent(Bool.self, forKey: .hotkeysEnabled) ?? true
-        hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? [:]
-        dragSnapEnabled = try c.decodeIfPresent(Bool.self, forKey: .dragSnapEnabled) ?? true
-        zonesRequireShift = try c.decodeIfPresent(Bool.self, forKey: .zonesRequireShift) ?? true
-        zonesModifier = try c.decodeIfPresent(String.self, forKey: .zonesModifier) ?? "shift"
-        zoneGap = try c.decodeIfPresent(Double.self, forKey: .zoneGap) ?? 0
-        zoneOpacity = try c.decodeIfPresent(Double.self, forKey: .zoneOpacity) ?? 1
-        zoneColorHex = try c.decodeIfPresent(String.self, forKey: .zoneColorHex)
-        zoneNumbersVisible = try c.decodeIfPresent(Bool.self, forKey: .zoneNumbersVisible) ?? true
-        zonesOnAllMonitors = try c.decodeIfPresent(Bool.self, forKey: .zonesOnAllMonitors) ?? false
-        zoneEdgeSpanPoints = try c.decodeIfPresent(Double.self, forKey: .zoneEdgeSpanPoints) ?? 16
-        grabMoveEnabled = try c.decodeIfPresent(Bool.self, forKey: .grabMoveEnabled) ?? false
-        grabMoveModifier = try c.decodeIfPresent(String.self, forKey: .grabMoveModifier) ?? "option"
-        grabMoveResize = try c.decodeIfPresent(Bool.self, forKey: .grabMoveResize) ?? true
-        grabMoveShowGeometry = try c.decodeIfPresent(Bool.self, forKey: .grabMoveShowGeometry) ?? true
-        highlightClicksEnabled = try c.decodeIfPresent(Bool.self, forKey: .highlightClicksEnabled) ?? false
-        crosshairsEnabled = try c.decodeIfPresent(Bool.self, forKey: .crosshairsEnabled) ?? false
-        excludedApps = try c.decodeIfPresent([String].self, forKey: .excludedApps) ?? []
-        restoreZonesOnScreenChange = try c.decodeIfPresent(Bool.self, forKey: .restoreZonesOnScreenChange) ?? true
-        placeNewWindows = try c.decodeIfPresent(Bool.self, forKey: .placeNewWindows) ?? false
-        textLanguages = try c.decodeIfPresent([String].self, forKey: .textLanguages) ?? []
-        awakeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .awakeAllowOnBattery) ?? true
-        awakeAutoWhileCharging = try c.decodeIfPresent(Bool.self, forKey: .awakeAutoWhileCharging) ?? false
-        awakeKeepDisplayOn = try c.decodeIfPresent(Bool.self, forKey: .awakeKeepDisplayOn) ?? true
-        awakeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .awakeTimeoutMinutes) ?? 0
-        awakeRequested = try c.decodeIfPresent(Bool.self, forKey: .awakeRequested) ?? false
-        awakeSessionEnd = try c.decodeIfPresent(Double.self, forKey: .awakeSessionEnd)
-        activeSchedule = try c.decodeIfPresent(ActiveSchedule.self, forKey: .activeSchedule) ?? ActiveSchedule()
-        activeApps = try c.decodeIfPresent([String].self, forKey: .activeApps) ?? []
-        activeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .activeAllowOnBattery) ?? false
-        activeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .activeTimeoutMinutes) ?? 0
-        shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
-        shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
-        rulerEdgeTolerance = try c.decodeIfPresent(Int.self, forKey: .rulerEdgeTolerance)
-            ?? EdgeDetector.defaultTolerance
-        launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
-        updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
-        handleRectangleURLs = try c.decodeIfPresent(Bool.self, forKey: .handleRectangleURLs) ?? false
-        rectangleOfferSettled = try c.decodeIfPresent(Bool.self, forKey: .rectangleOfferSettled) ?? false
-        selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
-        agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
-        voiceLocalCommands = try c.decodeIfPresent(Bool.self, forKey: .voiceLocalCommands) ?? true
-        sawFirstSnap = try c.decodeIfPresent(Bool.self, forKey: .sawFirstSnap) ?? false
-        sawFirstAgent = try c.decodeIfPresent(Bool.self, forKey: .sawFirstAgent) ?? false
-        gettingStartedHidden = try c.decodeIfPresent(Bool.self, forKey: .gettingStartedHidden) ?? false
-        agentAdapters = try c.decodeIfPresent([AgentAdapter].self, forKey: .agentAdapters) ?? []
-        appearance = try c.decodeIfPresent(AppearanceSettings.self, forKey: .appearance) ?? AppearanceSettings()
-        if let current = try c.decodeIfPresent([String: Workspace].self, forKey: .workspaces) {
-            workspaces = current
-        } else {
-            let legacy = try decoder.container(keyedBy: LegacyKeys.self)
-            workspaces = (try legacy.decodeIfPresent([String: [WorkspaceItem]].self, forKey: .layouts) ?? [:])
-                .mapValues { Workspace(items: $0) }
-        }
-        zoneSets = try c.decodeIfPresent([String: [ZoneRect]].self, forKey: .zoneSets) ?? [:]
-        screenZoneSets = try c.decodeIfPresent([String: String].self, forKey: .screenZoneSets) ?? [:]
-    }
-
-    /// Configs written before workspaces hold bare item arrays under "layouts".
-    /// Every field workspaces added is optional, so those still decode.
-    private enum LegacyKeys: String, CodingKey {
-        case layouts
-    }
-
     /// Assigned set name for a screen, or nil when it has no assignment.
     /// An empty string means edge snapping.
     func zoneAssignment(forKeys keys: [String]) -> String? {
@@ -241,6 +174,58 @@ struct Config: Codable {
     }
 }
 
+// MARK: - Reading a file
+
+extension Config {
+    /// Read a config file, tolerating every key it does not have.
+    ///
+    /// Swift synthesizes a decoder that demands every key, and there is no way
+    /// to tell it "use the property's default when one is missing". Spelling
+    /// that out by hand cost a line per field, and a new setting decoded only
+    /// if you remembered to add its line — which is a default that silently
+    /// stops applying, not a compiler error.
+    ///
+    /// So the file is merged over the defaults as JSON first. Every key is then
+    /// present, the synthesized decoder is enough, and adding a setting is the
+    /// field and nothing else.
+    static func decode(_ data: Data) throws -> Config {
+        guard let stored = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw Failure.notAnObject
+        }
+        let defaults = try JSONSerialization
+            .jsonObject(with: JSONEncoder().encode(Config())) as? [String: Any] ?? [:]
+        let merged = Self.merging(defaults, under: Self.migrated(stored))
+        return try JSONDecoder().decode(
+            Config.self, from: JSONSerialization.data(withJSONObject: merged))
+    }
+
+    enum Failure: Error {
+        case notAnObject
+    }
+
+    /// `over` wins, key by key, recursing where both sides are objects. The
+    /// recursion is what lets a file name one field of `appearance` without
+    /// losing the rest of it.
+    private static func merging(_ base: [String: Any], under over: [String: Any]) -> [String: Any] {
+        base.merging(over) { mine, theirs in
+            guard let mine = mine as? [String: Any], let theirs = theirs as? [String: Any] else {
+                return theirs
+            }
+            return merging(mine, under: theirs)
+        }
+    }
+
+    /// Renames a key an older release wrote. Configs written before workspaces
+    /// could launch apps hold bare item arrays under "layouts".
+    private static func migrated(_ stored: [String: Any]) -> [String: Any] {
+        guard stored["workspaces"] == nil,
+              let layouts = stored["layouts"] as? [String: Any] else { return stored }
+        var stored = stored
+        stored["workspaces"] = layouts.mapValues { ["items": $0] }
+        return stored
+    }
+}
+
 final class ConfigStore {
     private(set) var config = Config()
     /// Set when `load` had to set an unreadable config aside, so the UI can say so.
@@ -263,7 +248,7 @@ final class ConfigStore {
     func load() {
         guard let data = try? Data(contentsOf: url) else { return }
         do {
-            config = try JSONDecoder().decode(Config.self, from: data)
+            config = try Config.decode(data)
             // A file edited by hand is as much a caller as the slider is.
             config.clamp()
         } catch {
