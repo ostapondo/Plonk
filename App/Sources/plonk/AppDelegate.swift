@@ -68,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshModel()
 
         applyLaunchAtLogin(store.config.launchAtLogin)
-        model.launchAtLogin = isLaunchAtLoginEnabled
+        model.loginItemRegistered = isLaunchAtLoginEnabled
 
         knownDisplays = Self.attachedDisplays()
         watchForAccessibility()

@@ -13,9 +13,9 @@ struct AwakePage: View {
         PageShell(title: .pageAwake, subtitle: .awakeMenuBarGlow) {
             SettingsCard {
                 ToggleRow(title: .awakeKeepNow,
-                          detail: model.awakeRequested && !model.awakeOn
+                          detail: model.awakeHeld && !model.awakeOn
                               ? LocalizedStringResource.awakePausedOnBattery : nil,
-                          isOn: model.binding(\.awakeRequested, set: { $0.setAwake($1) }))
+                          isOn: model.binding(\.awakeHeld, set: { $0.setAwake($1) }))
                 SettingRow(title: .awakeTurnOffAfter) {
                     Picker("", selection: timeout) {
                         Text(.awakeNever).tag(0)

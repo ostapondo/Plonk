@@ -175,7 +175,7 @@ final class WindowManager {
         }
         guard let win else { return "no matching window for \"\(appName)\"" }
         if WindowAccess.isMinimized(win) {
-            AXUIElementSetAttributeValue(win, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
+            WindowAccess.setMinimized(false, of: win)
         }
         let index = screenIdx ?? screenIndex(containing: frame(ofWindow: win) ?? .zero, in: all)
         guard place(win, axRect(for: frac, screenIndex: index, in: all, gap: gap)) else {
@@ -184,7 +184,7 @@ final class WindowManager {
         if activate { app.activate() }
         // Minimizing right after a resize confuses some apps, so it goes last.
         if minimize {
-            AXUIElementSetAttributeValue(win, kAXMinimizedAttribute as CFString, kCFBooleanTrue)
+            WindowAccess.setMinimized(true, of: win)
         }
         return nil
     }
@@ -279,8 +279,7 @@ final class WindowManager {
     /// Brings a window forward and gives it focus. Raising alone leaves the
     /// keyboard with whatever was in front, so the app is activated too.
     func focus(_ win: AXUIElement, of app: NSRunningApplication) {
-        AXUIElementPerformAction(win, kAXRaiseAction as CFString)
-        AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
+        WindowAccess.raise(win)
         app.activate()
     }
 }

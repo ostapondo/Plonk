@@ -122,7 +122,7 @@ extension AppDelegate {
         // a SwiftUI setter. The answer comes back on the main queue.
         DispatchQueue.global(qos: .userInitiated).async {
             RectangleURLs.setHandled(on) { [weak self] holding in
-                self?.model.handleRectangleURLs = holding
+                self?.model.holdsRectangleURLs = holding
             }
         }
     }
@@ -170,7 +170,7 @@ extension AppDelegate {
     private func returnRectangleURLs() {
         DispatchQueue.global(qos: .utility).async {
             RectangleURLs.setHandled(false) { [weak self] holding in
-                self?.model.handleRectangleURLs = holding
+                self?.model.holdsRectangleURLs = holding
             }
         }
     }

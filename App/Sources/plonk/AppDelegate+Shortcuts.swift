@@ -43,7 +43,7 @@ extension AppDelegate {
         let wanted = store.config.handleRectangleURLs
         DispatchQueue.global(qos: .utility).async {
             RectangleURLs.setHandled(wanted) { [weak self] holding in
-                self?.model.handleRectangleURLs = holding
+                self?.model.holdsRectangleURLs = holding
             }
         }
     }

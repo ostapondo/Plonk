@@ -28,6 +28,6 @@ extension AppDelegate {
         update(\.launchAtLogin, to: on)
         // macOS can refuse, so the toggle shows what it settled on rather than
         // what it was asked for.
-        model.launchAtLogin = isLaunchAtLoginEnabled
+        model.loginItemRegistered = isLaunchAtLoginEnabled
     }
 }

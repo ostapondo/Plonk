@@ -6,9 +6,11 @@ import ApplicationServices
 // into that app, so every element made here carries a timeout — a hung app
 // must not take the cursor with it during a drag.
 //
-// WindowManager decides where a window goes. This is the whole of how it gets
-// there, which is what makes it the one thing to look at when macOS changes
-// what it will let an app do.
+// WindowManager decides where a window goes; this is the whole of how it gets
+// there, so it is the one file to read when macOS changes what an app may do
+// to another app's windows. Reading a menu bar (ShortcutGuide) and subscribing
+// to window-opened notifications (NewWindowWatcher) are different surfaces and
+// stay where they are.
 
 enum WindowAccess {
     /// Drag snapping makes one call per mouse event, so the wait is short
@@ -92,6 +94,18 @@ enum WindowAccess {
         var pid: pid_t = 0
         guard AXUIElementGetPid(win, &pid) == .success else { return nil }
         return NSRunningApplication(processIdentifier: pid)
+    }
+
+    static func setMinimized(_ minimized: Bool, of win: AXUIElement) {
+        AXUIElementSetAttributeValue(win, kAXMinimizedAttribute as CFString,
+                                     minimized ? kCFBooleanTrue : kCFBooleanFalse)
+    }
+
+    /// Brings a window to the front of its own app. Making it main as well is
+    /// what tells the app which of its windows the user meant.
+    static func raise(_ win: AXUIElement) {
+        AXUIElementPerformAction(win, kAXRaiseAction as CFString)
+        AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
     }
 
     /// False when the app refused the move, the resize, or both.

@@ -9,7 +9,7 @@ extension AppDelegate {
         awake.onChange = { [weak self] in
             guard let self else { return }
             model.awakeOn = awake.isOn
-            model.awakeRequested = awake.requested
+            model.awakeHeld = awake.requested
             refreshStatusMenu()
             persistAwakeSession()
             // Also fires when the power source or a timeout flips it, which
@@ -27,7 +27,7 @@ extension AppDelegate {
     /// `model.config` directly, so there is nothing here to keep in step.
     func refreshAwakeModel() {
         model.awakeOn = awake.isOn
-        model.awakeRequested = awake.requested
+        model.awakeHeld = awake.requested
     }
 
     /// Keep-awake is a user decision, not a session detail, so it has to

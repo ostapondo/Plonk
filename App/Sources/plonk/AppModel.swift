@@ -91,7 +91,10 @@ final class AppModel: ObservableObject {
 
     // Keep-awake, as the manager has it rather than as it was last saved.
     @Published var awakeOn = false
-    @Published var awakeRequested = false
+    /// Whether the manager is holding, which is not `config.awakeRequested`:
+    /// that one is only what to restore after a relaunch. Named apart so a
+    /// key path cannot mean both.
+    @Published var awakeHeld = false
     // Stay active, likewise.
     @Published var activeOn = false
     @Published var activeRequested = false
@@ -130,11 +133,13 @@ final class AppModel: ObservableObject {
     @Published var selectedPage: String?
     @Published var appVersion = ""
     @Published var shotStatus = ""
-    // Both are what macOS settled on rather than what config asked for: a
-    // scheme is one per machine and a login item can be refused, so the toggle
-    // has to show what is actually true.
-    @Published var launchAtLogin = true
-    @Published var handleRectangleURLs = false
+    // What macOS settled on, rather than what config asked for: a scheme is one
+    // per machine and a login item can be refused, so the toggle shows what is
+    // actually true. Named apart from the config fields they answer for, so
+    // that `binding(\.launchAtLogin)` cannot quietly mean the wrong one: the
+    // Config overload writes the setting and never tells macOS.
+    @Published var loginItemRegistered = true
+    @Published var holdsRectangleURLs = false
     @Published var connectedAgents: [String] = []
     /// Non-empty only while a newer release is on offer.
     @Published var updateAvailableVersion = ""

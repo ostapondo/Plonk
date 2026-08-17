@@ -32,9 +32,13 @@ Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
   what a manager is doing now, what macOS has granted, what is on screen.
   Views never reach past it.
 - `ScreenIdentity` turns a screen index into the keys config is stored under.
-- `WindowAccess` is every call into the Accessibility API and nothing else.
-  `WindowManager` decides where a window goes and is the only caller; a window
-  that moves without `WindowManager.place` seeing it announces nothing.
+- `WindowAccess` holds every Accessibility call that reads or moves a window,
+  and `WindowManager` is its only caller: one decides where a window goes, the
+  other is how it gets there. A window that moves without `WindowManager.place`
+  seeing it announces nothing. Two other surfaces talk to AX directly and are
+  not behind it — `ShortcutGuide` walks another app's menu bar and
+  `NewWindowWatcher` subscribes to window-opened notifications. Anything about
+  a window's frame belongs in `WindowAccess`; those two do not.
 
 ## Adding a module
 

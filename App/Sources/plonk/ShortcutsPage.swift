@@ -79,7 +79,7 @@ struct ShortcutsPage: View {
             .disabled(!model.config.hotkeysEnabled)
             ToggleRow(title: .keysRectangleURLs,
                       detail: .keysRectangleURLsHelp,
-                      isOn: model.binding(\.handleRectangleURLs,
+                      isOn: model.binding(\.holdsRectangleURLs,
                                           set: { $0.setRectangleURLs($1) }))
         }
     }

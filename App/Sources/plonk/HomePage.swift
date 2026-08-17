@@ -165,9 +165,9 @@ struct HomePage: View {
             tile(.homeEditZones, "pencil.and.outline", keys: []) {
                 model.actions?.openZonePicker()
             }
-            tile(model.awakeRequested ? LocalizedStringResource.homeAwakeOn : .homeKeepAwake,
+            tile(model.awakeHeld ? LocalizedStringResource.homeAwakeOn : .homeKeepAwake,
                  "cup.and.saucer", keys: []) {
-                model.actions?.setAwake(!model.awakeRequested)
+                model.actions?.setAwake(!model.awakeHeld)
             }
         }
     }
@@ -209,13 +209,13 @@ struct HomePage: View {
                       toggle: model.binding(\.dragSnapEnabled))
             Divider()
             switchRow(.homeKeepAwake, "cup.and.saucer",
-                      detail: model.awakeRequested && !model.awakeOn
+                      detail: model.awakeHeld && !model.awakeOn
                           ? LocalizedStringResource.homeKeepAwakePaused : .homeKeepAwakeDetail,
-                      toggle: model.binding(\.awakeRequested, set: { $0.setAwake($1) }))
+                      toggle: model.binding(\.awakeHeld, set: { $0.setAwake($1) }))
             Divider()
             switchRow(.homeLaunchAtLogin, "power",
                       detail: .homeLaunchAtLoginDetail,
-                      toggle: model.binding(\.launchAtLogin, set: { $0.setLaunchAtLogin($1) }))
+                      toggle: model.binding(\.loginItemRegistered, set: { $0.setLaunchAtLogin($1) }))
         }
         .card()
     }
