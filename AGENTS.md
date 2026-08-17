@@ -11,10 +11,12 @@ Rules for AI agents working in this repo.
 Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
 
 - `Router` owns the route table and nothing else: every case is one line to the
-  module that handles it, in a `Router+*` file of its own. `AppDelegate` owns
-  lifecycle, windows and the status menu. It is over the line limit and may only
-  shrink, so anything new goes in an extension of its own — see
-  `AppDelegate+Shell`.
+  module that handles it, in a `Router+*` file of its own.
+- `AppDelegate.swift` is the list of what the app is made of and the order it
+  comes up in, and nothing else. Every module's wiring lives in an
+  `AppDelegate+<Module>.swift` beside it, which is why none of those stored
+  properties is private: Swift only lets an extension in the same file see
+  that. New behavior goes in the module's file, or in a new one.
 - `ConfigStore` is the only way a setting is written. `update` clamps and saves
   it, then `didMutate` fires and `AppDelegate.applyConfig` hands the whole
   config to every manager. Nothing pushes a single field at a manager itself.
