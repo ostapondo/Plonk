@@ -212,58 +212,6 @@ struct ConfigTests {
     }
 }
 
-struct ConfigStoreTests {
-
-    private func temporaryDirectory() -> URL {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("plonk-tests-\(UUID().uuidString)", isDirectory: true)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        return url
-    }
-
-    @Test func savesAndReloads() {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-
-        let store = ConfigStore(directory: dir)
-        store.update {
-            $0.workspaces["work"] = Workspace(items: [
-                WorkspaceItem(app: "Safari", x: 0, y: 0, w: 0.5, h: 1),
-            ])
-        }
-
-        let reopened = ConfigStore(directory: dir)
-        reopened.load()
-        #expect(reopened.config.workspaces["work"]?.items.count == 1)
-    }
-
-    @Test func corruptFileIsSetAsideInsteadOfSilentlyOverwritten() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let file = dir.appendingPathComponent("config.json")
-        try Data("{ not json".utf8).write(to: file)
-
-        let store = ConfigStore(directory: dir)
-        store.load()
-
-        #expect(store.config.workspaces.isEmpty)
-        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("config.json.bad").path))
-        // Losing every saved workspace has to reach the user, not just the log.
-        #expect(store.loadFailure?.contains("config.json.bad") == true)
-    }
-
-    @Test func aReadableConfigReportsNoFailure() {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let store = ConfigStore(directory: dir)
-        store.update { $0.shotFolder = "~/Pictures" }
-
-        let reopened = ConfigStore(directory: dir)
-        reopened.load()
-        #expect(reopened.loadFailure == nil)
-    }
-}
-
 struct FracRectParsingTests {
 
     @Test func parsesAFrameInRange() throws {

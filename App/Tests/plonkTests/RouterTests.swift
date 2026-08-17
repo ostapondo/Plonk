@@ -166,11 +166,11 @@ struct RouterTests {
 
     @Test func workspaceChangesNotifyTheUI() {
         let h = Harness()
-        var notifications = 0
-        h.store.didMutate = { notifications += 1 }
+        var events: [String] = []
+        h.router.changes.onEvent = { _, what in events.append(what) }
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
         _ = h.post("/workspaces/delete", ["name": "work"])
-        #expect(notifications == 2)
+        #expect(events.filter { $0 == "config" }.count == 2)
     }
 
     @Test func zoneSetsAreValidatedAgainstScreenBounds() {
@@ -435,10 +435,10 @@ struct RouterTests {
 
     @Test func agentChangesNotifyTheUI() {
         let h = Harness()
-        var notifications = 0
-        h.store.didMutate = { notifications += 1 }
+        var events: [String] = []
+        h.router.changes.onEvent = { _, what in events.append(what) }
         _ = h.post("/agents/select", ["name": "claude-code"])
         _ = h.post("/agents/exclusive", ["on": true])
-        #expect(notifications == 2)
+        #expect(events.filter { $0 == "config" }.count == 2)
     }
 }
