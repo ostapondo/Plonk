@@ -32,6 +32,9 @@ Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
   what a manager is doing now, what macOS has granted, what is on screen.
   Views never reach past it.
 - `ScreenIdentity` turns a screen index into the keys config is stored under.
+- `WindowAccess` is every call into the Accessibility API and nothing else.
+  `WindowManager` decides where a window goes and is the only caller; a window
+  that moves without `WindowManager.place` seeing it announces nothing.
 
 ## Adding a module
 

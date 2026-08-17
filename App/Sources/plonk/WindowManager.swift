@@ -7,9 +7,41 @@ import ApplicationServices
 
 final class WindowManager {
 
-    /// AX calls are synchronous IPC into the target app. Drag snapping makes
-    /// one per mouse event, so a hung app must not take the cursor with it.
-    static let axTimeout: Float = 0.25
+    /// Fires on the main queue after any window actually moves, whoever asked —
+    /// hotkeys, drag snapping, workspace launches or the HTTP routes.
+    var onDidPlace: (() -> Void)?
+
+    // MARK: - Accessibility
+    //
+    // WindowAccess holds every call into the Accessibility API; what is here is
+    // the part of it this app hands to the rest of itself, plus the one place
+    // that announces a move.
+
+    var isTrusted: Bool { WindowAccess.isTrusted }
+    func promptForTrust() { WindowAccess.promptForTrust() }
+    func frame(ofWindow win: AXUIElement) -> CGRect? { WindowAccess.frame(of: win) }
+    func window(at point: CGPoint) -> AXUIElement? { WindowAccess.window(at: point) }
+    func app(ofWindow win: AXUIElement) -> NSRunningApplication? { WindowAccess.app(ofWindow: win) }
+    func focusedWindow(of app: NSRunningApplication) -> AXUIElement? {
+        WindowAccess.focusedWindow(of: app)
+    }
+
+    /// Placement during a live drag. Announces nothing: the change bus would
+    /// otherwise fire on every mouse event, and the drop announces once.
+    func setFrame(_ rect: CGRect, ofWindow win: AXUIElement) {
+        _ = WindowAccess.setFrame(rect, of: win)
+    }
+
+    /// Every other placement. Hotkeys, drag drops, workspace launches and the
+    /// HTTP routes all reach here, so this is the one place that sees a window
+    /// move and the only one that has to announce it. Launches run off the
+    /// main queue, which is why the callback hops back onto it.
+    @discardableResult
+    private func place(_ win: AXUIElement, _ rect: CGRect) -> Bool {
+        guard WindowAccess.setFrame(rect, of: win) else { return false }
+        if let onDidPlace { DispatchQueue.main.async(execute: onDidPlace) }
+        return true
+    }
 
     // MARK: - Coordinate conversion
 
@@ -37,12 +69,6 @@ final class WindowManager {
         let center = CGPoint(x: axRect.midX, y: axRect.midY)
         return all.first { $0.frame.contains(center) }?.index ?? 0
     }
-
-    // MARK: - AX helpers
-
-    /// Fires on the main queue after any window actually moves, whoever asked —
-    /// hotkeys, drag snapping, workspace launches or the HTTP routes.
-    var onDidPlace: (() -> Void)?
 
     private func axRect(for frac: FracRect, screenIndex: Int, in all: [ScreenInfo],
                         gap: CGFloat = 0) -> CGRect {
@@ -73,14 +99,14 @@ final class WindowManager {
         let ownPID = ProcessInfo.processInfo.processIdentifier
         for app in runningApps() where app.processIdentifier != ownPID {
             let name = app.localizedName ?? "?"
-            for (windowIndex, win) in axWindows(of: app.processIdentifier).enumerated() {
+            for (windowIndex, win) in WindowAccess.windows(of: app.processIdentifier).enumerated() {
                 guard let f = frame(ofWindow: win) else { continue }
-                let minimized = isMinimized(win)
+                let minimized = WindowAccess.isMinimized(win)
                 let index = screenIndex(containing: f, in: allScreens)
                 var entry: [String: Any] = [
                     "app": name,
                     "pid": app.processIdentifier,
-                    "title": title(of: win),
+                    "title": WindowAccess.title(of: win),
                     "minimized": minimized,
                     "screen": index,
                     "window_index": windowIndex,
@@ -134,9 +160,9 @@ final class WindowManager {
         guard let app = findApp(bundleID: bundleID, named: appName) else {
             return "app \"\(appName)\" is not running"
         }
-        var wins = axWindows(of: app.processIdentifier)
+        var wins = WindowAccess.windows(of: app.processIdentifier)
         if let t = titleContains?.lowercased(), !t.isEmpty {
-            let matching = wins.filter { title(of: $0).lowercased().contains(t) }
+            let matching = wins.filter { WindowAccess.title(of: $0).lowercased().contains(t) }
             // A saved title is a hint: windows get renamed as their content
             // changes, and no match is worse than the wrong window.
             if !matching.isEmpty { wins = matching }
@@ -145,14 +171,14 @@ final class WindowManager {
         if let windowIndex, wins.indices.contains(windowIndex) {
             win = wins[windowIndex]
         } else {
-            win = wins.first(where: { !isMinimized($0) }) ?? wins.first
+            win = wins.first(where: { !WindowAccess.isMinimized($0) }) ?? wins.first
         }
         guard let win else { return "no matching window for \"\(appName)\"" }
-        if isMinimized(win) {
+        if WindowAccess.isMinimized(win) {
             AXUIElementSetAttributeValue(win, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
         }
         let index = screenIdx ?? screenIndex(containing: frame(ofWindow: win) ?? .zero, in: all)
-        guard setFrame(win, axRect(for: frac, screenIndex: index, in: all, gap: gap)) else {
+        guard place(win, axRect(for: frac, screenIndex: index, in: all, gap: gap)) else {
             return "window of \"\(appName)\" refused to move or resize"
         }
         if activate { app.activate() }
@@ -176,17 +202,17 @@ final class WindowManager {
     /// Zero also covers an app that is not running.
     func windowCount(bundleID: String?, named name: String) -> Int {
         guard let app = findApp(bundleID: bundleID, named: name) else { return 0 }
-        return axWindows(of: app.processIdentifier).count
+        return WindowAccess.windows(of: app.processIdentifier).count
     }
 
     /// Which screen an app's window currently sits on, or nil when not running.
     func screenIndex(ofApp appName: String, titleContains: String?) -> Int? {
         guard let app = findApp(named: appName) else { return nil }
-        var wins = axWindows(of: app.processIdentifier)
+        var wins = WindowAccess.windows(of: app.processIdentifier)
         if let t = titleContains?.lowercased(), !t.isEmpty {
-            wins = wins.filter { title(of: $0).lowercased().contains(t) }
+            wins = wins.filter { WindowAccess.title(of: $0).lowercased().contains(t) }
         }
-        guard let win = wins.first(where: { !isMinimized($0) }) ?? wins.first,
+        guard let win = wins.first(where: { !WindowAccess.isMinimized($0) }) ?? wins.first,
               let f = frame(ofWindow: win) else { return nil }
         return screenIndex(containing: f, in: screens())
     }
@@ -194,7 +220,7 @@ final class WindowManager {
     /// Place a specific window (used by drag snapping). `gap` is the empty
     /// space left around the zone, in points, so a snapped window can breathe.
     func apply(frac: FracRect, toWindow win: AXUIElement, screenIndex: Int, gap: CGFloat = 0) {
-        setFrame(win, axRect(for: frac, screenIndex: screenIndex, in: screens(), gap: gap))
+        place(win, axRect(for: frac, screenIndex: screenIndex, in: screens(), gap: gap))
     }
 
     /// Which screen a window sits on, by the screen its centre falls in.
@@ -228,7 +254,7 @@ final class WindowManager {
         let all = screens()
         guard !all.isEmpty else { return false }
         let index = screenIndex(containing: rect, in: all)
-        return setFrame(win, WindowNavigator.clamped(rect, into: all[index].visible))
+        return place(win, WindowNavigator.clamped(rect, into: all[index].visible))
     }
 
     /// Every window Plonk can address, with its frame and title, excluding
@@ -242,9 +268,9 @@ final class WindowManager {
         let ownPID = ProcessInfo.processInfo.processIdentifier
         var result: [(NSRunningApplication, AXUIElement, CGRect, String)] = []
         for app in runningApps() where app.processIdentifier != ownPID {
-            for win in axWindows(of: app.processIdentifier) where !isMinimized(win) {
+            for win in WindowAccess.windows(of: app.processIdentifier) where !WindowAccess.isMinimized(win) {
                 guard let f = frame(ofWindow: win) else { continue }
-                result.append((app, win, f, title(of: win)))
+                result.append((app, win, f, WindowAccess.title(of: win)))
             }
         }
         return result
