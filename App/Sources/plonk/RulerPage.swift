@@ -13,46 +13,36 @@ struct RulerPage: View {
         Double(EdgeDetector.toleranceRange.lowerBound)...Double(EdgeDetector.toleranceRange.upperBound)
 
     var body: some View {
-        Form {
-            Section {
-                Button(String(localized: .rulerMeasure)) { model.actions?.startRuler() }
-            } header: {
-                Text(.rulerTitle)
-            } footer: {
-                Text(.rulerHelp)
-            }
-            Section {
-                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "ruler"))
-            } header: {
-                Text(.rulerShortcut)
-            }
-            Section {
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack {
-                        Text(.rulerSensitivity)
-                        Spacer()
-                        Text("\(Int(knob.rounded()))")
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
-                    Slider(value: $knob, in: Self.range,
-                           onEditingChanged: { editing in
-                               guard !editing else { return }
-                               model.actions?.setRulerTolerance(Int(knob.rounded()))
-                           })
-                        .labelsHidden()
-                        .controlSize(.small)
-                    Text(.rulerSensitivityHelp)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+        PageShell(title: .pageRuler, subtitle: .rulerHelp) {
+            SettingsCard(title: .rulerTitle) {
+                SettingBlock {
+                    Button(String(localized: .rulerMeasure)) { model.actions?.startRuler() }
+                        .buttonStyle(.borderedProminent)
                 }
-            } header: {
-                Text(.rulerDetection)
-            } footer: {
-                Text(.rulerDetectionHelp)
+            }
+            SettingsCard(title: .rulerShortcut) {
+                SettingBlock {
+                    ShortcutRows(model: model, actions: HotkeyAction.owned(by: "ruler"))
+                }
+            }
+            SettingsCard(title: .rulerDetection, note: .rulerDetectionHelp) {
+                SettingRow(title: .rulerSensitivity, detail: .rulerSensitivityHelp, stacked: true) {
+                    HStack(spacing: 10) {
+                        Slider(value: $knob, in: Self.range,
+                               onEditingChanged: { editing in
+                                   guard !editing else { return }
+                                   model.actions?.setRulerTolerance(Int(knob.rounded()))
+                               })
+                            .labelsHidden()
+                            .controlSize(.small)
+                        Text("\(Int(knob.rounded()))")
+                            .font(.system(size: 12).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24, alignment: .trailing)
+                    }
+                }
             }
         }
-        .formStyle(.grouped)
         .onAppear { knob = Double(model.rulerEdgeTolerance) }
         .onChange(of: model.rulerEdgeTolerance) { knob = Double($0) }
     }

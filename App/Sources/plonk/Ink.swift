@@ -78,6 +78,23 @@ enum Ink {
 extension View {
     /// A raised surface: everything that is not the page background sits on one.
     func card() -> some View { modifier(CardSurface()) }
+
+    /// Text that is not the subject of its row: card headings, the note under a
+    /// card, a footnote.
+    ///
+    /// Deliberately not `.tertiary`. macOS draws that at roughly a quarter
+    /// opacity, which is quiet on white and very nearly gone on the dark page —
+    /// the headings and the notes were being lost against it. This is the same
+    /// intent, stated as a colour that holds in both themes.
+    func muted() -> some View { modifier(MutedText()) }
+}
+
+private struct MutedText: ViewModifier {
+    @Environment(\.colorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(scheme == .dark ? Color(white: 0.68) : Color(white: 0.42))
+    }
 }
 
 private struct CardSurface: ViewModifier {
@@ -103,10 +120,10 @@ struct SectionHead: View {
             Text(String(localized: title).uppercased())
                 .font(.system(size: 10, weight: .bold))
                 .kerning(0.9)
-                .foregroundStyle(.tertiary)
+                .muted()
             Rectangle().fill(Ink.hairline).frame(height: 1)
             if let note {
-                Text(note).font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
+                Text(note).font(.caption2).muted().lineLimit(1)
             }
         }
     }
@@ -125,7 +142,7 @@ struct KeyCaps: View {
     var body: some View {
         HStack(spacing: 3) {
             if parts.isEmpty, showsNone {
-                Text(.shortcutUnbound).font(.caption).foregroundStyle(.tertiary)
+                Text(.shortcutUnbound).font(.caption).muted()
             }
             ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
                 Text(part)

@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plonk — ten Mac menu bar utilities in one app</title>
-<meta name="description" content="A macOS window manager with snap zones you draw yourself and workspaces that reopen your apps on the right monitor — plus text lifted off the screen, keep-awake, screenshot annotation, pointer tools and a shortcut guide, in one menu bar app. Everything runs on your Mac. No cloud, no telemetry.">
+<title>Plonk — give every window a place to live</title>
+<meta name="description" content="A Mac window manager with zones you draw yourself. Drop a window into one by dragging it, by a keystroke, by voice, or by asking an agent over MCP. Plus text lifted off the screen, a ruler, keep-awake, screenshots and pointer tools, in one menu bar app. Everything runs on your Mac. No account, no cloud, no telemetry.">
 <link rel="icon" href="logo-400.png">
-<meta property="og:title" content="Plonk — ten Mac menu bar utilities in one app">
-<meta property="og:description" content="Zones and workspaces, text off the screen, keep-awake, screenshots you can draw on, pointer tools, a shortcut guide — ten utilities in one menu bar app. Drag a window there, press a key, or say where it goes. Everything runs on your Mac.">
+<meta property="og:title" content="Plonk — give every window a place to live">
+<meta property="og:description" content="Draw the boxes you actually want, then drop windows into them: with a drag, a key, or by saying so. Ten menu bar utilities in one app, and twenty MCP tools so an agent can drive all of it. Nothing leaves your Mac.">
 <meta property="og:image" content="https://ostapondo.github.io/Plonk/social-preview.png">
 <meta property="og:url" content="https://ostapondo.github.io/Plonk/">
 <meta property="og:type" content="website">
@@ -19,368 +19,655 @@
     var saved = localStorage.getItem('plonk-theme');
     if (saved === 'light' || saved === 'dark') {
       document.documentElement.setAttribute('data-theme', saved);
+      document.documentElement.style.colorScheme = saved;
     }
   } catch (e) {}
 </script>
 <style>
-  :root {
-    color-scheme: light dark;
-    --bg: #ffffff;
-    --bg-soft: #f5f6f8;
-    --card: #ffffff;
-    --line: #e4e7ec;
-    --ink: #15171f;
-    --dim: #5c6377;
-    --accent: #6d5ce0;
-    --accent-warm: #e8674c;
-    --amber: #d98a1f;
-    --code-bg: #14171c;
-    --code-ink: #e8eaee;
-    --shadow: 0 1px 2px rgba(16,20,28,.06), 0 8px 24px rgba(16,20,28,.06);
-    --glow-a: rgba(109,92,224,.16);
-    --glow-b: rgba(232,103,76,.12);
-  }
-  /* The dark palette is the app's own, so the page and the product are plainly
-     the same thing. The guard lets the toggle win over the system setting. */
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0c0d11;
-      --bg-soft: #12141b;
-      --card: #171a21;
-      --line: #232833;
-      --ink: #e9ecf1;
-      --dim: #98a0b3;
-      --accent: #8b7cf6;
-      --accent-warm: #f2795f;
-      --amber: #ffb84d;
-      --code-bg: #08090c;
-      --code-ink: #e9ecf1;
-      --shadow: 0 1px 2px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.35);
-      --glow-a: rgba(139,124,246,.20);
-      --glow-b: rgba(242,121,95,.14);
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #0c0d11;
-    --bg-soft: #12141b;
-    --card: #171a21;
-    --line: #232833;
-    --ink: #e9ecf1;
-    --dim: #98a0b3;
-    --accent: #8b7cf6;
-    --accent-warm: #f2795f;
-    --amber: #ffb84d;
-    --code-bg: #08090c;
-    --code-ink: #e9ecf1;
-    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.35);
-    --glow-a: rgba(139,124,246,.20);
-    --glow-b: rgba(242,121,95,.14);
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background:
-      radial-gradient(900px 560px at 82% -6%, var(--glow-a), transparent 62%),
-      radial-gradient(720px 480px at 4% 22%, var(--glow-b), transparent 58%),
-      var(--bg);
-    background-attachment: fixed;
-    color: var(--ink);
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
-  header {
-    position: sticky; top: 0; z-index: 5;
-    backdrop-filter: saturate(140%) blur(12px);
-    background: color-mix(in srgb, var(--bg) 86%, transparent);
-    border-bottom: 1px solid var(--line);
-  }
-  header .wrap { display: flex; align-items: center; gap: 14px; height: 58px; }
-  .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; color: var(--ink); }
-  .brand img { width: 26px; height: 26px; border-radius: 7px; }
-  header nav { margin-left: auto; display: flex; gap: 18px; font-size: 14.5px; }
-  header nav a { color: var(--dim); }
-  header nav a:hover { color: var(--ink); text-decoration: none; }
-  .themes { display: flex; gap: 2px; padding: 3px; margin-left: 4px;
-            border: 1px solid var(--line); border-radius: 9px; background: var(--bg-soft); }
-  .themes button {
-    border: 0; background: none; cursor: pointer; border-radius: 6px;
-    padding: 5px 8px; line-height: 1; color: var(--dim); font: 13px/1 inherit;
-  }
-  .themes button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+/* ============================================================
+   CUBE AND COLOUR
+   Two rules hold the whole thing together.
 
-  .hero { padding: 68px 0 30px; text-align: center; }
-  .hero h1 { font-size: clamp(34px, 5.2vw, 52px); line-height: 1.08; margin: 0 0 14px; letter-spacing: -.022em; }
-  .hero p.lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--dim); max-width: 620px; margin: 0 auto 26px; }
-  .tag { display: inline-block; font-size: 13px; color: var(--dim); border: 1px solid var(--line);
-         border-radius: 999px; padding: 4px 12px; margin-bottom: 20px; background: var(--bg-soft); }
-  .tag b { color: var(--ink); font-weight: 600; }
+   One: colour is the zone number. Zone 1 is rose, 2 plum, 3 blue,
+   4 mint, 5 sun — here, in the app, and on the README. Colour is
+   never decoration; it is the same fact as the digit, said twice.
 
-  .install { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
-  .cmd {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--code-bg); color: var(--code-ink);
-    border-radius: 11px; padding: 12px 12px 12px 16px;
-    font: 14.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-    box-shadow: var(--shadow);
-  }
-  .cmd .prompt { color: #7f8896; }
-  .cmd button {
-    border: 0; border-radius: 7px; padding: 7px 11px; cursor: pointer;
-    background: rgba(255,255,255,.11); color: #e9ecf1; font: 600 12.5px/1 inherit;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-  .cmd button:hover { background: rgba(255,255,255,.2); }
-  .ghost {
-    border: 1px solid var(--line); border-radius: 11px; padding: 13px 18px;
-    color: var(--ink); font-weight: 550; font-size: 14.5px; background: var(--card);
-  }
-  .ghost:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
-  .grad { background: linear-gradient(135deg, var(--accent-warm), var(--accent));
-          color: #fff; border: 0; box-shadow: 0 6px 20px var(--glow-a); }
-  .grad:hover { color: #fff; filter: brightness(1.06); }
-  .fine { font-size: 13.5px; color: var(--dim); margin-top: 14px; }
+   Two: the cube is the only hard-edged object on the page. It
+   keeps a black outline and flat fills, and nothing else is
+   allowed either — everything else is soft glass over a mesh
+   mixed from the cube's own three faces. That contrast is what
+   puts a flat drawing in front of a gradient instead of on it.
+   ============================================================ */
+:root{
+  color-scheme: light dark;
 
-  figure.shot { margin: 34px 0 0; }
-  figure.shot img {
-    width: 100%; height: auto; border-radius: 14px;
-    border: 1px solid var(--line); display: block;
-    box-shadow: var(--shadow), 0 24px 70px var(--glow-a);
+  /* straight off the logo */
+  --cube-l:#ff4f81;
+  --cube-r:#3a6bff;
+
+  /* colour is the zone number */
+  --z1:#ff4f81; --z1-lo:#ff7fa4;
+  --z2:#8b5cf6; --z2-lo:#a98cff;
+  --z3:#3a6bff; --z3-lo:#6f92ff;
+  --z4:#12d3a4; --z4-lo:#5ff0cd;
+  --z5:#ffc531; --z5-lo:#ffe08a;
+
+  --bg:#f4f2fa;
+  --ink:#12101c;
+  --dim:#5f5a75;
+  --dimmer:#8d88a3;
+  --line:rgba(18,16,28,.1);
+  --glass:rgba(255,255,255,.74);
+  --glass-edge:rgba(255,255,255,.72);
+  --glass-shadow:0 12px 44px rgba(18,16,28,.11), inset 0 1px 0 rgba(255,255,255,.85);
+  --mesh-opacity:.34;
+  --sunk:rgba(18,16,28,.06);
+  --code-bg:rgba(18,16,28,.93);
+  --code-ink:#e9e6f5;
+
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI Variable Display","Helvetica Neue",Arial,sans-serif;
+  --text:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+/* The dark palette. Guarded so an explicit light choice beats a dark system. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c0a14;
+    --ink:#f2f0f8;
+    --dim:#a49eba;
+    --dimmer:#6f6a86;
+    --line:rgba(255,255,255,.11);
+    --glass:rgba(19,16,34,.62);
+    --glass-edge:rgba(255,255,255,.09);
+    --glass-shadow:0 12px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.07);
+    --mesh-opacity:.2;
+    --sunk:rgba(255,255,255,.06);
+    --code-bg:rgba(0,0,0,.45);
   }
-  img.diagram { display: block; width: 100%; max-width: 720px; height: auto; margin: 0 auto; }
-  figure.shot figcaption { font-size: 13.5px; color: var(--dim); text-align: center; margin-top: 12px; }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0a14;
+  --ink:#f2f0f8;
+  --dim:#a49eba;
+  --dimmer:#6f6a86;
+  --line:rgba(255,255,255,.11);
+  --glass:rgba(19,16,34,.62);
+  --glass-edge:rgba(255,255,255,.09);
+  --glass-shadow:0 12px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.07);
+  --mesh-opacity:.2;
+  --sunk:rgba(255,255,255,.06);
+  --code-bg:rgba(0,0,0,.45);
+}
 
-  section { padding: 52px 0; border-top: 1px solid var(--line); }
-  section:first-of-type { border-top: 0; }
-  h2 { font-size: clamp(24px, 3.4vw, 31px); letter-spacing: -.018em; margin: 0 0 10px; }
-  h2 + p.sub { color: var(--dim); margin: 0 0 26px; max-width: 640px; }
-  p.note { color: var(--dim); font-size: 14.5px; margin: 22px 0 0; max-width: 640px; }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--text);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased
+}
+svg{display:block}
+img{max-width:100%;height:auto}
+a{color:inherit}
+code{font-family:var(--mono);font-size:.92em}
 
-  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 13px;
-    padding: 20px; box-shadow: var(--shadow);
-  }
-  .card h3 { margin: 0 0 7px; font-size: 17px; }
-  .card p { margin: 0; color: var(--dim); font-size: 14.5px; }
-  kbd {
-    font: 600 12.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-    border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px;
-    padding: 3px 6px; background: var(--bg-soft); color: var(--ink);
-  }
+/* ---------- the mesh: the cube, out of focus ---------- */
+.mesh{position:fixed;inset:-22%;z-index:-1;filter:blur(58px);opacity:var(--mesh-opacity);pointer-events:none}
+.mesh i{position:absolute;display:block;border-radius:50%}
+.mesh .a{width:60%;height:44%;left:-8%;top:0;background:var(--cube-l)}
+.mesh .b{width:56%;height:42%;right:-10%;top:18%;background:var(--cube-r)}
+.mesh .c{width:52%;height:40%;left:6%;bottom:10%;background:var(--z4)}
+.mesh .d{width:48%;height:36%;right:0;bottom:-6%;background:var(--z5)}
+@keyframes f1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(9%,7%) scale(1.18)}}
+@keyframes f2{0%,100%{transform:translate(0,0) scale(1.1)}50%{transform:translate(-8%,10%) scale(.92)}}
+@keyframes f3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(7%,-9%) scale(1.15)}}
+@keyframes f4{0%,100%{transform:translate(0,0) scale(1.05)}50%{transform:translate(-11%,-6%) scale(.94)}}
+.mesh .a{animation:f1 20s ease-in-out infinite}
+.mesh .b{animation:f2 24s ease-in-out infinite}
+.mesh .c{animation:f3 22s ease-in-out infinite}
+.mesh .d{animation:f4 26s ease-in-out infinite}
 
-  .says { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
-  .says li {
-    background: var(--bg-soft); border: 1px solid var(--line); border-left: 3px solid var(--accent);
-    border-radius: 9px; padding: 11px 15px; font-size: 15px; color: var(--ink);
-  }
-  .split { display: grid; gap: 26px; grid-template-columns: 1fr 1fr; align-items: start; }
-  @media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+/* ---------- shell ---------- */
+.wrap{max-width:960px;margin:0 auto;padding:0 16px 80px}
+.glass{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);
+  border:1px solid var(--glass-edge);
+  box-shadow:var(--glass-shadow)
+}
+.card{border-radius:32px;padding:30px 24px;margin-top:14px}
+@media (min-width:760px){.card{padding:46px 42px}}
 
-  pre {
-    background: var(--code-bg); color: var(--code-ink); border-radius: 11px;
-    padding: 16px 18px; overflow-x: auto; margin: 0 0 14px;
-    font: 13.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
-    box-shadow: var(--shadow);
-  }
-  pre .c { color: #7f8896; }
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border-radius:999px;padding:9px 10px 9px 16px;margin-top:16px;position:sticky;top:10px;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;font-size:16px;text-decoration:none}
+.brand svg{width:26px;height:29px}
+.nav .right{display:flex;align-items:center;gap:8px}
+.themes{display:flex;gap:2px;background:var(--sunk);border-radius:999px;padding:3px}
+.themes button{
+  width:28px;height:28px;border:0;background:none;border-radius:999px;cursor:pointer;
+  color:var(--dim);font:600 12px/1 var(--text);display:grid;place-items:center
+}
+.themes button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+:focus-visible{outline:3px solid var(--z2);outline-offset:3px}
+.pill{border-radius:999px;padding:9px 17px;font-size:14px;font-weight:700;text-decoration:none;background:var(--ink);color:var(--bg)}
 
-  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
-  td { padding: 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
-  td:first-child { width: 190px; font-weight: 600; padding-right: 18px; }
-  tr:first-child td { border-top: 0; }
-  td.dim, .dim { color: var(--dim); }
+h1,h2,h3{text-wrap:balance}
+.h1{font-family:var(--display);font-weight:900;letter-spacing:-.055em;line-height:.88;
+  font-size:clamp(44px,10.5vw,82px);margin:0 0 20px}
+.h2{font-family:var(--display);font-weight:900;letter-spacing:-.045em;line-height:.94;
+  font-size:clamp(30px,6.2vw,48px);margin:0 0 14px}
+.h3{font-family:var(--display);font-weight:800;letter-spacing:-.03em;font-size:20px;margin:0 0 6px}
+.grad-text{
+  background:linear-gradient(100deg,var(--z1),var(--z2) 45%,var(--z3));
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.lead{margin:0 0 24px;font-size:clamp(17px,2.3vw,20px);line-height:1.42;color:var(--dim);max-width:36ch}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+  margin:0 0 16px;display:flex;align-items:center;gap:9px}
+.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.p{margin:0 0 14px;color:var(--dim);font-size:16.5px;max-width:64ch}
+.p b,.lead b{color:var(--ink);font-weight:600}
+.p a,.fine a,.foot a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.p a:hover,.foot a:hover{text-decoration-color:var(--z2)}
 
-  footer { border-top: 1px solid var(--line); padding: 34px 0 60px; color: var(--dim); font-size: 14px; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-  footer nav { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:16px 28px;
+  font-size:17px;font-weight:700;text-decoration:none}
+.btn.dark{background:var(--ink);color:var(--bg)}
+.btn.ghost{background:var(--sunk);color:var(--ink)}
+.cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.fine{font-size:13.5px;color:var(--dimmer);width:100%;margin:6px 0 0}
+
+/* ---------- the cube ---------- */
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-10px) rotate(1.5deg)}}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes hue{0%{filter:blur(26px) hue-rotate(0deg)}100%{filter:blur(26px) hue-rotate(360deg)}}
+.holder{position:relative;flex:none}
+.holder::before{content:"";position:absolute;left:-6%;top:14%;width:112%;height:84%;border-radius:50%;
+  background:radial-gradient(circle,var(--g,var(--z1)),transparent 70%);opacity:.7;
+  animation:hue 26s linear infinite}
+.holder svg{position:relative}
+.cubey{animation:bob 4.4s ease-in-out infinite}
+.cubey .eye{transform-box:fill-box;transform-origin:center;animation:blink 5.6s ease-in-out infinite}
+.cubey .eye.b{animation-delay:.05s}
+
+/* the cube breaks out of the glass, which is what puts it in front of the page */
+.hero{margin-top:72px}
+.stage{display:flex;align-items:flex-end;gap:10px;margin:-86px 0 10px;flex-wrap:wrap}
+.bubble{background:var(--bg);border:2.5px solid var(--ink);border-radius:20px 20px 20px 6px;
+  padding:11px 16px;font-size:15px;font-weight:600;margin-bottom:26px}
+
+/* ---------- zones: colour is the number ---------- */
+.screen{aspect-ratio:16/10;border-radius:20px;position:relative;overflow:hidden;background:var(--sunk);padding:9px;margin-top:24px}
+.z{position:absolute;border-radius:12px;display:flex;align-items:flex-end;padding:10px;
+  font:600 13px var(--mono);color:#fff}
+.z .frac{position:absolute;top:10px;right:12px;font-size:11px;font-weight:500;opacity:.85}
+.n1{background:linear-gradient(160deg,var(--z1-lo),var(--z1))}
+.n2{background:linear-gradient(160deg,var(--z2-lo),var(--z2))}
+.n3{background:linear-gradient(160deg,var(--z3-lo),var(--z3))}
+.n4{background:linear-gradient(160deg,var(--z4-lo),var(--z4));color:#04241b}
+.n5{background:linear-gradient(160deg,var(--z5-lo),var(--z5));color:#1c1400}
+
+@keyframes lift{0%,16%{opacity:.4;transform:scale(.96)}28%,72%{opacity:1;transform:scale(1)}86%,100%{opacity:.4;transform:scale(.96)}}
+.lift{animation:lift 6.6s ease infinite}
+.lift.d{animation-delay:.08s}
+@keyframes fly{
+  0%,12%{left:7%;top:44%;width:32%;height:44%}
+  42%,70%{left:35%;top:8%;width:36%;height:84%}
+  92%,100%{left:7%;top:44%;width:32%;height:44%}
+}
+.win{position:absolute;border-radius:12px;background:#fff;border:2.5px solid var(--ink);
+  box-shadow:0 16px 32px rgba(18,16,28,.28);overflow:hidden}
+.win .bar{height:15px;background:var(--ink);display:flex;gap:4px;align-items:center;padding:0 7px}
+.win .bar i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.68);display:block}
+.win .body{padding:11px;display:flex;flex-direction:column;gap:7px}
+.win .body u{display:block;height:6px;border-radius:3px;background:#e6e4ef;text-decoration:none}
+.win.fly{animation:fly 6.6s cubic-bezier(.34,1.3,.4,1) infinite}
+@keyframes pop{0%,20%{opacity:0;transform:translate(-50%,9px)}32%,66%{opacity:1;transform:translate(-50%,0)}80%,100%{opacity:0;transform:translate(-50%,9px)}}
+.toast{position:absolute;left:50%;bottom:7%;transform:translate(-50%,0);background:var(--ink);color:var(--bg);
+  border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;white-space:nowrap;
+  animation:pop 6.6s ease infinite}
+.toast b{color:var(--z2-lo)}
+
+/* the set swap — the behaviour no preset grid has */
+@keyframes s1{0%,26%{left:2%;top:2%;width:47%;height:96%}33%,59%{left:2%;top:2%;width:31.3%;height:96%}66%,92%{left:2%;top:2%;width:22%;height:46%}100%{left:2%;top:2%;width:47%;height:96%}}
+@keyframes s2{0%,26%{left:51%;top:2%;width:47%;height:96%}33%,59%{left:35.3%;top:2%;width:31.3%;height:96%}66%,92%{left:26%;top:2%;width:46%;height:96%}100%{left:51%;top:2%;width:47%;height:96%}}
+@keyframes s3{0%,26%{left:68.6%;top:2%;width:29.4%;height:96%;opacity:0}33%,59%{left:68.6%;top:2%;width:29.4%;height:96%;opacity:1}66%,92%{left:74%;top:2%;width:24%;height:46%;opacity:1}100%{left:68.6%;top:2%;width:29.4%;height:96%;opacity:0}}
+@keyframes s4{0%,59%{left:2%;top:52%;width:22%;height:46%;opacity:0}66%,92%{left:2%;top:52%;width:22%;height:46%;opacity:1}100%{left:2%;top:52%;width:22%;height:46%;opacity:0}}
+@keyframes s5{0%,59%{left:74%;top:52%;width:24%;height:46%;opacity:0}66%,92%{left:74%;top:52%;width:24%;height:46%;opacity:1}100%{left:74%;top:52%;width:24%;height:46%;opacity:0}}
+@keyframes lb1{0%,26%{opacity:1}31%,100%{opacity:0}}
+@keyframes lb2{0%,30%{opacity:0}33%,59%{opacity:1}64%,100%{opacity:0}}
+@keyframes lb3{0%,63%{opacity:0}66%,92%{opacity:1}97%,100%{opacity:0}}
+.swap .k1{animation:s1 12s ease-in-out infinite}
+.swap .k2{animation:s2 12s ease-in-out infinite}
+.swap .k3{animation:s3 12s ease-in-out infinite}
+.swap .k4{animation:s4 12s ease-in-out infinite}
+.swap .k5{animation:s5 12s ease-in-out infinite}
+.setlab{position:absolute;left:12px;top:12px;font:600 12px var(--mono);background:var(--ink);color:var(--bg);
+  border-radius:7px;padding:6px 10px}
+.setlab.l1{animation:lb1 12s linear infinite}
+.setlab.l2{animation:lb2 12s linear infinite}
+.setlab.l3{animation:lb3 12s linear infinite}
+
+/* ---------- real screenshots ---------- */
+figure.shot{margin:24px 0 0}
+figure.shot img{border-radius:18px;border:1px solid var(--line);display:block;width:100%}
+figure.shot figcaption{margin-top:11px;font-size:13.5px;color:var(--dimmer);line-height:1.45}
+/* A window and a desktop are not the same shape, so side by side their
+   captions start at different heights. Pushing them to the bottom of the
+   cell lines them up without cropping either picture. */
+.split figure.shot{display:flex;flex-direction:column;height:100%}
+.split figure.shot figcaption{margin-top:auto;padding-top:11px}
+.split{display:grid;gap:16px}
+/* Grid and flex children default to min-width:auto, so a <pre> refuses to
+   shrink below its longest line and pushes the page sideways, overflow-x
+   notwithstanding. This is what actually lets the scroll happen inside it. */
+.split > *{min-width:0}
+@media (min-width:720px){.split{grid-template-columns:1fr 1fr}}
+
+/* ---------- rows carried by faces ---------- */
+.rows{display:flex;flex-direction:column;margin-top:18px}
+.rw{display:flex;gap:16px;align-items:flex-start;padding:18px 0;border-top:1px solid var(--line)}
+.faceholder{position:relative;width:60px;height:67px;flex:none}
+.faceholder::before{content:"";position:absolute;left:-7px;top:6px;width:112%;height:88%;border-radius:50%;
+  background:radial-gradient(circle,var(--g),transparent 70%);filter:blur(12px);opacity:.85}
+.faceholder svg{position:relative;width:60px;height:67px}
+.rw b{font-size:17.5px;font-weight:700;letter-spacing:-.02em;display:block}
+.rw p{margin:4px 0 0;font-size:15px;line-height:1.45;color:var(--dim)}
+.keys{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.keys kbd{font-family:var(--mono);font-size:17px;font-weight:600;border-radius:14px;padding:14px 16px;
+  background:var(--sunk);box-shadow:inset 0 -2px 0 rgba(18,16,28,.1)}
+kbd{font-family:var(--mono)}
+
+/* ---------- the rail of sets ---------- */
+.rail-mask{overflow:hidden;margin:22px -24px 0}
+@media (min-width:760px){.rail-mask{margin:22px -42px 0}}
+@keyframes roll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.rail{display:flex;gap:12px;width:max-content;animation:roll 30s linear infinite}
+.set{width:172px;border-radius:22px;padding:12px;background:var(--sunk)}
+.set .g{aspect-ratio:16/10;display:grid;gap:5px}
+.set .g b{border-radius:8px}
+.set .n{margin-top:11px;font-size:13.5px;font-weight:700;display:flex;justify-content:space-between}
+.set .n span{font-family:var(--mono);font-size:11px;color:var(--dimmer);font-weight:400}
+.g.halves{grid-template-columns:1fr 1fr}
+.g.thirds{grid-template-columns:1fr 1fr 1fr}
+.g.sixty{grid-template-columns:1.5fr 1fr}
+.g.quarters{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.g.prio{grid-template-columns:.7fr 1.5fr .9fr;grid-template-rows:1fr 1fr}
+.g.prio b:nth-child(2){grid-row:span 2}
+
+/* ---------- desks ---------- */
+.desks{display:grid;gap:11px;margin-top:20px}
+@media (min-width:620px){.desks{grid-template-columns:1fr 1fr}}
+.desk{background:var(--sunk);border-radius:20px;padding:15px}
+.desk .t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:11px}
+.desk .t b{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.desk .t span{font-family:var(--mono);font-size:11.5px;color:var(--dimmer)}
+.desk .mon{display:flex;gap:6px;height:58px;margin-bottom:11px}
+.desk .mon i{border-radius:9px;display:block}
+.desk .ap{display:flex;flex-wrap:wrap;gap:5px}
+.desk .ap span{font-size:12.5px;background:var(--bg);border-radius:8px;padding:5px 9px;color:var(--dim)}
+
+/* ---------- code ---------- */
+.code{border-radius:16px;padding:16px 18px;font-family:var(--mono);font-size:14px;
+  background:var(--code-bg);color:#8ef0c4;overflow-x:auto;white-space:nowrap}
+pre{border-radius:16px;padding:16px 18px;font-family:var(--mono);font-size:13.5px;line-height:1.75;
+  background:var(--code-bg);color:var(--code-ink);overflow-x:auto;margin:0;min-width:0}
+pre .c{color:#9c96b8}
+.term{border-radius:16px;padding:16px 18px;font-family:var(--mono);font-size:13.5px;line-height:1.9;
+  background:var(--code-bg);color:var(--code-ink);overflow-x:auto}
+.term div{white-space:nowrap}
+.term .u{color:#fff}
+.term .u::before{content:"› ";color:var(--z2-lo)}
+.term .r{color:#9c96b8}
+.term .ok{color:#7ee7b4}
+
+/* the copy-command row */
+.cmd{display:flex;align-items:center;gap:10px;background:var(--code-bg);border-radius:16px;
+  padding:14px 14px 14px 18px;overflow:hidden}
+.cmd .prompt{color:var(--z2-lo);font-family:var(--mono);font-size:14px}
+.cmd code{color:#8ef0c4;font-size:14px;overflow-x:auto;white-space:nowrap;flex:1}
+.cmd button{border:0;border-radius:999px;padding:8px 15px;font:700 13px var(--text);cursor:pointer;
+  background:rgba(255,255,255,.14);color:#fff;flex:none}
+.cmd button:hover{background:rgba(255,255,255,.24)}
+
+.grid2{display:grid;gap:11px;margin-top:20px}
+@media (min-width:620px){.grid2{grid-template-columns:1fr 1fr}}
+.cell{background:var(--sunk);border-radius:18px;padding:16px}
+.cell .k{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--z2);
+  background:var(--bg);border-radius:8px;padding:5px 9px;display:inline-block;margin-bottom:9px}
+.cell b{font-size:16px;font-weight:700;letter-spacing:-.02em;display:block}
+.cell p{margin:4px 0 0;color:var(--dim);font-size:14px;line-height:1.4}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:24px 16px}
+@media (min-width:620px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat b{display:block;font-family:var(--display);font-weight:900;letter-spacing:-.06em;
+  font-size:clamp(44px,9vw,64px);line-height:.85;font-variant-numeric:tabular-nums}
+.stat span{display:block;margin-top:9px;font-size:13.5px;line-height:1.3;color:var(--dim)}
+.stat.a b{color:var(--z1)}.stat.b b{color:var(--z2)}
+.stat.c b{color:var(--z3)}.stat.d b{color:var(--z4)}
+
+.checks{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:11px}
+.checks li{display:flex;gap:12px;font-size:16px;line-height:1.4}
+.checks li::before{content:"";width:11px;height:11px;border-radius:4px;flex:none;margin-top:7px;
+  background:linear-gradient(150deg,var(--z1),var(--z3))}
+
+.foot{margin-top:14px;padding:28px 26px;border-radius:32px;font-size:14px;color:var(--dimmer)}
+.links{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:15px;margin-bottom:20px}
+.links a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:2px}
+.links a:hover{color:var(--ink);border-bottom-color:var(--z2)}
+
+@media (prefers-reduced-motion:reduce){
+  /* Selectors here have to outrank the ones that set the animation:
+     .mesh i (0,1,1) loses to .mesh .a (0,2,0), and .setlab loses to
+     .setlab.l1, so both kept moving for anyone who asked for less. */
+  .mesh .a,.mesh .b,.mesh .c,.mesh .d,
+  .cubey,.cubey .eye,.holder::before,.rail,.win.fly,.lift,.toast,
+  .swap .k1,.swap .k2,.swap .k3,.swap .k4,.swap .k5,
+  .setlab.l1,.setlab.l2,.setlab.l3{animation:none}
+  .win.fly{left:35%;top:8%;width:36%;height:84%}
+  .lift{opacity:1;transform:none}
+  .toast{opacity:1}
+  .swap .k1{left:2%;top:2%;width:22%;height:46%}
+  .swap .k2{left:26%;top:2%;width:46%;height:96%}
+  .swap .k3{left:74%;top:2%;width:24%;height:46%;opacity:1}
+  .swap .k4{left:2%;top:52%;width:22%;height:46%;opacity:1}
+  .swap .k5{left:74%;top:52%;width:24%;height:46%;opacity:1}
+  .setlab.l1,.setlab.l2{opacity:0}.setlab.l3{opacity:1}
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <a class="brand" href="./"><img src="logo-400.png" alt=""> Plonk</a>
-    <nav>
-      <a href="#app">The app</a>
-      <a href="#zones">Zones</a>
-      <a href="#workspaces">Workspaces</a>
-      <a href="#agents">For agents</a>
-      <a href="#privacy">Privacy</a>
-      <a href="https://github.com/ostapondo/plonk">GitHub</a>
-    </nav>
-    <div class="themes" role="group" aria-label="Theme">
-      <button type="button" data-theme-set="light" aria-pressed="false" title="Light">&#9728;</button>
-      <button type="button" data-theme-set="dark" aria-pressed="false" title="Dark">&#9789;</button>
-      <button type="button" data-theme-set="system" aria-pressed="true" title="Match the system">A</button>
-    </div>
-  </div>
-</header>
+<div class="mesh" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i></div>
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <symbol id="cube" viewBox="0 0 100 112">
+    <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
+    <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
+    <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
+    <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
+  </symbol>
+  <symbol id="f-wink" viewBox="0 0 100 112">
+    <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
+    <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
+    <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
+    <ellipse cx="25" cy="63" rx="5.2" ry="6.4" fill="#fffdf9"/>
+    <ellipse cx="26.2" cy="64.6" rx="2.6" ry="3.2" fill="#12101c"/>
+    <path d="M34,72 Q39,67 44,72" stroke="#12101c" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M27,77 Q33,83 40,80" stroke="#12101c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
+  </symbol>
+  <symbol id="f-focus" viewBox="0 0 100 112">
+    <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
+    <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
+    <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
+    <ellipse cx="25" cy="63" rx="5.4" ry="2.6" fill="#fffdf9"/>
+    <ellipse cx="25" cy="63" rx="2.4" ry="2.2" fill="#12101c"/>
+    <ellipse cx="39" cy="71" rx="5.4" ry="2.6" fill="#fffdf9"/>
+    <ellipse cx="39" cy="71" rx="2.4" ry="2.2" fill="#12101c"/>
+    <path d="M28,79 L39,82" stroke="#12101c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
+  </symbol>
+  <symbol id="f-talk" viewBox="0 0 100 112">
+    <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
+    <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
+    <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
+    <ellipse cx="25" cy="61" rx="5.2" ry="6.4" fill="#fffdf9"/>
+    <ellipse cx="26.2" cy="62.6" rx="2.6" ry="3.2" fill="#12101c"/>
+    <ellipse cx="39" cy="69" rx="5.2" ry="6.4" fill="#fffdf9"/>
+    <ellipse cx="40.2" cy="70.6" rx="2.6" ry="3.2" fill="#12101c"/>
+    <ellipse cx="33" cy="80" rx="4" ry="5" fill="#12101c"/>
+    <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
+  </symbol>
+  <symbol id="f-shut" viewBox="0 0 100 112">
+    <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
+    <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
+    <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
+    <path d="M20,64 Q25,58 30,64" stroke="#12101c" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M34,72 Q39,66 44,72" stroke="#12101c" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M27,78 Q33,84 40,81" stroke="#12101c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
+  </symbol>
+</svg>
 
 <div class="wrap">
 
-  <div class="hero">
-    <span class="tag"><b>Free and open source</b> · macOS 13+ · no account, no cloud, no telemetry</span>
-    <h1>Your desk, put back together.</h1>
-    <p class="lede">One menu bar app doing what ten usually do: a window manager with zones you
-      draw yourself and workspaces that reopen your apps on the right monitor, plus text lifted
-      off the screen, keep-awake, screenshots you can draw on, pointer tools and a shortcut guide.
-      Drag a window there, press a key, or hold a shortcut and say where it goes.</p>
-    <div class="install">
-      <div class="cmd">
-        <span class="prompt">$</span>
-        <code id="brew">brew install --cask ostapondo/plonk/plonk</code>
-        <button data-copy="#brew">Copy</button>
-      </div>
-      <a class="ghost grad" href="https://github.com/ostapondo/plonk/releases/latest">Download .zip</a>
-    </div>
-    <p class="fine">Signed, built and attested on GitHub's runners —
-      <a href="https://github.com/ostapondo/plonk/blob/main/docs/verify.md">check the binary against the commit</a>
-      before you open it.</p>
-  </div>
+  <nav class="nav glass">
+    <a class="brand" href="./"><svg viewBox="0 0 100 112"><use href="#cube"/></svg> Plonk</a>
+    <span class="right">
+      <span class="themes" role="group" aria-label="Theme">
+        <button type="button" data-theme-set="light" aria-pressed="false" title="Light">&#9728;</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false" title="Dark">&#9789;</button>
+        <button type="button" data-theme-set="system" aria-pressed="true" title="Match the system">A</button>
+      </span>
+      <a class="pill" href="#install">Get it &mdash; free</a>
+    </span>
+  </nav>
 
-  <figure class="shot">
-    <img src="demo.gif" width="1200" height="750"
-         alt="An eight-zone grid is cut out of one screen with seven clicks in the zone editor, then filled: one window dragged in, one sent by shortcut, and the remaining six placed at once from a sentence typed to an agent. A command palette then switches the screen to a four-zone set, and the theme changes from dark to light">
-    <figcaption>Seven clicks make the grid. One window is dragged in, one is sent with ⌃⌥3, and the other six land on a sentence. Then ⌘K swaps the whole set, and the theme follows.</figcaption>
-  </figure>
-
-  <section>
-    <h2>Three ways to put a window somewhere</h2>
-    <p class="sub">Halves and quarters your Mac already does. The point of Plonk is the layout that
-      isn't halves and quarters — and getting eight windows into it without eight drags.</p>
-    <div class="cards">
-      <div class="card">
-        <h3>Drag it</h3>
-        <p>Zones light up as you move a window, and it drops into one. Hold <kbd>⌘</kbd> and it takes
-          two of them at once. Grab-and-move lets you pull a window from anywhere inside it.</p>
-      </div>
-      <div class="card">
-        <h3>Press a key</h3>
-        <p><kbd>⌃⌥←</kbd> for the left half, <kbd>⌃⌥1</kbd>–<kbd>⌃⌥9</kbd> for the numbered zones on
-          that screen, <kbd>⌃⌥0</kbd> to put a window back exactly where it was before Plonk touched it.</p>
-      </div>
-      <div class="card">
-        <h3>Say it</h3>
-        <p>Hold <kbd>⌃⌥V</kbd> and name the zone. Recognition is on-device, and the common
-          commands run in the app itself — offline, and instantly.</p>
-      </div>
+  <!-- ================= HERO ================= -->
+  <section class="card glass hero">
+    <div class="stage">
+      <span class="holder" style="--g:var(--z1);width:136px;height:152px">
+        <svg class="cubey" viewBox="0 0 100 112" style="width:136px;height:152px" role="img" aria-label="The Plonk cube, looking friendly">
+          <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
+          <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
+          <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
+          <g>
+            <ellipse class="eye" cx="25" cy="63" rx="5.2" ry="6.4" fill="#fffdf9"/>
+            <ellipse class="eye" cx="26.2" cy="64.6" rx="2.6" ry="3.2" fill="#12101c"/>
+            <ellipse class="eye b" cx="39" cy="71" rx="5.2" ry="6.4" fill="#fffdf9"/>
+            <ellipse class="eye b" cx="40.2" cy="72.6" rx="2.6" ry="3.2" fill="#12101c"/>
+          </g>
+          <path d="M27,78 Q33,84 40,81" stroke="#12101c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
+        </svg>
+      </span>
+      <span class="bubble">Right &mdash; where does this one go?</span>
     </div>
+
+    <h1 class="h1">Give every window <span class="grad-text">a place to live.</span></h1>
+    <p class="lead">Draw the boxes you actually want. Then drop windows into them &mdash; with a drag, a key, or by saying so out loud.</p>
+    <div class="cta">
+      <a class="btn dark" href="#install">Get Plonk</a>
+      <a class="btn ghost" href="#ways">Show me first</a>
+      <p class="fine">macOS 13 or newer, Apple silicon &middot; free and MIT &middot; no account, no cloud, no telemetry</p>
+    </div>
+
+    <div class="screen" aria-hidden="true">
+      <div class="z n1 lift" style="left:2%;top:3%;width:29%;height:94%">1<span class="frac">0.29</span></div>
+      <div class="z n2 lift d" style="left:33%;top:3%;width:42%;height:94%">2<span class="frac">0.42</span></div>
+      <div class="z n3 lift" style="left:77%;top:3%;width:21%;height:45%">3<span class="frac">0.21</span></div>
+      <div class="z n4 lift d" style="left:77%;top:52%;width:21%;height:45%">4<span class="frac">0.21</span></div>
+      <div class="win fly" style="left:7%;top:44%;width:32%;height:44%">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body"><u style="width:72%"></u><u style="width:92%"></u><u style="width:56%"></u></div>
+      </div>
+      <div class="toast">release for <b>zone 2</b> &middot; &#8984; takes two</div>
+    </div>
+
   </section>
 
-  <section id="app">
-    <h2>The window it all lives in</h2>
-    <p class="sub">Five places to be, not eleven. Anything the app can do has a name you can type,
-      and the theme it is drawn in is yours to pick — the zone overlay and the HUD follow it.</p>
+  <!-- ================= THREE WAYS ================= -->
+  <section class="card glass" id="ways">
+    <p class="eyebrow">Three ways</p>
+    <h2 class="h2">Whichever your hands prefer.</h2>
+    <div class="rows">
+      <div class="rw">
+        <span class="faceholder" style="--g:var(--z1)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-wink"/></svg></span>
+        <div><b>Drag it</b><p>The zones light up while the window is in your hand. Hold <kbd>&#8984;</kbd> and it takes two of them at once. Grab-and-move lets you pull a window from anywhere inside it, not just the title bar.</p></div>
+      </div>
+      <div class="rw">
+        <span class="faceholder" style="--g:var(--z2)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-focus"/></svg></span>
+        <div><b>Press a key</b><p>Nine zones live on the digits: <kbd>&#8963;&#8997;1</kbd>&ndash;<kbd>&#8963;&#8997;9</kbd>. Zero is the oops key &mdash; it puts a window back exactly where it was before Plonk touched it.</p></div>
+      </div>
+      <div class="rw">
+        <span class="faceholder" style="--g:var(--z3)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-talk"/></svg></span>
+        <div><b>Say it</b><p>Hold <kbd>&#8963;&#8997;V</kbd> and name the place. It listens on the Mac, offline and on-device, and the common commands run in the app itself. Nobody hears you but the laptop.</p></div>
+      </div>
+    </div>
+    <div class="keys">
+      <kbd>&#8963;&#8997;1</kbd><kbd>&#8963;&#8997;&larr;</kbd><kbd>&#8963;&#8997;0</kbd><kbd>&#8963;&#8997;V</kbd>
+    </div>
+    <p class="p" style="margin-top:22px">The whole sheet is on the <a href="hotkeys.md">hotkeys page</a>. Every one of them is rebindable, and any of them can be left unbound.</p>
+  </section>
+
+  <!-- ================= ZONES ================= -->
+  <section class="card glass" id="zones">
+    <p class="eyebrow">Zones</p>
+    <h2 class="h2">Not a grid of halves.<br>Your grid.</h2>
+    <p class="lead">Any number of zones, any size, a different set on every monitor, overlapping if that suits you. Click a zone to cut it in half, <b>&#8679;-click cuts the other way</b>. That is the whole editor.</p>
+
+    <div class="screen swap" aria-hidden="true">
+      <div class="z n1 k1">1</div>
+      <div class="z n2 k2">2</div>
+      <div class="z n3 k3">3</div>
+      <div class="z n4 k4">4</div>
+      <div class="z n5 k5">5</div>
+      <span class="setlab l1">Halves</span>
+      <span class="setlab l2">Thirds</span>
+      <span class="setlab l3">Priority</span>
+    </div>
+    <p class="p" style="margin-top:18px"><b>Watch the plum rectangle.</b> Swap the set on a screen and any window already sitting in a numbered zone moves to wherever that number is now &mdash; it changes shape, never its number, and so never its colour. That is the part no preset-grid manager does.</p>
+
+    <div class="rail-mask" aria-hidden="true">
+      <div class="rail">
+        <div class="set"><div class="g prio"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b><b class="n5"></b></div><div class="n">Priority <span>5 zones</span></div></div>
+        <div class="set"><div class="g halves"><b class="n1"></b><b class="n2"></b></div><div class="n">Halves <span>2 zones</span></div></div>
+        <div class="set"><div class="g thirds"><b class="n1"></b><b class="n2"></b><b class="n3"></b></div><div class="n">Thirds <span>3 zones</span></div></div>
+        <div class="set"><div class="g sixty"><b class="n1"></b><b class="n2"></b></div><div class="n">60 / 40 <span>2 zones</span></div></div>
+        <div class="set"><div class="g quarters"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b></div><div class="n">Quarters <span>4 zones</span></div></div>
+        <div class="set"><div class="g prio"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b><b class="n5"></b></div><div class="n">Priority <span>5 zones</span></div></div>
+        <div class="set"><div class="g halves"><b class="n1"></b><b class="n2"></b></div><div class="n">Halves <span>2 zones</span></div></div>
+        <div class="set"><div class="g thirds"><b class="n1"></b><b class="n2"></b><b class="n3"></b></div><div class="n">Thirds <span>3 zones</span></div></div>
+        <div class="set"><div class="g sixty"><b class="n1"></b><b class="n2"></b></div><div class="n">60 / 40 <span>2 zones</span></div></div>
+        <div class="set"><div class="g quarters"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b></div><div class="n">Quarters <span>4 zones</span></div></div>
+      </div>
+    </div>
+    <p class="p" style="margin-top:20px">Five sets ship in the box; past those you draw your own, or describe it and let an agent build it. <a href="zones.md">Everything zones can do</a> &mdash; overlap, gaps, hiding the numbers, and the list of apps Plonk keeps its hands off.</p>
+  </section>
+
+  <!-- ================= THE APP ================= -->
+  <section class="card glass" id="app">
+    <p class="eyebrow">The app</p>
+    <h2 class="h2">Five places to be, not eleven.</h2>
+    <p class="lead">Anything the app can do has a name you can type. The theme is yours to pick, and the zone overlay and the heads-up display follow it.</p>
     <div class="split">
-      <figure class="shot" style="margin:0">
-        <img src="app-home-light.png" width="1400" height="980" loading="lazy"
-             alt="Plonk's Home page in the light theme: a sidebar with Home, Layout, Capture, Automation and Settings, a card showing the zone layout of the main screen, and rows of quick actions with their shortcuts">
-        <figcaption>Home, light theme. The picture is your screen's real zone set.</figcaption>
+      <figure class="shot" style="margin-top:0">
+        <img src="design/shots/s-zones.jpg" width="1600" height="1105" loading="lazy"
+             alt="Plonk's Zones page: a sidebar grouped into Layout, Tools and Automation, a row of zone-set tabs, the Priority set drawn full width in five colours with each zone's fraction printed in it, and grouped settings for dragging, gaps and overlay numbers">
+        <figcaption>Zones. The set you are editing is the page, not a separate window &mdash; and the colour is the number.</figcaption>
       </figure>
-      <figure class="shot" style="margin:0">
-        <img src="app-zones-dark.png" width="1400" height="980" loading="lazy"
-             alt="Plonk's Zones page in the dark theme: a row of zone-set tabs, a large preview of the selected set, and cards for dragging behaviour and shortcuts">
-        <figcaption>Zones, dark theme. The set you are editing is the page, not a separate window.</figcaption>
+      <figure class="shot" style="margin-top:0">
+        <img src="design/shots/s-menu.jpg" width="1600" height="1000" loading="lazy"
+             alt="The Plonk menu bar panel open over a desktop: the current zone set drawn in its five colours, two saved desks with their shortcuts, the capture and ruler tools, and a keep-awake timer">
+        <figcaption>The menu bar. The same set, the same desks, without opening the window.</figcaption>
       </figure>
     </div>
-    <div class="cards" style="margin-top:26px">
-      <div class="card">
-        <h3><kbd>⌘</kbd><kbd>K</kbd> runs anything</h3>
-        <p>Every zone, every workspace, every setting page, every shortcut — by name. The same list
-          of verbs an agent gets over MCP, with a search field in front of it.</p>
-      </div>
-      <div class="card">
-        <h3>Light, dark, or neither</h3>
-        <p>Pick a theme and an accent in Settings · Appearance. The window, the drag overlay and the
-          heads-up display all take it; leave it on System and macOS decides.</p>
-      </div>
-      <div class="card">
-        <h3>Nothing hidden behind a menu</h3>
-        <p>Shortcuts are printed on the row that owns them. Permissions only take space on the day
-          one of them is missing.</p>
-      </div>
+    <div class="grid2">
+      <div class="cell"><span class="k">&#8963;&#8997;A</span><b>Run anything by name</b><p>Every zone, every workspace, every settings page, every shortcut. The same list of verbs an agent gets over MCP, with a search field in front of it.</p></div>
+      <div class="cell"><span class="k">colour</span><b>The number is the colour</b><p>Zone 1 is rose, 2 plum, 3 blue, 4 mint, 5 sun &mdash; in the overlay, in the editor, in the menu bar and on this page. One fact, said twice.</p></div>
     </div>
   </section>
 
-  <section id="zones">
-    <h2>Draw the layout, once</h2>
-    <p class="sub">Click a zone to split it, ⇧-click to split it the other way, drag a divider to
-      resize its neighbours. Any number of zones, any size, a different set on every monitor —
-      and windows come back to their zone when a display is unplugged and plugged in again.</p>
-    <img class="diagram" src="zones.svg" width="720" height="300"
-         alt="A screen divided into three zones, with a window being dragged into the highlighted top-right zone">
-    <p class="dim" style="font-size:14.5px;margin:22px 0 10px">Five sets ship with it. Everything
-      past that you draw yourself.</p>
-    <img class="diagram" src="zone-sets.svg" width="720" height="112"
-         alt="Five built-in zone sets — Halves, Thirds, 60/40, Quarters, Priority — and a sixth, irregular one drawn by hand">
+  <!-- ================= DESKS ================= -->
+  <section class="card glass" id="workspaces">
+    <p class="eyebrow">Workspaces</p>
+    <h2 class="h2">It remembers <span class="grad-text">which monitor.</span></h2>
+    <p class="lead">Save the desk once: the apps, every window's frame, the display each one belongs on, and what each app should open on the way up. Close the lot, go home, come back &mdash; and it builds itself again.</p>
+    <div class="desks">
+      <div class="desk">
+        <div class="t"><b>review</b><span>&#8963;&#8997;&#8679;R &middot; 2 displays</span></div>
+        <div class="mon">
+          <i style="flex:1.3;background:linear-gradient(160deg,var(--z1-lo),var(--z1))"></i>
+          <i style="flex:2;background:linear-gradient(160deg,var(--z2-lo),var(--z2))"></i>
+          <i style="flex:1;background:linear-gradient(160deg,var(--z3-lo),var(--z3))"></i>
+        </div>
+        <div class="ap"><span>Safari &middot; 6 tabs</span><span>Terminal</span><span>Notes</span></div>
+      </div>
+      <div class="desk">
+        <div class="t"><b>writing</b><span>&#8963;&#8997;&#8679;W &middot; 1 display</span></div>
+        <div class="mon">
+          <i style="flex:2.4;background:linear-gradient(160deg,var(--z4-lo),var(--z4))"></i>
+          <i style="flex:1;background:linear-gradient(160deg,var(--z5-lo),var(--z5))"></i>
+        </div>
+        <div class="ap"><span>iA Writer &middot; ~/drafts</span><span>Music</span></div>
+      </div>
+    </div>
+    <p class="p" style="margin-top:20px">Monitors are keyed by display UUID, so unplugging one does not scramble them. <a href="workspaces.md">How workspaces work</a>, including the one thing macOS will not let them do.</p>
   </section>
 
-  <section id="workspaces">
-    <h2>A desk you can put away</h2>
-    <p class="sub">A workspace remembers the apps, the frame of every window, the monitor each one
-      belongs on, and what each app should open on the way up. Launch it onto an empty desktop and
-      it rebuilds itself — opening whatever is closed, waiting for the windows, putting them back.</p>
-    <img class="diagram" src="workspaces.svg" width="720" height="172"
-         alt="A saved workspace of four apps, closed to an empty desktop, then launched back into place">
-  </section>
-
-  <section id="agents">
-    <h2>The part no other Mac window manager has</h2>
-    <p class="sub">One line, and your agent can read the desk, rearrange it, save it, and read the
-      screen back — without a screenshot round trip for anything that is really just words.</p>
-    <div class="split">
-      <div>
-        <pre><span class="c"># Claude Code</span>
+  <!-- ================= AGENTS ================= -->
+  <section class="card glass" id="agents">
+    <p class="eyebrow">For agents</p>
+    <h2 class="h2">Or just ask.</h2>
+    <p class="lead">Twenty MCP tools across layouts, workspaces, zones, keep-awake, screenshots, on-device OCR and measuring. Generic automation can nudge someone else's window around. <b>This is the window manager itself.</b></p>
+    <div class="term">
+      <div class="u">browser on the left 60%, terminal top right, notes bottom right</div>
+      <div class="r ok">&#10003; 3 windows placed</div>
+      <div class="u">save that as a workspace called &ldquo;review&rdquo;</div>
+      <div class="r ok">&#10003; saved &middot; 2 monitors</div>
+      <div class="u">keep the Mac awake until this build finishes</div>
+      <div class="r">awake &middot; until npm run build exits</div>
+      <div class="u">read the error out of that dialog and tell me what it says</div>
+      <div class="r">EADDRINUSE 127.0.0.1:7654</div>
+    </div>
+    <p class="p" style="margin-top:20px">Frames are fractions of a monitor's visible area, origin top-left &mdash; so &ldquo;left 60%&rdquo; is literally <b>{x: 0, y: 0, w: 0.6, h: 1}</b>. The same number the app prints inside each zone, so the interface and the API never disagree.</p>
+    <div class="split" style="margin-top:20px">
+      <pre><span class="c"># Claude Code</span>
 claude mcp add plonk -- npx -y plonk-mcp
 
 <span class="c"># Codex CLI</span>
 codex mcp add plonk -- npx -y plonk-mcp</pre>
-        <p class="dim" style="font-size:14.5px">Cursor, Zed, Cline and anything else that speaks MCP
-          work the same way — several at once is fine, and Plonk shows you who is connected.
-          <a href="https://github.com/ostapondo/plonk#for-agents">All 20 tools →</a></p>
+      <div>
+        <p class="p">Cursor, Zed, Cline and anything else that speaks MCP work the same way, over stdio or HTTP &mdash; several at once is fine, and Plonk shows you who is connected.</p>
+        <p class="p"><a href="agents.md">All twenty tools, the multi-agent rules and the CLI</a> &middot; one-pagers for <a href="clients/cursor.md">Cursor</a>, <a href="clients/zed.md">Zed</a> and <a href="clients/cline.md">Cline</a>. For Claude Desktop there is nothing to type: open the <code>.mcpb</code> bundle from <a href="https://github.com/ostapondo/plonk/releases/latest">the latest release</a>.</p>
       </div>
-      <ul class="says">
-        <li>browser left 60%, terminal top right, notes bottom right</li>
-        <li>save that as a workspace called “review”</li>
-        <li>put everything back where it was before the meeting</li>
-        <li>keep the Mac awake until this build finishes</li>
-        <li>read the error out of that dialog and tell me what it says</li>
-      </ul>
     </div>
   </section>
 
-  <section id="features">
-    <h2>What you get</h2>
-    <table>
-      <tr><td>Zones</td><td class="dim">Draw any layout you like, per monitor. Snap by dragging, by number, or by asking. Windows come back to their zone when a display is unplugged and plugged in again.</td></tr>
-      <tr><td>Workspaces</td><td class="dim">A desk you can put away: the apps, every window's frame, the monitor each belongs on, and what each app opens on the way up. Launch it onto an empty desktop and it rebuilds itself.</td></tr>
-      <tr><td>Focus that follows<br>the layout</td><td class="dim"><kbd>⌃⌥⇧←</kbd> goes to the window that is actually on the left, not the one you used last. <kbd>⌃⌥`</kbd> cycles the windows stacked in one zone.</td></tr>
-      <tr><td>Text off the screen</td><td class="dim"><kbd>⌃⌥T</kbd> selects an area and copies the words in it — from a screenshot, a paused video, a dialog that will not let you select. On-device, nothing uploaded.</td></tr>
-      <tr><td>A ruler</td><td class="dim"><kbd>⌃⌥R</kbd>, then hover: how far the pointer can travel each way before it meets an edge, read out of the pixels — the width of a row, the height of a bar, the gap between two things. Drag for a distance. Points and pixels both.</td></tr>
-      <tr><td>Pin part of the screen</td><td class="dim">Float a live crop of anything above everything else: a build log, a chart, a call, visible in a corner while you work over it.</td></tr>
-      <tr><td>Keep awake</td><td class="dim">Real power assertions, not a jiggler — and a session that ends by itself: after N minutes, at a wall-clock time, or the moment a process exits.</td></tr>
-      <tr><td>Screenshots</td><td class="dim">Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution.</td></tr>
-      <tr><td>A shortcut guide</td><td class="dim">Every shortcut the app in front actually has, read from its own menus, so it is never out of date.</td></tr>
-      <tr><td>Pointer tools</td><td class="dim">Find the cursor, ring every click for a screen recording, crosshairs, jump to the next display.</td></tr>
-      <tr><td>Voice</td><td class="dim">Hold <kbd>⌃⌥V</kbd> and say it. The common ones — “snap this left”, “zone three”, “keep awake for an hour” — run in the app itself, offline and instantly; anything bigger goes to your agent. Recognition is on-device.</td></tr>
-    </table>
+  <!-- ================= NUMBERS ================= -->
+  <section class="card glass">
+    <div class="stats">
+      <div class="stat a"><b>20</b><span>MCP tools for your agent</span></div>
+      <div class="stat b"><b>10</b><span>utilities behind one icon</span></div>
+      <div class="stat c"><b>0</b><span>dependencies in the app</span></div>
+      <div class="stat d"><b>0</b><span>bytes sent to a cloud</span></div>
+    </div>
   </section>
 
-  <section id="privacy">
-    <h2>Everything runs on your Mac</h2>
-    <p class="sub">Moving another app's windows costs an Accessibility grant, and a screenshot costs
-      Screen Recording. That is a lot to hand something you installed a minute ago — so none of this
-      is a promise, it is all checkable from a terminal.</p>
-    <div class="split">
+  <!-- ================= THE REST ================= -->
+  <section class="card glass" id="features">
+    <p class="eyebrow">And seven smaller things</p>
+    <h2 class="h2">Each was otherwise its own icon in the menu bar.</h2>
+    <div class="grid2">
+      <div class="cell"><span class="k">&#8963;&#8997;T</span><b>Text off the screen</b><p>Select an area and the words are in your clipboard &mdash; a screenshot, a paused video, a PDF that will not let you select. On-device.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;R</span><b>A ruler</b><p>How far the pointer can travel each way before it meets an edge. Points and pixels both, because a 44-point tap target is 88 pixels and only one of those is in the asset.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;P</span><b>Pin part of the screen</b><p>Float a live crop above everything else: a build log, a chart, a call, visible in a corner while you work over it. Streamed, never written down.</p></div>
+      <div class="cell"><span class="k">awake</span><b>Keep awake</b><p>Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or the moment a process exits.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;S</span><b>Screenshots</b><p>Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;&#8679;/</span><b>A shortcut guide</b><p>Every shortcut the front app actually has, read from its own menus rather than from a table someone has to keep up to date.</p></div>
+    </div>
+    <p class="p" style="margin-top:20px"><a href="features.md">Everything else, in full</a> &mdash; pointer tools, grab-and-move, notices, and how an update is checked before it is unpacked.</p>
+  </section>
+
+  <!-- ================= PRIVACY ================= -->
+  <section class="card glass" id="privacy">
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:18px;flex-wrap:wrap">
+      <span class="faceholder" style="--g:var(--z4);width:84px;height:94px">
+        <svg viewBox="0 0 100 112" style="width:84px;height:94px" aria-hidden="true"><use href="#f-shut"/></svg>
+      </span>
+      <p class="eyebrow" style="margin:0">Privacy</p>
+    </div>
+    <h2 class="h2">It isn't watching you.</h2>
+    <p class="lead">No account, no cloud, no telemetry. Plonk moves rectangles around, and that is all it wants from your Mac.</p>
+    <p class="p">Moving another app's windows costs an Accessibility grant, and a screenshot costs Screen Recording. That is a lot to hand something you installed a minute ago &mdash; so none of this is a promise. <b>It is all checkable from a terminal.</b></p>
+    <div class="split" style="margin-top:20px">
       <div>
         <pre><span class="c"># every socket the app has open</span>
 lsof -nP -i -a -p "$(pgrep -f Plonk)"
 plonk … TCP 127.0.0.1:43917 (LISTEN)</pre>
-        <p class="dim" style="font-size:14.5px">One listener on loopback. The only outbound call is
-          the update check, which sends no identifier and can be switched off.</p>
+        <p class="p" style="font-size:14.5px;margin-top:12px">One listener, on loopback. The only outbound call is the update check, which sends no identifier and can be switched off.</p>
       </div>
       <div>
         <pre><span class="c"># a web page cannot drive it</span>
@@ -388,50 +675,62 @@ curl -so /dev/null -w '%{http_code}\n' \
   -H 'Origin: https://example.com' \
   http://127.0.0.1:43917/state
 403
-<span class="c"># and nor can another program on your Mac</span>
+<span class="c"># nor can another program on your Mac</span>
 curl -so /dev/null -w '%{http_code}\n' \
   http://127.0.0.1:43917/state
 401</pre>
-        <p class="dim" style="font-size:14.5px">The API is gated on a token only you can read, so a
-          script cannot borrow Plonk's Screen Recording by asking the port. No account, no cloud, no
-          analytics, no crash reporter.
-          <a href="https://github.com/ostapondo/plonk/blob/main/SECURITY.md">SECURITY.md →</a></p>
+        <p class="p" style="font-size:14.5px;margin-top:12px">The API is gated on a token only you can read, so a script cannot borrow Plonk's Screen Recording by asking the port.</p>
       </div>
     </div>
+    <p class="p" style="margin-top:20px">Releases are built and signed on GitHub's runners and ship with an attestation, so the binary on your Mac ties back to the commit it came from:</p>
+    <div class="code">gh attestation verify Plonk-&lt;version&gt;.zip -R ostapondo/plonk</div>
+    <p class="p" style="margin-top:16px"><a href="verify.md">Check it yourself</a> is every claim above with the command that tests it. <a href="https://github.com/ostapondo/plonk/blob/main/SECURITY.md">SECURITY.md</a> says where each promise stops.</p>
   </section>
 
-  <section>
-    <h2>Put it on your Mac</h2>
-    <div class="install" style="justify-content:flex-start">
-      <div class="cmd">
-        <span class="prompt">$</span>
-        <code id="brew2">brew install --cask ostapondo/plonk/plonk</code>
-        <button data-copy="#brew2">Copy</button>
-      </div>
-      <a class="ghost" href="https://github.com/ostapondo/plonk">Star it on GitHub</a>
+  <!-- ================= INSTALL ================= -->
+  <section class="card glass" id="install">
+    <p class="eyebrow">Install</p>
+    <h2 class="h2">One line, and it's yours.</h2>
+    <div class="cmd">
+      <span class="prompt">$</span>
+      <code id="brew">brew install --cask ostapondo/plonk/plonk</code>
+      <button type="button" data-copy="#brew">Copy</button>
     </div>
-    <p class="note">Or help build it. It compiles and tests on a plain checkout
-      with no signing certificate and no account —
-      <a href="https://github.com/ostapondo/plonk/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>
-      is three commands long, and the
-      <a href="https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">good first issues</a>
-      each say where the code is and how to tell it worked.</p>
+    <ul class="checks">
+      <li>macOS 13 or newer, Apple silicon</li>
+      <li>Say yes to Accessibility when it asks, then relaunch</li>
+      <li>No Full Disk Access, no Automation, no Keychain</li>
+      <li>Gets along fine with Rectangle, Magnet and Raycast</li>
+      <li>Coming from Rectangle: <a href="from-rectangle.md">one button takes your shortcuts</a>, and your <code>rectangle://</code> scripts keep working</li>
+    </ul>
+    <div class="cta" style="margin-top:26px">
+      <a class="btn dark" href="https://github.com/ostapondo/plonk/releases/latest">Download the .zip</a>
+      <a class="btn ghost" href="https://github.com/ostapondo/plonk">Source on GitHub</a>
+      <p class="fine">Signed, built and attested on GitHub's runners &mdash; <a href="verify.md">check the binary against the commit</a> before you open it.</p>
+    </div>
+    <p class="p" style="margin-top:22px">Plonk is signed but not notarized, so macOS holds a copy you download by hand; the cask clears that for you. And it is early &mdash; version 0.2.x, one author. Shortcuts, zone files and workspaces are settled; the MCP tool names and the HTTP API can still change between minor versions.</p>
+    <p class="p">Or help build it. It compiles and tests on a plain checkout with no signing certificate and no account: <a href="https://github.com/ostapondo/plonk/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> is five commands long, and the <a href="https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">good first issues</a> each say where the code is and how to tell it worked. The smallest useful change is one JSON file in <a href="https://github.com/ostapondo/plonk/tree/main/zone-sets">zone-sets/</a>.</p>
   </section>
 
-</div>
-
-<footer>
-  <div class="wrap">
-    <span>MIT © <a href="https://github.com/ostapondo">ostapondo</a></span>
-    <nav>
+  <footer class="foot glass">
+    <div class="links">
+      <a href="zones.md">Zones</a>
+      <a href="workspaces.md">Workspaces</a>
+      <a href="hotkeys.md">Hotkeys</a>
+      <a href="features.md">Everything else</a>
+      <a href="from-rectangle.md">From Rectangle</a>
+      <a href="agents.md">For agents</a>
+      <a href="verify.md">Check it yourself</a>
       <a href="https://github.com/ostapondo/plonk">Source</a>
       <a href="https://github.com/ostapondo/plonk/issues">Issues</a>
       <a href="https://github.com/ostapondo/plonk/blob/main/CONTRIBUTING.md">Contributing</a>
       <a href="https://github.com/ostapondo/plonk/blob/main/ROADMAP.md">Roadmap</a>
       <a href="https://www.npmjs.com/package/plonk-mcp">plonk-mcp on npm</a>
-    </nav>
-  </div>
-</footer>
+    </div>
+    MIT &copy; <a href="https://github.com/ostapondo">ostapondo</a> &middot; Swift 6 &middot; macOS 13+ &middot; still early, and there's only one of me
+  </footer>
+
+</div>
 
 <script>
   for (const button of document.querySelectorAll("button[data-copy]")) {

@@ -9,8 +9,6 @@ extension LocalizedStringResource {
     static let appRunACommand = Self.key("app.runACommand")
     static let appWorkspaces = Self.key("app.workspaces")
     static let appReportBug = Self.key("app.reportBug")
-    static let appReport = Self.key("app.report")
-    static let appThemePicker = Self.key("app.themePicker")
     static let appAllPermissionsGranted = Self.key("app.allPermissionsGranted")
     static let appAccessibility = Self.key("app.accessibility")
     static let appScreenRecording = Self.key("app.screenRecording")
@@ -19,12 +17,13 @@ extension LocalizedStringResource {
         Self.key("app.version \(version)")
     }
 
-    static func appLaunchWorkspace(_ name: String) -> LocalizedStringResource {
-        Self.key("app.launchWorkspace \(name)")
+    /// The line the sidebar signs off with: the app, and what is installed.
+    static func appNameVersion(_ version: String) -> LocalizedStringResource {
+        Self.key("app.nameVersion \(version)")
     }
 
-    static func appTitle(_ group: String, _ page: String) -> LocalizedStringResource {
-        Self.key("app.title \(group) \(page)")
+    static func appLaunchWorkspace(_ name: String) -> LocalizedStringResource {
+        Self.key("app.launchWorkspace \(name)")
     }
 
     static func appAgentCount(_ count: Int) -> LocalizedStringResource {
@@ -48,5 +47,6 @@ extension LocalizedStringResource {
     static let pageAppearance = Self.key("page.appearance")
     static let pageShortcuts = Self.key("page.shortcuts")
     static let pageAwake = Self.key("page.awake")
+    static let pageActive = Self.key("page.active")
     static let pageUpdate = Self.key("page.update")
 }

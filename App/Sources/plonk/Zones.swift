@@ -134,6 +134,31 @@ enum ZoneGeometry {
         return best?.index
     }
 
+    /// Which zone a saved frame came out of, by how much of the two rectangles
+    /// is the same rectangle. Used to colour a workspace by the zones its
+    /// windows return to: a desk stores frames, not zone numbers, so the number
+    /// has to be read back off the geometry.
+    ///
+    /// Intersection over union rather than nearest centre: a window filling the
+    /// whole screen has its centre inside every zone of a set, and picking one
+    /// of them would be arbitrary. Below half the same rectangle it is nobody's
+    /// zone, and saying so is better than colouring it a lie.
+    static func nearest(to frame: FracRect, in zones: [ZoneRect]) -> Int? {
+        var best: (index: Int, score: Double)?
+        for (index, zone) in zones.enumerated() {
+            let ix = min(zone.x + zone.w, frame.x + frame.w) - max(zone.x, frame.x)
+            let iy = min(zone.y + zone.h, frame.y + frame.h) - max(zone.y, frame.y)
+            guard ix > 0, iy > 0 else { continue }
+            let intersection = ix * iy
+            let union = zone.w * zone.h + frame.w * frame.h - intersection
+            guard union > 0 else { continue }
+            let score = intersection / union
+            if best == nil || score > best!.score { best = (index, score) }
+        }
+        guard let best, best.score >= 0.5 else { return nil }
+        return best.index
+    }
+
     /// Which zones a spanning rect swallows, by centre point — the same test
     /// the drag overlay uses to pick one, so what lights up is what a drop
     /// would land on.

@@ -41,9 +41,6 @@ struct Config: Codable {
     // window. The gap is in points and applies to the placed window too, not
     // just the drawing, so zones can be given breathing room.
     var zoneGap: Double = 0
-    /// The most gap anything may set, wherever it is set from: the slider, an
-    /// agent, or a Rectangle config being read in.
-    static let gapLimit = 40.0
     var zoneOpacity: Double = 1
     /// "#RRGGBB", or nil for the system accent colour.
     var zoneColorHex: String?
@@ -83,6 +80,13 @@ struct Config: Codable {
     // relaunch. Unix epoch seconds; nil means the session had no limit.
     var awakeRequested = false
     var awakeSessionEnd: Double?
+    // Stay active. The schedule and the app list are settings; whether it was
+    // switched on by hand is not restored, because a hold made yesterday says
+    // nothing about today.
+    var activeSchedule = ActiveSchedule()
+    var activeApps: [String] = []
+    var activeAllowOnBattery = false
+    var activeTimeoutMinutes = 0
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
     // How different two neighbouring pixels have to be, on one channel of 255,
@@ -158,6 +162,10 @@ struct Config: Codable {
         awakeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .awakeTimeoutMinutes) ?? 0
         awakeRequested = try c.decodeIfPresent(Bool.self, forKey: .awakeRequested) ?? false
         awakeSessionEnd = try c.decodeIfPresent(Double.self, forKey: .awakeSessionEnd)
+        activeSchedule = try c.decodeIfPresent(ActiveSchedule.self, forKey: .activeSchedule) ?? ActiveSchedule()
+        activeApps = try c.decodeIfPresent([String].self, forKey: .activeApps) ?? []
+        activeAllowOnBattery = try c.decodeIfPresent(Bool.self, forKey: .activeAllowOnBattery) ?? false
+        activeTimeoutMinutes = try c.decodeIfPresent(Int.self, forKey: .activeTimeoutMinutes) ?? 0
         shotFolder = try c.decodeIfPresent(String.self, forKey: .shotFolder) ?? "~/Desktop"
         shotCopyToClipboard = try c.decodeIfPresent(Bool.self, forKey: .shotCopyToClipboard) ?? true
         rulerEdgeTolerance = try c.decodeIfPresent(Int.self, forKey: .rulerEdgeTolerance)
@@ -210,24 +218,6 @@ struct Config: Codable {
     mutating func assignZoneSet(_ name: String?, forKeys keys: [String]) {
         keys.forEach { screenZoneSets.removeValue(forKey: $0) }
         if let name, let primary = keys.first { screenZoneSets[primary] = name }
-    }
-
-    /// Bind an action, freeing the combination wherever else it was, and
-    /// return what lost it. A combination can only drive one action, so this
-    /// is the one place that rule lives; setHotkey and RectangleImport.apply
-    /// both go through it.
-    @discardableResult
-    mutating func bind(_ action: HotkeyAction, to hotkey: Hotkey) -> [HotkeyAction] {
-        let resolved = resolvedHotkeys
-        let stolen = HotkeyAction.allCases.filter { $0 != action && resolved[$0] == hotkey }
-        for other in stolen { hotkeys[other.rawValue] = "" }
-        hotkeys[action.rawValue] = hotkey.spec
-        return stolen
-    }
-
-    /// The gap, held inside the bounds every caller shares.
-    mutating func setGap(_ points: Double) {
-        zoneGap = max(0, min(points, Self.gapLimit))
     }
 
     /// Resolved bindings: what the user chose, otherwise the default.

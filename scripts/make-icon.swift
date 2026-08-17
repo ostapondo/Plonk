@@ -1,61 +1,72 @@
-// Renders the app icon — an isometric Rubik's cube on a dark rounded square —
-// into App/Resources/AppIcon.icns. Run from the repo root:
+// Renders the app icon into App/Resources/AppIcon.icns. Run from the repo root:
 //   swift scripts/make-icon.swift
+//
+// The mark is the one on the site and in the README: a cube seen from above,
+// white top, rose left face, blue right, black outline, flat fills, on warm
+// white. Coordinates are the design's own 100 x 112 grid — the same numbers as
+// the SVG — flipped in y, because AppKit draws upward and the drawing was
+// written for a screen that draws downward.
+//
+// It replaced a dark tile holding a Rubik's cube, which shared nothing with the
+// rest of the design: three faces of nine stickers each is a different object
+// from one flat cube, and at 16 points the stickers were mush.
 import AppKit
 
-struct Vec {
-    let x: CGFloat
-    let y: CGFloat
-    static func + (a: Vec, b: Vec) -> Vec { Vec(x: a.x + b.x, y: a.y + b.y) }
-    static func * (a: Vec, s: CGFloat) -> Vec { Vec(x: a.x * s, y: a.y * s) }
-    var point: NSPoint { NSPoint(x: x, y: y) }
-}
+let grid = (w: CGFloat(100), h: CGFloat(112))
 
-func quad(_ p0: Vec, _ e1: Vec, _ e2: Vec) -> NSBezierPath {
+func poly(_ points: [(CGFloat, CGFloat)], size: CGFloat, unit: CGFloat,
+          originX: CGFloat, originY: CGFloat) -> NSBezierPath {
     let path = NSBezierPath()
-    path.move(to: p0.point)
-    path.line(to: (p0 + e1).point)
-    path.line(to: (p0 + e1 + e2).point)
-    path.line(to: (p0 + e2).point)
+    for (index, point) in points.enumerated() {
+        let mapped = NSPoint(x: originX + point.0 * unit, y: originY + (grid.h - point.1) * unit)
+        index == 0 ? path.move(to: mapped) : path.line(to: mapped)
+    }
     path.close()
     return path
 }
 
-func drawFace(origin: Vec, e1: Vec, e2: Vec, sticker: NSColor, gapColor: NSColor) {
-    gapColor.setFill()
-    quad(origin, e1, e2).fill()
-    let g: CGFloat = 0.045
-    sticker.setFill()
-    for i in 0..<3 {
-        for j in 0..<3 {
-            let p = origin + e1 * ((CGFloat(i) + g) / 3) + e2 * ((CGFloat(j) + g) / 3)
-            quad(p, e1 * ((1 - 2 * g) / 3), e2 * ((1 - 2 * g) / 3)).fill()
-        }
-    }
-}
-
 func drawIcon(size: CGFloat) {
     let inset = size * 0.05
-    let bg = NSBezierPath(
+    let tile = NSBezierPath(
         roundedRect: NSRect(x: inset, y: inset, width: size - 2 * inset, height: size - 2 * inset),
         xRadius: size * 0.21, yRadius: size * 0.21
     )
-    NSColor(calibratedRed: 0.11, green: 0.12, blue: 0.14, alpha: 1).setFill()
-    bg.fill()
+    NSColor(srgbRed: 1, green: 0.992, blue: 0.976, alpha: 1).setFill()
+    tile.fill()
 
-    let s = size * 0.31
-    let apex = Vec(x: size / 2, y: size * 0.815)
-    let u = Vec(x: 0.866 * s, y: -0.5 * s)
-    let v = Vec(x: -0.866 * s, y: -0.5 * s)
-    let k = Vec(x: 0, y: -s)
-    let gap = NSColor(calibratedRed: 0.07, green: 0.075, blue: 0.09, alpha: 1)
+    // The cube fills about two thirds of the tile, centred.
+    let unit = (size * 0.66) / grid.h
+    let originX = (size - grid.w * unit) / 2
+    let originY = (size - grid.h * unit) / 2
 
-    drawFace(origin: apex, e1: u, e2: v,
-             sticker: NSColor(calibratedRed: 0.96, green: 0.96, blue: 0.95, alpha: 1), gapColor: gap)
-    drawFace(origin: apex + v, e1: u, e2: k,
-             sticker: NSColor(calibratedRed: 0.90, green: 0.28, blue: 0.30, alpha: 1), gapColor: gap)
-    drawFace(origin: apex + u, e1: v, e2: k,
-             sticker: NSColor(calibratedRed: 0.18, green: 0.51, blue: 0.97, alpha: 1), gapColor: gap)
+    let map = { (points: [(CGFloat, CGFloat)]) in
+        poly(points, size: size, unit: unit, originX: originX, originY: originY)
+    }
+
+    NSColor(srgbRed: 1, green: 0.992, blue: 0.976, alpha: 1).setFill()
+    map([(12, 34), (50, 12), (88, 34), (50, 56)]).fill()
+    NSColor(srgbRed: 1, green: 0x4F / 255, blue: 0x81 / 255, alpha: 1).setFill()
+    map([(12, 34), (50, 56), (50, 100), (12, 78)]).fill()
+    NSColor(srgbRed: 0x3A / 255, green: 0x6B / 255, blue: 1, alpha: 1).setFill()
+    map([(88, 34), (50, 56), (50, 100), (88, 78)]).fill()
+
+    let outline = map([(12, 34), (50, 12), (88, 34), (88, 78), (50, 100), (12, 78)])
+    let inner = NSBezierPath()
+    let point = { (x: CGFloat, y: CGFloat) in
+        NSPoint(x: originX + x * unit, y: originY + (grid.h - y) * unit)
+    }
+    inner.move(to: point(12, 34))
+    inner.line(to: point(50, 56))
+    inner.line(to: point(88, 34))
+    inner.move(to: point(50, 56))
+    inner.line(to: point(50, 100))
+    NSColor(srgbRed: 0.071, green: 0.063, blue: 0.11, alpha: 1).setStroke()
+    for path in [outline, inner] {
+        path.lineWidth = 2.6 * unit
+        path.lineJoinStyle = .round
+        path.lineCapStyle = .round
+        path.stroke()
+    }
 }
 
 let repoRoot = FileManager.default.currentDirectoryPath

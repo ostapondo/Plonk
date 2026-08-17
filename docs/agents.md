@@ -9,7 +9,7 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 "left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.
 
 <p align="center">
-  <img src="agents.gif" alt="Four sentences typed to an agent: a layout is applied across the desk, the result is saved as a workspace called review and the Mac held awake until a build finishes, everything is then closed to an empty desktop and rebuilt from that workspace, and finally a line of error text is read off the screen" width="720">
+  <img src="agent-desk.svg" alt="A sentence typed to an agent becomes a desk: the browser takes the left 0.6 of the screen, the terminal the top right and the notes the bottom right, and the result is saved as a workspace called review" width="720">
 </p>
 
 ## The tools
@@ -22,6 +22,7 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 | `snap_window` | Drop a window into a numbered zone |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
 | `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
+| `set_active` | Stay active — resets the idle timer so chat apps do not show Away |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
 | `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
 | `measure_screen` | How far a point can go each way before it meets an edge, or the distance between two points, in points and pixels — no image, no eyeballing |

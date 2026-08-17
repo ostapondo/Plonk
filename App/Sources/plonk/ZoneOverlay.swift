@@ -15,7 +15,14 @@ struct ZoneAppearance: Equatable {
     var color: NSColor?
     var showNumbers = true
 
+    /// One colour, for the things that are not a zone: the ruler and the
+    /// pointer tools share it so the desk stays one colour.
     var tint: NSColor { color ?? .controlAccentColor }
+
+    /// The colour of a particular zone. Colour is the zone number, so each gets
+    /// its own hue — unless an explicit colour is set for the set, in which
+    /// case that wins and the whole overlay is one colour, as it used to be.
+    func tint(for index: Int) -> NSColor { color ?? Ink.zoneTint(index) }
 
     /// "#RRGGBB" as stored in config. Anything else is nil, which means the
     /// accent colour — a bad string in a hand-edited file should not be fatal.
@@ -72,10 +79,11 @@ final class ZoneOverlay {
             window.setFrame(visible, display: false)
             rebuild(zones: zones, visible: visible)
         }
-        let tint = appearance.tint
         let alpha = max(0, min(appearance.opacity, 1))
         for (index, view) in zoneViews.enumerated() {
             let isHovered = highlighted.contains(index)
+            // Per zone, not per set: the hue is the number.
+            let tint = appearance.tint(for: index)
             view.layer?.backgroundColor = tint.withAlphaComponent((isHovered ? 0.28 : 0.10) * alpha).cgColor
             view.layer?.borderColor = tint.withAlphaComponent((isHovered ? 0.9 : 0.35) * alpha).cgColor
             view.layer?.borderWidth = isHovered ? 2 : 1.5

@@ -14,26 +14,21 @@ struct MainWindowView: View {
     @ObservedObject var model: AppModel
     @Environment(\.colorScheme) private var scheme
 
-    private static let wide: CGFloat = 216
+    private static let wide: CGFloat = 220
     private static let rail: CGFloat = 58
     private static let railBelow: CGFloat = 780
+    /// The unified toolbar height macOS uses, and the design with it.
+    private static let bar: CGFloat = 38
 
     private var current: SettingsPage? {
         model.settingsPages.first { $0.id == model.selectedPage } ?? model.settingsPages.first
     }
 
-    private var group: SettingsGroup? {
-        model.settingsGroups.first { $0.id == current?.parent }
-    }
-
-    /// "Layout · Zones", or just "Home" where the destination is the page.
+    /// The page, and only the page. The destination it belongs to is a heading
+    /// in the sidebar now, so repeating it here said the same word twice.
     private var title: String {
         guard let current else { return String(localized: .appName) }
-        let page = String(localized: current.title)
-        guard let group else { return page }
-        let destination = String(localized: group.title)
-        guard destination != page else { return page }
-        return String(localized: .appTitle(destination, page))
+        return String(localized: current.title)
     }
 
     var body: some View {
@@ -83,8 +78,8 @@ struct MainWindowView: View {
     // green every day teach people to stop reading them, and then the one that
     // matters goes unread too.
     private var topBar: some View {
-        HStack(spacing: 8) {
-            Text(title).font(.system(size: 14.5, weight: .semibold))
+        HStack(spacing: 7) {
+            Text(title).font(.system(size: 13, weight: .bold))
             Spacer(minLength: 12)
             if healthy {
                 StatusPill(title: .appAllPermissionsGranted, ok: true)
@@ -104,24 +99,11 @@ struct MainWindowView: View {
                 StatusPill(title: .appAgentCount(model.connectedAgents.count), ok: true)
                     .help(model.connectedAgents.joined(separator: ", "))
             }
-            Button { model.actions?.openCommandPalette() } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 11))
-                    Text("⌘K").font(.system(size: 11))
-                }
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 8)
-                .frame(height: 24)
-                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Ink.card(scheme)))
-                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .strokeBorder(Ink.capStroke))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help(String(localized: .appRunACommand))
         }
-        .padding(.horizontal, 20)
-        .frame(height: 52)
+        // No search button here: the sidebar already carries "Run a command"
+        // with the same shortcut on it, and one way in is one way in.
+        .padding(.horizontal, 14)
+        .frame(height: Self.bar)
         .background(Ink.chrome(scheme))
     }
 

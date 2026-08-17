@@ -9,7 +9,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = ConfigStore()
     private let windows = WindowManager()
     let awake = AwakeManager()
-    private let agents = AgentRegistry()
+    let active = ActiveManager()
+    let agents = AgentRegistry()
     private let eventBroadcaster = EventBroadcaster()
     let voice = VoiceManager()
     let hotkeys = HotkeyManager()
@@ -19,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     lazy var commands = WindowCommands(windows: windows, memory: snapMemory)
     private lazy var launcher = WorkspaceLauncher(windows: windows)
     lazy var presenter = WindowPresenter(model: model)
-    private var statusMenu: StatusMenuController!
+    var statusMenu: StatusMenuController!
     var dragSnap: DragSnapManager!
     private var grabMove: GrabMove!
     private var newWindows: NewWindowWatcher!
@@ -54,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupPresenter()
         setupStatusMenu()
         setupAwake()
+        setupActive()
         setupLauncher()
         setupHotkeys()
         setupVoice()
@@ -112,57 +114,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         presenter.onCancelWorkspaceLaunch = { [weak self] in self?.launcher.cancel() }
         presenter.onZonePickerClosed = { [weak self] in self?.clearPreview() }
         presenter.onFullscreenEditorClosed = { [weak self] in self?.clearPreview() }
-    }
-
-    private func setupStatusMenu() {
-        statusMenu = StatusMenuController()
-        statusMenu.isAwakeRequested = { [weak self] in self?.awake.requested ?? false }
-        statusMenu.onOpenWindow = { [weak self] in self?.openMainWindow() }
-        statusMenu.onCaptureRegion = { [weak self] in self?.runCapture(.region, openEditor: true) }
-        statusMenu.onToggleAwake = { [weak self] in self?.awake.toggle() }
-        statusMenu.onLaunchWorkspace = { [weak self] name in self?.launchWorkspace(named: name, onScreen: nil) }
-        statusMenu.onReportBug = { [weak self] in self?.reportBug() }
-        statusMenu.agentEntries = { [weak self] in
-            guard let self else { return [] }
-            var names = agents.onlineNames()
-            for adapter in store.config.agentAdapters where !names.contains(adapter.name) {
-                names.append(adapter.name)
-            }
-            if let selected = store.config.selectedAgent, !names.contains(selected) {
-                names.append(selected)
-            }
-            return names.map { ($0, $0 == self.store.config.selectedAgent) }
-        }
-        statusMenu.isExclusive = { [weak self] in self?.store.config.agentExclusive ?? false }
-        statusMenu.hasSelection = { [weak self] in self?.store.config.selectedAgent != nil }
-        statusMenu.onSelectAgent = { [weak self] name in self?.selectAgent(name) }
-        statusMenu.onToggleExclusive = { [weak self] in
-            guard let self else { return }
-            setAgentExclusive(!store.config.agentExclusive)
-        }
-        refreshStatusMenu()
-    }
-
-    private func setupAwake() {
-        awake.allowOnBattery = store.config.awakeAllowOnBattery
-        awake.autoWhileCharging = store.config.awakeAutoWhileCharging
-        awake.keepDisplayOn = store.config.awakeKeepDisplayOn
-        awake.timeoutMinutes = store.config.awakeTimeoutMinutes
-        awake.onChange = { [weak self] in
-            guard let self else { return }
-            model.awakeOn = awake.isOn
-            model.awakeRequested = awake.requested
-            refreshStatusMenu()
-            persistAwakeSession()
-            // Also fires when the power source or a timeout flips it, which
-            // writes no config and would otherwise never reach a listener.
-            router?.changes.bump("awake")
-        }
-        awake.startObservingPowerSource()
-        if store.config.awakeRequested {
-            awake.restore(sessionEnd: store.config.awakeSessionEnd.map(Date.init(timeIntervalSince1970:)))
-        }
-        awake.reevaluate()
     }
 
     private func setupLauncher() {
@@ -484,7 +435,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupServer() {
-        router = Router(store: store, windows: windows, awake: awake, agents: agents)
+        router = Router(store: store, windows: windows, awake: awake, active: active, agents: agents)
         router.changes.onEvent = { [weak self] rev, what in
             self?.eventBroadcaster.broadcast(rev: rev, what: what)
         }
@@ -535,22 +486,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.server = server
     }
 
-    /// Keep-awake is a user decision, not a session detail, so it has to
-    /// outlive a relaunch. Written only when it actually changed, since
-    /// onChange also fires on every power-source event.
-    private func persistAwakeSession() {
-        // A pid means nothing after a relaunch — the process it named may be
-        // gone, or worse, reused — so those sessions are recorded as off and
-        // simply end when the app does.
-        let requested = awake.boundPID == nil && awake.requested
-        let end = awake.sessionEnd?.timeIntervalSince1970
-        guard store.config.awakeRequested != requested || store.config.awakeSessionEnd != end else { return }
-        store.update {
-            $0.awakeRequested = requested
-            $0.awakeSessionEnd = end
-        }
-    }
-
     // MARK: - Model
 
     /// Bundle version; empty when running unbundled through `swift run`.
@@ -562,12 +497,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.appVersion = appVersion
         model.configWarning = store.loadFailure
         refreshPermissions()
-        model.awakeOn = awake.isOn
-        model.awakeRequested = awake.requested
-        model.awakeAllowOnBattery = store.config.awakeAllowOnBattery
-        model.awakeAutoWhileCharging = store.config.awakeAutoWhileCharging
-        model.awakeKeepDisplayOn = store.config.awakeKeepDisplayOn
-        model.awakeTimeoutMinutes = store.config.awakeTimeoutMinutes
+        refreshAwakeModel()
+        refreshActiveModel()
         model.hotkeysEnabled = store.config.hotkeysEnabled
         model.dragSnapEnabled = store.config.dragSnapEnabled
         model.zoneGap = store.config.zoneGap
@@ -664,7 +595,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.zonesModifier = store.config.zonesModifier
     }
 
-    private func refreshStatusMenu() {
+    func refreshStatusMenu() {
         statusMenu.refresh(
             icon: awake.isOn ? StatusIcon.awake : StatusIcon.idle,
             tooltip: String(localized: .menuTooltip(String(localized: awake.statusText))),

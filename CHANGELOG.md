@@ -57,7 +57,31 @@ one of those.
   [docs/from-rectangle.md](docs/from-rectangle.md) is the whole of it, including
   what happens when both apps are running and hold the same key.
 
+- **Stay active**, a page of its own under Settings, for the thing keep-awake
+  was never able to do: stop Slack and Teams showing you as Away. They do not
+  ask whether the Mac is asleep, they ask how long it is since the last
+  keypress, and a power assertion does not touch that number. Stay active
+  resets it with a Shift every two minutes. Run it by hand with a timeout, on a
+  schedule of hours and weekdays, or while a chosen app is open. The schedule is
+  read from the clock rather than fired by a timer, so a Mac that slept through
+  09:00 and woke at 11:00 is inside the window rather than waiting for tomorrow,
+  and a window may cross midnight. Off on battery unless you allow it, and it
+  needs Accessibility — without the permission the page says so instead of
+  quietly sending nothing. Agents get `set_active`.
+
 ### Changed
+
+- **The window looks like the rest of Plonk now.** Colour is the zone number
+  everywhere it is drawn, so the sidebar, the Zones page, the website and the
+  README all say the same thing the same way. The sidebar lists every page under
+  the heading it belongs to instead of hiding ten of them behind groups that
+  expanded, the selected row is the accent rather than a grey fill, and the
+  Zones page opens with the set named in full, what it is running under it, and
+  each zone printing the fraction an agent would send for it.
+
+- **The README and the docs dropped the screen recordings** that still showed
+  the old single-accent overlay. What replaced them is drawn to the same palette
+  as the app, so a picture cannot go stale the next time the interface moves.
 
 - **Every word the app says now lives in one file.** The text was written into
   the views that draw it, spread across sixty-odd Swift files, which meant a

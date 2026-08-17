@@ -251,6 +251,31 @@ struct BuiltinZoneSetsTests {
                                        toleranceX: 0.1, toleranceY: 0.1) == nil)
     }
 
+    // MARK: - Reading a zone number back off a saved frame
+
+    @Test func aFrameSavedFromAZoneFindsItAgain() {
+        let priority = BuiltinZoneSets.all["Priority"]!
+        #expect(ZoneGeometry.nearest(to: FracRect(0.6, 0.5, 0.4, 0.5), in: priority) == 2)
+    }
+
+    /// Windows are dragged and resized by hand after they are placed, so the
+    /// frame a desk saves is rarely the zone to the pixel.
+    @Test func aFrameNudgedOffItsZoneStillFindsIt() {
+        let halves = BuiltinZoneSets.all["Halves"]!
+        #expect(ZoneGeometry.nearest(to: FracRect(0.02, 0.01, 0.49, 0.98), in: halves) == 0)
+    }
+
+    /// A window over the whole screen has its centre inside every zone of the
+    /// set, which is exactly when picking one would be arbitrary.
+    @Test func aFullScreenFrameBelongsToNoZone() {
+        let thirds = BuiltinZoneSets.all["Thirds"]!
+        #expect(ZoneGeometry.nearest(to: FracRect(0, 0, 1, 1), in: thirds) == nil)
+    }
+
+    @Test func anEmptySetHasNothingToMatch() {
+        #expect(ZoneGeometry.nearest(to: FracRect(0, 0, 0.5, 1), in: []) == nil)
+    }
+
     @Test func spanningAZoneWithItselfChangesNothing() {
         let thirds = BuiltinZoneSets.all["Thirds"]!
         let span = ZoneGeometry.union(thirds[1], thirds[1])

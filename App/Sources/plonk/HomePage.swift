@@ -13,6 +13,7 @@ struct HomePage: View {
 
     private var guide: GettingStarted {
         GettingStarted(accessibilityGranted: model.accessibilityGranted,
+                       screenRecordingGranted: model.screenRecordingGranted,
                        snapped: model.sawFirstSnap,
                        agentConnected: model.sawFirstAgent)
     }
@@ -41,7 +42,7 @@ struct HomePage: View {
                 HomeStatus(model: model)
                 Text(.homePrivacy)
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .muted()
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(20)
@@ -258,7 +259,7 @@ struct ZonePreview: View {
                     if zones.isEmpty {
                         Text(.homeEdgeSnapping)
                             .font(.caption)
-                            .foregroundStyle(.tertiary)
+                            .muted()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }

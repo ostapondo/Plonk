@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" role="img"
+     aria-label="Four ways to move a window: drag it, press a key, say it, or ask an agent">
+  <title>Four ways to move a window</title>
+  <!-- Solid cards rather than a gradient over the page, so this reads the same
+       in GitHub's light theme and its dark one. Colours are the zone palette:
+       1 rose, 2 plum, 3 blue, 4 mint. -->
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#ff7fa4"/><stop offset="1" stop-color="#ff4f81"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#a98cff"/><stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#6f92ff"/><stop offset="1" stop-color="#3a6bff"/>
+    </linearGradient>
+    <linearGradient id="g4" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#5ff0cd"/><stop offset="1" stop-color="#12d3a4"/>
+    </linearGradient>
+    <style>
+      .t { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+           font-weight: 800; font-size: 26px; letter-spacing: -0.6px }
+      .s { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+           font-weight: 500; font-size: 15px; opacity: .92 }
+      .n { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; opacity: .8 }
+    </style>
+  </defs>
+
+  <g>
+    <rect x="0" y="0" width="350" height="140" rx="22" fill="url(#g1)"/>
+    <text class="n" x="26" y="36" fill="#ffffff">1</text>
+    <text class="t" x="26" y="76" fill="#ffffff">Drag it</text>
+    <text class="s" x="26" y="106" fill="#ffffff">Zones light up. Hold ⌘ and it takes two.</text>
+  </g>
+  <g>
+    <rect x="370" y="0" width="350" height="140" rx="22" fill="url(#g2)"/>
+    <text class="n" x="396" y="36" fill="#ffffff">2</text>
+    <text class="t" x="396" y="76" fill="#ffffff">⌃⌥1 … ⌃⌥9</text>
+    <text class="s" x="396" y="106" fill="#ffffff">⌃⌥0 is the oops key. It puts it back.</text>
+  </g>
+  <g>
+    <rect x="0" y="160" width="350" height="140" rx="22" fill="url(#g3)"/>
+    <text class="n" x="26" y="196" fill="#ffffff">3</text>
+    <text class="t" x="26" y="236" fill="#ffffff">⌃⌥V — say it</text>
+    <text class="s" x="26" y="266" fill="#ffffff">Offline, on-device. Nobody hears you.</text>
+  </g>
+  <g>
+    <rect x="370" y="160" width="350" height="140" rx="22" fill="url(#g4)"/>
+    <text class="n" x="396" y="196" fill="#04241b">4</text>
+    <text class="t" x="396" y="236" fill="#04241b">Ask an agent</text>
+    <text class="s" x="396" y="266" fill="#04241b">Twenty MCP tools, one sentence.</text>
+  </g>
+</svg>

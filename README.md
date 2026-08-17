@@ -1,26 +1,26 @@
+<p align="center">
+  <img src="docs/banner.gif" width="640"
+       alt="The Plonk cube drops a window into the second of four gradient-filled zones, which frames it with a visible gap">
+</p>
+
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>A Mac window manager with zones you draw yourself. Put a
-window in one by dragging it, by shortcut, by voice, or by asking an agent over
-MCP.</strong><br>
+<p align="center"><strong>Give every window a place to live. Draw the boxes you
+actually want, then drop windows into them — with a drag, a key, or by saying so
+out loud.</strong><br>
 <sub>To plonk is to set a thing down exactly where it belongs.</sub></p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/github/v/release/ostapondo/Plonk?style=flat-square&color=8b7cf6&label=version">
-  <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111?style=flat-square">
-  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=flat-square">
-  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-2ea043?style=flat-square">
-  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-20_tools-8957e5?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/github/v/release/ostapondo/Plonk?style=flat-square&color=8b5cf6&label=version">
+  <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-3a6bff?style=flat-square">
+  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-ff4f81?style=flat-square">
+  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-12d3a4?style=flat-square">
+  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-ffc531?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-20_tools-8b5cf6?style=flat-square">
 </p>
 
 <p align="center">
   <a href="https://ostapondo.github.io/Plonk/"><strong>ostapondo.github.io/Plonk</strong></a>
-</p>
-
-<p align="center">
-  <img src="docs/demo.gif" width="720"
-       alt="A pile of overlapping windows is cleared four ways in turn: one window is dragged into a zone as the zones light up, the next is sent to zone two with ⌃⌥2, the third by holding ⌃⌥V and saying “zone three”, and the last two are placed together from a sentence typed to an agent">
 </p>
 
 ## Why another one
@@ -58,6 +58,11 @@ between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 
 ## Three ways to move a window
 
+<p align="center">
+  <img src="docs/ways.svg" width="720"
+       alt="Four cards, one per way to move a window: drag it and the zones light up, hold ⌘ for two at once; ⌃⌥1 to ⌃⌥9 for the numbered zones with ⌃⌥0 as the oops key; ⌃⌥V to say it, offline and on-device; or ask an agent, through twenty MCP tools">
+</p>
+
 **Drag it.** Zones light up as you move a window, and it drops into one. Hold
 `⌘` too and it takes two of them at once. Turn on grab-and-move to pull a window
 from anywhere inside it instead of aiming for the title bar.
@@ -73,14 +78,13 @@ screen and any window already in a numbered zone moves to wherever that number
 is now.
 
 <p align="center">
-  <img src="docs/zones.gif" width="720"
-       alt="Five clicks in the zone editor cut one screen into six zones, six windows fill them, and ⌃⌥⇧2 then swaps the whole set for another while the windows already in it follow their numbers across">
+  <img src="docs/zone-swap.svg" width="720"
+       alt="The same screen under two zone sets. In the first, zone 1 is a narrow left rail, zone 2 the wide middle, zone 3 the right column; after ⌃⌥⇧2 the shape is different but the numbers are not, so the window in zone 2 is still in zone 2">
 </p>
 
-<p align="center">
-  <img src="docs/app-zones.png" width="820"
-       alt="Plonk's Zones page: zone sets across the top with Thirds selected and its three numbered zones drawn below, controls for drag-to-snap and the modifier that shows the zones, and the list of halves, quarters, maximize and centre with the shortcut bound to each">
-</p>
+Colour is the zone number, everywhere it is drawn: 1 rose, 2 plum, 3 blue,
+4 mint, 5 sun, 6 sky. In the overlay you drag into, in the editor, in the menu
+bar, and in every picture on this page. A set can be read before a digit is.
 
 ## Install
 
@@ -206,8 +210,8 @@ can connect at once, each registering itself, with an optional mode that locks
 changes to the active one.
 
 <p align="center">
-  <img src="docs/agents.gif" width="720"
-       alt="Four sentences typed to an agent: a layout is applied across the desk, the result is saved as a workspace called review and the Mac held awake until a build finishes, everything is then closed to an empty desktop and rebuilt from that workspace, and finally a line of error text is read off the screen">
+  <img src="docs/agent-desk.svg" width="720"
+       alt="A sentence typed to an agent becomes a desk: the browser takes the left 0.6 of the screen, the terminal the top right and the notes the bottom right, and the result is saved as a workspace called review">
 </p>
 
 Setup, if you want the `plonk` CLI or an agent driving it (Node 18+):

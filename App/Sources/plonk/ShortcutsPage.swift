@@ -26,56 +26,61 @@ struct ShortcutsPage: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                Toggle(isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) })) {
-                    Text(LocalizedStringResource.keysHotkeys)
-                    Text(.keysHotkeysDetail)
-                }
+        PageShell(title: .pageShortcuts, subtitle: .keysHotkeysDetail) {
+            SettingsCard {
+                ToggleRow(title: .keysHotkeys,
+                          isOn: model.binding(\.hotkeysEnabled, set: { $0.setHotkeys($1) }))
             }
-            // Dimmed together when the keys are off. The URL switch below is
-            // not in here: a URL runs its action whatever that switch says, so
+            // Dimmed together when the keys are off. The URL card below is not
+            // in here: a URL runs its action whatever the keys are doing, so
             // greying it would misdescribe the surface SECURITY.md documents.
             Group {
-                Section {
-                    ShortcutRows(model: model, actions: [.shortcutGuide])
-                } header: {
-                    Text(.shortcutGroupGuide)
-                } footer: {
-                    Text(.keysGuideHelp)
+                SettingsCard(title: .shortcutGroupGuide, note: .keysGuideHelp) {
+                    SettingBlock {
+                        ShortcutRows(model: model, actions: [.shortcutGuide])
+                    }
                 }
-                Section {
-                    ShortcutRows(model: model, actions: [.commandPalette])
-                } header: {
-                    Text(.keysPalette)
-                } footer: {
-                    Text(.keysPaletteHelp)
+                SettingsCard(title: .keysPalette, note: .keysPaletteHelp) {
+                    SettingBlock {
+                        ShortcutRows(model: model, actions: [.commandPalette])
+                    }
                 }
                 ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
-                    Section(String(localized: group.name)) {
-                        ForEach(group.actions) { row($0) }
+                    SettingsCard(title: group.name) {
+                        ForEach(group.actions) { action in
+                            SettingBlock { row(action) }
+                        }
                     }
                 }
-                Section {
-                    Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
-                    Button(String(localized: .keysImportRectangle)) {
-                        model.actions?.importFromRectangle()
-                    }
-                } footer: {
-                    Text(.keysImportRectangleHelp)
-                }
+                buttons
             }
             .opacity(model.hotkeysEnabled ? 1 : 0.5)
             .disabled(!model.hotkeysEnabled)
-            Section {
-                Toggle(isOn: model.binding(\.handleRectangleURLs,
-                                           set: { $0.setRectangleURLs($1) })) {
-                    Text(LocalizedStringResource.keysRectangleURLs)
-                    Text(.keysRectangleURLsHelp)
-                }
+            SettingsCard(note: .keysRectangleURLsHelp) {
+                ToggleRow(title: .keysRectangleURLs,
+                          isOn: model.binding(\.handleRectangleURLs,
+                                              set: { $0.setRectangleURLs($1) }))
             }
         }
-        .formStyle(.grouped)
+    }
+
+    /// Restore and import sit under the last card rather than in one of their
+    /// own: they act on every binding above, not on any one group of them.
+    private var buttons: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 8) {
+                Button(String(localized: .keysRestoreDefaults)) { model.actions?.resetHotkeys() }
+                Button(String(localized: .keysImportRectangle)) {
+                    model.actions?.importFromRectangle()
+                }
+            }
+            .controlSize(.small)
+            Text(.keysImportRectangleHelp)
+                .font(.caption)
+                .muted()
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 3)
+        }
     }
 
     private func row(_ action: HotkeyAction) -> some View {
@@ -83,7 +88,7 @@ struct ShortcutsPage: View {
             model.selectedPage = action.page
         } label: {
             HStack(spacing: 10) {
-                Text(action.title)
+                Text(action.title).font(.system(size: 12.5))
                 Spacer(minLength: 12)
                 if model.unavailableHotkeys.contains(action.rawValue) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -94,7 +99,7 @@ struct ShortcutsPage: View {
                 KeyCaps(parts: model.hotkeyParts[action.rawValue] ?? [], showsNone: true)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .muted()
             }
             .contentShape(Rectangle())
         }

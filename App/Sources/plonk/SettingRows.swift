@@ -8,6 +8,37 @@ import SwiftUI
 // fields stretched across the window. These rows decide their own layout, and
 // the card decides where the lines between them go.
 
+/// Every page opens the same way: what it is, in display weight, and one line
+/// saying what it is for. Zones names the set, Workspaces names itself, and the
+/// rest follow — a page that opened straight into a list of switches gave no
+/// answer to "what is this page", which is the question a sidebar entry asks.
+struct PageShell<Content: View>: View {
+    let title: LocalizedStringResource
+    var subtitle: LocalizedStringResource?
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 26, weight: .heavy))
+                        .kerning(-0.7)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                content
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+        }
+    }
+}
+
 /// A card of rows with an optional heading and a note underneath.
 struct SettingsCard<Content: View>: View {
     var title: LocalizedStringResource?
@@ -16,13 +47,15 @@ struct SettingsCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            VStack(spacing: 0) {
+            // Leading, and stated: a bare VStack centres its children, so any
+            // block narrower than the card drifted into the middle of it.
+            VStack(alignment: .leading, spacing: 0) {
                 if let title {
                     HStack {
                         Text(String(localized: title).uppercased())
                             .font(.system(size: 10, weight: .bold))
                             .kerning(0.8)
-                            .foregroundStyle(.tertiary)
+                            .muted()
                         Spacer()
                     }
                     .padding(.horizontal, 13)
@@ -35,7 +68,7 @@ struct SettingsCard<Content: View>: View {
             if let note {
                 Text(note)
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .muted()
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 3)
             }
@@ -133,6 +166,7 @@ struct SettingBlock<Content: View>: View {
         VStack(spacing: 0) {
             Divider()
             VStack(alignment: .leading, spacing: 8) { content }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, inset ? 13 : 0)
                 .padding(.vertical, 10)
         }

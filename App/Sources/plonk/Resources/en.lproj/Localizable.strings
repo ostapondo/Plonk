@@ -36,6 +36,37 @@
 "awake.autoWhileCharging" = "Automatically while charging";
 "awake.autoWhileChargingHelp" = "Keeps the Mac awake whenever it is plugged in";
 
+/* Stay active. */
+"active.subtitle" = "Chat apps read how long it is since you last touched the keyboard. This resets that clock.";
+"active.stayActive" = "Stay active now";
+"active.stayActiveHelp" = "Sends a Shift keypress every two minutes, which also keeps the Mac awake";
+"active.turnOffAfter" = "Turn off after";
+"active.never" = "Never";
+"active.after30Minutes" = "30 minutes";
+"active.after1Hour" = "1 hour";
+"active.after4Hours" = "4 hours";
+"active.after8Hours" = "8 hours";
+"active.schedule" = "Schedule";
+"active.onASchedule" = "On a schedule";
+"active.onAScheduleHelp" = "Switches itself on inside these hours, and off again after them";
+"active.from" = "From";
+"active.to" = "To";
+"active.days" = "Days";
+"active.sameTimeHelp" = "Set two different times for the schedule to run";
+"active.apps" = "Apps";
+"active.appsHelp" = "Stay active runs while any of these is open, and stops when the last one quits";
+"active.noApps" = "No apps yet";
+"active.power" = "Power";
+"active.allowOnBattery" = "Allow on battery";
+"active.allowOnBatteryHelp" = "Off: stay active pauses when unplugged and resumes on power";
+"active.needsAccessibility" = "Plonk needs Accessibility to post the keypress. Without it nothing is sent.";
+"active.openSettings" = "Open Settings";
+"active.chooseApp" = "Choose app";
+"active.addRunning" = "Add running app";
+"active.unnamed" = "Unnamed";
+"active.prompt" = "Watch";
+"active.remove" = "Stop watching this app";
+
 /* Screenshots. */
 "shot.capture" = "Capture";
 "shot.captureRegion" = "Capture Region";
@@ -283,7 +314,10 @@
 "start.hide" = "Hide";
 "start.hideHelp" = "Hide this until the next version";
 "start.grant" = "Grant Accessibility";
-"start.grantDetail" = "The only way macOS lets one app move another's windows";
+"start.grantDetail" = "So Plonk can move another app's windows. macOS allows that no other way.";
+"start.record" = "Grant Screen Recording";
+"start.recordDetail" = "So a screenshot, the text off the screen and the ruler have something to read. Asked for the first time you use one.";
+"start.neverAsked" = "Never asked for: Full Disk Access, Automation, your Keychain, your contacts, your network. Nothing you do here leaves the Mac.";
 "start.snap" = "Snap a window";
 "start.snapDetail" = "Press ⌃⌥← with any window in front, or drag one to the side of the screen";
 "start.agent" = "Let an agent drive it";
@@ -323,16 +357,14 @@
 /* The window itself: sidebar, top bar, and the names of the pages. */
 "app.name" = "Plonk";
 "app.version %@" = "Version %@";
+"app.nameVersion %@" = "Plonk %@";
 "app.runACommand" = "Run a command";
 "app.workspaces" = "Workspaces";
 "app.launchWorkspace %@" = "Launch %@";
 "app.reportBug" = "Report a Bug";
-"app.report" = "Report";
-"app.themePicker" = "Light, dark, or whatever macOS is using";
 "app.allPermissionsGranted" = "All permissions granted";
 "app.accessibility" = "Accessibility";
 "app.screenRecording" = "Screen Recording";
-"app.title %@ %@" = "%1$@ · %2$@";
 
 "group.home" = "Home";
 "group.layout" = "Layout";
@@ -350,10 +382,12 @@
 "page.appearance" = "Appearance";
 "page.shortcuts" = "Keyboard";
 "page.awake" = "Keep awake";
+"page.active" = "Stay active";
 "page.update" = "Updates";
 
 /* The menu bar item. */
 "menu.openPlonk" = "Open Plonk";
+"menu.sendToZone %lld" = "Send the front window to zone %lld";
 "menu.launchWorkspace" = "Launch Workspace";
 "menu.noWorkspaces" = "No workspaces saved yet";
 "menu.activeAgent" = "Active Agent";
@@ -437,6 +471,7 @@
 "zoneSet.newSet" = "New set";
 "zoneSet.screen %lld" = "Screen %lld";
 "zoneSet.screenWithSize %lld %@" = "Screen %1$lld — %2$@";
+"zoneSet.summary %lld %@ %@ %lld" = "Screen %1$lld · %2$@ · %3$@ · gap %4$lld px";
 "zoneSet.edgeHint" = "Windows dropped near an edge fill that half of the screen.";
 "zoneSet.zoneHint" = "Drop a window on a zone while dragging, or press ⌃⌥ and its number.";
 "zoneSet.preview" = "Preview";
@@ -626,6 +661,15 @@
 "awake.statusAutoCharging" = "auto (charging)";
 "awake.statusUntilProcess %lld" = "on until process %lld exits";
 "awake.statusPausedOnBattery" = "paused on battery";
+
+/* Stay active, in one phrase, for the page and for an agent asking. */
+"active.statusOn" = "on";
+"active.statusOff" = "off";
+"active.statusSchedule" = "on for the scheduled hours";
+"active.statusApp" = "on while a watched app is running";
+"active.statusUntil %@" = "on until %@";
+"active.statusPausedOnBattery" = "paused on battery";
+"active.statusNoAccessibility" = "off: Accessibility not granted";
 "menu.tooltip %@" = "Plonk — keep-awake: %@";
 
 /* Stand-in for an app that will not say what it is called. */
