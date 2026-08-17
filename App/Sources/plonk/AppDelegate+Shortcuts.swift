@@ -14,6 +14,7 @@ extension AppDelegate {
         if store.config.hotkeysEnabled { hotkeys.setEnabled(true) }
         refreshHotkeyModel()
         reconcileRectangleURLs()
+        noticeRectangle()
     }
 
     func refreshHotkeyModel() {

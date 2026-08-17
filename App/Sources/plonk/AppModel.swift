@@ -25,6 +25,8 @@ protocol AppActions: AnyObject {
     /// Take whatever bindings an installed or exported Rectangle has that mean
     /// the same thing here. See RectangleImport.
     func importFromRectangle()
+    /// Turn down the offer on Home, for good. See RectangleOffer.
+    func dismissRectangleOffer()
     /// Ask macOS to send rectangle:// URLs here too, or hand them back to an
     /// installed Rectangle. See RectangleURLs.
     func setRectangleURLs(_ on: Bool)
@@ -143,6 +145,9 @@ final class AppModel: ObservableObject {
     @Published var zonesRequireModifier = true
     @Published var zonesModifier = "shift"
     @Published var zoneGap = 0.0
+    /// Whether Home should offer to take a Rectangle setup: one was found on
+    /// this Mac and the offer has neither been taken nor turned down.
+    @Published var rectangleFound = false
     /// Whether this app answers rectangle:// URLs. Off means it refuses them
     /// even while still holding the scheme, which is the only reading that
     /// stays true with no Rectangle installed to hand it back to.

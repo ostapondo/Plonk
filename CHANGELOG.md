@@ -22,6 +22,11 @@ one of those.
   binding had to be re-entered by hand, and a `rectangle://execute-action` URL
   sitting in a Raycast script or on a Stream Deck button did nothing at all.
 
+  Plonk looks once at launch, and a Mac with a Rectangle setup on it gets the
+  offer on the Home page rather than a button on a settings page nobody opens
+  first. Taking it or turning it down settles it for good, and a Mac with no
+  Rectangle is shown nothing.
+
   **Shortcuts → Import from Rectangle** reads the preferences of an installed
   copy, or a `RectangleConfig.json` exported from an old machine, and takes the
   bindings that mean the same thing here: the halves, the corners, maximize,

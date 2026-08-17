@@ -231,6 +231,11 @@
 "home.launchAtLoginDetail" = "Plonk starts automatically when you log in";
 "home.privacy" = "Everything runs on this Mac. No account, no cloud, no telemetry.";
 "home.edgeSnapping" = "Edge snapping";
+"home.rectangleTitle" = "Rectangle is set up on this Mac";
+"home.rectangleDetail" = "Its halves, corners, maximize, centre, restore and window gap can come across as they are. Thirds and the rest of the fixed grid are zone sets here, so those are left alone.";
+"home.rectangleTake" = "Take its shortcuts";
+"home.rectangleNotNow" = "Not now";
+"home.rectangleMore" = "What else carries over";
 
 /* Zones: the page, and the tuning below it. */
 "zones.dragging" = "Dragging";

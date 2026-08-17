@@ -100,6 +100,9 @@ struct Config: Codable {
     // The only setting that decides whether the app ever opens an outbound
     // connection. Off means no release check, automatic or otherwise.
     var updateCheckAutomatically = true
+    // Whether Home has already offered to take a Rectangle setup. Set by taking
+    // the offer or by turning it down; either way it is not asked again.
+    var rectangleOfferSettled = false
     // Whether to ask macOS to send rectangle:// URLs here as well. Off, because
     // a scheme is one per machine and the loser would be a Rectangle the user
     // still has installed. See RectangleURLs.
@@ -173,6 +176,7 @@ struct Config: Codable {
         launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? true
         updateCheckAutomatically = try c.decodeIfPresent(Bool.self, forKey: .updateCheckAutomatically) ?? true
         handleRectangleURLs = try c.decodeIfPresent(Bool.self, forKey: .handleRectangleURLs) ?? false
+        rectangleOfferSettled = try c.decodeIfPresent(Bool.self, forKey: .rectangleOfferSettled) ?? false
         selectedAgent = try c.decodeIfPresent(String.self, forKey: .selectedAgent)
         agentExclusive = try c.decodeIfPresent(Bool.self, forKey: .agentExclusive) ?? false
         voiceLocalCommands = try c.decodeIfPresent(Bool.self, forKey: .voiceLocalCommands) ?? true

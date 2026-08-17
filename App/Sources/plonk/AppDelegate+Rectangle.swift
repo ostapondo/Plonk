@@ -20,6 +20,26 @@ extension AppDelegate {
         }
     }
 
+    /// Whether to offer the import on Home, answered once at launch.
+    ///
+    /// The same read the button does, and just as much off the main queue. Only
+    /// asked while the offer is still open, so a Mac that has already answered
+    /// does not pay for the round trip at all.
+    func noticeRectangle() {
+        guard !store.config.rectangleOfferSettled else { return }
+        DispatchQueue.global(qos: .utility).async {
+            let found = Self.readRectangleSetup()
+            let worth = found.map { !$0.bindings.isEmpty || !$0.unmapped.isEmpty } ?? false
+            OnMain.run { [weak self] in self?.model.rectangleFound = worth }
+        }
+    }
+
+    /// Turned down. Settled the same way taking it is, so it is asked once.
+    func dismissRectangleOffer() {
+        store.update { $0.rectangleOfferSettled = true }
+        model.rectangleFound = false
+    }
+
     private func applyRectangleSetup(_ found: RectangleImport.Found?) {
         guard let found, !found.isEmpty else {
             HUD.shared.show(.hudRectangleNothing)
@@ -28,7 +48,10 @@ extension AppDelegate {
         var displaced: [HotkeyAction] = []
         store.update { config in
             displaced = RectangleImport.apply(found, to: &config)
+            // Asked and answered, wherever the button was pressed.
+            config.rectangleOfferSettled = true
         }
+        model.rectangleFound = false
         hotkeys.bindings = store.config.resolvedHotkeys
         model.zoneGap = store.config.zoneGap
         refreshHotkeyModel()

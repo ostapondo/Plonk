@@ -27,8 +27,14 @@ are your thirds. Draw something else and the same three keys follow it.
 
 ## If you changed yours
 
-**Shortcuts → Import from Rectangle** reads the setup you have and takes the
-bindings that mean the same thing in both apps.
+Plonk looks once, at launch, and if it finds a Rectangle setup on the Mac the
+Home page opens with the offer on it: **Take its shortcuts**. Taking it or
+turning it down settles it, and it is not asked again. With no Rectangle on the
+Mac nothing is shown at all.
+
+The same thing lives permanently under **Shortcuts → Import from Rectangle**.
+Either one reads the setup you have and takes the bindings that mean the same
+thing in both apps.
 
 It looks in two places, in this order: the preferences of an installed
 Rectangle, and then `~/Library/Application Support/Rectangle/RectangleConfig.json`
