@@ -111,6 +111,9 @@ struct Config: Codable {
     var appearance = AppearanceSettings()
     var workspaces: [String: Workspace] = [:]
     var zoneSets: [String: [ZoneRect]] = [:]
+    /// A set's own gap in points, keyed by set name. A set with no entry
+    /// uses `zoneGap`, the default; see `zoneGap(forSet:)`.
+    var zoneSetGaps: [String: Double] = [:]
     // Keyed by display UUID; configs written before that used the screen index,
     // which is why lookups take a list of candidate keys.
     var screenZoneSets: [String: String] = [:]
@@ -131,6 +134,17 @@ struct Config: Codable {
         return zoneSets[name] ?? BuiltinZoneSets.all[name] ?? []
     }
 
+    /// The gap for a set: its own if it has one, else the default. Nil is
+    /// the set an unassigned screen falls back to.
+    func zoneGap(forSet name: String?) -> Double {
+        zoneSetGaps[name ?? BuiltinZoneSets.defaultName] ?? zoneGap
+    }
+
+    /// The gap that applies on a screen, through the set it wears.
+    func zoneGap(forKeys keys: [String]) -> Double {
+        zoneGap(forSet: zoneAssignment(forKeys: keys))
+    }
+
     mutating func assignZoneSet(_ name: String?, forKeys keys: [String]) {
         keys.forEach { screenZoneSets.removeValue(forKey: $0) }
         if let name, let primary = keys.first { screenZoneSets[primary] = name }
@@ -149,6 +163,7 @@ struct Config: Codable {
 
     mutating func forgetZoneSet(named name: String) {
         zoneSets.removeValue(forKey: name)
+        zoneSetGaps.removeValue(forKey: name)
         screenZoneSets = screenZoneSets.filter { $0.value != name }
     }
 }

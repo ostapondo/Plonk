@@ -37,7 +37,8 @@ protocol AppActions: AnyObject {
     func reportBug()
 
     func assignZoneSet(_ name: String?, toScreen index: Int)
-    func updateZoneSet(_ name: String, zones: [ZoneRect])
+    /// `gap` is the set's own spacing in points; nil means the default gap.
+    func updateZoneSet(_ name: String, zones: [ZoneRect], gap: Double?)
     /// False when `new` is already taken, which leaves both sets untouched.
     func renameZoneSet(_ old: String, to new: String) -> Bool
     func deleteZoneSet(_ name: String)

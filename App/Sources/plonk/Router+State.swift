@@ -37,6 +37,8 @@ extension Router {
                 ] as [String: Any]
             },
             "zone_sets": zoneSets,
+            "zone_gap": store.config.zoneGap,
+            "zone_set_gaps": store.config.zoneSetGaps,
             "screen_zone_sets": assignments,
             "screens": screens.map { s in
                 [

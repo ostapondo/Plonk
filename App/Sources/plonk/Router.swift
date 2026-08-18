@@ -14,7 +14,8 @@ import Network
 //   POST /workspaces/delete { name }
 //   POST /workspaces/rename { from, to }
 //   POST /layouts/*         aliases of save/launch/delete, kept for older clients
-//   POST /zones/save     { name, zones: [{x,y,w,h}], screen? }
+//   POST /zones/save     { name, zones: [{x,y,w,h}], screen?, gap? }
+//                        gap in points is the set's own; null or absent keeps the default
 //   POST /zones/assign   { screen, name? }
 //   POST /zones/delete   { name }
 //   POST /shot/capture   { mode?, annotate?, path?, clipboard?, preview? }

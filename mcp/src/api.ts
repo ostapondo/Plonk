@@ -74,6 +74,8 @@ export interface State {
   saved_layouts: string[];
   workspaces: Record<string, Workspace>;
   zone_sets: Record<string, Frame[]>;
+  zone_gap: number;
+  zone_set_gaps: Record<string, number>;
   screen_zone_sets: Record<string, string>;
   screens: Screen[];
   windows: WindowInfo[];

@@ -66,7 +66,7 @@ struct ZoneSetCanvas: View {
         }
         return String(localized: .zoneSetSummary(screen + 1, size,
                                                  String(localized: .zoneSetZoneCount(zones.count)),
-                                                 Int(model.config.zoneGap)))
+                                                 Int(model.config.zoneGap(forSet: assigned))))
     }
 
     private var actions: some View {

@@ -25,6 +25,13 @@ one of those.
 
 ### Added
 
+- **A layout can keep its own gap.** The gap in Zones › Overlay is the default;
+  the editor's Gap row lets one layout set its own number of points instead,
+  or go back to following the default. Six narrow zones can sit tight while a
+  two-zone layout keeps its air. Drag snapping, numbered zones, previews and
+  the flash all draw and place with the gap of the set on that screen.
+  `save_zone_set` takes `gap` (points, or `null` for the default) and
+  `get_state` lists `zone_gap` and `zone_set_gaps`.
 - **Switching from Rectangle costs nothing now.** The ten placement shortcuts
   were already the same keys in both apps — `⌃⌥` and an arrow, a corner letter,
   return or C — because that is the one combination macOS leaves alone and both

@@ -34,6 +34,7 @@ extension Config {
     /// which is what kept the same clamp written out at three call sites.
     mutating func clamp() {
         zoneGap = zoneGap.clamped(to: 0...Self.gapLimit)
+        zoneSetGaps = zoneSetGaps.mapValues { $0.clamped(to: 0...Self.gapLimit) }
         zoneOpacity = zoneOpacity.clamped(to: Self.opacityRange)
         zoneEdgeSpanPoints = zoneEdgeSpanPoints.clamped(to: 0...Self.edgeSpanLimit)
         rulerEdgeTolerance = rulerEdgeTolerance.clamped(to: EdgeDetector.toleranceRange)

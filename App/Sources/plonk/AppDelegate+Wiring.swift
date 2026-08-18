@@ -21,13 +21,16 @@ extension AppDelegate {
         store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
     }
 
-    var zoneGapPoints: CGFloat { CGFloat(store.config.zoneGap) }
+    /// The gap on a screen is the gap of the set it wears, or the default.
+    func zoneGapPoints(onScreen index: Int) -> CGFloat {
+        CGFloat(store.config.zoneGap(forKeys: ScreenIdentity.keys(forIndex: index)))
+    }
 
     func setupCommands() {
         commands.zonesForScreen = { [weak self] index in self?.zones(onScreen: index) ?? [] }
         commands.isExcluded = exclusionCheck
         commands.announce = { HUD.shared.show($0) }
-        commands.zoneGap = { [weak self] in self?.zoneGapPoints ?? 0 }
+        commands.zoneGap = { [weak self] index in self?.zoneGapPoints(onScreen: index) ?? 0 }
     }
 
     func setupPresenter() {

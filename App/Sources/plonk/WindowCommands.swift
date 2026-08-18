@@ -16,7 +16,8 @@ final class WindowCommands {
     var isExcluded: ((NSRunningApplication) -> Bool)?
     var announce: ((String) -> Void)?
     /// Empty space left around a snapped window, in points.
-    var zoneGap: (() -> CGFloat)?
+    /// The gap for a screen: that of the set it wears.
+    var zoneGap: ((Int) -> CGFloat)?
 
     init(windows: WindowManager, memory: SnapMemory) {
         self.windows = windows
@@ -57,7 +58,7 @@ final class WindowCommands {
         }
         let frac = zones[number - 1].frac
         remember(target, frac: frac, screen: screen, zoneIndex: number - 1)
-        windows.apply(frac: frac, toWindow: target.window, screenIndex: screen, gap: zoneGap?() ?? 0)
+        windows.apply(frac: frac, toWindow: target.window, screenIndex: screen, gap: zoneGap?(screen) ?? 0)
     }
 
     /// Give a window back the frame it had before Plonk first moved it.
@@ -117,11 +118,11 @@ final class WindowCommands {
     /// placed on. Windows whose display is gone are left alone: guessing a new
     /// screen for them would scatter a layout rather than preserve it.
     func restorePlacements() {
-        let gap = zoneGap?() ?? 0
         for placement in memory.placements {
             guard let uuid = placement.screenUUID, let index = ScreenIdentity.index(forUUID: uuid),
                   mayTouch(placement.window) else { continue }
-            windows.apply(frac: placement.frac, toWindow: placement.window, screenIndex: index, gap: gap)
+            windows.apply(frac: placement.frac, toWindow: placement.window, screenIndex: index,
+                          gap: zoneGap?(index) ?? 0)
         }
     }
 
@@ -132,7 +133,7 @@ final class WindowCommands {
     func relayout(screenIndex: Int) {
         let zones = zonesForScreen?(screenIndex) ?? []
         guard !zones.isEmpty, let uuid = ScreenIdentity.uuid(forIndex: screenIndex) else { return }
-        let gap = zoneGap?() ?? 0
+        let gap = zoneGap?(screenIndex) ?? 0
         for placement in memory.placements {
             guard placement.screenUUID == uuid, let zone = placement.zoneIndex,
                   zones.indices.contains(zone), mayTouch(placement.window) else { continue }
