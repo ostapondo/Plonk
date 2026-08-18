@@ -21,6 +21,13 @@ enum Localization {
         return resourceBundle ?? .main
     }()
 
+    /// How a `LocalizedStringResource` names that bundle. `.main` for the
+    /// built app; the URL form only for the SwiftPM bundle, where nothing
+    /// else finds it.
+    static let description: LocalizedStringResource.BundleDescription = {
+        bundle === Bundle.main ? .main : .atURL(bundle.bundleURL)
+    }()
+
     /// SwiftPM's own resource bundle, which is what a `swift run` or a test run
     /// sees. Found by hand rather than through `Bundle.module`: that traps when
     /// the bundle is missing, and a build that lost its `.lproj` folders should
@@ -54,6 +61,21 @@ extension LocalizedStringResource {
     /// interpolation does, so a key declared with one interpolated value is
     /// looked up as `zones.count %lld` and the catalog spells it that way.
     static func key(_ key: String.LocalizationValue) -> LocalizedStringResource {
-        LocalizedStringResource(key, bundle: .atURL(Localization.bundle.bundleURL))
+        LocalizedStringResource(key, bundle: Localization.description)
+    }
+}
+
+extension String {
+    /// The text for a key, the way every call site spells it.
+    ///
+    /// Foundation's own `String(localized: LocalizedStringResource)` resolves
+    /// through a path that reopens and reparses `Localizable.strings` on
+    /// every call, close to a millisecond each; a page evaluating its body
+    /// makes dozens of them and switching pages took half a second. Going
+    /// through the bundle's string table instead is cached and formats the
+    /// same way. This overload lives in the module, so it shadows Foundation's
+    /// for every caller here; `Text(_ resource:)` was never affected.
+    init(localized resource: LocalizedStringResource) {
+        self.init(localized: resource.defaultValue, bundle: Localization.bundle)
     }
 }

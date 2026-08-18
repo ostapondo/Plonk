@@ -24,7 +24,7 @@ struct WorkspacesPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            LazyVStack(alignment: .leading, spacing: 14) {
                 header
                 if !model.accessibilityGranted {
                     Label(String(localized: .workspacesGrantAccessibility),

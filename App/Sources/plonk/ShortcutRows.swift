@@ -91,7 +91,7 @@ private struct ShortcutField: NSViewRepresentable {
     /// cannot stretch it. Without this a representable takes the width it is
     /// offered, which is the whole window.
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: RecorderView, context: Context) -> CGSize? {
-        nsView.intrinsicContentSize
+        nsView.fittingWidth
     }
 }
 
@@ -126,14 +126,24 @@ final class RecorderView: NSView {
     /// Wide enough for what it is showing, and never narrower than 84 so a
     /// column of them lines up. "⌃⌥⇧⌘Space" is a legal binding and would be
     /// clipped by a fixed width.
-    override var intrinsicContentSize: NSSize {
-        NSSize(width: max(84, ceil(label.intrinsicContentSize.width) + 18), height: 22)
-    }
+    ///
+    /// Measured once in `apply`, not on demand: SwiftUI asks for the size
+    /// several times per layout pass for every field on the page, and each
+    /// measurement of the label lays its text out again.
+    private(set) var fittingWidth = NSSize(width: 84, height: 22)
+    private var measuredText: String?
+
+    override var intrinsicContentSize: NSSize { fittingWidth }
 
     func apply(display: String, recording: Bool) {
         self.recording = recording
-        label.stringValue = recording ? String(localized: .shortcutPressKeys) : display
-        invalidateIntrinsicContentSize()
+        let text = recording ? String(localized: .shortcutPressKeys) : display
+        if text != measuredText {
+            measuredText = text
+            label.stringValue = text
+            fittingWidth = NSSize(width: max(84, ceil(label.intrinsicContentSize.width) + 18), height: 22)
+            invalidateIntrinsicContentSize()
+        }
         label.textColor = recording ? .controlAccentColor : .labelColor
         layer?.backgroundColor = (recording ? NSColor.controlAccentColor.withAlphaComponent(0.18)
                                             : NSColor.quaternaryLabelColor).cgColor
