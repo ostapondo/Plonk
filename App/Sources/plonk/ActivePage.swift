@@ -6,17 +6,13 @@ import SwiftUI
 struct ActivePage: View {
     @ObservedObject var model: AppModel
 
-    private var timeout: Binding<Int> {
-        model.binding(\.activeTimeoutMinutes)
-    }
-
     var body: some View {
         PageShell(title: .pageActive, subtitle: .activeSubtitle) {
             if !model.activeTrusted {
                 SettingsCard {
                     SettingRow(title: .activeNeedsAccessibility) {
                         Button(String(localized: .activeOpenSettings)) {
-                            model.actions?.openAccessibilitySettings()
+                            PrivacySettings.openAccessibility()
                         }
                     }
                 }
@@ -26,7 +22,7 @@ struct ActivePage: View {
                           detail: statusDetail,
                           isOn: model.binding(\.activeRequested, set: { $0.setActive($1) }))
                 SettingRow(title: .activeTurnOffAfter) {
-                    Picker("", selection: timeout) {
+                    Picker("", selection: model.binding(\.activeTimeoutMinutes)) {
                         Text(.activeNever).tag(0)
                         Text(.activeAfter30Minutes).tag(30)
                         Text(.activeAfter1Hour).tag(60)
@@ -40,15 +36,15 @@ struct ActivePage: View {
             SettingsCard(title: .activeSchedule) {
                 ToggleRow(title: .activeOnASchedule,
                           detail: .activeOnAScheduleHelp,
-                          isOn: field(\.enabled))
+                          isOn: model.binding(\.activeSchedule.enabled))
                 if model.config.activeSchedule.enabled {
                     SettingRow(title: .activeFrom, detail: emptyWindowHelp) {
-                        DatePicker("", selection: time(\.start), displayedComponents: .hourAndMinute)
+                        DatePicker("", selection: time(\.activeSchedule.start), displayedComponents: .hourAndMinute)
                             .labelsHidden()
                             .fixedSize()
                     }
                     SettingRow(title: .activeTo) {
-                        DatePicker("", selection: time(\.end), displayedComponents: .hourAndMinute)
+                        DatePicker("", selection: time(\.activeSchedule.end), displayedComponents: .hourAndMinute)
                             .labelsHidden()
                             .fixedSize()
                     }
@@ -112,31 +108,18 @@ struct ActivePage: View {
     }
 
     private func toggle(_ day: Int) {
-        var next = model.config.activeSchedule
-        if next.days.contains(day) { next.days.remove(day) } else { next.days.insert(day) }
-        model.actions?.update(\.activeSchedule, to: next)
-    }
-
-    // MARK: - Bindings
-
-    private func field<Value>(_ keyPath: WritableKeyPath<ActiveSchedule, Value>) -> Binding<Value> {
-        Binding(
-            get: { model.config.activeSchedule[keyPath: keyPath] },
-            set: { value in
-                var next = model.config.activeSchedule
-                next[keyPath: keyPath] = value
-                model.actions?.update(\.activeSchedule, to: next)
-            }
-        )
+        var days = model.config.activeSchedule.days
+        if days.contains(day) { days.remove(day) } else { days.insert(day) }
+        model.actions?.update(\.activeSchedule.days, to: days)
     }
 
     /// The schedule stores minutes from midnight, because it repeats and a date
     /// does not. DatePicker wants a Date, so one is built on today and only its
     /// time of day is read back.
-    private func time(_ keyPath: WritableKeyPath<ActiveSchedule, Int>) -> Binding<Date> {
+    private func time(_ keyPath: WritableKeyPath<Config, Int>) -> Binding<Date> {
         Binding(
             get: {
-                let minutes = model.config.activeSchedule[keyPath: keyPath]
+                let minutes = model.config[keyPath: keyPath]
                 return Calendar.current.date(bySettingHour: minutes / 60,
                                              minute: minutes % 60,
                                              second: 0,
@@ -144,9 +127,7 @@ struct ActivePage: View {
             },
             set: { date in
                 let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
-                var next = model.config.activeSchedule
-                next[keyPath: keyPath] = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
-                model.actions?.update(\.activeSchedule, to: next)
+                model.actions?.update(keyPath, to: (parts.hour ?? 0) * 60 + (parts.minute ?? 0))
             }
         )
     }

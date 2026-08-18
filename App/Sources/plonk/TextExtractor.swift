@@ -102,7 +102,7 @@ enum TextExtractor {
     }
 
     private static func clamp(_ value: CGFloat) -> Double {
-        min(max(Double(value), 0), 1)
+        Double(value).clamped(to: 0...1)
     }
 
     /// Reading order: top to bottom, then left to right within a row. Vision

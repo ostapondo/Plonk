@@ -19,13 +19,7 @@ struct ShortcutGuideView: View {
         }
         // Menu order is the order they appear in the bar, which is the order
         // the user already knows.
-        var order: [String] = []
-        var byMenu: [String: [ShortcutGuide.Item]] = [:]
-        for item in matching {
-            if byMenu[item.menu] == nil { order.append(item.menu) }
-            byMenu[item.menu, default: []].append(item)
-        }
-        return order.map { ($0, byMenu[$0] ?? []) }
+        return matching.groupedPreservingOrder(by: \.menu).map { ($0.key, $0.elements) }
     }
 
     var body: some View {

@@ -31,14 +31,6 @@ struct AppearanceSettings: Codable, Equatable {
             }
         }
 
-        var icon: String {
-            switch self {
-            case .system: return "laptopcomputer"
-            case .light: return "sun.max"
-            case .dark: return "moon"
-            }
-        }
-
         /// Nil hands the window back to macOS.
         var nsAppearance: NSAppearance? {
             switch self {
@@ -60,15 +52,6 @@ struct AppearanceSettings: Codable, Equatable {
     /// because it is a different kind of choice from picking a colour.
     static let accentChoices = ["#F2795F", "#E5484D", "#F0AA3C", "#34D17F",
                                 "#3B9DFF", "#8B7CF6", "#E05FA8", "#8B93A6"]
-
-    init() {}
-
-    // Tolerate missing keys, the same way Config does.
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        theme = try c.decodeIfPresent(String.self, forKey: .theme) ?? Theme.system.rawValue
-        accentHex = try c.decodeIfPresent(String.self, forKey: .accentHex)
-    }
 
     /// Applies to every window at once, including the ones already on screen.
     ///

@@ -20,14 +20,10 @@ struct MainWindowView: View {
     /// The unified toolbar height macOS uses, and the design with it.
     private static let bar: CGFloat = 38
 
-    private var current: SettingsPage? {
-        model.settingsPages.first { $0.id == model.selectedPage } ?? model.settingsPages.first
-    }
-
     /// The page, and only the page. The destination it belongs to is a heading
     /// in the sidebar now, so repeating it here said the same word twice.
     private var title: String {
-        guard let current else { return String(localized: .appName) }
+        guard let current = model.currentPage else { return String(localized: .appName) }
         return String(localized: current.title)
     }
 
@@ -37,13 +33,13 @@ struct MainWindowView: View {
             HStack(spacing: 0) {
                 MainSidebar(model: model, rail: rail)
                     .frame(width: rail ? Self.rail : Self.wide)
-                    .background(SidebarMaterial())
+                    .background(VisualEffect(material: .sidebar, state: .followsWindowActiveState))
                 Divider()
                 VStack(spacing: 0) {
                     topBar
                     Divider()
                     Group {
-                        if let current { current.make(model) }
+                        if let current = model.currentPage { current.make(model) }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(page)
@@ -81,7 +77,7 @@ struct MainWindowView: View {
         HStack(spacing: 7) {
             Text(title).font(.system(size: 13, weight: .bold))
             Spacer(minLength: 12)
-            if healthy {
+            if model.allPermissionsGranted {
                 StatusPill(title: .appAllPermissionsGranted, ok: true)
             } else {
                 if !model.accessibilityGranted {
@@ -121,11 +117,6 @@ struct MainWindowView: View {
         }
         .ignoresSafeArea()
     }
-
-    private var healthy: Bool {
-        model.accessibilityGranted && model.screenRecordingGranted && model.apiWarning == nil
-    }
-
 }
 
 /// The two panes of System Settings the app can send someone to. Both pages
@@ -143,18 +134,4 @@ enum PrivacySettings {
         guard let url = URL(string: string) else { return }
         NSWorkspace.shared.open(url)
     }
-}
-
-/// The real sidebar blur. SwiftUI materials get close, but only
-/// NSVisualEffectView picks up the vibrancy the system sidebar has.
-private struct SidebarMaterial: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = .sidebar
-        view.blendingMode = .behindWindow
-        view.state = .followsWindowActiveState
-        return view
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }

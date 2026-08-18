@@ -108,9 +108,8 @@ extension VoiceCommand {
         }
     }
 
-    private static let vocabulary: Set<String> = [
-        // what to do
-        "snap", "put", "move", "send", "shove", "throw", "stick", "drop", "push", "pin",
+    private static let vocabulary: Set<String> = Set(placeVerbs).union([
+        // what to do, beyond the place verbs
         "make", "maximize", "maximise", "fill", "resize", "go",
         // what it is done to — never a name, always the front window
         "this", "it", "that", "the", "a", "my", "current", "front", "active",
@@ -121,7 +120,7 @@ extension VoiceCommand {
         "corner", "side", "screen", "full", "zone", "display", "monitor",
         // joins and politeness
         "to", "in", "into", "on", "onto", "over", "at", "of", "hand", "please", "now",
-    ]
+    ])
 
     /// Lowercased, punctuation dropped, runs of spaces collapsed. Dictation
     /// punctuates as it likes, and none of it changes the meaning here.

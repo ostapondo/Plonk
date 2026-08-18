@@ -56,9 +56,6 @@ struct GettingStarted: Equatable {
     var doneCount: Int { steps.filter(\.done).count }
     var isComplete: Bool { doneCount == steps.count }
 
-    /// The first step still to do, which is the one worth pointing at.
-    var next: Step? { steps.first { !$0.done } }
-
     /// Dismissing hides it early; finishing hides it for good. Both are checked
     /// here rather than at the call site, so the two reasons stay in one place.
     static func isVisible(hidden: Bool, complete: Bool) -> Bool { !hidden && !complete }
@@ -70,12 +67,7 @@ struct GettingStartedCard: View {
 
     private static let connectCommand = "claude mcp add plonk -- npx -y plonk-mcp"
 
-    private var guide: GettingStarted {
-        GettingStarted(accessibilityGranted: model.accessibilityGranted,
-                       screenRecordingGranted: model.screenRecordingGranted,
-                       snapped: model.config.sawFirstSnap,
-                       agentConnected: model.config.sawFirstAgent)
-    }
+    private var guide: GettingStarted { model.gettingStarted }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

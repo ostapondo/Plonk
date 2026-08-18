@@ -143,11 +143,7 @@ final class ActiveManager {
         expiryTimer?.invalidate()
         expiryTimer = nil
         if let end {
-            let timer = Timer(fire: end, interval: 0, repeats: false) { [weak self] _ in
-                self?.clearManual()
-            }
-            RunLoop.main.add(timer, forMode: .common)
-            expiryTimer = timer
+            expiryTimer = Timer.common(at: end) { [weak self] in self?.clearManual() }
         }
         reevaluate()
     }
@@ -155,11 +151,7 @@ final class ActiveManager {
     /// Watch the clock and the app list. Called once at startup; the timer runs
     /// for the life of the app, because the schedule can open at any time.
     func startWatching() {
-        let timer = Timer(timeInterval: Self.watchSeconds, repeats: true) { [weak self] _ in
-            self?.reevaluate()
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        watchTimer = timer
+        watchTimer = Timer.common(every: Self.watchSeconds) { [weak self] in self?.reevaluate() }
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
@@ -183,11 +175,7 @@ final class ActiveManager {
         if shouldRun && !isOn {
             isOn = true
             nudge()
-            let timer = Timer(timeInterval: Self.nudgeSeconds, repeats: true) { [weak self] _ in
-                self?.nudge()
-            }
-            RunLoop.main.add(timer, forMode: .common)
-            nudgeTimer = timer
+            nudgeTimer = Timer.common(every: Self.nudgeSeconds) { [weak self] in self?.nudge() }
         } else if !shouldRun && isOn {
             isOn = false
             nudgeTimer?.invalidate()
@@ -210,12 +198,5 @@ final class ActiveManager {
         else { return }
         down.post(tap: .cghidEventTap)
         up.post(tap: .cghidEventTap)
-    }
-
-    /// Seconds since the last input event, real or posted here. What the chat
-    /// apps read, and the only way to tell whether any of this works.
-    static var systemIdleSeconds: Double {
-        guard let any = CGEventType(rawValue: ~0) else { return 0 }
-        return CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: any)
     }
 }

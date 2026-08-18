@@ -86,8 +86,6 @@ private final class RulerView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("not from a nib") }
 
-    override var isFlipped: Bool { false }
-
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: .crosshair)
     }

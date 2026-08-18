@@ -129,9 +129,9 @@ struct ThemePreview: View {
 
     var body: some View {
         switch theme {
-        case .dark: return AnyView(pane(dark: true))
-        case .light: return AnyView(pane(dark: false))
-        case .system: return AnyView(split)
+        case .dark: pane(dark: true)
+        case .light: pane(dark: false)
+        case .system: split
         }
     }
 

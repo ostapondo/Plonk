@@ -5,10 +5,6 @@ import SwiftUI
 struct AwakePage: View {
     @ObservedObject var model: AppModel
 
-    private var timeout: Binding<Int> {
-        model.binding(\.awakeTimeoutMinutes)
-    }
-
     var body: some View {
         PageShell(title: .pageAwake, subtitle: .awakeMenuBarGlow) {
             SettingsCard {
@@ -17,7 +13,7 @@ struct AwakePage: View {
                               ? LocalizedStringResource.awakePausedOnBattery : nil,
                           isOn: model.binding(\.awakeHeld, set: { $0.setAwake($1) }))
                 SettingRow(title: .awakeTurnOffAfter) {
-                    Picker("", selection: timeout) {
+                    Picker("", selection: model.binding(\.awakeTimeoutMinutes)) {
                         Text(.awakeNever).tag(0)
                         Text(.awakeAfter15Minutes).tag(15)
                         Text(.awakeAfter30Minutes).tag(30)

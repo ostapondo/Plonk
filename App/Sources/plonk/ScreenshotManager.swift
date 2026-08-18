@@ -49,49 +49,15 @@ enum ScreenshotManager {
     /// The interactive modes wait for the user, so this never blocks the caller.
     /// `completion` runs on the main queue with nil when the user cancels.
     static func capture(_ mode: CaptureMode, completion: @escaping (NSImage?) -> Void) {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("plonk-capture-\(UUID().uuidString).png")
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        task.arguments = ["-x"] + mode.arguments + [url.path]
-        task.terminationHandler = { finished in
-            var image: NSImage?
-            if finished.terminationStatus == 0 {
-                image = NSImage(contentsOf: url)
-            }
-            try? FileManager.default.removeItem(at: url)
-            DispatchQueue.main.async { completion(image) }
-        }
-        do {
-            try task.run()
-        } catch {
-            NSLog("Plonk: screencapture failed to launch: \(error)")
-            DispatchQueue.main.async { completion(nil) }
-        }
+        run(mode.arguments, completion: completion)
     }
 
     /// Captures a rect given in CG coordinates — origin top-left of the primary
     /// display — without asking the user for anything. `screencapture -R` takes
     /// exactly that space, which is why regions are carried in it everywhere.
     static func captureRegion(_ region: CGRect, completion: @escaping (NSImage?) -> Void) {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("plonk-region-\(UUID().uuidString).png")
         let rect = "\(Int(region.minX)),\(Int(region.minY)),\(Int(region.width)),\(Int(region.height))"
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        task.arguments = ["-x", "-R", rect, url.path]
-        task.terminationHandler = { finished in
-            var image: NSImage?
-            if finished.terminationStatus == 0 { image = NSImage(contentsOf: url) }
-            try? FileManager.default.removeItem(at: url)
-            DispatchQueue.main.async { completion(image) }
-        }
-        do {
-            try task.run()
-        } catch {
-            NSLog("Plonk: screencapture failed to launch: \(error)")
-            DispatchQueue.main.async { completion(nil) }
-        }
+        run(["-R", rect], completion: completion)
     }
 
     /// Photographs one window by id, whatever is stacked on top of it, and
@@ -99,11 +65,15 @@ enum ScreenshotManager {
     /// window's own image rather than for the pixels standing where it is, and
     /// `-o` leaves the drop shadow off. WindowCapture finds the id.
     static func captureWindow(_ id: CGWindowID, completion: @escaping (NSImage?) -> Void) {
+        run(["-o", "-l", String(id)], completion: completion)
+    }
+
+    private static func run(_ arguments: [String], completion: @escaping (NSImage?) -> Void) {
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("plonk-window-\(UUID().uuidString).png")
+            .appendingPathComponent("plonk-capture-\(UUID().uuidString).png")
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        task.arguments = ["-x", "-o", "-l", String(id), url.path]
+        task.arguments = ["-x"] + arguments + [url.path]
         task.terminationHandler = { finished in
             var image: NSImage?
             // A minimized window exits 0 and writes nothing, so the file is
