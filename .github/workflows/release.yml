@@ -198,7 +198,7 @@ jobs:
       # never tries OIDC at all, because OIDC is what it falls back to only
       # when nothing else claims to be a credential. The default registry is
       # registry.npmjs.org anyway.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -319,7 +319,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
