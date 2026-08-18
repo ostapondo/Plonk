@@ -40,8 +40,16 @@ final class DragSnapManager {
     var requireModifier = true
     var modifierFlag: NSEvent.ModifierFlags = .shift
     var zonesForScreen: ((Int) -> [ZoneRect])?
-    /// Looks and spacing, taken from config in `apply`.
+    /// Looks and spacing, taken from config in `apply`. The gap in it is
+    /// the default; `look(on:)` swaps in the gap of the set a screen wears.
     var look = ZoneAppearance()
+    var gapForScreen: ((Int) -> CGFloat)?
+
+    func look(on screenIndex: Int) -> ZoneAppearance {
+        var appearance = look
+        appearance.gap = gapForScreen?(screenIndex) ?? look.gap
+        return appearance
+    }
     /// Draw every screen's zones during a drag, not just the one under the
     /// cursor. Costs an overlay per display.
     var showOnAllMonitors = false
@@ -78,13 +86,17 @@ final class DragSnapManager {
     }
 
     /// Show one zone set on one screen until hidden (the picker's eye toggle).
-    func showPreview(zones: [ZoneRect], screenIndex: Int) {
+    /// The set previewed need not be the one the screen wears, so its gap
+    /// comes with it.
+    func showPreview(zones: [ZoneRect], screenIndex: Int, gap: CGFloat) {
         previewGeneration += 1
         let screens = NSScreen.screens
         guard screens.indices.contains(screenIndex), !zones.isEmpty else { return }
         hideAll()
+        var appearance = look
+        appearance.gap = gap
         overlay(for: screenIndex).show(zones: zones, highlighted: [],
-                                       visible: screens[screenIndex].visibleFrame, appearance: look)
+                                       visible: screens[screenIndex].visibleFrame, appearance: appearance)
     }
 
     func hidePreviews() {
@@ -102,7 +114,7 @@ final class DragSnapManager {
             guard !zones.isEmpty else { continue }
             shownAny = true
             overlay(for: index).show(zones: zones, highlighted: [], visible: screen.visibleFrame,
-                                     appearance: look)
+                                     appearance: look(on: index))
         }
         guard shownAny else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
@@ -154,7 +166,8 @@ final class DragSnapManager {
     }
 
     private func drop(_ win: AXUIElement, startFrame: CGRect, into zone: (screenIndex: Int, frac: FracRect)) {
-        windows.apply(frac: zone.frac, toWindow: win, screenIndex: zone.screenIndex, gap: look.gap)
+        windows.apply(frac: zone.frac, toWindow: win, screenIndex: zone.screenIndex,
+                      gap: look(on: zone.screenIndex).gap)
         onSnap?(win, startFrame, zone.frac, zone.screenIndex)
     }
 

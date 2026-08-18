@@ -10,20 +10,36 @@ import AppKit
 extension Router {
     func saveZoneSetRoute(_ body: [String: Any]) -> HTTPResponse {
         guard let name = Self.trimmedName(body["name"]), let raw = body["zones"] as? [[String: Any]] else {
-            return .badRequest("body must be {\"name\", \"zones\": [{x,y,w,h}], \"screen\"?}")
+            return .badRequest("body must be {\"name\", \"zones\": [{x,y,w,h}], \"screen\"?, \"gap\"?}")
         }
         let zones = raw.compactMap { ZoneRect(dict: $0) }
         guard !zones.isEmpty, zones.count == raw.count else {
             return .badRequest("every zone needs x,y,w,h within 0..1, with w and h above 0")
         }
+        // A gap given is the set's own; null or absent leaves whatever it had,
+        // so a client that only knows zones does not silently reset it.
+        var gap: Double??
+        if body["gap"] is NSNull {
+            gap = .some(nil)
+        } else if let number = body["gap"] as? NSNumber {
+            guard number.doubleValue >= 0, number.doubleValue <= Config.gapLimit else {
+                return .badRequest("gap must be 0...\(Int(Config.gapLimit)) points")
+            }
+            gap = .some(number.doubleValue)
+        } else if body["gap"] != nil {
+            return .badRequest("gap must be a number of points, or null for the default")
+        }
         store.update {
             $0.zoneSets[name] = zones
+            if let gap { $0.zoneSetGaps[name] = gap }
             if let screen = (body["screen"] as? NSNumber)?.intValue {
                 $0.assignZoneSet(name, forKeys: ScreenIdentity.keys(forIndex: screen))
             }
         }
         didChangeZones?()
-        return .ok(["ok": true, "saved": name, "zones": zones.count])
+        var reply: [String: Any] = ["ok": true, "saved": name, "zones": zones.count]
+        reply["gap"] = store.config.zoneSetGaps[name] ?? NSNull()
+        return .ok(reply)
     }
 
     func assignZoneSetRoute(_ body: [String: Any]) -> HTTPResponse {
@@ -83,7 +99,8 @@ extension Router {
             return .badRequest("screen \(screen) has zones 1...\(zones.count)")
         }
         let error = windows.place(app: app, titleContains: title, screen: screen,
-                                  frac: zones[number - 1].frac, gap: CGFloat(store.config.zoneGap))
+                                  frac: zones[number - 1].frac,
+                                  gap: CGFloat(store.config.zoneGap(forKeys: ScreenIdentity.keys(forIndex: screen))))
         if let error { return .failed(error) }
         return .ok(["ok": true, "app": app, "screen": screen, "zone": number, "zones": zones.count])
     }

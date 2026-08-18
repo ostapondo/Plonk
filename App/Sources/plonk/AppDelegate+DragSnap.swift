@@ -13,6 +13,7 @@ extension AppDelegate {
     func setupDragSnap() {
         dragSnap = DragSnapManager(windows: windows)
         dragSnap.zonesForScreen = { [weak self] index in self?.zones(onScreen: index) ?? [] }
+        dragSnap.gapForScreen = { [weak self] index in self?.zoneGapPoints(onScreen: index) ?? 0 }
         dragSnap.isExcluded = exclusionCheck
         dragSnap.onSnap = { [weak self] window, before, frac, screenIndex in
             guard let self else { return }
@@ -72,7 +73,7 @@ extension AppDelegate {
         newWindows = NewWindowWatcher(windows: windows)
         newWindows.apply(store.config)
         newWindows.isExcluded = exclusionCheck
-        newWindows.zoneGap = { [weak self] in self?.zoneGapPoints ?? 0 }
+        newWindows.zoneGap = { [weak self] index in self?.zoneGapPoints(onScreen: index) ?? 0 }
         newWindows.placement = { [weak self] app in
             guard let self, let key = app.bundleIdentifier,
                   let habit = snapMemory.habit(ofApp: key) else { return nil }

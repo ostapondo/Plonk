@@ -17,6 +17,10 @@ struct FullscreenZoneEditorView: View {
     @State private var name = ""
     @State private var error: String?
     @State private var selected: Int?
+    /// The set's own gap, edited as digits and kept only while `ownGap` is on;
+    /// off means the default gap in Zones › Overlay.
+    @State private var ownGap = false
+    @State private var gapText = ""
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -34,6 +38,10 @@ struct FullscreenZoneEditorView: View {
             name = setName
             let existing = seed ?? model.zoneSets[setName] ?? []
             draft = existing.isEmpty ? [ZoneRect(0, 0, 1, 1)] : existing
+            if seed == nil, let own = model.config.zoneSetGaps[setName] {
+                ownGap = true
+                gapText = String(Int(own))
+            }
         }
     }
 
@@ -42,6 +50,7 @@ struct FullscreenZoneEditorView: View {
             TextField(String(localized: .zoneEditorName), text: $name)
                 .textFieldStyle(.roundedBorder)
                 .font(.headline)
+            gapRow
             VStack(alignment: .leading, spacing: 3) {
                 Text(.zoneEditorSplit)
                 Text(.zoneEditorResize)
@@ -66,6 +75,43 @@ struct FullscreenZoneEditorView: View {
         .frame(width: 460)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .padding(.bottom, 60)
+    }
+
+    /// The gap this layout keeps around its windows: the default from
+    /// Zones › Overlay, or a number of its own. A layout of wide zones can
+    /// afford air that a six-zone one cannot.
+    private var gapRow: some View {
+        HStack(spacing: 10) {
+            Text(.zoneEditorGap)
+            Picker("", selection: $ownGap) {
+                Text(.zoneEditorGapDefault(Int(model.config.zoneGap))).tag(false)
+                Text(.zoneEditorGapOwn).tag(true)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+            if ownGap {
+                TextField(text: $gapText, prompt: Text("0")) { EmptyView() }
+                    .labelsHidden()
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .monospacedDigit()
+                    .frame(width: 56)
+                    .onChange(of: gapText) { typed in
+                        let digits = typed.filter(\.isNumber)
+                        if digits != typed { gapText = digits }
+                    }
+                Text(.commonPoints).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// What `gapRow` says, as a value: nil for the default. Anything above
+    /// the limit is held to it, the way `Config.clamp` would on load.
+    private var gap: Double? {
+        guard ownGap else { return nil }
+        return Double(Int(gapText) ?? 0).clamped(to: 0...Config.gapLimit)
     }
 
     /// Editing without a mouse. Every edit goes through the same geometry the
@@ -116,7 +162,7 @@ struct FullscreenZoneEditorView: View {
                 return
             }
         }
-        actions.updateZoneSet(target, zones: draft)
+        actions.updateZoneSet(target, zones: draft, gap: gap)
         actions.assignZoneSet(target, toScreen: screenIndex)
         done()
     }

@@ -264,8 +264,8 @@
 "zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits";
 "zones.overlay" = "Overlay";
 "zones.overlayHelp" = "The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything; zero switches it off.";
-"zones.gap" = "Gap";
-"zones.gapHelp" = "Empty space kept around every snapped window";
+"zones.gap" = "Default gap";
+"zones.gapHelp" = "Empty space kept around every snapped window, unless the layout sets its own in the editor";
 "zones.opacity" = "Opacity";
 "zones.colour" = "Colour";
 "zones.colourFollowsAccent" = "Following the app's accent colour";
@@ -502,6 +502,9 @@
 "zoneEditor.delete" = "Delete: ✕ removes a zone and neighbors fill the space.";
 "zoneEditor.keyboard" = "Keyboard: ⇥ selects, arrows move, ⇧arrows resize, S splits, ⇧S splits vertically, ⌫ deletes.";
 "zoneEditor.saveAndApply" = "Save & Apply";
+"zoneEditor.gap" = "Gap";
+"zoneEditor.gapDefault %lld" = "Default (%lld pt)";
+"zoneEditor.gapOwn" = "Own";
 "zoneEditor.nameTaken %@" = "A layout named \"%@\" already exists.";
 
 /* The screenshot editor. */

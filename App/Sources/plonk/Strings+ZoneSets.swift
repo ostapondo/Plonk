@@ -59,6 +59,11 @@ extension LocalizedStringResource {
     static let zoneEditorDelete = Self.key("zoneEditor.delete")
     static let zoneEditorKeyboard = Self.key("zoneEditor.keyboard")
     static let zoneEditorSaveAndApply = Self.key("zoneEditor.saveAndApply")
+    static let zoneEditorGap = Self.key("zoneEditor.gap")
+    static let zoneEditorGapOwn = Self.key("zoneEditor.gapOwn")
+    static func zoneEditorGapDefault(_ points: Int) -> LocalizedStringResource {
+        Self.key("zoneEditor.gapDefault \(points)")
+    }
 
     static func zoneEditorNameTaken(_ name: String) -> LocalizedStringResource {
         Self.key("zoneEditor.nameTaken \(name)")

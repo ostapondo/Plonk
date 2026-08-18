@@ -39,7 +39,7 @@ extension DragSnapManager {
                 : straddle(from: hovered, at: p, in: zones, visible: v)
             overlay(for: index).show(zones: zones,
                                      highlighted: spanned?.indices ?? Set(hovered.map { [$0] } ?? []),
-                                     visible: v, appearance: look)
+                                     visible: v, appearance: look(on: index))
             showOthers(except: index)
             if let spanned {
                 currentZone = (index, spanned.frac)
@@ -48,7 +48,7 @@ extension DragSnapManager {
             }
         } else if let frac = edgeZone(at: p, on: screen) {
             overlay(for: index).show(zones: [ZoneRect(frac.x, frac.y, frac.w, frac.h)], highlighted: [0],
-                                     visible: screen.visibleFrame, appearance: look)
+                                     visible: screen.visibleFrame, appearance: look(on: index))
             showOthers(except: index)
             currentZone = (index, frac)
         } else {
@@ -103,7 +103,7 @@ extension DragSnapManager {
                 continue
             }
             overlay(for: index).show(zones: zones, highlighted: [], visible: screen.visibleFrame,
-                                     appearance: look)
+                                     appearance: look(on: index))
         }
     }
 

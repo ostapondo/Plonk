@@ -21,8 +21,11 @@ extension AppDelegate {
         commands.relayout(screenIndex: index)
     }
 
-    func updateZoneSet(_ name: String, zones: [ZoneRect]) {
-        store.update { $0.zoneSets[name] = zones }
+    func updateZoneSet(_ name: String, zones: [ZoneRect], gap: Double?) {
+        store.update {
+            $0.zoneSets[name] = zones
+            $0.zoneSetGaps[name] = gap
+        }
         for index in NSScreen.screens.indices
         where store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: index)) == name {
             commands.relayout(screenIndex: index)
@@ -38,6 +41,7 @@ extension AppDelegate {
         store.update {
             guard let zones = $0.zoneSets.removeValue(forKey: old) else { return }
             $0.zoneSets[new] = zones
+            $0.zoneSetGaps[new] = $0.zoneSetGaps.removeValue(forKey: old)
             $0.screenZoneSets = $0.screenZoneSets.mapValues { $0 == old ? new : $0 }
         }
         return true
@@ -54,7 +58,8 @@ extension AppDelegate {
             return
         }
         guard let zones = store.config.zoneSets[name] ?? BuiltinZoneSets.all[name] else { return }
-        dragSnap.showPreview(zones: zones, screenIndex: index)
+        dragSnap.showPreview(zones: zones, screenIndex: index,
+                             gap: CGFloat(store.config.zoneGap(forSet: name)))
         model.previewedZoneSet = name
 
         let token = previewToken

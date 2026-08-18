@@ -35,7 +35,8 @@ final class NewWindowWatcher {
     /// Called after a new window has been placed, so it can be remembered like
     /// any other move.
     var onPlaced: ((NSRunningApplication, AXUIElement, CGRect, FracRect, Int) -> Void)?
-    var zoneGap: (() -> CGFloat)?
+    /// The gap for a screen: that of the set it wears.
+    var zoneGap: ((Int) -> CGFloat)?
 
     init(windows: WindowManager) {
         self.windows = windows
@@ -114,7 +115,7 @@ final class NewWindowWatcher {
               let before = windows.frame(ofWindow: window),
               let target = placement?(app) else { return }
         windows.apply(frac: target.frac, toWindow: window, screenIndex: target.screenIndex,
-                      gap: zoneGap?() ?? 0)
+                      gap: zoneGap?(target.screenIndex) ?? 0)
         onPlaced?(app, window, before, target.frac, target.screenIndex)
     }
 }
