@@ -144,11 +144,7 @@ final class AwakeManager {
         boundPID = pid
         sessionEnd = end
         if let end {
-            let timer = Timer(fire: end, interval: 0, repeats: false) { [weak self] _ in
-                self?.reevaluate()
-            }
-            RunLoop.main.add(timer, forMode: .common)
-            expiryTimer = timer
+            expiryTimer = Timer.common(at: end) { [weak self] in self?.reevaluate() }
         }
         if let pid {
             // Polled rather than watched with a kqueue process source: that
@@ -156,12 +152,10 @@ final class AwakeManager {
             // failure is silent, which would leave the Mac awake for good after
             // `sudo make`. A signal-0 probe every few seconds always works, and
             // a handful of seconds either way is nothing to a power assertion.
-            let timer = Timer(timeInterval: Self.processPollSeconds, repeats: true) { [weak self] _ in
+            processWatch = Timer.common(every: Self.processPollSeconds) { [weak self] in
                 guard let self, boundPID == pid else { return }
                 if !Self.isRunning(pid) { set(false) }
             }
-            RunLoop.main.add(timer, forMode: .common)
-            processWatch = timer
         }
         reevaluate()
     }

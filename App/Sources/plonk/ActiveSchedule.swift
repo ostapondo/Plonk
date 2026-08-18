@@ -19,8 +19,6 @@ struct ActiveSchedule: Codable, Equatable {
     /// default: an unqualified 09:00-18:00 would otherwise cover Saturday.
     var days: Set<Int> = [2, 3, 4, 5, 6]
 
-    static let dayLength = 24 * 60
-
     /// A window whose end is before its start crosses midnight and belongs to
     /// the day it opened on, so 22:00-02:00 on a Monday runs into Tuesday.
     var crossesMidnight: Bool { end < start }
