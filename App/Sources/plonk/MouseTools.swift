@@ -107,10 +107,8 @@ final class MouseTools {
         let current = screens.firstIndex { $0.frame.contains(mouse) } ?? 0
         let next = screens[(current + 1) % screens.count]
         let centre = CGPoint(x: next.frame.midX, y: next.frame.midY)
-        // CGWarpMouseCursorPosition works in CG space: origin top-left of the
-        // primary display, y downward, which is the flip of NSScreen's.
-        let primaryMaxY = screens[0].frame.maxY
-        CGWarpMouseCursorPosition(CGPoint(x: centre.x, y: primaryMaxY - centre.y))
+        // CGWarpMouseCursorPosition works in CG space, the flip of NSScreen's.
+        CGWarpMouseCursorPosition(CGSpace.flip(centre))
         // Warping leaves the pointer where it was put but does not redraw it
         // anywhere obvious, so it is worth pointing at.
         flashSpotlight()
@@ -171,8 +169,5 @@ final class MouseTools {
 
 private extension CGEvent {
     /// CG events are in top-left space; AppKit windows are in bottom-left.
-    var unflippedLocation: NSPoint {
-        let primaryMaxY = NSScreen.screens.first?.frame.maxY ?? 0
-        return NSPoint(x: location.x, y: primaryMaxY - location.y)
-    }
+    var unflippedLocation: NSPoint { CGSpace.flip(location) }
 }

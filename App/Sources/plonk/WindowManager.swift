@@ -43,11 +43,7 @@ final class WindowManager {
         return true
     }
 
-    // MARK: - Coordinate conversion
-
-    private func toAX(_ r: NSRect, primaryMaxY: CGFloat) -> CGRect {
-        CGRect(x: r.origin.x, y: primaryMaxY - r.maxY, width: r.width, height: r.height)
-    }
+    // MARK: - Screens
 
     struct ScreenInfo {
         let index: Int
@@ -56,12 +52,8 @@ final class WindowManager {
     }
 
     func screens() -> [ScreenInfo] {
-        let all = NSScreen.screens
-        let primaryMaxY = all.first?.frame.maxY ?? 0
-        return all.enumerated().map { i, s in
-            ScreenInfo(index: i,
-                       frame: toAX(s.frame, primaryMaxY: primaryMaxY),
-                       visible: toAX(s.visibleFrame, primaryMaxY: primaryMaxY))
+        NSScreen.screens.enumerated().map { i, s in
+            ScreenInfo(index: i, frame: CGSpace.flip(s.frame), visible: CGSpace.flip(s.visibleFrame))
         }
     }
 
