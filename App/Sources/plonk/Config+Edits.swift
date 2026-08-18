@@ -33,12 +33,10 @@ extension Config {
     /// in, or config.json edited by hand. No caller has to remember a limit,
     /// which is what kept the same clamp written out at three call sites.
     mutating func clamp() {
-        zoneGap = min(max(zoneGap, 0), Self.gapLimit)
-        zoneOpacity = min(max(zoneOpacity, Self.opacityRange.lowerBound),
-                          Self.opacityRange.upperBound)
-        zoneEdgeSpanPoints = min(max(zoneEdgeSpanPoints, 0), Self.edgeSpanLimit)
-        rulerEdgeTolerance = min(max(rulerEdgeTolerance, EdgeDetector.toleranceRange.lowerBound),
-                                 EdgeDetector.toleranceRange.upperBound)
+        zoneGap = zoneGap.clamped(to: 0...Self.gapLimit)
+        zoneOpacity = zoneOpacity.clamped(to: Self.opacityRange)
+        zoneEdgeSpanPoints = zoneEdgeSpanPoints.clamped(to: 0...Self.edgeSpanLimit)
+        rulerEdgeTolerance = rulerEdgeTolerance.clamped(to: EdgeDetector.toleranceRange)
         awakeTimeoutMinutes = max(0, awakeTimeoutMinutes)
         activeTimeoutMinutes = max(0, activeTimeoutMinutes)
     }
