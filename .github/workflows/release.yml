@@ -53,7 +53,7 @@ jobs:
       id-token: write # sign the attestation
       attestations: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Read the version
         id: version
@@ -198,7 +198,7 @@ jobs:
       # workflow by, and what it records the tarball's origin from.
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       # Node 24 for npm 11, which is the first that can publish over OIDC.
       #
       # No registry-url on purpose. Given one, setup-node writes an .npmrc with
@@ -326,7 +326,7 @@ jobs:
       id-token: write # sign the attestation
       attestations: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
