@@ -160,20 +160,9 @@ final class WindowManager {
         guard let app = findApp(bundleID: bundleID, named: appName) else {
             return "app \"\(appName)\" is not running"
         }
-        var wins = WindowAccess.windows(of: app.processIdentifier)
-        if let t = titleContains?.lowercased(), !t.isEmpty {
-            let matching = wins.filter { WindowAccess.title(of: $0).lowercased().contains(t) }
-            // A saved title is a hint: windows get renamed as their content
-            // changes, and no match is worse than the wrong window.
-            if !matching.isEmpty { wins = matching }
+        guard let win = pickWindow(of: app, titleContains: titleContains, windowIndex: windowIndex) else {
+            return "no matching window for \"\(appName)\""
         }
-        let win: AXUIElement?
-        if let windowIndex, wins.indices.contains(windowIndex) {
-            win = wins[windowIndex]
-        } else {
-            win = wins.first(where: { !WindowAccess.isMinimized($0) }) ?? wins.first
-        }
-        guard let win else { return "no matching window for \"\(appName)\"" }
         if WindowAccess.isMinimized(win) {
             WindowAccess.setMinimized(false, of: win)
         }
@@ -187,6 +176,21 @@ final class WindowManager {
             WindowAccess.setMinimized(true, of: win)
         }
         return nil
+    }
+
+    /// The window an app name points at: the one at `windowIndex` if it has
+    /// one, else the first not minimized. A title is a hint, because windows
+    /// get renamed as their content changes, and no match is worse than the
+    /// wrong window.
+    private func pickWindow(of app: NSRunningApplication, titleContains: String?,
+                            windowIndex: Int?) -> AXUIElement? {
+        var wins = WindowAccess.windows(of: app.processIdentifier)
+        if let t = titleContains?.lowercased(), !t.isEmpty {
+            let matching = wins.filter { WindowAccess.title(of: $0).lowercased().contains(t) }
+            if !matching.isEmpty { wins = matching }
+        }
+        if let windowIndex, wins.indices.contains(windowIndex) { return wins[windowIndex] }
+        return wins.first(where: { !WindowAccess.isMinimized($0) }) ?? wins.first
     }
 
     /// Running app for a workspace item. The bundle ID is exact; the name is
@@ -207,12 +211,8 @@ final class WindowManager {
 
     /// Which screen an app's window currently sits on, or nil when not running.
     func screenIndex(ofApp appName: String, titleContains: String?) -> Int? {
-        guard let app = findApp(named: appName) else { return nil }
-        var wins = WindowAccess.windows(of: app.processIdentifier)
-        if let t = titleContains?.lowercased(), !t.isEmpty {
-            wins = wins.filter { WindowAccess.title(of: $0).lowercased().contains(t) }
-        }
-        guard let win = wins.first(where: { !WindowAccess.isMinimized($0) }) ?? wins.first,
+        guard let app = findApp(named: appName),
+              let win = pickWindow(of: app, titleContains: titleContains, windowIndex: nil),
               let f = frame(ofWindow: win) else { return nil }
         return screenIndex(containing: f, in: screens())
     }
