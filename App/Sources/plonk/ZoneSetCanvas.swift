@@ -18,7 +18,7 @@ struct ZoneSetCanvas: View {
 
     /// Clamped on read, because a display can go away while this page is open
     /// and a stale index writes an assignment for a monitor that is not there.
-    private var screen: Int { min(max(chosen, 0), max(model.screenCount - 1, 0)) }
+    private var screen: Int { chosen.clamped(to: 0...max(model.screenCount - 1, 0)) }
 
     /// The assignment as the page thinks of it: a set name, or nil for edge
     /// snapping. An unassigned screen falls back to the default set.

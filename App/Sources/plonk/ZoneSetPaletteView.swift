@@ -200,7 +200,7 @@ struct ZoneSetPaletteView: View {
     private func move(_ delta: Int) {
         let count = rows.count
         guard count > 0 else { return }
-        selection = min(max(selection + delta, 0), count - 1)
+        selection = (selection + delta).clamped(to: 0...(count - 1))
     }
 
     private func startMonitor() {

@@ -81,8 +81,8 @@ enum ZoneGeometry {
         let w = max(snapValue(zone.w), minSide)
         let h = max(snapValue(zone.h), minSide)
         return ZoneRect(
-            min(max(snapValue(zone.x), 0), 1 - w),
-            min(max(snapValue(zone.y), 0), 1 - h),
+            snapValue(zone.x).clamped(to: 0...(1 - w)),
+            snapValue(zone.y).clamped(to: 0...(1 - h)),
             w,
             h
         )

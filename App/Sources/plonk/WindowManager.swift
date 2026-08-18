@@ -73,7 +73,7 @@ final class WindowManager {
     private func axRect(for frac: FracRect, screenIndex: Int, in all: [ScreenInfo],
                         gap: CGFloat = 0) -> CGRect {
         guard !all.isEmpty else { return .zero }
-        let v = all[min(max(screenIndex, 0), all.count - 1)].visible
+        let v = all[screenIndex.clamped(to: 0...(all.count - 1))].visible
         return ZoneGeometry.frame(for: frac, in: v, gap: gap)
     }
 

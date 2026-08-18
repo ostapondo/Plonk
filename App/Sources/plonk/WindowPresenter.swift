@@ -138,7 +138,7 @@ final class WindowPresenter: NSObject {
         closeFullscreenEditor()
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
-        let screen = screens[min(max(screenIndex, 0), screens.count - 1)]
+        let screen = screens[screenIndex.clamped(to: 0...(screens.count - 1))]
 
         // Zones are fractions of the visible area (menu bar and Dock excluded),
         // so the editor covers exactly that area.

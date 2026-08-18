@@ -185,8 +185,7 @@ final class ScreenRuler {
                  completion: @escaping (Result<RulerMeasurement, Failure>) -> Void) {
         refreshAppearance()
         if let override {
-            tolerance = min(max(override, EdgeDetector.toleranceRange.lowerBound),
-                            EdgeDetector.toleranceRange.upperBound)
+            tolerance = override.clamped(to: EdgeDetector.toleranceRange)
         }
         guard CGPreflightScreenCaptureAccess() else {
             completion(.failure(.notPermitted))
