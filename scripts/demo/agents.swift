@@ -66,33 +66,31 @@ let tools: [(name: String, at: Double)] = [
 ]
 
 func drawTools(at t: Double, alpha: CGFloat, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    let widths = tools.map { width(of: $0.name, size: 13, weight: .medium, mono: true) + 44 }
-    let total = widths.reduce(0, +) + CGFloat(tools.count - 1) * 8
-    var x = size.width / 2 - total / 2
-    for (index, tool) in tools.enumerated() {
-        let live = phase(t, from: tool.at, to: tool.at + 0.3)
-        let chip = CGRect(x: x, y: 116, width: widths[index], height: 28)
-        fill(chip, mix(Ink.faint, Ink.accent.withAlphaComponent(0.92), live), radius: 8, in: ctx)
-        stroke(chip, mix(Ink.line, Ink.accent, live), radius: 8, in: ctx)
-        // A tick that draws itself as the call returns.
-        let mark = CGPoint(x: chip.minX + 15, y: chip.midY)
-        ctx.saveGState()
-        ctx.setStrokeColor(mix(Ink.dim, .white, live).cgColor)
-        ctx.setLineWidth(2)
-        ctx.setLineCap(.round)
-        ctx.move(to: CGPoint(x: mark.x - 5, y: mark.y))
-        ctx.addLine(to: CGPoint(x: mark.x - 1.5, y: mark.y - 3.5 * live))
-        ctx.addLine(to: CGPoint(x: mark.x + 5, y: mark.y + 4.5 * live))
-        ctx.strokePath()
-        ctx.restoreGState()
-        text(tool.name, at: CGPoint(x: chip.minX + 28, y: chip.midY - 5), size: 13,
-             color: mix(Ink.dim, .white, live), weight: .medium, mono: true, in: ctx)
-        x += widths[index] + 8
+    faded(alpha, in: ctx) {
+        let widths = tools.map { width(of: $0.name, size: 13, weight: .medium, mono: true) + 44 }
+        let total = widths.reduce(0, +) + CGFloat(tools.count - 1) * 8
+        var x = size.width / 2 - total / 2
+        for (index, tool) in tools.enumerated() {
+            let live = phase(t, from: tool.at, to: tool.at + 0.3)
+            let chip = CGRect(x: x, y: 116, width: widths[index], height: 28)
+            fill(chip, mix(Ink.faint, Ink.accent.withAlphaComponent(0.92), live), radius: 8, in: ctx)
+            stroke(chip, mix(Ink.line, Ink.accent, live), radius: 8, in: ctx)
+            // A tick that draws itself as the call returns.
+            let mark = CGPoint(x: chip.minX + 15, y: chip.midY)
+            ctx.saveGState()
+            ctx.setStrokeColor(mix(Ink.dim, .white, live).cgColor)
+            ctx.setLineWidth(2)
+            ctx.setLineCap(.round)
+            ctx.move(to: CGPoint(x: mark.x - 5, y: mark.y))
+            ctx.addLine(to: CGPoint(x: mark.x - 1.5, y: mark.y - 3.5 * live))
+            ctx.addLine(to: CGPoint(x: mark.x + 5, y: mark.y + 4.5 * live))
+            ctx.strokePath()
+            ctx.restoreGState()
+            text(tool.name, at: CGPoint(x: chip.minX + 28, y: chip.midY - 5), size: 13,
+                 color: mix(Ink.dim, .white, live), weight: .medium, mono: true, in: ctx)
+            x += widths[index] + 8
+        }
     }
-    ctx.restoreGState()
 }
 
 // MARK: - Plonk's notice
@@ -101,48 +99,38 @@ func drawTools(at t: Double, alpha: CGFloat, in ctx: CGContext) {
 /// Slots stack downward, because two tools can return at once.
 func drawNotice(_ title: String, _ detail: String, tint: NSColor, slot: Int,
                 alpha: Double, slide: Double, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(CGFloat(alpha))
-    let box = CGRect(x: size.width - 24 - 348 + CGFloat(1 - slide) * 44,
-                     y: size.height - 34 - 18 - 60 - CGFloat(slot) * 70, width: 348, height: 60)
-    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 26, color: Ink.shadow.cgColor)
-    fill(box, Ink.panel, radius: 13, in: ctx)
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(box, Ink.line, radius: 13, in: ctx)
-    fill(CGRect(x: box.minX, y: box.minY + 12, width: 3, height: box.height - 24), tint,
-         radius: 1.5, in: ctx)
-    drawCube(at: CGPoint(x: box.minX + 30, y: box.midY), scale: 1, glow: 0, in: ctx)
-    text(title, at: CGPoint(x: box.minX + 52, y: box.midY + 3), size: 14.5, color: Ink.text,
-         weight: .semibold, in: ctx)
-    text(detail, at: CGPoint(x: box.minX + 52, y: box.midY - 17), size: 12.5, color: Ink.dim,
-         in: ctx)
-    ctx.restoreGState()
+    faded(CGFloat(alpha), in: ctx) {
+        let box = CGRect(x: size.width - 24 - 348 + CGFloat(1 - slide) * 44,
+                         y: size.height - 34 - 18 - 60 - CGFloat(slot) * 70, width: 348, height: 60)
+        panel(box, radius: 13, border: Ink.line, blur: 26, in: ctx)
+        fill(CGRect(x: box.minX, y: box.minY + 12, width: 3, height: box.height - 24), tint,
+             radius: 1.5, in: ctx)
+        drawCube(at: CGPoint(x: box.minX + 30, y: box.midY), scale: 1, glow: 0, in: ctx)
+        text(title, at: CGPoint(x: box.minX + 52, y: box.midY + 3), size: 14.5, color: Ink.text,
+             weight: .semibold, in: ctx)
+        text(detail, at: CGPoint(x: box.minX + 52, y: box.midY - 17), size: 12.5, color: Ink.dim,
+             in: ctx)
+    }
 }
 
 /// The marquee extract_text draws round the region it read, with the words it
 /// lifted out shown under it.
 func drawExtract(_ region: CGRect, line: String, progress: Double, alpha: Double,
                  in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(CGFloat(alpha))
-    fill(region, Ink.accent.withAlphaComponent(0.2), radius: 5, in: ctx)
-    stroke(region, Ink.accent, radius: 5, width: 2, in: ctx)
-    for corner in [CGPoint(x: region.minX, y: region.minY), CGPoint(x: region.maxX, y: region.minY),
-                   CGPoint(x: region.minX, y: region.maxY), CGPoint(x: region.maxX, y: region.maxY)] {
-        fill(CGRect(x: corner.x - 4, y: corner.y - 4, width: 8, height: 8), Ink.accent,
-             radius: 4, in: ctx)
+    faded(CGFloat(alpha), in: ctx) {
+        fill(region, Ink.accent.withAlphaComponent(0.2), radius: 5, in: ctx)
+        stroke(region, Ink.accent, radius: 5, width: 2, in: ctx)
+        for corner in [CGPoint(x: region.minX, y: region.minY), CGPoint(x: region.maxX, y: region.minY),
+                       CGPoint(x: region.minX, y: region.maxY), CGPoint(x: region.maxX, y: region.maxY)] {
+            fill(CGRect(x: corner.x - 4, y: corner.y - 4, width: 8, height: 8), Ink.accent,
+                 radius: 4, in: ctx)
+        }
+        let box = CGRect(x: region.minX, y: region.minY - 56,
+                         width: width(of: line, size: 15, mono: true) + 36, height: 40)
+        panel(box, radius: 10, border: Ink.accent.withAlphaComponent(0.55), lift: 6, blur: 20, in: ctx)
+        text(typed(line, progress), at: CGPoint(x: box.minX + 18, y: box.midY - 6), size: 15,
+             color: Ink.text, mono: true, in: ctx)
     }
-    let box = CGRect(x: region.minX, y: region.minY - 56,
-                     width: width(of: line, size: 15, mono: true) + 36, height: 40)
-    ctx.setShadow(offset: CGSize(width: 0, height: -6), blur: 20, color: Ink.shadow.cgColor)
-    fill(box, Ink.panel, radius: 10, in: ctx)
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(box, Ink.accent.withAlphaComponent(0.55), radius: 10, in: ctx)
-    text(typed(line, progress), at: CGPoint(x: box.minX + 18, y: box.midY - 6), size: 15,
-         color: Ink.text, mono: true, in: ctx)
-    ctx.restoreGState()
 }
 
 // MARK: - The frame
@@ -218,7 +206,8 @@ func frame(at t: Double) -> CGImage {
         drawPrompt(line, progress: phase(t, from: typeFrom,
                                          to: typeFrom + Double(line.count) * 0.024),
                    alpha: CGFloat(pulse(t, appear, appear + 0.2, leave, leave + 0.25)),
-                   y: 42, label: "Claude Code", in: ctx)
+                   frame: CGRect(x: size.width / 2 - 396, y: 42, width: 792, height: 64),
+                   label: "Claude Code", in: ctx)
     }
 
     drawTools(at: t, alpha: CGFloat(pulse(t, 0.3, 0.7, 15.0, 15.3)), in: ctx)
