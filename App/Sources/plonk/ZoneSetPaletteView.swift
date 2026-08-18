@@ -122,7 +122,11 @@ struct ZoneSetPaletteView: View {
             Rectangle().fill(selected ? Color.accentColor : .clear).frame(width: 2.5)
         }
         .contentShape(Rectangle())
-        .onTapGesture { selection = index; apply(row) }
+        // A single click only moves the highlight, the same as an arrow key: a
+        // relayout moves every window on the screen, and one stray click should
+        // not be enough to do that. Return or a double click commits.
+        .onTapGesture(count: 2) { selection = index; apply(row) }
+        .onTapGesture(count: 1) { selection = index }
         .id(row.id)
     }
 

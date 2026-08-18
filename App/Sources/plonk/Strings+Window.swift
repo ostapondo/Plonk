@@ -22,8 +22,8 @@ extension LocalizedStringResource {
         Self.key("app.nameVersion \(version)")
     }
 
-    static func appLaunchWorkspace(_ name: String) -> LocalizedStringResource {
-        Self.key("app.launchWorkspace \(name)")
+    static func appOpenWorkspace(_ name: String) -> LocalizedStringResource {
+        Self.key("app.openWorkspace \(name)")
     }
 
     static func appAgentCount(_ count: Int) -> LocalizedStringResource {

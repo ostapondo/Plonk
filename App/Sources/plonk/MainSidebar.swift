@@ -136,9 +136,12 @@ struct MainSidebar: View {
     private var workspaces: some View {
         VStack(alignment: .leading, spacing: 1) {
             heading(.appWorkspaces)
+            // A row opens the Workspaces page, where each one has its own
+            // Launch button. Launching opens apps and moves windows, and a
+            // sidebar click is too easy to land by accident for that.
             ForEach(model.workspaceNames.prefix(4), id: \.self) { name in
                 Button {
-                    model.actions?.launchWorkspace(named: name, onScreen: nil)
+                    model.selectedPage = "workspaces"
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "rectangle.3.group").font(.system(size: 12.5)).frame(width: 16)
@@ -151,7 +154,7 @@ struct MainSidebar: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(String(localized: .appLaunchWorkspace(name)))
+                .help(String(localized: .appOpenWorkspace(name)))
             }
         }
     }
