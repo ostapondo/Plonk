@@ -66,12 +66,6 @@ final class WorkspaceLauncher {
     /// Reopened once each, so a stubborn app is not relaunched in a loop.
     private var nudged: Set<String> = []
 
-    var isRunning: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return running
-    }
-
     /// Both fire on the main queue.
     var onProgress: ((String, [LaunchStatus]) -> Void)?
     var onFinished: ((String, [LaunchStatus]) -> Void)?
@@ -119,7 +113,6 @@ final class WorkspaceLauncher {
     func cancel() {
         lock.lock()
         defer { lock.unlock() }
-        // `running`, not `isRunning`: NSLock is not recursive.
         if running { cancelled = true }
     }
 

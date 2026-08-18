@@ -132,16 +132,12 @@ struct BuiltinZoneSetsTests {
         #expect(BuiltinZoneSets.all[BuiltinZoneSets.defaultName] != nil)
     }
 
-    @Test func gridTilesTheWholeScreen() {
-        let zones = BuiltinZoneSets.grid(columns: 3, rows: 2)
-        #expect(zones.count == 6)
-        let area = zones.reduce(0.0) { $0 + $1.w * $1.h }
-        #expect(abs(area - 1.0) < 0.001)
-        #expect(!ZoneGeometry.overlaps(zones, at: Array(zones.indices)))
-    }
-
-    @Test func gridClampsDegenerateInput() {
-        #expect(BuiltinZoneSets.grid(columns: 0, rows: -1).count == 1)
+    @Test func builtinSetsTileTheWholeScreen() {
+        for (name, zones) in BuiltinZoneSets.all {
+            let area = zones.reduce(0.0) { $0 + $1.w * $1.h }
+            #expect(abs(area - 1.0) < 0.001, "\(name)")
+            #expect(!ZoneGeometry.overlaps(zones, at: Array(zones.indices)), "\(name)")
+        }
     }
 
     // MARK: - spanning

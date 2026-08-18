@@ -41,20 +41,6 @@ enum BuiltinZoneSets {
         ],
         "Priority": [ZoneRect(0, 0, 0.6, 1), ZoneRect(0.6, 0, 0.4, 0.5), ZoneRect(0.6, 0.5, 0.4, 0.5)],
     ]
-
-    static func grid(columns: Int, rows: Int) -> [ZoneRect] {
-        let cols = max(1, columns), rws = max(1, rows)
-        var zones: [ZoneRect] = []
-        for r in 0..<rws {
-            for c in 0..<cols {
-                zones.append(ZoneRect(
-                    Double(c) / Double(cols), Double(r) / Double(rws),
-                    1.0 / Double(cols), 1.0 / Double(rws)
-                ))
-            }
-        }
-        return zones
-    }
 }
 
 // Pure zone-set math shared by the editor and covered by unit tests.

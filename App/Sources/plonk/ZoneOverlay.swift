@@ -28,12 +28,7 @@ struct ZoneAppearance: Equatable {
         showNumbers = config.zoneNumbersVisible
     }
 
-    init(gap: CGFloat = 0, opacity: CGFloat = 1, color: NSColor? = nil, showNumbers: Bool = true) {
-        self.gap = gap
-        self.opacity = opacity
-        self.color = color
-        self.showNumbers = showNumbers
-    }
+    init() {}
 
     /// One colour, for the things that are not a zone: the ruler and the
     /// pointer tools share it so the desk stays one colour.
