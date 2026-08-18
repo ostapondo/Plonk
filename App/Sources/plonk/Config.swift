@@ -54,6 +54,11 @@ struct Config: Codable {
     // BCP-47 tags for text recognition, e.g. ["uk-UA", "en-US"]. Empty lets
     // Vision pick, which follows the system language.
     var textLanguages: [String] = []
+    // The menu bar tidy: a divider and a chevron of Plonk's own in the bar,
+    // and whether the icons left of the divider are pushed off screen right
+    // now. Off by default: it adds two items nobody asked for.
+    var menuBarEnabled = false
+    var menuBarCollapsed = true
     var awakeAllowOnBattery = true
     var awakeAutoWhileCharging = false
     var awakeKeepDisplayOn = true

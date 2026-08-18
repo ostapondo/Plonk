@@ -387,6 +387,7 @@
 "page.appearance" = "Appearance";
 "page.shortcuts" = "Keyboard";
 "page.awake" = "Keep awake";
+"page.menuBar" = "Menu bar";
 "page.active" = "Stay active";
 "page.update" = "Updates";
 
@@ -681,3 +682,17 @@
 
 /* Stand-in for an app that will not say what it is called. */
 "guide.thisApp" = "This app";
+
+/* Menu bar tidy */
+"menuBar.title" = "Menu bar";
+"menuBar.subtitle" = "Hide the icons that only need to be there sometimes.";
+"menuBar.enable" = "Tidy the menu bar";
+"menuBar.enableHelp" = "Puts a divider and a chevron in the bar. Icons left of the divider are hidden until you click the chevron. Nothing runs in the background: hiding is one item changing width, so it costs nothing while idle.";
+"menuBar.collapsed" = "Hidden set is hidden";
+"menuBar.collapsedHelp" = "The same as clicking the chevron in the bar.";
+"menuBar.items" = "Icons in the bar";
+"menuBar.itemsHelp" = "Left to right, as the bar has them. To hide one, hold ⌘ and drag it to the left of the divider; to keep one, drag it to the right. macOS lets nothing but a drag move an icon, so that part stays in your hands. Keep the chevron right of the divider, or it would be hidden along with the rest.";
+"menuBar.refresh" = "Read again";
+"menuBar.visible" = "Visible";
+"menuBar.hidden" = "Hidden";
+"menuBar.empty" = "Turn the tidy on and the icons in the bar will be listed here.";

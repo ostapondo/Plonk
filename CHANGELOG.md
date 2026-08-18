@@ -15,6 +15,12 @@ one of those.
 
 ### Added
 
+- **Menu bar tidy (prototype).** Layout → Menu bar puts a divider and a
+  chevron in the bar; icons left of the divider are pushed off screen until
+  the chevron is clicked. The page lists what is in the bar and a switch per
+  icon ⌘-drags it across the divider. Nothing polls and nothing is captured:
+  hiding is one status item changing width.
+
 - **Switching from Rectangle costs nothing now.** The ten placement shortcuts
   were already the same keys in both apps — `⌃⌥` and an arrow, a corner letter,
   return or C — because that is the one combination macOS leaves alone and both

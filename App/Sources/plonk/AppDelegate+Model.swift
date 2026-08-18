@@ -74,6 +74,7 @@ extension AppDelegate {
         grabMove.apply(config)
         mouse.apply(config)
         awake.apply(config)
+        menuBar.apply(config)
         active.apply(config)
         newWindows.apply(config)
         updates.apply(config)

@@ -30,6 +30,9 @@ enum SettingsPages {
         SettingsPage(id: "workspaces", title: .pageWorkspaces, icon: "rectangle.3.group", parent: "layout") {
             AnyView(WorkspacesPage(model: $0))
         },
+        SettingsPage(id: "menubar", title: .pageMenuBar, icon: "menubar.rectangle", parent: "layout") {
+            AnyView(MenuBarPage(model: $0))
+        },
         SettingsPage(id: "shot", title: .pageShot, icon: "camera.viewfinder", parent: "capture") {
             AnyView(ShotPage(model: $0))
         },

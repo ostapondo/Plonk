@@ -17,6 +17,8 @@ protocol AppActions: AnyObject {
     /// schedule itself changes, which a config field could not express.
     func setAwake(_ on: Bool)
     func setActive(_ on: Bool)
+    /// The menu bar tidy: re-read what is in the bar.
+    func refreshMenuBarItems()
     func openAccessibilitySettings()
 
     /// Binding an action frees the combination wherever else it was, so it
@@ -84,6 +86,8 @@ final class AppModel: ObservableObject {
 
     // Keep-awake, as the manager has it rather than as it was last saved.
     @Published var awakeOn = false
+    /// What is in the menu bar, as last read; see refreshMenuBarItems.
+    @Published var menuBarItems: [MenuBarItemInfo] = []
     /// Whether the manager is holding, which is not `config.awakeRequested`:
     /// that one is only what to restore after a relaunch. Named apart so a
     /// key path cannot mean both.

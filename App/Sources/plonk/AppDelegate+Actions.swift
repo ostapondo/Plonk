@@ -17,6 +17,7 @@ extension AppDelegate: AppActions {
     /// Keep-awake is held by its manager, not by a stored flag: a hold made by
     /// hand outlives the schedule that would otherwise decide.
     func setAwake(_ on: Bool) { awake.set(on) }
+    func refreshMenuBarItems() { refreshMenuBarModel() }
 
     func setHotkey(_ action: HotkeyAction, to hotkey: Hotkey) {
         // Taking a combination frees it wherever it was, possibly on a page
