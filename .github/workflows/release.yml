@@ -15,6 +15,24 @@ name: Release
 # Only the first two are required. Without SMITHERY_API_KEY the release still
 # goes out in full and the Smithery listing keeps whatever version it last had.
 #
+# and, once there is a paid Apple Developer account, the five that replace them:
+#
+#   APPLE_DEVELOPER_ID_P12    the "Developer ID Application" certificate, base64
+#   APPLE_DEVELOPER_ID_PASSWORD  the password used when exporting it
+#   APPLE_NOTARY_KEY          the App Store Connect .p8 API key, base64
+#   APPLE_NOTARY_KEY_ID       the key's ten-character ID
+#   APPLE_NOTARY_ISSUER       the issuer UUID the key was created under
+#
+# Set the first of those five and this workflow switches paths on its own:
+# Developer ID signing, notarization, a stapled ticket and a .dmg beside the
+# zip. Unset, it behaves exactly as it did before they existed.
+#
+# One thing has to be done by hand, and the build stops until it is. A Developer
+# ID is a different designated requirement, so the first such run fails the
+# check in release.sh with the old and new values printed side by side — commit
+# the new one to scripts/release-requirement. Every installed copy will refuse
+# that update the way 0.0.5 did; SECURITY.md has why it is worth doing early.
+#
 # npm needs no secret at all: plonk-mcp names this repository and this workflow
 # file as a trusted publisher (npmjs.com > the package > Settings > Trusted
 # publisher), and npm takes GitHub's OIDC token as proof. Nothing to rotate,
@@ -60,14 +78,34 @@ jobs:
             exit 1
           fi
 
+      # One step for both identities: the keychain dance is the same, and only
+      # the trust line differs. A self-signed root has to be trusted before
+      # macOS counts it as a valid identity at all; a Developer ID already
+      # chains to one every Mac ships with.
       - name: Import the signing certificate
+        id: signing
         env:
+          DEVELOPER_ID_P12: ${{ secrets.APPLE_DEVELOPER_ID_P12 }}
+          DEVELOPER_ID_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_PASSWORD }}
           P12: ${{ secrets.PLONK_SIGN_CERT_P12 }}
           P12_PASSWORD: ${{ secrets.PLONK_SIGN_CERT_PASSWORD }}
         run: |
           set -eu
-          if [ -z "${P12:-}" ]; then
-            echo "::error::PLONK_SIGN_CERT_P12 is not set — see the header of this workflow"
+          # A Developer ID wins when both are present. Having set it up, nobody
+          # means "sign the next release with the old key anyway", and a release
+          # that quietly took the lesser path would be discovered by its users.
+          if [ -n "${DEVELOPER_ID_P12:-}" ]; then
+            PAYLOAD=$DEVELOPER_ID_P12
+            PAYLOAD_PASSWORD=${DEVELOPER_ID_PASSWORD:-}
+            WANTED="Developer ID Application"
+            SELF_SIGNED=no
+          elif [ -n "${P12:-}" ]; then
+            PAYLOAD=$P12
+            PAYLOAD_PASSWORD=${P12_PASSWORD:-}
+            WANTED="Plonk Signing"
+            SELF_SIGNED=yes
+          else
+            echo "::error::neither APPLE_DEVELOPER_ID_P12 nor PLONK_SIGN_CERT_P12 is set — see the header of this workflow"
             exit 1
           fi
           KEYCHAIN="$RUNNER_TEMP/plonk-signing.keychain-db"
@@ -75,11 +113,11 @@ jobs:
           P12_FILE="$RUNNER_TEMP/signing.p12"
           CERT_FILE="$RUNNER_TEMP/signing.pem"
 
-          printf '%s' "$P12" | base64 --decode > "$P12_FILE"
+          printf '%s' "$PAYLOAD" | base64 --decode > "$P12_FILE"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security set-keychain-settings -lut 3600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security import "$P12_FILE" -k "$KEYCHAIN" -P "$P12_PASSWORD" \
+          security import "$P12_FILE" -k "$KEYCHAIN" -P "$PAYLOAD_PASSWORD" \
             -T /usr/bin/codesign -T /usr/bin/security
 
           # "Plonk Signing" is a self-signed root, so nothing on a fresh runner
@@ -88,9 +126,11 @@ jobs:
           # certificate is read back out of the keychain rather than out of the
           # .p12, which would need an openssl new enough for -legacy and the
           # one on the runner is not it.
-          security find-certificate -c "Plonk Signing" -p "$KEYCHAIN" > "$CERT_FILE"
-          sudo security add-trusted-cert -d -r trustRoot \
-            -k /Library/Keychains/System.keychain "$CERT_FILE"
+          if [ "$SELF_SIGNED" = yes ]; then
+            security find-certificate -c "Plonk Signing" -p "$KEYCHAIN" > "$CERT_FILE"
+            sudo security add-trusted-cert -d -r trustRoot \
+              -k /Library/Keychains/System.keychain "$CERT_FILE"
+          fi
 
           # codesign would otherwise stop to ask for the key, and there is
           # nobody here to answer.
@@ -100,19 +140,67 @@ jobs:
             $(security list-keychains -d user | tr -d '"')
           rm -f "$P12_FILE" "$CERT_FILE"
 
-          if ! security find-identity -v -p codesigning | grep -q "Plonk Signing"; then
-            echo "::error::the imported certificate is not a valid codesigning identity named \"Plonk Signing\""
+          if ! security find-identity -v -p codesigning | grep -q "$WANTED"; then
+            echo "::error::the imported certificate is not a valid codesigning identity named \"$WANTED\""
             security find-identity -v -p codesigning
             exit 1
           fi
+
+          # The full name, not the prefix matched above: a Developer ID carries
+          # the account and team in it, which nothing here knows in advance, and
+          # release.sh reads the identity rather than guessing at it.
+          IDENTITY=$(security find-identity -v -p codesigning |
+            sed -n "s/.*\"\($WANTED[^\"]*\)\".*/\1/p" | head -1)
+          echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
+          if [ "$SELF_SIGNED" = yes ]; then
+            echo "notarize=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "notarize=yes" >> "$GITHUB_OUTPUT"
+          fi
+          echo "signing with \"$IDENTITY\""
+
+      # notarytool has nobody to prompt here, so the credentials arrive as an
+      # App Store Connect key written to a file for the length of the job. The
+      # laptop path is unchanged and still a keychain profile; release.sh picks
+      # whichever it was given.
+      - name: Write the notarization key
+        if: steps.signing.outputs.notarize == 'yes'
+        env:
+          NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER }}
+        run: |
+          set -eu
+          # Caught here rather than after the build: a Developer ID with no key
+          # beside it signs everything correctly and then fails on the upload,
+          # twenty minutes of runner later.
+          if [ -z "${NOTARY_KEY:-}" ] || [ -z "${NOTARY_KEY_ID:-}" ] || [ -z "${NOTARY_ISSUER:-}" ]; then
+            echo "::error::APPLE_DEVELOPER_ID_P12 is set, so this release has to be notarized, but APPLE_NOTARY_KEY, APPLE_NOTARY_KEY_ID and APPLE_NOTARY_ISSUER are not all there"
+            exit 1
+          fi
+          KEY_FILE="$RUNNER_TEMP/notary.p8"
+          printf '%s' "$NOTARY_KEY" | base64 --decode > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          {
+            echo "PLONK_NOTARY_KEY=$KEY_FILE"
+            echo "PLONK_NOTARY_KEY_ID=$NOTARY_KEY_ID"
+            echo "PLONK_NOTARY_ISSUER=$NOTARY_ISSUER"
+          } >> "$GITHUB_ENV"
 
       - name: Test
         run: ./scripts/test.sh
 
       - name: Build, sign and package
         env:
-          PLONK_SIGN_IDENTITY: Plonk Signing
+          PLONK_SIGN_IDENTITY: ${{ steps.signing.outputs.identity }}
         run: ./scripts/release.sh
+
+      # The key is gone from the runner before anything else runs, rather than
+      # left to the cleanup that usually happens. `always()`, because the build
+      # failing is not a reason to leave it lying there.
+      - name: Remove the notarization key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/notary.p8"
 
       # What ties Plonk-<version>.zip to this repository, this commit and this
       # workflow run. Without it the app's own promises are only checkable at
@@ -121,6 +209,13 @@ jobs:
         with:
           subject-path: Plonk-${{ steps.version.outputs.version }}.zip
 
+      # The image is a separate artifact and gets its own statement. Ticking
+      # only the zip would leave the download most people take unattested.
+      - uses: actions/attest-build-provenance@v4
+        if: steps.signing.outputs.notarize == 'yes'
+        with:
+          subject-path: Plonk-${{ steps.version.outputs.version }}.dmg
+
       - name: Publish the archive
         env:
           GH_TOKEN: ${{ github.token }}
@@ -128,7 +223,18 @@ jobs:
         run: |
           set -eu
           ZIP="Plonk-$VERSION.zip"
-          SHA=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
+          DMG="Plonk-$VERSION.dmg"
+
+          # The image only exists on the notarized path, so everything below
+          # names what this run produced. A digest printed next to a file it
+          # does not belong to is worse than none: it reads as tampering.
+          #
+          # Positional list rather than a string, so the loops iterate on
+          # quoted arguments instead of on however the shell splits.
+          set -- "$ZIP"
+          if [ -f "$DMG" ]; then
+            set -- "$ZIP" "$DMG"
+          fi
 
           STATE=$(gh release view "v$VERSION" --json isDraft \
             --jq 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo missing)
@@ -146,27 +252,39 @@ jobs:
           # New releases land as drafts, so nothing reaches the updater before
           # someone has said what changed.
           if [ "$STATE" = missing ]; then
-            gh release create "v$VERSION" --draft --title "Plonk $VERSION" --notes "$(
-              printf '%s\n' \
-                "Drafted by CI. Replace this with the release notes before publishing." \
-                "" \
-                "Built from \`$GITHUB_SHA\` by [this run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)." \
-                "Verify it against that commit before installing:" \
-                "" \
-                '```sh' \
-                "gh attestation verify $ZIP -R $GITHUB_REPOSITORY" \
-                '```' \
-                "" \
-                "sha256: \`$SHA\`"
-            )"
+            {
+              echo "Drafted by CI. Replace this with the release notes before publishing."
+              echo
+              echo "Built from \`$GITHUB_SHA\` by [this run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+              echo "Verify what you downloaded against that commit before installing:"
+              echo
+              echo '```sh'
+              for f in "$@"; do
+                echo "gh attestation verify $f -R $GITHUB_REPOSITORY"
+              done
+              echo '```'
+              echo
+              for f in "$@"; do
+                echo "\`$f\` sha256: \`$(shasum -a 256 "$f" | cut -d' ' -f1)\`"
+              done
+            } > "$RUNNER_TEMP/notes.md"
+            gh release create "v$VERSION" --draft --title "Plonk $VERSION" \
+              --notes-file "$RUNNER_TEMP/notes.md"
           fi
-          gh release upload "v$VERSION" "$ZIP" --clobber
+
+          for f in "$@"; do
+            gh release upload "v$VERSION" "$f" --clobber
+          done
 
           {
             echo "### Plonk $VERSION"
             echo
-            echo "- sha256: \`$SHA\`"
-            echo "- update the cask in \`ostapondo/homebrew-plonk\` with that version and sha256"
+            for f in "$@"; do
+              echo "- \`$f\` sha256: \`$(shasum -a 256 "$f" | cut -d' ' -f1)\`"
+            done
+            # Named rather than implied: the cask pins the zip, and once two
+            # digests are on screen "that sha256" stops meaning anything.
+            echo "- update the cask in \`ostapondo/homebrew-plonk\` with this version and the \`$ZIP\` sha256"
           } >> "$GITHUB_STEP_SUMMARY"
 
   mcp:
