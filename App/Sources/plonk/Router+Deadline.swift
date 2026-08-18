@@ -3,10 +3,25 @@ import Foundation
 // Turning what someone typed into a moment in time.
 //
 // Kept out of Router, which owns the route table rather than
-// parsers. /awake is the only route that takes a deadline today; keep-awake
-// "until 17:00" is the same question wherever it is asked from.
+// parsers. /awake and /active both take a deadline; "until 17:00" is the same
+// question wherever it is asked from.
 
 extension Router {
+    /// The optional "until" of a request body: nil when absent, .failure with
+    /// the response to send when it does not parse.
+    static func deadline(in body: [String: Any]) -> Result<Date?, InvalidDeadline> {
+        guard let raw = trimmedName(body["until"]) else { return .success(nil) }
+        guard let parsed = parseDeadline(raw) else { return .failure(InvalidDeadline()) }
+        return .success(parsed)
+    }
+
+    struct InvalidDeadline: Error {
+        var response: HTTPResponse {
+            .badRequest("\"until\" must be a time of day like \"17:00\" or an "
+                        + "ISO-8601 timestamp like \"2026-08-08T17:00:00Z\"")
+        }
+    }
+
     /// "17:00" or "17:00:00" is the next such moment — today when it is still
     /// ahead, tomorrow when it has passed, which is what someone setting an
     /// alarm at midnight means. An ISO-8601 timestamp is taken as written.

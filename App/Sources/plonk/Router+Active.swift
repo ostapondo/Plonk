@@ -9,14 +9,10 @@ import Foundation
 extension Router {
     func handleActive(body: [String: Any], respond: @escaping (HTTPResponse) -> Void) {
         let on = (body["on"] as? Bool) ?? !active.wants
-        var until: Date?
-        if let raw = trimmedName(body["until"]) {
-            guard let parsed = Self.parseDeadline(raw) else {
-                respond(.badRequest("\"until\" must be a time of day like \"17:00\" or an "
-                                    + "ISO-8601 timestamp like \"2026-08-08T17:00:00Z\""))
-                return
-            }
-            until = parsed
+        let until: Date?
+        switch Self.deadline(in: body) {
+        case .success(let date): until = date
+        case .failure(let invalid): return respond(invalid.response)
         }
         if let error = active.set(on, minutes: (body["minutes"] as? NSNumber)?.intValue,
                                   until: until) {

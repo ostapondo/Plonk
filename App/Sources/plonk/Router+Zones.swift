@@ -9,7 +9,7 @@ import AppKit
 
 extension Router {
     func saveZoneSetRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let name = trimmedName(body["name"]), let raw = body["zones"] as? [[String: Any]] else {
+        guard let name = Self.trimmedName(body["name"]), let raw = body["zones"] as? [[String: Any]] else {
             return .badRequest("body must be {\"name\", \"zones\": [{x,y,w,h}], \"screen\"?}")
         }
         let zones = raw.compactMap { ZoneRect(dict: $0) }
@@ -50,7 +50,7 @@ extension Router {
     }
 
     func deleteZoneSetRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let name = trimmedName(body["name"]) else {
+        guard let name = Self.trimmedName(body["name"]) else {
             return .badRequest("body must include name")
         }
         // Built-ins are not deletable, and they are not in zoneSets, so this
@@ -66,7 +66,7 @@ extension Router {
     /// Zones are addressed by the number the drag overlay draws on them, so
     /// "the middle zone" is whatever the user sees as 2 in a three-zone set.
     func placeInZoneRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let app = trimmedName(body["app"]),
+        guard let app = Self.trimmedName(body["app"]),
               let number = (body["zone"] as? NSNumber)?.intValue else {
             return .badRequest("body must be {\"app\", \"zone\": 1-based index, \"title\"?, \"screen\"?}")
         }

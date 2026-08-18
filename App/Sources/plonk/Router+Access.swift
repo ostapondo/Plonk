@@ -51,7 +51,7 @@ extension Router {
             + "the user can switch agents in Plonk's menu."
     }
 
-    func trimmedName(_ value: Any?) -> String? {
+    static func trimmedName(_ value: Any?) -> String? {
         guard let name = (value as? String)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return nil }
         return name
     }

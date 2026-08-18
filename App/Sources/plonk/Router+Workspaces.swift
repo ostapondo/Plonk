@@ -7,7 +7,7 @@ import Foundation
 
 extension Router {
     func saveWorkspaceRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let name = trimmedName(body["name"]) else {
+        guard let name = Self.trimmedName(body["name"]) else {
             return .badRequest("body must include name")
         }
         let items: [WorkspaceItem]
@@ -31,7 +31,7 @@ extension Router {
     }
 
     func launchWorkspaceRoute(_ body: [String: Any], respond: @escaping (HTTPResponse) -> Void) {
-        guard let name = trimmedName(body["name"]) else {
+        guard let name = Self.trimmedName(body["name"]) else {
             respond(.badRequest("body must include name"))
             return
         }
@@ -54,7 +54,7 @@ extension Router {
     }
 
     func deleteWorkspaceRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let name = trimmedName(body["name"]) else {
+        guard let name = Self.trimmedName(body["name"]) else {
             return .badRequest("body must include name")
         }
         guard store.config.workspaces[name] != nil else {
@@ -65,7 +65,7 @@ extension Router {
     }
 
     func renameWorkspaceRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let from = trimmedName(body["from"]), let to = trimmedName(body["to"]) else {
+        guard let from = Self.trimmedName(body["from"]), let to = Self.trimmedName(body["to"]) else {
             return .badRequest("body must include from and to")
         }
         guard store.config.workspaces[from] != nil else {
