@@ -37,9 +37,7 @@ enum WindowAccess {
     }
 
     static func windows(of pid: pid_t) -> [AXUIElement] {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(application(pid), kAXWindowsAttribute as CFString, &value) == .success,
-              let windows = value as? [AXUIElement] else { return [] }
+        guard let windows = attribute(application(pid), kAXWindowsAttribute) as? [AXUIElement] else { return [] }
         return windows.filter { (attribute($0, kAXRoleAttribute) as? String) == kAXWindowRole }
     }
 
