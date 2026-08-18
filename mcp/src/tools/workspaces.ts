@@ -3,8 +3,8 @@ import { z } from "zod";
 import { call, text, type LaunchResults } from "../api.js";
 import { workspaceItemsSchema } from "../schemas.js";
 
-/// Launching waits for every app to open a window, which the app gives up on
-/// after 20 seconds per app.
+// Launching waits for every app to open a window, which the app gives up on
+// after 20 seconds per app.
 const LAUNCH_TIMEOUT_MS = 90_000;
 
 export function register(server: McpServer): void {

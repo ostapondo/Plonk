@@ -1,11 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { call, text } from "../api.js";
-
-const pointSchema = z.object({
-  x: z.number().min(0).max(1),
-  y: z.number().min(0).max(1),
-});
+import { pointSchema } from "../schemas.js";
 
 export function register(server: McpServer): void {
   server.tool(

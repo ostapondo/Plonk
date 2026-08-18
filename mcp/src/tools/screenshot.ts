@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { call, text } from "../api.js";
+import { call, INTERACTIVE_TIMEOUT_MS, text } from "../api.js";
 
 interface CaptureResult {
   ok?: boolean;
@@ -15,7 +15,6 @@ interface CaptureResult {
 
 // The interactive modes hand the user a crosshair and wait for them.
 const INTERACTIVE_MODES = new Set(["region", "window"]);
-const INTERACTIVE_TIMEOUT_MS = 5 * 60_000;
 // Refuse to inline anything larger; a full retina desktop is easily 10 MB,
 // which is dead weight in the conversation.
 const MAX_INLINE_BYTES = 4 << 20;
@@ -63,7 +62,7 @@ export function register(server: McpServer): void {
         timeoutMs: INTERACTIVE_MODES.has(wanted) ? INTERACTIVE_TIMEOUT_MS : undefined,
       });
 
-      const savedPath = "path" in result && typeof result.path === "string" ? result.path : undefined;
+      const savedPath = "path" in result ? result.path : undefined;
       if (!savedPath || include_image === false) return text(result);
 
       const preview = "preview_path" in result && typeof result.preview_path === "string"
