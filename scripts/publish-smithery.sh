@@ -67,14 +67,15 @@ printf 'updated https://smithery.ai/server/%s\n' "$SERVER"
 # From the management API, not registry.smithery.ai: the public endpoint sits
 # behind a CDN that serves the pre-write copy for a while, so reading it here
 # reports a failure that did not happen.
-curl -sS "https://api.smithery.ai/servers/$ENCODED" \
-	-H "Authorization: Bearer $SMITHERY_API_KEY" | node -e '
-	let raw = "";
-	process.stdin.on("data", (c) => (raw += c));
-	process.stdin.on("end", () => {
-		const server = JSON.parse(raw);
-		for (const field of ["displayName", "description", "iconUrl"]) {
-			console.log(`  ${field}: ${server[field] || "(empty)"}`);
-		}
-	});
+#
+# To a file first, then read by node, rather than piped straight in: the body
+# is data, and `curl | node` looks like the other thing.
+curl -sS -o /tmp/smithery-server.json "https://api.smithery.ai/servers/$ENCODED" \
+	-H "Authorization: Bearer $SMITHERY_API_KEY"
+node -e '
+	const server = JSON.parse(require("fs").readFileSync("/tmp/smithery-server.json", "utf8"));
+	for (const field of ["displayName", "description", "iconUrl"]) {
+		console.log(`  ${field}: ${server[field] || "(empty)"}`);
+	}
 '
+rm -f /tmp/smithery-server.json
