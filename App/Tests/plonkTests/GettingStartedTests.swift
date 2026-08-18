@@ -12,29 +12,24 @@ struct GettingStartedTests {
                        snapped: snapped, agentConnected: agent)
     }
 
+    private func done(_ guide: GettingStarted) -> [String] {
+        guide.steps.filter(\.done).map(\.id)
+    }
+
     @Test func aFreshInstallHasFourThingsToDo() {
         let fresh = guide()
-        #expect(fresh.steps.count == 4)
+        #expect(fresh.steps.map(\.id) == ["grant", "record", "snap", "agent"])
         #expect(fresh.doneCount == 0)
         #expect(!fresh.isComplete)
-        #expect(fresh.next?.id == "grant")
     }
 
     /// The two permissions are separate steps: they buy different halves of the
     /// app and macOS asks for them at different moments, so one being granted
     /// must never tick the other.
     @Test func thePermissionsTickSeparately() {
-        #expect(guide(accessibility: true).next?.id == "record")
-        #expect(guide(recording: true).next?.id == "grant")
-        #expect(guide(accessibility: true, recording: true).next?.id == "snap")
-    }
-
-    /// The next step is the first undone one, not the first one — otherwise the
-    /// card keeps pointing at a permission that was granted minutes ago.
-    @Test func theNextStepSkipsWhatIsDone() {
-        #expect(guide(accessibility: true, recording: true).next?.id == "snap")
-        #expect(guide(accessibility: true, recording: true, snapped: true).next?.id == "agent")
-        #expect(guide(accessibility: true, recording: true, snapped: true, agent: true).next == nil)
+        #expect(done(guide(accessibility: true)) == ["grant"])
+        #expect(done(guide(recording: true)) == ["record"])
+        #expect(done(guide(accessibility: true, recording: true)) == ["grant", "record"])
     }
 
     @Test func allOfThemDoneMeansComplete() {
@@ -49,7 +44,7 @@ struct GettingStartedTests {
         let partial = guide(accessibility: true, recording: true, agent: true)
         #expect(partial.doneCount == 3)
         #expect(!partial.isComplete)
-        #expect(partial.next?.id == "snap")
+        #expect(done(partial) == ["grant", "record", "agent"])
     }
 
     @Test func itHidesWhenFinishedOrDismissed() {

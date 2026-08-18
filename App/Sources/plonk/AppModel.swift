@@ -17,7 +17,6 @@ protocol AppActions: AnyObject {
     /// schedule itself changes, which a config field could not express.
     func setAwake(_ on: Bool)
     func setActive(_ on: Bool)
-    func openAccessibilitySettings()
 
     /// Binding an action frees the combination wherever else it was, so it
     /// goes through `Config.bind` rather than a plain write. See Config+Edits.
@@ -176,6 +175,24 @@ extension AppModel {
     /// more than `config.zoneSets` holds: that is only the ones the user made.
     var zoneSets: [String: [ZoneRect]] {
         BuiltinZoneSets.all.merging(config.zoneSets) { _, user in user }
+    }
+
+    /// The page on show, or the first one before anything has been picked.
+    var currentPage: SettingsPage? {
+        settingsPages.first { $0.id == selectedPage } ?? settingsPages.first
+    }
+
+    /// The same three facts everywhere they are summed up, so Home cannot say
+    /// everything is ready while the top bar says a permission is missing.
+    var allPermissionsGranted: Bool {
+        accessibilityGranted && screenRecordingGranted && apiWarning == nil
+    }
+
+    var gettingStarted: GettingStarted {
+        GettingStarted(accessibilityGranted: accessibilityGranted,
+                       screenRecordingGranted: screenRecordingGranted,
+                       snapped: config.sawFirstSnap,
+                       agentConnected: config.sawFirstAgent)
     }
 
     /// A zone set name nobody has taken, which is `base` itself when it is free.

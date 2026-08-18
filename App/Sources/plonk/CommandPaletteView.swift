@@ -64,10 +64,7 @@ struct CommandPaletteView: View {
                                 row(command)
                             }
                         } header: {
-                            Text(section.name.uppercased())
-                                .font(.system(size: 9.5, weight: .bold))
-                                .kerning(0.9)
-                                .muted()
+                            Eyebrow(verbatim: section.name, size: 9.5, kerning: 0.9)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 11)
                                 .padding(.bottom, 4)
@@ -106,15 +103,10 @@ struct CommandPaletteView: View {
     /// Groups in the order the commands arrived, so the list does not reshuffle
     /// itself alphabetically while it is being typed into.
     private var sections: [(name: String, commands: [PlonkCommand])] {
-        var order: [String] = []
-        var byGroup: [String: [PlonkCommand]] = [:]
-        for command in commands.matching(query) {
-            if !order.contains(command.group) { order.append(command.group) }
-            byGroup[command.group, default: []].append(command)
-        }
-        var result = order.map { ($0, byGroup[$0] ?? []) }
+        var result = commands.matching(query).groupedPreservingOrder(by: \.group)
+            .map { (name: $0.key, commands: $0.elements) }
         if let askRow {
-            result.append((name: String(localized: .paletteGroupAgent), commands: [askRow]))
+            result.append((name: askRow.group, commands: [askRow]))
         }
         return result
     }
@@ -142,10 +134,10 @@ struct CommandPaletteView: View {
 
     private var footer: some View {
         HStack(spacing: 14) {
-            hint(["↑", "↓"], "navigate")
-            hint(["return"], "run")
-            hint(["⌘", "return"], String(localized: .paletteAskTheAgent))
-            hint(["esc"], "close")
+            hint(["↑", "↓"], .paletteHintNavigate)
+            hint(["return"], .paletteHintRun)
+            hint(["⌘", "return"], .paletteAskTheAgent)
+            hint(["esc"], .paletteHintClose)
             Spacer()
         }
         .padding(.horizontal, 16)
@@ -153,7 +145,7 @@ struct CommandPaletteView: View {
         .overlay(alignment: .top) { Rectangle().fill(Ink.hairline).frame(height: 1) }
     }
 
-    private func hint(_ keys: [String], _ label: String) -> some View {
+    private func hint(_ keys: [String], _ label: LocalizedStringResource) -> some View {
         HStack(spacing: 5) {
             KeyCaps(parts: keys)
             Text(label).font(.system(size: 10.5)).muted()
@@ -199,24 +191,5 @@ struct CommandPaletteView: View {
     private func stopMonitor() {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
-    }
-}
-
-/// The blur behind the palette. SwiftUI's materials sit inside the window;
-/// this one is the window, which is what a panel floating over the desktop
-/// needs to look like.
-struct VisualEffect: NSViewRepresentable {
-    let material: NSVisualEffectView.Material
-
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = material
-        view.blendingMode = .behindWindow
-        view.state = .active
-        return view
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
-        nsView.material = material
     }
 }

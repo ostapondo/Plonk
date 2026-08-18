@@ -33,7 +33,7 @@ extension PlonkCommand {
         // the rest when it fails.
         let who = named.isEmpty ? String(localized: .paletteTheAgent) : named
         return PlonkCommand(id: "agent.ask", title: String(localized: .paletteAsk(who, prompt)),
-                            group: "Agent", keys: ["⌘", "return"], run: run)
+                            group: String(localized: .paletteGroupAgent), keys: ["⌘", "return"], run: run)
     }
 }
 
