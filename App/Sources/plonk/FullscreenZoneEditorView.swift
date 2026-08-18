@@ -25,7 +25,8 @@ struct FullscreenZoneEditorView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.black.opacity(0.35).ignoresSafeArea()
-            ZoneCanvas(zones: draft, editable: true, fullscreen: true, selected: selected) { draft = $0 }
+            ZoneCanvas(zones: draft, editable: true, fullscreen: true, selected: selected,
+                       gap: gap ?? model.config.zoneGap) { draft = $0 }
                 .ignoresSafeArea()
             // Sits behind the panel and takes nothing but keys, so the mouse
             // still reaches the canvas.

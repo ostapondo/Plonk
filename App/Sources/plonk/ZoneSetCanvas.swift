@@ -28,6 +28,8 @@ struct ZoneSetCanvas: View {
     }
 
     private var zones: [ZoneRect] { model.zones(onScreen: screen) }
+    /// The gap the set on this screen keeps, in points on the real screen.
+    private var gap: Double { model.config.zoneGap(forSet: assigned) }
     private var size: String { model.screenDescription(screen) }
 
     var body: some View {
@@ -171,9 +173,14 @@ struct ZoneSetCanvas: View {
     }
 
     private func tile(index: Int, zone: ZoneRect, in size: CGSize) -> some View {
+        // The canvas is the screen to scale, so the gap is too: the same
+        // points on the real screen, shrunk by the same factor as the zones,
+        // and a window's inset drawn on every side the way ZoneGeometry.inset
+        // applies it. Gap 0 draws zones that touch, which is what happens.
+        let inset = gap * size.width / max(model.screenSize(screen).width, 1)
         // Colour is the zone number, and the fraction printed on it is the same
         // number an agent sends over MCP, so the picture and the API agree.
-        RoundedRectangle(cornerRadius: 9, style: .continuous)
+        return RoundedRectangle(cornerRadius: 9, style: .continuous)
             .fill(Ink.zoneGradient(index))
             .overlay(alignment: .bottomLeading) {
                 Text("\(index + 1)")
@@ -187,9 +194,9 @@ struct ZoneSetCanvas: View {
                     .foregroundStyle(Ink.zoneInk(index).opacity(0.85))
                     .padding(9)
             }
-            .frame(width: max(zone.w * size.width - 5, 1),
-                   height: max(zone.h * size.height - 5, 1))
-            .offset(x: zone.x * size.width + 2.5, y: zone.y * size.height + 2.5)
+            .frame(width: max(zone.w * size.width - 2 * inset, 1),
+                   height: max(zone.h * size.height - 2 * inset, 1))
+            .offset(x: zone.x * size.width + inset, y: zone.y * size.height + inset)
     }
 
     /// "0.22 × 0.5". Two decimals, and no trailing zeros to read past.

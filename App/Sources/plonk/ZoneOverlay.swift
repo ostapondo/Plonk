@@ -122,8 +122,8 @@ final class ZoneOverlay {
         // The gap is drawn as well as applied, so the overlay is a preview of
         // where the window will actually land — which means it is clamped the
         // same way, or a wide gap on a narrow zone draws a rect that no window
-        // will ever be given. Five points is the inset the rounded corners need
-        // to read as separate tiles at all.
+        // will ever be given. And nothing but the gap: a layout with gap 0
+        // draws zones that touch, because that is where its windows go.
 
         for (index, z) in zones.enumerated() {
             let rect = NSRect(
@@ -131,7 +131,7 @@ final class ZoneOverlay {
                 y: visible.height - (z.y + z.h) * visible.height,
                 width: z.w * visible.width,
                 height: z.h * visible.height
-            ).insetBy(dx: 5, dy: 5)
+            )
             let gapped = ZoneGeometry.inset(rect, by: appearance.gap)
 
             let view = NSView(frame: gapped)
