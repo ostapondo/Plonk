@@ -128,6 +128,7 @@ extension AppDelegate {
     func refreshScreenModel() {
         model.screenCount = NSScreen.screens.count
         model.screenDescriptions = NSScreen.screens.map { "\(Int($0.frame.width)) × \(Int($0.frame.height))" }
+        model.screenSizes = NSScreen.screens.map(\.visibleFrame.size)
         refreshScreenAssignments()
     }
 

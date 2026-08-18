@@ -110,6 +110,8 @@ final class AppModel: ObservableObject {
     @Published var screenAssignments: [Int: String] = [:]
     @Published var screenCount = 1
     @Published var screenDescriptions: [String] = []
+    /// Each screen's visible area in points, for drawing to scale.
+    @Published var screenSizes: [CGSize] = []
     @Published var accessibilityGranted = false
     @Published var screenRecordingGranted = false
     @Published var apiWarning: String?
@@ -210,6 +212,10 @@ extension AppModel {
     /// The size line for a screen, or nothing for one that has gone away.
     func screenDescription(_ index: Int) -> String {
         screenDescriptions.indices.contains(index) ? screenDescriptions[index] : ""
+    }
+
+    func screenSize(_ index: Int) -> CGSize {
+        screenSizes.indices.contains(index) ? screenSizes[index] : CGSize(width: 1440, height: 900)
     }
 
     /// A zone set name nobody has taken, which is `base` itself when it is free.

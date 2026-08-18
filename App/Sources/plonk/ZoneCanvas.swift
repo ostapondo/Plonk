@@ -10,6 +10,10 @@ struct ZoneCanvas: View {
     var fullscreen = false
     /// Ringed while the keyboard is editing it.
     var selected: Int?
+    /// Fullscreen only: the set's gap in points, drawn as the inset a window
+    /// gets, so the editor shows the layout the way it will land. Nil keeps
+    /// the hairline gutter the thumbnails use.
+    var gap: Double?
     var onChange: (([ZoneRect]) -> Void)?
 
     private struct Edges: OptionSet {
@@ -41,10 +45,12 @@ struct ZoneCanvas: View {
                     RoundedRectangle(cornerRadius: 6).fill(Color.gray.opacity(0.12))
                     RoundedRectangle(cornerRadius: 6).strokeBorder(Color.gray.opacity(0.35))
                 }
+                let inset = gap.map { CGFloat($0) } ?? 2
                 ForEach(Array(shown.enumerated()), id: \.offset) { index, z in
                     zoneView(z, index: index, shown: shown, size: geo.size)
-                        .frame(width: max(z.w * geo.size.width - 4, 8), height: max(z.h * geo.size.height - 4, 8))
-                        .offset(x: z.x * geo.size.width + 2, y: z.y * geo.size.height + 2)
+                        .frame(width: max(z.w * geo.size.width - 2 * inset, 8),
+                               height: max(z.h * geo.size.height - 2 * inset, 8))
+                        .offset(x: z.x * geo.size.width + inset, y: z.y * geo.size.height + inset)
                         // Sized and placed by the modifiers above, so the ring
                         // only has to fill what it is drawn over.
                         .overlay {
