@@ -52,8 +52,7 @@ extension AppDelegate {
                         HUD.shared.show(.hudNoTextFound)
                         return
                     }
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(text, forType: .string)
+                    NSPasteboard.general.replaceContents(with: text)
                     HUD.shared.show(String(localized: .hudCopied(text.prefix(80)
                                                   + (text.count > 80 ? "…" : ""))))
                 }
