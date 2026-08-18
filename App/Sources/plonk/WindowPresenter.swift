@@ -242,7 +242,11 @@ final class WindowPresenter: NSObject {
         if unified {
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
-            window.isMovableByWindowBackground = true
+            // Not movable by background: the strip where the title bar would be
+            // still drags the window, and that is the whole of it. Dragging
+            // from anywhere a click lands on nothing turns a mis-click in a
+            // page into the window walking off.
+            window.isMovableByWindowBackground = false
         }
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(rootView: content)

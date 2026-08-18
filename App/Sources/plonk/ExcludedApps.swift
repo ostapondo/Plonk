@@ -14,6 +14,10 @@ import SwiftUI
 struct ExcludedApps: View {
     @ObservedObject var model: AppModel
     @State private var typed = ""
+    /// What is running, taken when the list appears and when the workspace
+    /// says it changed: asking NSWorkspace inside `body` walked every process
+    /// on each redraw of the page.
+    @State private var running: [NSRunningApplication] = []
 
     var body: some View {
         if model.config.excludedApps.isEmpty {
@@ -26,7 +30,7 @@ struct ExcludedApps: View {
         HStack(spacing: 8) {
             Button(String(localized: .excludedChooseApp), action: chooseApp)
             Menu(String(localized: .excludedAddRunning)) {
-                ForEach(AppPicker.runningApps, id: \.bundleIdentifier) { app in
+                ForEach(running, id: \.bundleIdentifier) { app in
                     Button(app.localizedName ?? String(localized: .excludedUnnamed)) {
                         add(app.bundleIdentifier ?? app.localizedName ?? "")
                     }
@@ -43,6 +47,13 @@ struct ExcludedApps: View {
                 .onSubmit { add(typed) }
             Button(String(localized: .excludedAdd)) { add(typed) }
                 .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
+        .onAppear { running = AppPicker.runningApps }
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didLaunchApplicationNotification)) { _ in
+            running = AppPicker.runningApps
+        }
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didTerminateApplicationNotification)) { _ in
+            running = AppPicker.runningApps
         }
     }
 

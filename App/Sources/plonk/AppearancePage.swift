@@ -10,7 +10,7 @@ struct AppearancePage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 18) {
                 SectionHead(title: .appearanceTheme, note: .appearanceThemeNote)
                 themes
                 SectionHead(title: .appearanceAccent)

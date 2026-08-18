@@ -16,7 +16,7 @@ struct ZonesPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 16) {
                 ZoneSetCanvas(model: model)
                 HStack(alignment: .top, spacing: 12) {
                     dragging

@@ -15,7 +15,7 @@ struct HomePage: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 16) {
                 if let warning = model.configWarning {
                     Label(warning, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
@@ -66,10 +66,11 @@ struct HomePage: View {
                         .fill(RadialGradient(colors: [model.accent.opacity(0.14), .clear],
                                              center: .topTrailing, startRadius: 0, endRadius: 460))
                 )
+                // On the shape, not the hero: see CardSurface.
+                .shadow(color: model.accent.opacity(scheme == .dark ? 0.18 : 0.10), radius: 18, y: 6)
         )
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
             .strokeBorder(Ink.gradient(model.accent), lineWidth: 1.2))
-        .shadow(color: model.accent.opacity(scheme == .dark ? 0.18 : 0.10), radius: 18, y: 6)
     }
 
     private func heroBody(preview: Bool) -> some View {
@@ -104,8 +105,8 @@ struct HomePage: View {
                         .padding(.horizontal, 13)
                         .frame(height: 32)
                         .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(Ink.gradient(model.accent)))
-                        .shadow(color: model.accent.opacity(0.45), radius: 10, y: 3)
+                            .fill(Ink.gradient(model.accent))
+                            .shadow(color: model.accent.opacity(0.45), radius: 10, y: 3))
                     }
                     .buttonStyle(.plain)
                     Button(String(localized: .homeEditZonesButton)) { model.actions?.openZonePicker() }

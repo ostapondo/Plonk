@@ -140,10 +140,14 @@ private struct CardSurface: ViewModifier {
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: Ink.radius, style: .continuous)
+        // The shadow sits on the fill, not on the card: a shadow on the content
+        // makes SwiftUI rasterize the whole subtree offscreen on every layout
+        // pass, and a page of rows in cards turns into a page of bitmaps being
+        // redrawn on each resize and scroll.
         return content
-            .background(shape.fill(Ink.card(scheme)))
+            .background(shape.fill(Ink.card(scheme))
+                .shadow(color: Ink.shadow(scheme), radius: 7, y: 2))
             .overlay(shape.strokeBorder(Ink.stroke(scheme)))
-            .shadow(color: Ink.shadow(scheme), radius: 7, y: 2)
     }
 }
 

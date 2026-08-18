@@ -18,8 +18,12 @@ struct PageShell<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
+        // Lazy, here and on the pages that own their scroll view: a page is
+        // laid out card by card as it scrolls into view, so opening it costs
+        // the cards on screen and not the whole page. Zones went from half a
+        // second to under a tenth.
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            LazyVStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 26, weight: .heavy))
