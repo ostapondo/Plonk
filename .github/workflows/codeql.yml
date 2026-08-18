@@ -35,11 +35,13 @@ on:
 # one holds a macOS runner for eighteen minutes to produce it. Without this
 # block GitHub lets both run to the end.
 #
-# Pull requests only. A push to main that cancelled the run before it left
-# every commit after it unanalysed, and the Security tab is meant to describe
-# main at all times, so those queue instead.
+# Pull requests only. A push to main gets a group of its own, keyed by the
+# commit, because a shared one is not a queue: GitHub keeps one pending run
+# per group and drops the rest, so three merges in a quarter of an hour left
+# two commits on main unanalysed and the badge reading "cancelled". The
+# Security tab is meant to describe main at all times, so every push runs.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
