@@ -12,11 +12,8 @@ extension AppDelegate {
     /// while the app is running and this does not.
     func setupDragSnap() {
         dragSnap = DragSnapManager(windows: windows)
-        dragSnap.zonesForScreen = { [weak self] index in
-            guard let self else { return [] }
-            return store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
-        }
-        dragSnap.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
+        dragSnap.zonesForScreen = { [weak self] index in self?.zones(onScreen: index) ?? [] }
+        dragSnap.isExcluded = exclusionCheck
         dragSnap.onSnap = { [weak self] window, before, frac, screenIndex in
             guard let self else { return }
             snapMemory.record(window, wasAt: before, placedAt: frac,
@@ -32,7 +29,7 @@ extension AppDelegate {
 
     func setupGrabMove() {
         grabMove = GrabMove(windows: windows)
-        grabMove.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
+        grabMove.isExcluded = exclusionCheck
         // A grab is a drag as far as zones are concerned, so it goes through
         // the same overlay and the same drop rules.
         grabMove.onGrabBegan = { [weak self] window, frame in
@@ -65,8 +62,7 @@ extension AppDelegate {
     /// set later can move the window with its number. Nil for a span or an
     /// edge snap, which match no single zone.
     func zoneIndex(of frac: FracRect, onScreen index: Int) -> Int? {
-        let zones = store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
-        return zones.firstIndex {
+        zones(onScreen: index).firstIndex {
             abs($0.x - frac.x) < 0.001 && abs($0.y - frac.y) < 0.001
                 && abs($0.w - frac.w) < 0.001 && abs($0.h - frac.h) < 0.001
         }
@@ -75,8 +71,8 @@ extension AppDelegate {
     func setupNewWindows() {
         newWindows = NewWindowWatcher(windows: windows)
         newWindows.apply(store.config)
-        newWindows.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
-        newWindows.zoneGap = { [weak self] in CGFloat(self?.store.config.zoneGap ?? 0) }
+        newWindows.isExcluded = exclusionCheck
+        newWindows.zoneGap = { [weak self] in self?.zoneGapPoints ?? 0 }
         newWindows.placement = { [weak self] app in
             guard let self, let key = app.bundleIdentifier,
                   let habit = snapMemory.habit(ofApp: key) else { return nil }
@@ -85,7 +81,7 @@ extension AppDelegate {
             guard let uuid = habit.screenUUID, let index = ScreenIdentity.index(forUUID: uuid) else { return nil }
             // A numbered zone is followed by number, so the habit survives the
             // set being edited; anything else falls back to the raw fraction.
-            let zones = store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
+            let zones = zones(onScreen: index)
             if let zone = habit.zoneIndex, zones.indices.contains(zone) {
                 return (zones[zone].frac, index)
             }
