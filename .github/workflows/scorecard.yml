@@ -27,7 +27,7 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # Scorecard reads the checkout; it has no use for a token sitting in
           # .git/config while it does.
