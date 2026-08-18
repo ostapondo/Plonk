@@ -8,6 +8,11 @@ name: CodeQL
 # Findings land in the Security tab. `security-and-quality` is the wider of the
 # two query suites, so some of what it reports is a correctness smell rather
 # than a vulnerability; both are worth a look on a codebase this size.
+# Read by default. The analysis job asks below for the one write scope it
+# needs, security-events, to file its findings under the Security tab.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -50,9 +55,9 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: github/codeql-action/init@v4
+      - uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           languages: swift
           queries: security-and-quality
@@ -71,6 +76,6 @@ jobs:
         run: swift build
         working-directory: App
 
-      - uses: github/codeql-action/analyze@v4
+      - uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           category: "/language:swift"
