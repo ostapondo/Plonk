@@ -6,7 +6,7 @@
 // instead, for clients that cannot spawn a process — several at once.
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { BASE, isAppReachable, processIdentityHolder } from "./api.js";
-import { createPlonkServer, startHello, startInboxLoop, watchClientInfo } from "./factory.js";
+import { bindClient, createPlonkServer } from "./factory.js";
 import { serveHttp } from "./http.js";
 
 const args = process.argv.slice(2);
@@ -20,14 +20,8 @@ if (args.includes("--http")) {
   }
   await serveHttp(port);
 } else {
-  const holder = processIdentityHolder();
   const server = createPlonkServer();
-  watchClientInfo(server, ({ name, version }) => {
-    const identity = { name, version, pid: process.pid };
-    holder.identity = identity;
-    startHello(identity);
-    startInboxLoop(server, identity);
-  });
+  bindClient(server, processIdentityHolder(), () => process.pid);
   await server.connect(new StdioServerTransport());
 }
 

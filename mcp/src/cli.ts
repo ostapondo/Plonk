@@ -5,7 +5,7 @@
 // neither helps a script, a Raycast command or a Makefile. This is that gap:
 // every subcommand is one HTTP call to 127.0.0.1, and nothing here holds state.
 import { spawn } from "node:child_process";
-import { BASE, call, processIdentityHolder, type State } from "./api.js";
+import { BASE, call, INTERACTIVE_TIMEOUT_MS, processIdentityHolder, type State } from "./api.js";
 import { options } from "./args.js";
 
 const USAGE = `plonk — drive the Plonk menu bar app from a shell
@@ -140,12 +140,10 @@ async function main(): Promise<void> {
 
     case "ping":
       report(await call("/ping"));
-      break;
 
     case "state":
       if (flags.json) report(await call("/state"));
       await summarize();
-      break;
 
     case "snap": {
       const [app, zone] = args;
@@ -154,7 +152,6 @@ async function main(): Promise<void> {
         method: "POST",
         body: { app, zone: number(zone, "zone"), screen },
       }));
-      break;
     }
 
     case "workspaces": {
@@ -171,17 +168,14 @@ async function main(): Promise<void> {
         body: { name: args[0], screen },
         timeoutMs: 90_000,
       }));
-      break;
 
     case "save":
       if (!args[0]) fail("save needs a name for the workspace");
       report(await call("/workspaces/save", { method: "POST", body: { name: args[0] } }));
-      break;
 
     case "zones":
       if (!args[0]) fail("zones needs a set name, or 'edge' for edge snapping");
       report(await call("/zones/assign", { method: "POST", body: { screen: screen ?? 0, name: args[0] } }));
-      break;
 
     case "awake": {
       // `while` is handled before flags are parsed; anything else must be on/off.
@@ -195,7 +189,6 @@ async function main(): Promise<void> {
           pid: number(flags.pid, "--pid"),
         },
       }));
-      break;
     }
 
     case "measure": {
@@ -212,16 +205,15 @@ async function main(): Promise<void> {
               point: { x: fraction(x, "x"), y: fraction(y, "y") },
               tolerance: number(flags.tolerance, "--tolerance"),
             },
-        timeoutMs: interactive ? 5 * 60_000 : 30_000,
+        timeoutMs: interactive ? INTERACTIVE_TIMEOUT_MS : 30_000,
       }));
-      break;
     }
 
     case "text": {
       const result = await call<{ text?: string }>("/shot/text", {
         method: "POST",
         body: { mode: flags.mode ?? "region", path: flags.path },
-        timeoutMs: 5 * 60_000,
+        timeoutMs: INTERACTIVE_TIMEOUT_MS,
       });
       if ("error" in result) report(result);
       // Bare text, so it can be piped.
@@ -233,9 +225,8 @@ async function main(): Promise<void> {
       report(await call("/shot/capture", {
         method: "POST",
         body: { mode: flags.mode ?? "region", path: flags.path },
-        timeoutMs: 5 * 60_000,
+        timeoutMs: INTERACTIVE_TIMEOUT_MS,
       }));
-      break;
 
     default:
       fail(`unknown command "${command}"\n\n${USAGE}`);

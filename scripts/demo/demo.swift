@@ -65,54 +65,26 @@ let items = [
 /// are recognised. Bars are a function of t, so the meter moves without any
 /// state carried between frames.
 func drawVoice(_ heard: String, progress: Double, at t: Double, alpha: CGFloat, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    let box = CGRect(x: size.width - 46 - 470, y: 40, width: 470, height: 64)
-    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 30, color: Ink.shadow.cgColor)
-    fill(box, Ink.panel, radius: 32, in: ctx)
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(box, Ink.accent.withAlphaComponent(0.5), radius: 32, width: 1.5, in: ctx)
+    faded(alpha, in: ctx) {
+        let box = CGRect(x: size.width - 46 - 470, y: 40, width: 470, height: 64)
+        panel(box, radius: 32, border: Ink.accent.withAlphaComponent(0.5), borderWidth: 1.5, in: ctx)
 
-    // The mic: a capsule with a stand, small enough to read as an icon.
-    let mic = CGPoint(x: box.minX + 34, y: box.midY)
-    fill(CGRect(x: mic.x - 6, y: mic.y - 3, width: 12, height: 18), Ink.accent, radius: 6, in: ctx)
-    fill(CGRect(x: mic.x - 1.5, y: mic.y - 13, width: 3, height: 8), Ink.accent, radius: 1.5, in: ctx)
-    fill(CGRect(x: mic.x - 8, y: mic.y - 13, width: 16, height: 3), Ink.accent, radius: 1.5, in: ctx)
+        // The mic: a capsule with a stand, small enough to read as an icon.
+        let mic = CGPoint(x: box.minX + 34, y: box.midY)
+        fill(CGRect(x: mic.x - 6, y: mic.y - 3, width: 12, height: 18), Ink.accent, radius: 6, in: ctx)
+        fill(CGRect(x: mic.x - 1.5, y: mic.y - 13, width: 3, height: 8), Ink.accent, radius: 1.5, in: ctx)
+        fill(CGRect(x: mic.x - 8, y: mic.y - 13, width: 16, height: 3), Ink.accent, radius: 1.5, in: ctx)
 
-    for index in 0..<9 {
-        let level = 0.35 + 0.65 * abs(sin(t * 7.5 + Double(index) * 0.85))
-        let height = CGFloat(7 + 21 * level) * (progress < 1 ? 1 : 0.35)
-        fill(CGRect(x: box.minX + 62 + CGFloat(index) * 8, y: box.midY - height / 2,
-                    width: 3.5, height: height),
-             Ink.accent.withAlphaComponent(0.75), radius: 1.75, in: ctx)
+        for index in 0..<9 {
+            let level = 0.35 + 0.65 * abs(sin(t * 7.5 + Double(index) * 0.85))
+            let height = CGFloat(7 + 21 * level) * (progress < 1 ? 1 : 0.35)
+            fill(CGRect(x: box.minX + 62 + CGFloat(index) * 8, y: box.midY - height / 2,
+                        width: 3.5, height: height),
+                 Ink.accent.withAlphaComponent(0.75), radius: 1.75, in: ctx)
+        }
+        text("“\(typed(heard, progress))”", at: CGPoint(x: box.minX + 148, y: box.midY - 7),
+             size: 18, color: Ink.text, weight: .medium, in: ctx)
     }
-    text("“\(typed(heard, progress))”", at: CGPoint(x: box.minX + 148, y: box.midY - 7),
-         size: 18, color: Ink.text, weight: .medium, in: ctx)
-    ctx.restoreGState()
-}
-
-/// The agent's line. Right-aligned in the stage so it shares the band with the
-/// chapter label rather than covering it.
-func drawAgentBar(_ line: String, progress: Double, alpha: CGFloat, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    let box = CGRect(x: size.width - 46 - 616, y: 40, width: 616, height: 64)
-    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 30, color: Ink.shadow.cgColor)
-    fill(box, Ink.panel, radius: 15, in: ctx)
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(box, Ink.accent.withAlphaComponent(0.55), radius: 15, width: 1.5, in: ctx)
-    fill(CGRect(x: box.minX + 20, y: box.midY - 5, width: 10, height: 10), Ink.accent,
-         radius: 5, in: ctx)
-    let start = box.minX + 44
-    let advance = text(typed(line, progress), at: CGPoint(x: start, y: box.midY - 7), size: 17,
-                       color: Ink.text, mono: true, in: ctx)
-    if progress < 1 {
-        fill(CGRect(x: start + advance + 2, y: box.midY - 10, width: 9, height: 20),
-             Ink.accent.withAlphaComponent(0.85), radius: 1.5, in: ctx)
-    }
-    ctx.restoreGState()
 }
 
 // MARK: - The frame
@@ -195,9 +167,12 @@ func frame(at t: Double) -> CGImage {
               alpha: CGFloat(pulse(t, 5.6, 5.85, 7.4, 7.65)), in: ctx)
 
     // Beat 4: the agent, which is the one no other Mac window manager has.
-    drawAgentBar("messages top right, mail under it",
-                 progress: phase(t, from: 8.0, to: 8.85),
-                 alpha: CGFloat(pulse(t, 7.75, 8.0, 10.2, 10.45)), in: ctx)
+    // Right-aligned in the stage so it shares the band with the chapter label
+    // rather than covering it.
+    drawPrompt("messages top right, mail under it",
+               progress: phase(t, from: 8.0, to: 8.85),
+               alpha: CGFloat(pulse(t, 7.75, 8.0, 10.2, 10.45)),
+               frame: CGRect(x: size.width - 46 - 616, y: 40, width: 616, height: 64), in: ctx)
 
     // The chapter label rides the bottom-left of the stage the whole way, so
     // there is never a moment where the picture is unlabelled.

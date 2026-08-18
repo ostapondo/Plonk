@@ -1,8 +1,12 @@
 // Typed HTTP client for the Plonk app's localhost API.
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { z } from "zod";
+import type { workspaceItemsSchema } from "./schemas.js";
 
 export const BASE = "http://127.0.0.1:43917";
 const DEFAULT_TIMEOUT_MS = 15_000;
+/** Interactive captures and the ruler wait on the user, so they get this budget instead. */
+export const INTERACTIVE_TIMEOUT_MS = 5 * 60_000;
 
 export interface Frame {
   x: number;
@@ -30,19 +34,7 @@ export interface WindowInfo {
   fraction?: Frame;
 }
 
-export interface WorkspaceItem {
-  app: string;
-  bundle_id?: string;
-  bundle_path?: string;
-  title?: string;
-  window_index?: number;
-  screen?: number;
-  screen_uuid?: string;
-  frame: Frame;
-  minimized?: boolean;
-  urls?: string[];
-  args?: string[];
-}
+export type WorkspaceItem = z.infer<typeof workspaceItemsSchema>[number];
 
 export interface Workspace {
   move_existing: boolean;

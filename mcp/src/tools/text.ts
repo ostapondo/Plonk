@@ -1,9 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { call, text } from "../api.js";
-
-// The interactive mode hands the user a crosshair and waits for them.
-const INTERACTIVE_TIMEOUT_MS = 5 * 60_000;
+import { call, INTERACTIVE_TIMEOUT_MS, text } from "../api.js";
 
 export function register(server: McpServer): void {
   server.tool(

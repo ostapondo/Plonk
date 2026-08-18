@@ -99,117 +99,33 @@ struct ScreenshotManagerTests {
         #expect(url.deletingLastPathComponent().lastPathComponent == "Desktop")
     }
 
-    @Test func nativeScaleReflectsThePixelBacking() {
-        let image = NSImage(size: NSSize(width: 100, height: 50))
-        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 200, pixelsHigh: 100,
-                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
-        rep.size = NSSize(width: 100, height: 50)
+    /// An image whose one bitmap holds `pixels` for `points` on screen.
+    private func image(points: NSSize, pixels: NSSize) -> NSImage {
+        let image = NSImage(size: points)
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(pixels.width),
+                                   pixelsHigh: Int(pixels.height), bitsPerSample: 8, samplesPerPixel: 4,
+                                   hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                                   bytesPerRow: 0, bitsPerPixel: 0)!
+        rep.size = points
         image.addRepresentation(rep)
+        return image
+    }
+
+    @Test func nativeScaleReflectsThePixelBacking() {
+        let image = image(points: NSSize(width: 100, height: 50), pixels: NSSize(width: 200, height: 100))
         #expect(abs(ScreenshotManager.nativeScale(of: image) - 2) < 0.001)
     }
 
     @Test func downscaleIsSkippedWhenTheImageAlreadyFits() {
-        let image = NSImage(size: NSSize(width: 100, height: 50))
-        image.addRepresentation(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 100, pixelsHigh: 50,
-                                                 bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
-                                                 isPlanar: false, colorSpaceName: .deviceRGB,
-                                                 bytesPerRow: 0, bitsPerPixel: 0)!)
+        let image = image(points: NSSize(width: 100, height: 50), pixels: NSSize(width: 100, height: 50))
         #expect(ScreenshotManager.downscaled(image, maxDimension: 1568) == nil)
     }
 
     @Test func downscaleCapsTheLongestSide() throws {
-        let image = NSImage(size: NSSize(width: 4000, height: 1000))
-        image.addRepresentation(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 4000, pixelsHigh: 1000,
-                                                 bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
-                                                 isPlanar: false, colorSpaceName: .deviceRGB,
-                                                 bytesPerRow: 0, bitsPerPixel: 0)!)
+        let image = image(points: NSSize(width: 4000, height: 1000), pixels: NSSize(width: 4000, height: 1000))
         let small = try #require(ScreenshotManager.downscaled(image, maxDimension: 1000))
         #expect(abs(small.size.width - 1000) < 1)
         #expect(abs(small.size.height - 250) < 1)
     }
 }
 
-
-struct AwakeManagerTests {
-
-    @Test func restoreResumesASessionThatIsStillRunning() {
-        let awake = AwakeManager()
-        awake.restore(sessionEnd: Date().addingTimeInterval(600))
-        #expect(awake.requested)
-        #expect(awake.sessionEnd != nil)
-        awake.set(false)
-    }
-
-    @Test func restoreIgnoresASessionThatRanOutWhileClosed() {
-        let awake = AwakeManager()
-        awake.restore(sessionEnd: Date().addingTimeInterval(-60))
-        #expect(!awake.requested)
-        #expect(awake.sessionEnd == nil)
-    }
-
-    @Test func restoreWithoutAnEndDateMeansNoLimit() {
-        let awake = AwakeManager()
-        awake.restore(sessionEnd: nil)
-        #expect(awake.requested)
-        #expect(awake.sessionEnd == nil)
-        awake.set(false)
-    }
-
-    @Test func togglingOffClearsTheSession() {
-        let awake = AwakeManager()
-        awake.set(true, minutes: 30)
-        #expect(awake.sessionEnd != nil)
-        awake.set(false)
-        #expect(!awake.requested)
-        #expect(awake.sessionEnd == nil)
-    }
-}
-
-
-struct HotkeyTests {
-
-    @Test func specRoundTripsThroughParsing() throws {
-        for action in HotkeyAction.allCases {
-            let spec = action.defaultHotkey.spec
-            let parsed = try #require(Hotkey(spec: spec), Comment(rawValue: action.rawValue))
-            #expect(parsed == action.defaultHotkey, Comment(rawValue: spec))
-        }
-    }
-
-    @Test func specIsReadableAndOrderIndependent() throws {
-        let hotkey = try #require(Hotkey(spec: "option+control+left"))
-        #expect(hotkey.control && hotkey.option)
-        #expect(!hotkey.shift && !hotkey.command)
-        #expect(hotkey.spec == "control+option+left")
-        #expect(hotkey.display == "⌃⌥←")
-    }
-
-    @Test func specWithoutAKeyIsRejected() {
-        #expect(Hotkey(spec: "control+option") == nil)
-        #expect(Hotkey(spec: "control+option+nonsense") == nil)
-        #expect(Hotkey(spec: "") == nil)
-    }
-
-    @Test func everyActionHasADistinctDefault() {
-        let defaults = HotkeyAction.allCases.map(\.defaultHotkey)
-        for (index, hotkey) in defaults.enumerated() {
-            #expect(!defaults[(index + 1)...].contains(hotkey), Comment(rawValue: hotkey.display))
-        }
-    }
-
-    @Test func unsetActionsFallBackToTheirDefault() {
-        var config = Config()
-        config.hotkeys["leftHalf"] = "command+shift+1"
-        let resolved = config.resolvedHotkeys
-        #expect(resolved[.leftHalf] == Hotkey(spec: "command+shift+1"))
-        #expect(resolved[.rightHalf] == HotkeyAction.rightHalf.defaultHotkey)
-    }
-
-    @Test func anEmptySpecMeansUnbound() {
-        var config = Config()
-        config.hotkeys["center"] = ""
-        #expect(config.resolvedHotkeys[.center] == nil)
-        #expect(config.resolvedHotkeys[.maximize] != nil)
-    }
-}

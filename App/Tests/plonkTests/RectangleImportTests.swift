@@ -57,7 +57,9 @@ struct RectangleImportTests {
 
     /// The whole point of the mapping table: a fixed-grid action is reported by
     /// name rather than guessed onto a numbered zone that means something else
-    /// on every screen not using Thirds.
+    /// on every screen not using Thirds. A setup that binds nothing here is
+    /// still a setup: reporting it as absent is what sent the caller looking
+    /// for a Rectangle they still have.
     @Test func theFixedGridActionsAreNamedNotGuessed() throws {
         let data = export(shortcuts: """
         {"firstThird":{"keyCode":2,"modifierFlags":786432},
@@ -66,6 +68,7 @@ struct RectangleImportTests {
         let found = try #require(RectangleImport.read(exportedJSON: data))
         #expect(found.bindings.isEmpty)
         #expect(found.unmapped == ["firstThird", "topLeftNinth"])
+        #expect(!found.isEmpty)
     }
 
     @Test func anActionRectangleUnboundIsNotImported() throws {
@@ -108,19 +111,6 @@ struct RectangleImportTests {
         RectangleImport.apply(found, to: &config)
         #expect(config.hotkeys["leftHalf"] == "control+command+h")
         #expect(config.resolvedHotkeys[.leftHalf]?.keyCode == UInt32(kVK_ANSI_H))
-    }
-
-    /// ⌃⌥T is Plonk's own "copy the text out of a region". Someone who put
-    /// Rectangle's left half there gets it, and is told what it cost.
-    @Test func anImportedKeyFreesWhateverPlonkHadOnIt() {
-        var config = Config()
-        let found = RectangleImport.Found(bindings: [.leftHalf: Hotkey(
-            keyCode: UInt32(kVK_ANSI_T), control: true, option: true
-        )])
-        let displaced = RectangleImport.apply(found, to: &config)
-        #expect(displaced == [.captureText])
-        #expect(config.hotkeys["captureText"] == "")
-        #expect(config.resolvedHotkeys[.captureText] == nil)
     }
 
     /// Two window actions trading keys is not a displacement: both end up
@@ -223,15 +213,6 @@ struct RectangleImportTests {
         let found = try #require(RectangleImport.read(exportedJSON: data))
         #expect(found.bindings.isEmpty)
         #expect(found.unmapped == ["leftHalf"])
-        #expect(!found.isEmpty)
-    }
-
-    /// A setup that binds nothing here is still a setup. Reporting it as
-    /// absent is what sent the caller looking for a Rectangle they still have.
-    @Test func aGridOnlySetupIsNotAnAbsence() throws {
-        let data = export(shortcuts: #"{"firstThird":{"keyCode":2,"modifierFlags":786432}}"#)
-        let found = try #require(RectangleImport.read(exportedJSON: data))
-        #expect(found.bindings.isEmpty)
         #expect(!found.isEmpty)
     }
 

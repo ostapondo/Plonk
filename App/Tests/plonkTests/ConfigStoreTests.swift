@@ -6,40 +6,31 @@ import Foundation
 // listens: clamped, saved, then told.
 struct ConfigStoreTests {
 
-    private func temporaryDirectory() -> URL {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("plonk-tests-\(UUID().uuidString)", isDirectory: true)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        return url
-    }
-
     @Test func savesAndReloads() {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
+        let dir = TempDir()
 
-        let store = ConfigStore(directory: dir)
+        let store = ConfigStore(directory: dir.url)
         store.update {
             $0.workspaces["work"] = Workspace(items: [
                 WorkspaceItem(app: "Safari", x: 0, y: 0, w: 0.5, h: 1),
             ])
         }
 
-        let reopened = ConfigStore(directory: dir)
+        let reopened = ConfigStore(directory: dir.url)
         reopened.load()
         #expect(reopened.config.workspaces["work"]?.items.count == 1)
     }
 
     @Test func corruptFileIsSetAsideInsteadOfSilentlyOverwritten() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let file = dir.appendingPathComponent("config.json")
+        let dir = TempDir()
+        let file = dir.url.appendingPathComponent("config.json")
         try Data("{ not json".utf8).write(to: file)
 
-        let store = ConfigStore(directory: dir)
+        let store = ConfigStore(directory: dir.url)
         store.load()
 
         #expect(store.config.workspaces.isEmpty)
-        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("config.json.bad").path))
+        #expect(FileManager.default.fileExists(atPath: dir.url.appendingPathComponent("config.json.bad").path))
         // Losing every saved workspace has to reach the user, not just the log.
         #expect(store.loadFailure?.contains("config.json.bad") == true)
     }
@@ -48,9 +39,8 @@ struct ConfigStoreTests {
     /// caller that writes a raw number (a Rectangle import, a route) never
     /// gets it saved as written.
     @Test func updateClampsBeforeSavingAndTelling() {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let store = ConfigStore(directory: dir)
+        let dir = TempDir()
+        let store = ConfigStore(directory: dir.url)
         var seen: Double?
         store.didMutate = { seen = store.config.zoneGap }
 
@@ -59,7 +49,7 @@ struct ConfigStoreTests {
         // Whoever listens sees the clamped, saved value, not the raw write.
         #expect(seen == Config.gapLimit)
 
-        let reopened = ConfigStore(directory: dir)
+        let reopened = ConfigStore(directory: dir.url)
         reopened.load()
         #expect(reopened.config.zoneGap == Config.gapLimit)
     }
@@ -67,9 +57,8 @@ struct ConfigStoreTests {
     /// A listener that writes back (keep-awake persisting a session) does so
     /// against the store's newest state, and each write is announced once.
     @Test func aWriteMadeFromDidMutateSeesTheFirstWrite() {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let store = ConfigStore(directory: dir)
+        let dir = TempDir()
+        let store = ConfigStore(directory: dir.url)
         var announced = 0
         store.didMutate = {
             announced += 1
@@ -83,12 +72,11 @@ struct ConfigStoreTests {
     }
 
     @Test func aReadableConfigReportsNoFailure() {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let store = ConfigStore(directory: dir)
+        let dir = TempDir()
+        let store = ConfigStore(directory: dir.url)
         store.update { $0.shotFolder = "~/Pictures" }
 
-        let reopened = ConfigStore(directory: dir)
+        let reopened = ConfigStore(directory: dir.url)
         reopened.load()
         #expect(reopened.loadFailure == nil)
     }

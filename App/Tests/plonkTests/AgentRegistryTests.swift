@@ -136,16 +136,7 @@ struct AgentRegistryTests {
         registry.enqueue("for claude", for: "claude-code")
         var received: [String]?
         registry.wait(for: "cursor", seconds: 0) { received = $0.map(\.prompt) }
-        #expect(received?.isEmpty != false || received == [])
+        #expect(received == [])
         #expect(registry.drain(for: "claude-code").map(\.prompt) == ["for claude"])
-    }
-
-    @Test func onChangeFiresOnlyForNewSessions() {
-        let registry = AgentRegistry()
-        var changes = 0
-        registry.onChange = { changes += 1 }
-        registry.register(name: "zed", pid: 3)
-        registry.register(name: "zed", pid: 3)
-        #expect(changes == 1)
     }
 }

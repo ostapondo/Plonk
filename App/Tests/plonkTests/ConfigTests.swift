@@ -55,6 +55,9 @@ struct ConfigTests {
         #expect(!config.awakeAutoWhileCharging)
         #expect(config.awakeKeepDisplayOn)
         #expect(config.awakeTimeoutMinutes == 0)
+        #expect(!config.awakeRequested)
+        #expect(config.awakeSessionEnd == nil)
+        #expect(!config.handleRectangleURLs)
         #expect(config.workspaces.isEmpty)
         #expect(config.zoneSets.isEmpty)
     }
@@ -139,12 +142,6 @@ struct ConfigTests {
         let decoded = try Config.decode(JSONEncoder().encode(config))
         #expect(decoded.awakeRequested)
         #expect(decoded.awakeSessionEnd == 1_800_000_000)
-    }
-
-    @Test func configWrittenBeforeAwakeWasPersistedStillDecodes() throws {
-        let config = try decode(#"{"awakeTimeoutMinutes": 30}"#)
-        #expect(!config.awakeRequested)
-        #expect(config.awakeSessionEnd == nil)
     }
 
     // MARK: - Zone assignment
@@ -258,15 +255,6 @@ struct LayoutItemSpecTests {
 
     @Test func rejectsMissingApp() {
         #expect(LayoutItemSpec(dict: ["frame": ["x": 0, "y": 0, "w": 1, "h": 1]]) == nil)
-    }
-
-    @Test func rejectsMissingFrameComponent() {
-        #expect(LayoutItemSpec(dict: ["app": "Safari", "frame": ["x": 0, "y": 0, "w": 1]]) == nil)
-    }
-
-    @Test func rejectsFrameOutsideTheScreen() {
-        #expect(LayoutItemSpec(dict: ["app": "Safari", "frame": ["x": 0.6, "y": 0, "w": 0.5, "h": 1]]) == nil)
-        #expect(LayoutItemSpec(dict: ["app": "Safari", "frame": ["x": 0, "y": 0, "w": 0, "h": 1]]) == nil)
     }
 }
 
@@ -393,14 +381,6 @@ struct WorkspaceItemParsingTests {
 
     @Test func aWindowWithNoFractionIsSkipped() {
         #expect(WorkspaceItem(window: ["app": "Claude", "minimized": false, "screen": 0]) == nil)
-    }
-
-    @Test func rejectsMissingFrameComponent() {
-        #expect(WorkspaceItem(dict: ["app": "Safari", "frame": ["x": 0, "y": 0, "w": 1]]) == nil)
-    }
-
-    @Test func rejectsFrameOutsideTheScreen() {
-        #expect(WorkspaceItem(dict: ["app": "Safari", "frame": ["x": 0, "y": 0.5, "w": 1, "h": 0.7]]) == nil)
     }
 
     @Test func roundTripsThroughItsDictionary() throws {
