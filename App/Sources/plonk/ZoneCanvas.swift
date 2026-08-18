@@ -148,9 +148,9 @@ struct ZoneCanvas: View {
                     lastValid = nil
                     interaction = begin(at: value.startLocation, in: size)
                 }
-                guard let interaction, case .resize = interaction else { return }
-                let candidate = apply(interaction, value: value, size: size)
-                if !ZoneGeometry.overlaps(candidate, at: changedIndices(interaction)) {
+                guard let interaction, case .resize(let items) = interaction else { return }
+                let candidate = apply(items, value: value, size: size)
+                if !ZoneGeometry.overlaps(candidate, at: items.map(\.index)) {
                     lastValid = candidate
                 }
                 liveZones = lastValid ?? zones
@@ -187,13 +187,6 @@ struct ZoneCanvas: View {
         }
     }
 
-    private func changedIndices(_ interaction: Interaction) -> [Int] {
-        switch interaction {
-        case .resize(let items): return items.map(\.index)
-        case .split: return []
-        }
-    }
-
     private func begin(at point: CGPoint, in size: CGSize) -> Interaction? {
         let px = point.x / size.width
         let py = point.y / size.height
@@ -227,29 +220,29 @@ struct ZoneCanvas: View {
         return nil
     }
 
-    private func apply(_ interaction: Interaction, value: DragGesture.Value, size: CGSize) -> [ZoneRect] {
+    private func apply(_ items: [(index: Int, origin: ZoneRect, edges: Edges)],
+                       value: DragGesture.Value, size: CGSize) -> [ZoneRect] {
         var result = zones
-        guard case .resize(let items) = interaction else { return result }
         let dx = value.translation.width / size.width
         let dy = value.translation.height / size.height
         for (index, origin, edges) in items {
             guard result.indices.contains(index) else { continue }
             var z = origin
             if edges.contains(.left) {
-                let nx = min(max(origin.x + dx, 0), origin.x + origin.w - ZoneGeometry.minSide)
+                let nx = (origin.x + dx).clamped(to: 0...(origin.x + origin.w - ZoneGeometry.minSide))
                 z.w = origin.x + origin.w - nx
                 z.x = nx
             }
             if edges.contains(.right) {
-                z.w = min(max(origin.w + dx, ZoneGeometry.minSide), 1 - origin.x)
+                z.w = (origin.w + dx).clamped(to: ZoneGeometry.minSide...(1 - origin.x))
             }
             if edges.contains(.top) {
-                let ny = min(max(origin.y + dy, 0), origin.y + origin.h - ZoneGeometry.minSide)
+                let ny = (origin.y + dy).clamped(to: 0...(origin.y + origin.h - ZoneGeometry.minSide))
                 z.h = origin.y + origin.h - ny
                 z.y = ny
             }
             if edges.contains(.bottom) {
-                z.h = min(max(origin.h + dy, ZoneGeometry.minSide), 1 - origin.y)
+                z.h = (origin.h + dy).clamped(to: ZoneGeometry.minSide...(1 - origin.y))
             }
             result[index] = z
         }

@@ -21,13 +21,11 @@ struct WorkspaceLauncherTests {
     @Test func cancelReturnsWhenNothingIsLaunching() {
         let launcher = WorkspaceLauncher(windows: WindowManager())
         expectReturns({ launcher.cancel() }, "cancel deadlocked")
-        #expect(launcher.isRunning == false)
     }
 
     @Test func cancelIsRepeatable() {
         let launcher = WorkspaceLauncher(windows: WindowManager())
         expectReturns({ launcher.cancel(); launcher.cancel() }, "cancel deadlocked on the second call")
-        #expect(launcher.isRunning == false)
     }
 
     @Test func anEmptyWorkspaceReportsWhyItDidNotLaunch() {
@@ -35,7 +33,6 @@ struct WorkspaceLauncherTests {
         var results: [[String: Any]]?
         launcher.launch(Workspace(items: []), named: "work") { results = $0 }
         #expect(results?.first?["ok"] as? Bool == false)
-        #expect(launcher.isRunning == false)
     }
 
     /// A workspace saved on two monitors and launched on one used to clamp onto

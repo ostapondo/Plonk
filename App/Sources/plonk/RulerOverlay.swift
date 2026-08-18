@@ -99,10 +99,7 @@ private final class RulerView: NSView {
 
     /// A measured rect is in CG space; the view is not.
     private func local(_ rect: CGRect) -> NSRect {
-        let primaryMaxY = NSScreen.screens.first?.frame.maxY ?? 0
-        let flipped = NSPoint(x: rect.minX, y: primaryMaxY - rect.maxY)
-        let origin = local(flipped)
-        return NSRect(origin: origin, size: NSSize(width: rect.width, height: rect.height))
+        NSRect(origin: local(CGSpace.flip(rect).origin), size: rect.size)
     }
 
     override func draw(_ dirtyRect: NSRect) {

@@ -1,9 +1,7 @@
 import SwiftUI
 
-// One row of a workspace: the window, where it goes, and what its app should
-// open on the way up.
-
-/// One window inside a workspace: where it goes, and what its app should open.
+/// One row of a workspace: the window, where it goes, and what its app should
+/// open on the way up.
 struct WorkspaceItemRow: View {
     @ObservedObject var model: AppModel
     let workspace: String

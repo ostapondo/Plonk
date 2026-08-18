@@ -11,6 +11,16 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Fixed
+
+- **`snap_window` with a title that matches nothing no longer reports the app
+  as not running.** Placing a window into a zone by app and title, without
+  naming a screen, looked for the window one way and moved it another: the
+  screen lookup gave up when no title matched, while the move fell back to the
+  app's front window as documented. Both now pick the window the same way.
+
 ## 0.3.0 — 2026-08-18
 
 ### Added

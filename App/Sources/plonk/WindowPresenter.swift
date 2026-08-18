@@ -65,10 +65,7 @@ final class WindowPresenter: NSObject {
     /// its key monitor is removed. An ordered-out window keeps its view alive,
     /// and a live monitor would swallow the arrow keys of every other app.
     func closeCommandPalette() {
-        guard let window = palette else { return }
-        palette = nil
-        window.delegate = nil
-        window.close()
+        tearDown(&palette)
     }
 
     /// The zone sets for one screen, opened on that screen: the list is about
@@ -84,8 +81,12 @@ final class WindowPresenter: NSObject {
     }
 
     func closeZoneSetPalette() {
-        guard let window = zoneSetPalette else { return }
-        zoneSetPalette = nil
+        tearDown(&zoneSetPalette)
+    }
+
+    private func tearDown(_ slot: inout EditorWindow?) {
+        guard let window = slot else { return }
+        slot = nil
         window.delegate = nil
         window.close()
     }
@@ -119,8 +120,7 @@ final class WindowPresenter: NSObject {
             window.setFrameOrigin(NSPoint(x: screen.frame.midX - frame.width / 2,
                                           y: screen.visibleFrame.maxY - frame.height - 140))
         }
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
+        bringForward(window)
     }
 
     func showZonePicker() {
@@ -138,7 +138,7 @@ final class WindowPresenter: NSObject {
         closeFullscreenEditor()
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
-        let screen = screens[min(max(screenIndex, 0), screens.count - 1)]
+        let screen = screens[screenIndex.clamped(to: 0...(screens.count - 1))]
 
         // Zones are fractions of the visible area (menu bar and Dock excluded),
         // so the editor covers exactly that area.
@@ -158,8 +158,7 @@ final class WindowPresenter: NSObject {
         )
         window.setFrame(screen.visibleFrame, display: true)
         fullscreenEditor = window
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
+        bringForward(window)
     }
 
     func closeFullscreenEditor() {
@@ -214,12 +213,11 @@ final class WindowPresenter: NSObject {
                 self?.onShotFinished?(copied, path)
             }
         )
-        window.setContentSize(NSSize(width: min(max(image.size.width, 700), 1400),
-                                     height: min(max(image.size.height + 110, 520), 900)))
+        window.setContentSize(NSSize(width: image.size.width.clamped(to: 700...1400),
+                                     height: (image.size.height + 110).clamped(to: 520...900)))
         window.center()
         shotEditor = window
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
+        bringForward(window)
     }
 
     func closeShotEditor() {
@@ -257,6 +255,12 @@ final class WindowPresenter: NSObject {
     private func present(_ window: NSWindow?) {
         guard let window else { return }
         if !window.isVisible { window.center() }
+        bringForward(window)
+    }
+
+    /// An accessory app is not frontmost when a hotkey fires, so the window
+    /// has to bring the app forward with it or it opens behind everything.
+    private func bringForward(_ window: NSWindow) {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }

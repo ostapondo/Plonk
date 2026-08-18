@@ -109,13 +109,13 @@ final class ScreenRuler {
         case .rightMouseDown:
             finish(current.map { .success($0) } ?? .failure(.cancelled))
         case .leftMouseDown:
-            anchor = RulerSheet.toCG(NSEvent.mouseLocation)
+            anchor = CGSpace.flip(NSEvent.mouseLocation)
         case .leftMouseDragged:
             update(at: NSEvent.mouseLocation)
         case .leftMouseUp:
             // A press that never moved is a click, and a click copies. Anything
             // longer is a line, which stays on screen to be read.
-            let point = RulerSheet.toCG(NSEvent.mouseLocation)
+            let point = CGSpace.flip(NSEvent.mouseLocation)
             let dragged = anchor.map { hypot(point.x - $0.x, point.y - $0.y) > 3 } ?? false
             anchor = nil
             if !dragged {
@@ -130,13 +130,13 @@ final class ScreenRuler {
     /// Whatever is under the pointer now: a line while one is being dragged,
     /// otherwise the box the pixels say is there.
     private func update(at pointer: NSPoint) {
-        let point = RulerSheet.toCG(pointer)
+        let point = CGSpace.flip(pointer)
         if let anchor {
             current = line(from: anchor, to: point)
         } else {
             current = spans(at: point)
         }
-        overlay?.update(measurement: current, pointer: pointer, anchor: anchor.map(RulerSheet.toScreen))
+        overlay?.update(measurement: current, pointer: pointer, anchor: anchor.map(CGSpace.flip))
     }
 
     /// Photographs the screen again, with the ruler's own overlay out of the
@@ -185,8 +185,7 @@ final class ScreenRuler {
                  completion: @escaping (Result<RulerMeasurement, Failure>) -> Void) {
         refreshAppearance()
         if let override {
-            tolerance = min(max(override, EdgeDetector.toleranceRange.lowerBound),
-                            EdgeDetector.toleranceRange.upperBound)
+            tolerance = override.clamped(to: EdgeDetector.toleranceRange)
         }
         guard CGPreflightScreenCaptureAccess() else {
             completion(.failure(.notPermitted))
@@ -224,9 +223,7 @@ final class ScreenRuler {
             ?? RulerSheet.screens().first(where: { $0.frame.contains(to) }) else {
             return .failure(.noScreen)
         }
-        let rect = CGRect(x: min(from.x, to.x), y: min(from.y, to.y),
-                          width: abs(to.x - from.x), height: abs(to.y - from.y))
-        return .success(RulerMeasurement(kind: .line, screen: screen.index, rect: rect,
+        return .success(RulerMeasurement(kind: .line, screen: screen.index, rect: CGRect(spanning: from, to),
                                          scale: screen.scale, from: from, to: to))
     }
 
@@ -259,9 +256,7 @@ final class ScreenRuler {
         guard let sheet = sheets.first(where: { $0.frame.contains(from) }) ?? sheets.first else {
             return nil
         }
-        let rect = CGRect(x: min(from.x, to.x), y: min(from.y, to.y),
-                          width: abs(to.x - from.x), height: abs(to.y - from.y))
-        return RulerMeasurement(kind: .line, screen: sheet.index, rect: rect,
+        return RulerMeasurement(kind: .line, screen: sheet.index, rect: CGRect(spanning: from, to),
                                 scale: sheet.scale, from: from, to: to)
     }
 

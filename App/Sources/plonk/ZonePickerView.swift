@@ -8,9 +8,7 @@ struct ZonePickerView: View {
     @ObservedObject var model: AppModel
     @State private var selectedScreen = 0
 
-    private var assignedName: String {
-        model.screenAssignments[selectedScreen].map { $0.isEmpty ? "edge" : $0 } ?? BuiltinZoneSets.defaultName
-    }
+    private var assignedName: String { model.assignedZoneSet(onScreen: selectedScreen) }
 
     private var builtinNames: [String] {
         model.zoneSetNames.filter { !model.customZoneSetNames.contains($0) }
@@ -69,7 +67,7 @@ struct ZonePickerView: View {
                 } label: {
                     VStack(spacing: 2) {
                         Text("\(screen + 1)").font(.title2.bold())
-                        Text(model.screenDescriptions.indices.contains(screen) ? model.screenDescriptions[screen] : "")
+                        Text(model.screenDescription(screen))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -93,7 +91,7 @@ struct ZonePickerView: View {
                     name: String(localized: .zoneSetEdgeSnappingCard),
                     zones: [],
                     subtitle: String(localized: .zoneSetEdgeSnappingSubtitle),
-                    isSelected: assignedName == "edge",
+                    isSelected: assignedName.isEmpty,
                     isPreviewing: false,
                     onSelect: { model.actions?.assignZoneSet("", toScreen: selectedScreen) },
                     onPreview: nil,
