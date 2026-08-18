@@ -178,6 +178,23 @@ extension AppModel {
         BuiltinZoneSets.all.merging(config.zoneSets) { _, user in user }
     }
 
+    /// The set a screen is on: the default set when nothing was assigned, and
+    /// the empty name for edge snapping.
+    func assignedZoneSet(onScreen index: Int) -> String {
+        screenAssignments[index] ?? BuiltinZoneSets.defaultName
+    }
+
+    /// What a screen snaps to. Edge snapping has no zones to match against.
+    func zones(onScreen index: Int) -> [ZoneRect] {
+        let name = assignedZoneSet(onScreen: index)
+        return name.isEmpty ? [] : zoneSets[name] ?? []
+    }
+
+    /// The size line for a screen, or nothing for one that has gone away.
+    func screenDescription(_ index: Int) -> String {
+        screenDescriptions.indices.contains(index) ? screenDescriptions[index] : ""
+    }
+
     /// A zone set name nobody has taken, which is `base` itself when it is free.
     func freeZoneSetName(base: String) -> String {
         if zoneSets[base] == nil { return base }

@@ -19,14 +19,6 @@ struct DeskMonitors: View {
         Set(items.map { $0.screen ?? 0 }).sorted()
     }
 
-    /// An unassigned screen falls back to the default set; an empty assignment
-    /// is edge snapping, which has no zones to match against.
-    private func zones(on screen: Int) -> [ZoneRect] {
-        let name = model.screenAssignments[screen] ?? BuiltinZoneSets.defaultName
-        guard !name.isEmpty else { return [] }
-        return model.zoneSets[name] ?? []
-    }
-
     var body: some View {
         HStack(alignment: .top, spacing: 5) {
             if screens.isEmpty {
@@ -41,7 +33,7 @@ struct DeskMonitors: View {
 
     private func monitor(_ screen: Int) -> some View {
         let windows = items.filter { ($0.screen ?? 0) == screen }
-        let set = zones(on: screen)
+        let set = model.zones(onScreen: screen)
         return GeometryReader { geo in
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 7, style: .continuous)

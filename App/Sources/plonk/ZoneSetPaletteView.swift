@@ -40,9 +40,7 @@ struct ZoneSetPaletteView: View {
     }
 
     /// What the screen is on now. No assignment means the default set.
-    private var assigned: String {
-        model.screenAssignments[screenIndex] ?? BuiltinZoneSets.defaultName
-    }
+    private var assigned: String { model.assignedZoneSet(onScreen: screenIndex) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -74,8 +72,7 @@ struct ZoneSetPaletteView: View {
     }
 
     private var screenLabel: String {
-        let size = model.screenDescriptions.indices.contains(screenIndex)
-            ? model.screenDescriptions[screenIndex] : ""
+        let size = model.screenDescription(screenIndex)
         guard model.screenCount > 1 else { return size }
         return String(localized: size.isEmpty ? .zoneSetScreen(screenIndex + 1)
                                               : .zoneSetScreenWithSize(screenIndex + 1, size))

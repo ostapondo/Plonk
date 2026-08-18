@@ -23,18 +23,12 @@ struct ZoneSetCanvas: View {
     /// The assignment as the page thinks of it: a set name, or nil for edge
     /// snapping. An unassigned screen falls back to the default set.
     private var assigned: String? {
-        guard let name = model.screenAssignments[screen] else { return BuiltinZoneSets.defaultName }
+        let name = model.assignedZoneSet(onScreen: screen)
         return name.isEmpty ? nil : name
     }
 
-    private var zones: [ZoneRect] {
-        guard let assigned else { return [] }
-        return model.zoneSets[assigned] ?? []
-    }
-
-    private var size: String {
-        model.screenDescriptions.indices.contains(screen) ? model.screenDescriptions[screen] : ""
-    }
+    private var zones: [ZoneRect] { model.zones(onScreen: screen) }
+    private var size: String { model.screenDescription(screen) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
