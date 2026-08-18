@@ -171,7 +171,7 @@ struct CommandPaletteView: View {
 
     private func move(_ delta: Int) {
         guard !results.isEmpty else { return }
-        selection = min(max(selection + delta, 0), results.count - 1)
+        selection = (selection + delta).clamped(to: 0...(results.count - 1))
     }
 
     private func startMonitor() {

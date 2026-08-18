@@ -1,8 +1,5 @@
 import Foundation
 
-// The fallback channel to an agent that holds no live MCP session, or whose
-// client cannot receive sampling requests: Plonk starts it as a process.
-
 /// A command-line agent Plonk can start on demand — the fallback channel for
 /// clients that hold no live MCP session or cannot receive sampling requests.
 struct AgentAdapter: Codable {
