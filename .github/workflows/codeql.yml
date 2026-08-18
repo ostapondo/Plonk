@@ -11,12 +11,27 @@ name: CodeQL
 on:
   push:
     branches: [main]
+  # Only when the Swift actually changed. Every pull request used to start a
+  # macOS build here, which meant a Dependabot bump to a TypeScript type
+  # package spent twenty minutes analysing Swift that was byte for byte the
+  # same as the last run. `push` above stays unfiltered, so main is still
+  # analysed on every commit and the Security tab cannot go stale.
   pull_request:
     branches: [main]
+    paths:
+      - "App/**"
+      - ".github/workflows/codeql.yml"
   schedule:
     # Weekly, because a query suite that ships a new rule should find last
     # week's code with it, not wait for the next commit to that file.
     - cron: "27 5 * * 1"
+
+# A second push to a branch makes the first run's answer worthless, and this
+# one holds a macOS runner for twenty minutes to produce it. Without this
+# block GitHub lets both run to the end.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:

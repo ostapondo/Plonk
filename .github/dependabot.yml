@@ -3,6 +3,10 @@ version: 2
 # Weekly rather than daily. Nothing here has enough dependencies to make a
 # daily pull request anything but noise, and a week is well inside the window
 # that matters for a menu bar app with no server behind it.
+#
+# Grouped, because the first run opened six pull requests in ninety seconds and
+# each one started a full macOS CI matrix. One pull request per ecosystem is
+# the same information and one review.
 updates:
   # The actions in .github/workflows/. This is the one that earns its keep: an
   # action is third-party code running with write access to the repository and
@@ -11,6 +15,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
+    groups:
+      actions:
+        patterns: ["*"]
     commit-message:
       prefix: ci
 
@@ -19,8 +27,20 @@ updates:
     directory: /mcp
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
+    groups:
+      mcp:
+        patterns: ["*"]
     commit-message:
       prefix: mcp
+    ignore:
+      # package.json says `engines: node >= 18`, and the types are pinned to 18
+      # to match. Left alone, Dependabot offers the newest ones, which typecheck
+      # happily against APIs that do not exist on the oldest Node this package
+      # claims to run on — a green build that is wrong. Raise the floor in
+      # package.json first and this follows on its own.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   # App/Package.swift declares no third-party dependencies at all, so this
   # opens nothing today. It is here so that the day one is added, it is watched
