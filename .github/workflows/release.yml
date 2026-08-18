@@ -36,6 +36,15 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+# Deliberately without cancel-in-progress. A tag push and a dispatch of the
+# same version would otherwise run together and race each other for the
+# release asset; queued, the second one finds the release already published
+# and stops, which is the check below doing its job. Cancelling instead could
+# kill a run between the notarization submit and the upload.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   app:
     runs-on: macos-15

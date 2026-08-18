@@ -27,11 +27,15 @@ on:
     - cron: "27 5 * * 1"
 
 # A second push to a branch makes the first run's answer worthless, and this
-# one holds a macOS runner for twenty minutes to produce it. Without this
+# one holds a macOS runner for eighteen minutes to produce it. Without this
 # block GitHub lets both run to the end.
+#
+# Pull requests only. A push to main that cancelled the run before it left
+# every commit after it unanalysed, and the Security tab is meant to describe
+# main at all times, so those queue instead.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze:

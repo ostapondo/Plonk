@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
 
+# Pushing a fixup to a branch leaves the previous run building to the end,
+# answering a question about a commit that no longer exists. On main they
+# queue instead: every commit there gets its own answer.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # First, and on the cheapest runner there is: style is the half of review a
   # script can do, and nobody should hear about a trailing space from a person.
