@@ -7,6 +7,7 @@
 import { spawn } from "node:child_process";
 import { BASE, call, INTERACTIVE_TIMEOUT_MS, processIdentityHolder, type State } from "./api.js";
 import { options } from "./args.js";
+import { CLI_NAME } from "./messages.js";
 
 const USAGE = `plonk — drive the Plonk menu bar app from a shell
 
@@ -235,7 +236,7 @@ async function main(): Promise<void> {
 
 // Named so the app can attribute the calls, and so "only the active agent
 // controls" can be pointed at the shell like anything else.
-processIdentityHolder().identity = { name: "plonk-cli", version: "", pid: process.pid };
+processIdentityHolder().identity = { name: CLI_NAME, version: "", pid: process.pid };
 try {
   await main();
 } catch (err) {

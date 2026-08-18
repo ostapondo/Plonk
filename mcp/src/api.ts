@@ -2,6 +2,7 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
 import type { workspaceItemsSchema } from "./schemas.js";
+import { notRunningMessage } from "./messages.js";
 
 export const BASE = "http://127.0.0.1:43917";
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -114,9 +115,6 @@ export interface ApiError {
 }
 
 export type ApiResponse = Record<string, unknown>;
-
-const NOT_RUNNING =
-  "Plonk menu bar app is not running. Ask the user to launch Plonk.app (its icon should appear in the menu bar).";
 
 // Stamped on every request so the app can attribute it to a client and, in
 // exclusive mode, gate on it. One mechanism, one shape: the identity always
@@ -273,7 +271,7 @@ export async function call<T extends object = ApiResponse>(
     if (timeout.aborted) {
       return { error: `Plonk did not answer within ${timeoutMs / 1000}s. It may be waiting on a dialog.` };
     }
-    return { error: NOT_RUNNING };
+    return { error: notRunningMessage(agentIdentityName()) };
   }
 
   const text = await res.text();
