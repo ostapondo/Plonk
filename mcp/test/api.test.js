@@ -6,6 +6,7 @@ import {
   runWithIdentity,
   processIdentityHolder,
 } from "../dist/api.js";
+import { notRunningMessage, CLI_NAME } from "../dist/messages.js";
 
 test("a reply carrying an error is flagged as one", () => {
   // Without isError the model reads a refusal as a successful call and carries
@@ -57,4 +58,17 @@ test("the process-wide holder is the one stdio fills", () => {
   } finally {
     holder.identity = undefined;
   }
+});
+
+test("a refused connection tells an agent to ask the user", () => {
+  assert.match(notRunningMessage("claude-code"), /Ask the user/);
+});
+
+test("a refused connection tells a person at the shell where the app comes from", () => {
+  // `plonk state` goes through the same call() as the tools, but the reader is
+  // the user: "ask the user" would mean asking themselves, and someone who
+  // installed the npm package first may not know there is a separate app.
+  const message = notRunningMessage(CLI_NAME);
+  assert.doesNotMatch(message, /Ask the user/);
+  assert.match(message, /brew install --cask ostapondo\/plonk\/plonk/);
 });
