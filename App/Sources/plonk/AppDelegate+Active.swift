@@ -31,6 +31,4 @@ extension AppDelegate {
     }
 
     func setActive(_ on: Bool) { active.set(on) }
-
-    func openAccessibilitySettings() { PrivacySettings.openAccessibility() }
 }
