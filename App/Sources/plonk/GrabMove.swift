@@ -35,8 +35,7 @@ final class GrabMove {
     private static let replayMarker: Int64 = 0x504C_4E4B  // "PLNK"
 
     private let windows: WindowManager
-    private var tap: CFMachPort?
-    private var runLoopSource: CFRunLoopSource?
+    private var tap: EventTap?
 
     private struct Grab {
         let window: AXUIElement
@@ -90,8 +89,6 @@ final class GrabMove {
         self.windows = windows
     }
 
-    /// Starts the tap. Silently does nothing without Accessibility, which is
-    /// the same permission everything else here needs.
     /// Take the settings as they now stand, and arm or disarm accordingly. An
     /// event tap that can swallow clicks has no business existing while the
     /// feature is off, so the tap follows the setting rather than the launch.
@@ -103,6 +100,8 @@ final class GrabMove {
         if config.grabMoveEnabled { start() } else { stop() }
     }
 
+    /// Silently does nothing without Accessibility, which is the same
+    /// permission everything else here needs.
     func start() {
         guard tap == nil, windows.isTrusted else { return }
         let mask: CGEventMask =
@@ -112,32 +111,12 @@ final class GrabMove {
             (1 << CGEventType.rightMouseDown.rawValue) |
             (1 << CGEventType.rightMouseDragged.rawValue) |
             (1 << CGEventType.rightMouseUp.rawValue)
-
-        let context = Unmanaged.passUnretained(self).toOpaque()
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
-            eventsOfInterest: mask,
-            callback: { _, type, event, context in
-                guard let context else { return Unmanaged.passUnretained(event) }
-                let manager = Unmanaged<GrabMove>.fromOpaque(context).takeUnretainedValue()
-                return manager.handle(type: type, event: event)
-            },
-            userInfo: context
-        ) else {
-            NSLog("Plonk: could not create the grab-and-move event tap")
-            return
+        tap = EventTap(mask: mask, options: .defaultTap, name: "grab-and-move") { [unowned self] type, event in
+            handle(type: type, event: event)
         }
-        self.tap = tap
-        let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
-        runLoopSource = source
-        CGEvent.tapEnable(tap: tap, enable: true)
     }
 
     func stop() {
-        if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
-        if let runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes) }
-        runLoopSource = nil
         tap = nil
         state = .idle
     }
@@ -145,13 +124,6 @@ final class GrabMove {
     // MARK: - Tap
 
     private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
-        // The tap is disabled by the system if it ever takes too long. Turning
-        // it back on is the documented recovery, and losing it silently would
-        // strand every future drag.
-        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
-            return Unmanaged.passUnretained(event)
-        }
         guard enabled else { return Unmanaged.passUnretained(event) }
         // A press this class posted is the user's click arriving late; it must
         // not be caught a second time.
