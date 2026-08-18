@@ -11,7 +11,7 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
-## Unreleased
+## 0.3.0 — 2026-08-18
 
 ### Added
 
@@ -74,6 +74,46 @@ one of those.
   needs Accessibility — without the permission the page says so instead of
   quietly sending nothing. Agents get `set_active`.
 
+- **The zone sets, as a list you can see.** `⌃⌥L` draws every set available for
+  the screen the cursor is on, each one as a small picture of itself, with the
+  one that screen is wearing marked. Arrows or the digit picks, `return` puts it
+  on the screen, `E` opens it in the fullscreen editor, `N` starts a new one,
+  Escape leaves everything as it was.
+
+  `⌃⌥⇧1`–`⌃⌥⇧9` already swapped a set, but only for someone who remembers which
+  set is number four. The digits in the list are those same numbers, so the list
+  is also the thing that teaches them. Editing from here duplicates a built-in
+  template first, exactly as the Zones window does, so the shipped sets stay
+  intact.
+
+- **A ruler for the screen.** `⌃⌥R`, then hover: Plonk photographs the screen
+  once, walks out from the pointer in all four directions until one pixel is
+  unlike the one beside it, and draws each run as a dimension line with its own
+  number. That is the width of a row, the height of a bar, the size of the gap
+  between two things, without anybody aiming a drag at a corner. Drag instead
+  and it measures a straight line. Points and pixels both, because a 44-point
+  tap target is 88 pixels and only one of those numbers is in the asset. A click
+  copies, `Space` takes a fresh picture of the screen, Escape ends it.
+
+  Two numbers on two lines rather than a box: the run across and the run down
+  are separate answers, often about different things, and a rectangle drawn
+  round them would claim they are the sides of one object — the one thing
+  pixels cannot say.
+
+  Borrowed from PowerToys' Screen Ruler, tolerance setting included, on the
+  Ruler page under Capture. Ten out of 255 suits an interface: gradients and
+  shadows step by less, borders by more. Raise it for a photograph or a video,
+  where every pixel differs a little from the last.
+
+- **`measure_screen` for agents, and `plonk measure` for a shell.** The same
+  measurement without a person: hand it a point and it answers with the two
+  runs through it, or two points and it answers with the distance. The reply
+  carries the points, the display's own pixels, and the fraction of the screen
+  ready to hand back to `apply_layout`. An agent that would have taken a
+  screenshot and guessed at sizes can ask for the number instead, at a fraction
+  of the tokens. `interactive: true` hands the ruler to the user and waits for
+  what they measure. Needs Screen Recording, like every other capture.
+
 ### Changed
 
 - **A hand-edited `config.json` is held to the same limits the sliders are.**
@@ -123,48 +163,6 @@ one of those.
   The two permission dialogs macOS draws are covered too, through an
   `InfoPlist.strings` beside the catalog, since Info.plist itself cannot be
   translated.
-
-### Added
-
-- **The zone sets, as a list you can see.** `⌃⌥L` draws every set available for
-  the screen the cursor is on, each one as a small picture of itself, with the
-  one that screen is wearing marked. Arrows or the digit picks, `return` puts it
-  on the screen, `E` opens it in the fullscreen editor, `N` starts a new one,
-  Escape leaves everything as it was.
-
-  `⌃⌥⇧1`–`⌃⌥⇧9` already swapped a set, but only for someone who remembers which
-  set is number four. The digits in the list are those same numbers, so the list
-  is also the thing that teaches them. Editing from here duplicates a built-in
-  template first, exactly as the Zones window does, so the shipped sets stay
-  intact.
-
-- **A ruler for the screen.** `⌃⌥R`, then hover: Plonk photographs the screen
-  once, walks out from the pointer in all four directions until one pixel is
-  unlike the one beside it, and draws each run as a dimension line with its own
-  number. That is the width of a row, the height of a bar, the size of the gap
-  between two things, without anybody aiming a drag at a corner. Drag instead
-  and it measures a straight line. Points and pixels both, because a 44-point
-  tap target is 88 pixels and only one of those numbers is in the asset. A click
-  copies, `Space` takes a fresh picture of the screen, Escape ends it.
-
-  Two numbers on two lines rather than a box: the run across and the run down
-  are separate answers, often about different things, and a rectangle drawn
-  round them would claim they are the sides of one object — the one thing
-  pixels cannot say.
-
-  Borrowed from PowerToys' Screen Ruler, tolerance setting included, on the
-  Ruler page under Capture. Ten out of 255 suits an interface: gradients and
-  shadows step by less, borders by more. Raise it for a photograph or a video,
-  where every pixel differs a little from the last.
-
-- **`measure_screen` for agents, and `plonk measure` for a shell.** The same
-  measurement without a person: hand it a point and it answers with the two
-  runs through it, or two points and it answers with the distance. The reply
-  carries the points, the display's own pixels, and the fraction of the screen
-  ready to hand back to `apply_layout`. An agent that would have taken a
-  screenshot and guessed at sizes can ask for the number instead, at a fraction
-  of the tokens. `interactive: true` hands the ruler to the user and waits for
-  what they measure. Needs Screen Recording, like every other capture.
 
 ### Fixed
 
