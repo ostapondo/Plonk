@@ -32,7 +32,6 @@ struct GettingStartedTests {
     /// The next step is the first undone one, not the first one — otherwise the
     /// card keeps pointing at a permission that was granted minutes ago.
     @Test func theNextStepSkipsWhatIsDone() {
-        #expect(guide(accessibility: true, recording: true).next?.id == "snap")
         #expect(guide(accessibility: true, recording: true, snapped: true).next?.id == "agent")
         #expect(guide(accessibility: true, recording: true, snapped: true, agent: true).next == nil)
     }

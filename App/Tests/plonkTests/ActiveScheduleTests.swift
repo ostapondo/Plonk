@@ -6,18 +6,6 @@ import Testing
 // not depend on where the test runs, and the dates below are chosen for their
 // weekdays: 2026-08-10 is a Monday, 2026-08-15 a Saturday.
 
-private let utc: Calendar = {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(identifier: "UTC")!
-    return calendar
-}()
-
-private func at(_ iso: String) -> Date {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime]
-    return formatter.date(from: iso)!
-}
-
 /// Weekdays only, 09:00 to 18:00.
 private func workdays() -> ActiveSchedule {
     var schedule = ActiveSchedule()

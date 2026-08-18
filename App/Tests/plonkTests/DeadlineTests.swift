@@ -5,18 +5,6 @@ import Testing
 // "Keep awake until 17:00" is parsed here; the clock and calendar are injected
 // so the tests do not depend on when they run or where they run.
 
-private let utc: Calendar = {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(identifier: "UTC")!
-    return calendar
-}()
-
-private func at(_ iso: String) -> Date {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime]
-    return formatter.date(from: iso)!
-}
-
 struct DeadlineTests {
 
     @Test func aTimeStillAheadIsToday() {

@@ -6,34 +6,6 @@ import Foundation
 // /state need a real desktop session, so they stay out of the suite.
 struct RouterTests {
 
-    private final class Harness {
-        let directory: URL
-        let store: ConfigStore
-        let router: Router
-
-        init() {
-            directory = FileManager.default.temporaryDirectory
-                .appendingPathComponent("plonk-router-\(UUID().uuidString)", isDirectory: true)
-            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            store = ConfigStore(directory: directory)
-            router = Router(store: store, windows: WindowManager(), awake: AwakeManager())
-            // Mirrors AppDelegate.setupServer, which owns this wiring.
-            store.didMutate = { [router] in router.changes.bump("config") }
-        }
-
-        deinit { try? FileManager.default.removeItem(at: directory) }
-
-        func post(_ path: String, _ body: [String: Any]) -> HTTPResponse {
-            send(HTTPRequest(method: "POST", path: path, headers: [:], body: body))
-        }
-
-        func send(_ request: HTTPRequest) -> HTTPResponse {
-            var result: HTTPResponse?
-            router.handle(request) { result = $0 }
-            return result ?? .failed("no response")
-        }
-    }
-
     private let sampleItem: [String: Any] = [
         "app": "Safari",
         "frame": ["x": 0, "y": 0, "w": 0.5, "h": 1],
@@ -41,25 +13,25 @@ struct RouterTests {
 
     /// The MCP server's liveness check, so it must not depend on Accessibility.
     @Test func pingAnswersWithoutPermissions() {
-        let h = Harness()
-        let response = h.send(HTTPRequest(method: "GET", path: "/ping", headers: [:], body: [:]))
+        let h = RouterHarness()
+        let response = h.get("/ping")
         #expect(response.status == 200)
         #expect(response.json["ok"] as? Bool == true)
     }
 
     @Test func unknownRouteIsNotFound() {
-        let h = Harness()
-        #expect(h.send(HTTPRequest(method: "GET", path: "/nope", headers: [:], body: [:])).status == 404)
+        let h = RouterHarness()
+        #expect(h.get("/nope").status == 404)
     }
 
     @Test func layoutWithoutItemsIsRejected() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/layout", [:]).status == 400)
         #expect(h.post("/layout", ["items": []]).status == 400)
     }
 
     @Test func savingAWorkspaceStoresIt() {
-        let h = Harness()
+        let h = RouterHarness()
         let response = h.post("/workspaces/save", ["name": " work ", "items": [sampleItem]])
         #expect(response.status == 200)
         #expect(response.json["saved"] as? String == "work")
@@ -67,7 +39,7 @@ struct RouterTests {
     }
 
     @Test func savingAWorkspaceKeepsWhatAnAppShouldOpen() throws {
-        let h = Harness()
+        let h = RouterHarness()
         let item: [String: Any] = [
             "app": "Visual Studio Code",
             "bundle_id": "com.microsoft.VSCode",
@@ -81,14 +53,14 @@ struct RouterTests {
     }
 
     @Test func savingAWorkspaceNeedsAName() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/workspaces/save", ["items": [sampleItem]]).status == 400)
         #expect(h.post("/workspaces/save", ["name": "   ", "items": [sampleItem]]).status == 400)
     }
 
     /// Editing the items of a workspace must not silently reset how it launches.
     @Test func resavingKeepsTheLaunchBehavior() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem], "move_existing": false])
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
         #expect(h.store.config.workspaces["work"]?.moveExisting == false)
@@ -97,7 +69,7 @@ struct RouterTests {
     /// A frame outside the screen used to be saved and then placed the window
     /// where nobody could reach it.
     @Test func savingRejectsFramesOutsideTheScreen() {
-        let h = Harness()
+        let h = RouterHarness()
         let outside: [String: Any] = ["app": "Safari", "frame": ["x": 0.6, "y": 0, "w": 0.5, "h": 1]]
         #expect(h.post("/workspaces/save", ["name": "work", "items": [outside]]).status == 400)
         #expect(h.store.config.workspaces["work"] == nil)
@@ -105,14 +77,14 @@ struct RouterTests {
 
     /// One bad item used to be dropped silently, saving a workspace short a window.
     @Test func savingRejectsTheWholeRequestWhenAnItemIsBad() {
-        let h = Harness()
+        let h = RouterHarness()
         let bad: [String: Any] = ["frame": ["x": 0, "y": 0, "w": 1, "h": 1]]
         #expect(h.post("/workspaces/save", ["name": "work", "items": [sampleItem, bad]]).status == 400)
         #expect(h.store.config.workspaces["work"] == nil)
     }
 
     @Test func layoutReportsAnOutOfRangeFramePerItem() throws {
-        let h = Harness()
+        let h = RouterHarness()
         let outside: [String: Any] = ["app": "Safari", "frame": ["x": 0, "y": 0, "w": 2, "h": 1]]
         let response = h.post("/layout", ["items": [outside]])
         #expect(response.status == 200)
@@ -121,12 +93,12 @@ struct RouterTests {
     }
 
     @Test func launchingAnUnknownWorkspaceIsNotFound() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/workspaces/launch", ["name": "nope"]).status == 404)
     }
 
     @Test func launchingPassesTheWorkspaceAndScreenOn() throws {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
         var launched: (name: String, apps: [String], screen: Int?)?
         h.router.launchWorkspace = { name, workspace, screen, done in
@@ -142,7 +114,7 @@ struct RouterTests {
     }
 
     @Test func deletingReportsWhetherItExisted() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
         #expect(h.post("/workspaces/delete", ["name": "work"]).status == 200)
         #expect(h.post("/workspaces/delete", ["name": "work"]).status == 404)
@@ -150,7 +122,7 @@ struct RouterTests {
 
     /// Saved layouts became workspaces; the old paths still reach them.
     @Test func layoutRoutesAreAliasesOfTheWorkspaceRoutes() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/layouts/save", ["name": "work", "items": [sampleItem]]).status == 200)
         #expect(h.store.config.workspaces["work"]?.items.count == 1)
 
@@ -165,16 +137,18 @@ struct RouterTests {
     }
 
     @Test func workspaceChangesNotifyTheUI() {
-        let h = Harness()
+        let h = RouterHarness()
+        let before = h.router.changes.rev
         var events: [String] = []
         h.router.changes.onEvent = { _, what in events.append(what) }
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
         _ = h.post("/workspaces/delete", ["name": "work"])
         #expect(events.filter { $0 == "config" }.count == 2)
+        #expect(h.router.changes.rev > before)
     }
 
     @Test func zoneSetsAreValidatedAgainstScreenBounds() {
-        let h = Harness()
+        let h = RouterHarness()
         let outside: [String: Any] = ["x": 0.6, "y": 0, "w": 0.5, "h": 1]
         #expect(h.post("/zones/save", ["name": "bad", "zones": [outside]]).status == 400)
         #expect(h.post("/zones/save", ["name": "bad", "zones": []]).status == 400)
@@ -182,7 +156,7 @@ struct RouterTests {
     }
 
     @Test func savingAZoneSetStoresIt() {
-        let h = Harness()
+        let h = RouterHarness()
         let zones: [[String: Any]] = [
             ["x": 0, "y": 0, "w": 0.5, "h": 1],
             ["x": 0.5, "y": 0, "w": 0.5, "h": 1],
@@ -193,23 +167,23 @@ struct RouterTests {
     }
 
     @Test func assigningAnUnknownZoneSetIsNotFound() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/zones/assign", ["screen": 0, "name": "nope"]).status == 404)
     }
 
     @Test func assigningNeedsAScreen() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/zones/assign", ["name": "Halves"]).status == 400)
     }
 
     @Test func edgeSnappingIsStoredAsAnEmptyAssignment() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/zones/assign", ["screen": 0, "name": "edge"]).status == 200)
         #expect(h.store.config.zones(forKeys: ScreenIdentity.keys(forIndex: 0)).isEmpty)
     }
 
     @Test func deletingAZoneSetAlsoClearsItsAssignments() {
-        let h = Harness()
+        let h = RouterHarness()
         let zones: [[String: Any]] = [["x": 0, "y": 0, "w": 1, "h": 1]]
         _ = h.post("/zones/save", ["name": "solo", "zones": zones, "screen": 0])
         #expect(h.store.config.screenZoneSets.values.contains("solo"))
@@ -221,7 +195,7 @@ struct RouterTests {
     }
 
     @Test func renamingAWorkspaceKeepsItsContentsAndBehavior() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem], "move_existing": false])
         #expect(h.post("/workspaces/rename", ["from": "work", "to": "review"]).status == 200)
         #expect(h.store.config.workspaces["work"] == nil)
@@ -230,7 +204,7 @@ struct RouterTests {
     }
 
     @Test func renamingOntoAnExistingWorkspaceIsRejected() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/workspaces/save", ["name": "a", "items": [sampleItem]])
         _ = h.post("/workspaces/save", ["name": "b", "items": [sampleItem]])
         #expect(h.post("/workspaces/rename", ["from": "a", "to": "b"]).status == 409)
@@ -240,7 +214,7 @@ struct RouterTests {
     }
 
     @Test func renamingNeedsBothNames() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/workspaces/rename", ["from": "a"]).status == 400)
         #expect(h.post("/workspaces/rename", ["to": "b"]).status == 400)
     }
@@ -248,21 +222,20 @@ struct RouterTests {
     // MARK: - Agents
 
     @Test func helloRegistersTheAgent() {
-        let h = Harness()
+        let h = RouterHarness()
         let response = h.post("/agents/hello", ["name": "cursor", "version": "1.2", "pid": 7])
         #expect(response.status == 200)
         #expect(h.router.agents.onlineNames() == ["cursor"])
     }
 
     @Test func helloNeedsAName() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/agents/hello", [:]).status == 400)
     }
 
     @Test func anyTokenedRequestWithTheAgentHeaderRegistersIt() {
-        let h = Harness()
-        _ = h.send(HTTPRequest(method: "GET", path: "/state",
-                               headers: ["x-plonk-agent": "openai-test-agent/0.1"], body: [:]))
+        let h = RouterHarness()
+        _ = h.get("/state", headers: ["x-plonk-agent": "openai-test-agent/0.1"])
         #expect(h.router.agents.onlineNames() == ["openai-test-agent"])
     }
 
@@ -270,14 +243,13 @@ struct RouterTests {
     /// registry: otherwise anything on the machine can invent agents that show
     /// up in the menu bar selector and in `/state`, and the list only grows.
     @Test func pingCannotInventAnAgent() {
-        let h = Harness()
-        _ = h.send(HTTPRequest(method: "GET", path: "/ping",
-                               headers: ["x-plonk-agent": "not-an-agent/0.1"], body: [:]))
+        let h = RouterHarness()
+        _ = h.get("/ping", headers: ["x-plonk-agent": "not-an-agent/0.1"])
         #expect(h.router.agents.onlineNames().isEmpty)
     }
 
     @Test func selectStoresAndClearsTheChoice() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/agents/select", ["name": "claude-code"]).status == 200)
         #expect(h.store.config.selectedAgent == "claude-code")
         #expect(h.post("/agents/select", [:]).status == 200)
@@ -285,7 +257,7 @@ struct RouterTests {
     }
 
     @Test func exclusiveModeBlocksEveryOtherAgent() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/agents/select", ["name": "claude-code"])
         _ = h.post("/agents/exclusive", ["on": true])
 
@@ -303,11 +275,11 @@ struct RouterTests {
     }
 
     @Test func exclusiveModeLeavesReadsAndHelloOpen() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/agents/select", ["name": "claude-code"])
         _ = h.post("/agents/exclusive", ["on": true])
         let headers = ["x-plonk-agent": "cursor/1.0"]
-        #expect(h.send(HTTPRequest(method: "GET", path: "/ping", headers: headers, body: [:])).status == 200)
+        #expect(h.get("/ping", headers: headers).status == 200)
         #expect(h.send(HTTPRequest(method: "POST", path: "/agents/hello", headers: headers,
                                    body: ["name": "cursor"])).status == 200)
     }
@@ -315,7 +287,7 @@ struct RouterTests {
     /// Handing the wheel to someone else is itself guarded, or any agent could
     /// undo the user's choice.
     @Test func exclusiveModeGuardsTheSelectionItself() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/agents/select", ["name": "claude-code"])
         _ = h.post("/agents/exclusive", ["on": true])
         let steal = HTTPRequest(method: "POST", path: "/agents/select",
@@ -330,7 +302,7 @@ struct RouterTests {
     }
 
     @Test func exclusiveModeWithoutASelectionBlocksNothing() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/agents/exclusive", ["on": true])
         let request = HTTPRequest(method: "POST", path: "/workspaces/save",
                                   headers: ["x-plonk-agent": "cursor/1.0"],
@@ -339,25 +311,24 @@ struct RouterTests {
     }
 
     @Test func askQueuesForTheSelectedAgent() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/agents/select", ["name": "claude-code"])
         let response = h.post("/agents/ask", ["prompt": "browser left"])
         #expect(response.status == 200)
         #expect(response.json["queued"] as? Bool == true)
-        let inbox = h.send(HTTPRequest(method: "GET", path: "/agents/inbox?agent=claude-code",
-                                       headers: [:], body: [:]))
+        let inbox = h.get("/agents/inbox?agent=claude-code")
         let tasks = inbox.json["tasks"] as? [[String: Any]]
         #expect(tasks?.first?["prompt"] as? String == "browser left")
     }
 
     @Test func askWithoutATargetIsRejected() {
-        let h = Harness()
+        let h = RouterHarness()
         #expect(h.post("/agents/ask", ["prompt": "hi"]).status == 400)
         #expect(h.post("/agents/ask", [:]).status == 400)
     }
 
     @Test func askRunsAConfiguredAdapterInsteadOfQueueing() {
-        let h = Harness()
+        let h = RouterHarness()
         h.store.update { $0.agentAdapters = [AgentAdapter(name: "codex-cli", command: "codex exec {prompt}")] }
         var launched: (name: String, prompt: String)?
         h.router.runAdapter = { adapter, prompt in launched = (adapter.name, prompt) }
@@ -370,8 +341,8 @@ struct RouterTests {
     }
 
     @Test func inboxNeedsAnAgentParameter() {
-        let h = Harness()
-        #expect(h.send(HTTPRequest(method: "GET", path: "/agents/inbox", headers: [:], body: [:])).status == 400)
+        let h = RouterHarness()
+        #expect(h.get("/agents/inbox").status == 400)
     }
 
     @Test func queryStringsSplitCleanly() {
@@ -388,13 +359,13 @@ struct RouterTests {
         #expect(Router.splitQuery("/state?a=1&=&b=2").query["b"] == "2")
         #expect(Router.splitQuery("/state?").path == "/state")
         #expect(Router.splitQuery("/state?flag").query["flag"] == "")
-        let h = Harness()
-        #expect(h.send(HTTPRequest(method: "GET", path: "/state?=", headers: [:], body: [:])).status != 404)
+        let h = RouterHarness()
+        #expect(h.get("/state?=").status != 404)
     }
 
     /// A prompt is a way to move windows by proxy, and can launch an adapter.
     @Test func exclusiveModeGuardsTheAgentChannel() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/agents/select", ["name": "claude-code"])
         _ = h.post("/agents/exclusive", ["on": true])
         let ask = HTTPRequest(method: "POST", path: "/agents/ask",
@@ -407,13 +378,12 @@ struct RouterTests {
     /// active agent happens to be. Getting that backwards both starved
     /// everyone else of their own prompts and let the active agent take theirs.
     @Test func anAgentMayOnlyReadItsOwnQueue() {
-        let h = Harness()
+        let h = RouterHarness()
         _ = h.post("/agents/select", ["name": "claude-code"])
         _ = h.post("/agents/exclusive", ["on": true])
 
         func poll(as caller: String, queue: String) -> Int {
-            h.send(HTTPRequest(method: "GET", path: "/agents/inbox?agent=\(queue)",
-                               headers: ["x-plonk-agent": "\(caller)/1.0"], body: [:])).status
+            h.get("/agents/inbox?agent=\(queue)", headers: ["x-plonk-agent": "\(caller)/1.0"]).status
         }
         // Its own, even though it is not the selected agent.
         #expect(poll(as: "cursor", queue: "cursor") == 200)
@@ -423,18 +393,8 @@ struct RouterTests {
         #expect(poll(as: "cursor", queue: "claude-code") == 409)
     }
 
-    @Test func mutationsBumpTheRevision() {
-        let h = Harness()
-        let before = h.router.changes.rev
-        var events: [String] = []
-        h.router.changes.onEvent = { _, what in events.append(what) }
-        _ = h.post("/workspaces/save", ["name": "work", "items": [sampleItem]])
-        #expect(h.router.changes.rev > before)
-        #expect(events.contains("config"))
-    }
-
     @Test func agentChangesNotifyTheUI() {
-        let h = Harness()
+        let h = RouterHarness()
         var events: [String] = []
         h.router.changes.onEvent = { _, what in events.append(what) }
         _ = h.post("/agents/select", ["name": "claude-code"])

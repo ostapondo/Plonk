@@ -4,30 +4,19 @@ import Foundation
 
 struct APITokenFileTests {
 
-    /// A directory of its own per test, so nothing here can touch the token the
-    /// developer's own copy of Plonk is running with.
-    private func temporaryDirectory() -> URL {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("plonk-token-tests-\(UUID().uuidString)", isDirectory: true)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        return url
-    }
-
     @Test func firstLaunchWritesATokenAndKeepsIt() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
+        let dir = TempDir()
 
-        let first = try #require(APIToken.loadOrCreate(in: dir))
+        let first = try #require(APIToken.loadOrCreate(in: dir.url))
         #expect(!first.isEmpty)
-        #expect(APIToken.loadOrCreate(in: dir) == first)
+        #expect(APIToken.loadOrCreate(in: dir.url) == first)
     }
 
     @Test func theFileIsReadableOnlyByItsOwner() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
+        let dir = TempDir()
 
-        _ = APIToken.loadOrCreate(in: dir)
-        let attributes = try FileManager.default.attributesOfItem(atPath: APIToken.url(in: dir).path)
+        _ = APIToken.loadOrCreate(in: dir.url)
+        let attributes = try FileManager.default.attributesOfItem(atPath: APIToken.url(in: dir.url).path)
         let mode = try #require(attributes[.posixPermissions] as? NSNumber)
         #expect(mode.int16Value == 0o600)
     }
@@ -37,80 +26,71 @@ struct APITokenFileTests {
     /// already have read it. Fixing the mode does not unread it, so the secret
     /// itself is replaced.
     @Test func aLooseFileIsReplacedRatherThanTightened() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let url = APIToken.url(in: dir)
+        let dir = TempDir()
+        let url = APIToken.url(in: dir.url)
         FileManager.default.createFile(
             atPath: url.path,
             contents: Data("borrowed\n".utf8),
             attributes: [.posixPermissions: NSNumber(value: 0o644)])
 
-        let token = try #require(APIToken.loadOrCreate(in: dir))
+        let token = try #require(APIToken.loadOrCreate(in: dir.url))
         #expect(token != "borrowed")
         #expect(token.count == 64)
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         let mode = try #require(attributes[.posixPermissions] as? NSNumber)
         #expect(mode.int16Value == 0o600)
         // And it stays put from then on, rather than rotating every launch.
-        #expect(APIToken.loadOrCreate(in: dir) == token)
+        #expect(APIToken.loadOrCreate(in: dir.url) == token)
     }
 
     @Test func anEmptyFileIsReplacedRatherThanUsed() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        try Data("   \n".utf8).write(to: APIToken.url(in: dir))
+        let dir = TempDir()
+        try Data("   \n".utf8).write(to: APIToken.url(in: dir.url))
 
-        let token = try #require(APIToken.loadOrCreate(in: dir))
+        let token = try #require(APIToken.loadOrCreate(in: dir.url))
         #expect(!token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
 
     @Test func twoInstallsDoNotShareAToken() {
-        let a = temporaryDirectory(), b = temporaryDirectory()
-        defer {
-            try? FileManager.default.removeItem(at: a)
-            try? FileManager.default.removeItem(at: b)
-        }
-        #expect(APIToken.loadOrCreate(in: a) != APIToken.loadOrCreate(in: b))
+        let a = TempDir(), b = TempDir()
+        #expect(APIToken.loadOrCreate(in: a.url) != APIToken.loadOrCreate(in: b.url))
     }
 
     /// A file this user cannot tighten is one the rest of the machine has
     /// already read. It is not a secret any more, so it is not a token.
     @Test func aFileThatWillNotTightenIsRefused() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let url = APIToken.url(in: dir)
+        let dir = TempDir()
+        let url = APIToken.url(in: dir.url)
         FileManager.default.createFile(atPath: url.path, contents: Data("loose\n".utf8),
                                        attributes: [.posixPermissions: NSNumber(value: 0o644)])
         // Make the directory read-only so the mode cannot be changed, the way
         // a root-owned file behaves for a normal user.
         try FileManager.default.setAttributes([.immutable: true], ofItemAtPath: url.path)
-        defer { try? FileManager.default.setAttributes([.immutable: false], ofItemAtPath: url.path) }
 
-        #expect(APIToken.loadOrCreate(in: dir) == nil)
+        #expect(APIToken.loadOrCreate(in: dir.url) == nil)
+        try FileManager.default.setAttributes([.immutable: false], ofItemAtPath: url.path)
     }
 
     /// A symlink at that path would have the token written wherever it points,
     /// with this user's hand on the pen. Refused twice over: the attributes of
     /// a link are the link's, and the create is O_NOFOLLOW.
     @Test func aSymlinkAtTheTokenPathIsRefused() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        let target = dir.appendingPathComponent("elsewhere")
+        let dir = TempDir()
+        let target = dir.url.appendingPathComponent("elsewhere")
         FileManager.default.createFile(atPath: target.path, contents: Data())
-        try FileManager.default.createSymbolicLink(at: APIToken.url(in: dir), withDestinationURL: target)
+        try FileManager.default.createSymbolicLink(at: APIToken.url(in: dir.url), withDestinationURL: target)
 
-        #expect(APIToken.loadOrCreate(in: dir) == nil)
+        #expect(APIToken.loadOrCreate(in: dir.url) == nil)
         #expect(try String(contentsOf: target, encoding: .utf8).isEmpty)
     }
 
     /// Anything that is not a plain file — a directory planted at that path
     /// before first launch — is refused rather than worked around.
     @Test func aDirectoryAtTheTokenPathIsRefused() throws {
-        let dir = temporaryDirectory()
-        defer { try? FileManager.default.removeItem(at: dir) }
-        try FileManager.default.createDirectory(at: APIToken.url(in: dir), withIntermediateDirectories: true)
+        let dir = TempDir()
+        try FileManager.default.createDirectory(at: APIToken.url(in: dir.url), withIntermediateDirectories: true)
 
-        #expect(APIToken.loadOrCreate(in: dir) == nil)
+        #expect(APIToken.loadOrCreate(in: dir.url) == nil)
     }
 }
 

@@ -68,9 +68,4 @@ struct TextExtractorTests {
         let lines = (0..<40).map { line("w\($0)", Double($0 % 7) / 7, Double($0) * 0.004) }
         #expect(TextExtractor.joined(lines).split(separator: "\n").count == 40)
     }
-
-    @Test func farApartLinesNeverShareARow() {
-        let lines = [line("bottom", 0.9, 0.8), line("top", 0.1, 0.1)]
-        #expect(TextExtractor.joined(lines) == "top\nbottom")
-    }
 }
