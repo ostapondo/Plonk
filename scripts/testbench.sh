@@ -111,7 +111,7 @@ down() {
 }
 
 case "${1:-}" in
-    up) shift; up "${1:-4}" ;;
+    up) shift; up "$@" ;;
     state) state ;;
     down) down ;;
     ''|-h|--help|help) usage 0 ;;

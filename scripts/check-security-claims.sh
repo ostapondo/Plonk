@@ -23,10 +23,6 @@ say() {
 	status=1
 }
 
-swift_sources() {
-	find App/Sources -type f -name '*.swift' | sort
-}
-
 # --- Entitlements ----------------------------------------------------------
 #
 # "The bundle ships with no entitlements at all, under the hardened runtime."
@@ -35,9 +31,10 @@ swift_sources() {
 # claim that breaks silently: adding one is a single flag, and nothing about
 # the build gets louder when it appears.
 
-if find . -name '*.entitlements' -not -path './.git/*' | grep -q .; then
+entitlements=$(find . -name '*.entitlements' -not -path './.git/*')
+if [ -n "$entitlements" ]; then
 	say "SECURITY.md says the bundle ships with no entitlements, but an .entitlements file exists:"
-	find . -name '*.entitlements' -not -path './.git/*' >&2
+	printf '%s\n' "$entitlements" >&2
 fi
 
 # Only on a line that signs. `codesign -d --entitlements -` reads them back and
@@ -90,7 +87,7 @@ fi
 # nobody decided to add cannot arrive unnoticed; anything new fails and someone
 # has to either justify it or update the page.
 
-for host in $(swift_sources | xargs grep -hoE 'https?://[a-zA-Z0-9._-]+' | sed 's|https\{0,1\}://||' | sort -u); do
+for host in $(find App/Sources -type f -name '*.swift' | sort | xargs grep -hoE 'https?://[a-zA-Z0-9._-]+' | sed 's|https\{0,1\}://||' | sort -u); do
 	case "$host" in
 	api.github.com | github.com) ;;
 	*) say "Swift sources reach $host; SECURITY.md names api.github.com as the only host" ;;
@@ -102,9 +99,10 @@ done
 # machine: every address in that source either starts with 127.0.0.1 or is a
 # template hole. A hostname made of letters is the thing that must not appear.
 
-if find mcp/src -type f -name '*.ts' | xargs grep -nE 'https?://[a-zA-Z]' | grep -q .; then
+named_hosts=$(find mcp/src -type f -name '*.ts' | xargs grep -nE 'https?://[a-zA-Z]' || true)
+if [ -n "$named_hosts" ]; then
 	say "mcp/src contains a URL naming a host by name; the MCP server should only speak to loopback:"
-	find mcp/src -type f -name '*.ts' | xargs grep -nE 'https?://[a-zA-Z]' >&2
+	printf '%s\n' "$named_hosts" >&2
 fi
 
 if ! grep -q 'static let port: UInt16 = 43917' App/Sources/plonk/ControlServer.swift; then

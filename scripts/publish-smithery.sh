@@ -43,22 +43,23 @@ BODY=$(SITE="$SITE" node -e '
 # The qualified name has a slash in it and goes in the path.
 ENCODED=$(printf '%s' "$SERVER" | sed 's|/|%2F|')
 
+REPLY=$(mktemp)
+trap 'rm -f "$REPLY"' EXIT
+
 STATUS=$(curl -sS -X PATCH \
 	"https://api.smithery.ai/servers/$ENCODED" \
 	-H "Authorization: Bearer $SMITHERY_API_KEY" \
 	-H "Content-Type: application/json" \
 	-d "$BODY" \
-	-o /tmp/smithery-patch.json -w '%{http_code}')
+	-o "$REPLY" -w '%{http_code}')
 
 if [ "$STATUS" != "200" ]; then
 	printf 'PATCH %s failed with %s:\n' "$SERVER" "$STATUS" >&2
-	cat /tmp/smithery-patch.json >&2
+	cat "$REPLY" >&2
 	printf '\n' >&2
-	rm -f /tmp/smithery-patch.json
 	exit 1
 fi
 
-rm -f /tmp/smithery-patch.json
 printf 'updated https://smithery.ai/server/%s\n' "$SERVER"
 
 # Read it back, because a 200 from the write path is not the same as the card
@@ -70,12 +71,11 @@ printf 'updated https://smithery.ai/server/%s\n' "$SERVER"
 #
 # To a file first, then read by node, rather than piped straight in: the body
 # is data, and `curl | node` looks like the other thing.
-curl -sS -o /tmp/smithery-server.json "https://api.smithery.ai/servers/$ENCODED" \
+curl -sS -o "$REPLY" "https://api.smithery.ai/servers/$ENCODED" \
 	-H "Authorization: Bearer $SMITHERY_API_KEY"
 node -e '
-	const server = JSON.parse(require("fs").readFileSync("/tmp/smithery-server.json", "utf8"));
+	const server = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
 	for (const field of ["displayName", "description", "iconUrl"]) {
 		console.log(`  ${field}: ${server[field] || "(empty)"}`);
 	}
-'
-rm -f /tmp/smithery-server.json
+' "$REPLY"
