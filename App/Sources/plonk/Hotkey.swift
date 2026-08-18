@@ -23,14 +23,7 @@ struct Hotkey: Equatable {
     var hasModifier: Bool { control || option || shift || command }
 
     /// What the user sees, in the order macOS writes modifiers.
-    var display: String {
-        var text = ""
-        if control { text += "⌃" }
-        if option { text += "⌥" }
-        if shift { text += "⇧" }
-        if command { text += "⌘" }
-        return text + (Self.symbol(for: keyCode) ?? "?")
-    }
+    var display: String { parts.joined() }
 
     /// Each key on its own, for drawing them as separate caps.
     var parts: [String] {

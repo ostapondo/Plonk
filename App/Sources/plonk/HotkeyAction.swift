@@ -46,35 +46,13 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     }
 
     /// 1-based zone this action snaps to, nil for everything else.
-    var zoneNumber: Int? {
-        switch self {
-        case .zone1: return 1
-        case .zone2: return 2
-        case .zone3: return 3
-        case .zone4: return 4
-        case .zone5: return 5
-        case .zone6: return 6
-        case .zone7: return 7
-        case .zone8: return 8
-        case .zone9: return 9
-        default: return nil
-        }
-    }
+    var zoneNumber: Int? { number(afterPrefix: "zone") }
 
     /// 1-based zone set this action switches to, nil for everything else.
-    var layoutNumber: Int? {
-        switch self {
-        case .layout1: return 1
-        case .layout2: return 2
-        case .layout3: return 3
-        case .layout4: return 4
-        case .layout5: return 5
-        case .layout6: return 6
-        case .layout7: return 7
-        case .layout8: return 8
-        case .layout9: return 9
-        default: return nil
-        }
+    var layoutNumber: Int? { number(afterPrefix: "layout") }
+
+    private func number(afterPrefix prefix: String) -> Int? {
+        rawValue.hasPrefix(prefix) ? Int(rawValue.dropFirst(prefix.count)) : nil
     }
 
     var focusDirection: WindowNavigator.Direction? {
