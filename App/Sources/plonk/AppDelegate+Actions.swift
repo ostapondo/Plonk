@@ -94,10 +94,6 @@ extension AppDelegate: AppActions {
         }
     }
 
-    func cancelWorkspaceLaunch() {
-        launcher.cancel()
-    }
-
     func checkForUpdates() {
         updates.check()
     }

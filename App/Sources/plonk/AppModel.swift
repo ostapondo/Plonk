@@ -62,7 +62,6 @@ protocol AppActions: AnyObject {
     func setWorkspaceMoveExisting(_ on: Bool, for name: String)
     func updateWorkspaceItem(_ index: Int, in name: String, urls: [String], args: [String])
     func removeWorkspaceItem(_ index: Int, from name: String)
-    func cancelWorkspaceLaunch()
 
     /// Everything the palette can run, in the order it should be offered.
     func paletteCommands() -> [PlonkCommand]
