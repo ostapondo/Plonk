@@ -27,10 +27,7 @@ enum APIToken {
     static let openPaths: Set<String> = ["/ping"]
 
     static func url(in directory: URL? = nil) -> URL {
-        let dir = directory ?? FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Plonk", isDirectory: true)
-        return dir.appendingPathComponent("token")
+        (directory ?? ConfigStore.supportDirectory).appendingPathComponent("token")
     }
 
     /// The token for this install, generated on first launch.
@@ -46,7 +43,8 @@ enum APIToken {
         try? FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 
-        if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path) {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        if let attributes {
             // Somebody else's file — one `sudo` launch leaves a root-owned one
             // behind — is neither replaceable by this user nor trustworthy:
             // its contents are a secret they do not control. Same for anything
@@ -67,8 +65,7 @@ enum APIToken {
             // Unknown counts as loose: a mode this cannot read is a mode this
             // cannot vouch for, and the safe reading of "I do not know who can
             // read this secret" is "everyone".
-            let mode = (try? FileManager.default.attributesOfItem(atPath: url.path))
-                .flatMap { ($0[.posixPermissions] as? NSNumber)?.int16Value } ?? 0o777
+            let mode = attributes.flatMap { ($0[.posixPermissions] as? NSNumber)?.int16Value } ?? 0o777
             if mode & 0o077 == 0 {
                 return existing.trimmingCharacters(in: .whitespacesAndNewlines)
             }
