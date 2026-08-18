@@ -365,7 +365,7 @@
 "app.nameVersion %@" = "Plonk %@";
 "app.runACommand" = "Run a command";
 "app.workspaces" = "Workspaces";
-"app.launchWorkspace %@" = "Launch %@";
+"app.openWorkspace %@" = "Open %@ in Workspaces";
 "app.reportBug" = "Report a Bug";
 "app.allPermissionsGranted" = "All permissions granted";
 "app.accessibility" = "Accessibility";
@@ -490,7 +490,7 @@
 "zoneSet.editThis" = "Edit this set";
 "zoneSet.editCopy" = "Edit a copy of this template";
 "zoneSet.hintPick" = "pick";
-"zoneSet.hintUse" = "use it";
+"zoneSet.hintUse" = "or double-click to use it";
 "zoneSet.hintEdit" = "edit";
 "zoneSet.hintNew" = "new";
 "zoneSet.hintClose" = "close";

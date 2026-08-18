@@ -15,6 +15,12 @@ one of those.
 
 ### Fixed
 
+- **A single click no longer moves your windows.** Clicking a workspace in the
+  sidebar launched it on the spot, and clicking a row in the zone set palette
+  swapped the layout and relaid out every window on the screen. Both were one
+  stray click away from a mess. The sidebar row now opens the Workspaces page,
+  where each workspace has its own Launch button; in the palette a click only
+  moves the highlight, and return, a digit or a double click applies it.
 - **`snap_window` with a title that matches nothing no longer reports the app
   as not running.** Placing a window into a zone by app and title, without
   naming a screen, looked for the window one way and moved it another: the
