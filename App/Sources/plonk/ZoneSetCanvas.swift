@@ -77,7 +77,8 @@ struct ZoneSetCanvas: View {
                 }
                 .help(String(localized: .zoneSetPreviewHelp))
                 Button(String(localized: .zoneSetDuplicate)) {
-                    model.actions?.editZoneSet(nextSetName, seed: zones, onScreen: screen)
+                    model.actions?.editZoneSet(model.freeZoneSetName(base: assigned + " copy"),
+                                               seed: zones, onScreen: screen)
                 }
             }
             Button(String(localized: .zoneSetManage)) { model.actions?.openZonePicker() }
@@ -107,8 +108,8 @@ struct ZoneSetCanvas: View {
                         model.actions?.assignZoneSet("", toScreen: screen)
                     }
                     tab(String(localized: .zoneSetNewSet), selected: false, plus: true) {
-                        model.actions?.editZoneSet(nextSetName, seed: [ZoneRect(0, 0, 1, 1)],
-                                                   onScreen: screen)
+                        model.actions?.editZoneSet(model.freeZoneSetName(base: "Set"),
+                                                   seed: [ZoneRect(0, 0, 1, 1)], onScreen: screen)
                     }
                 }
                 .padding(.vertical, 1)
@@ -145,13 +146,6 @@ struct ZoneSetCanvas: View {
         }
         .buttonStyle(.plain)
         .help(title)
-    }
-
-    /// "Set 2", "Set 3" — the first one nobody has taken.
-    private var nextSetName: String {
-        var index = model.zoneSetNames.count + 1
-        while model.zoneSetNames.contains("Set \(index)") { index += 1 }
-        return "Set \(index)"
     }
 
     // MARK: - Canvas
