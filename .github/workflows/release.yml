@@ -31,6 +31,11 @@ name: Release
 # signed with it — and only one signed with it. Losing it means no user can
 # auto-update again; leaking it means someone else can offer them a build.
 
+# Read by default. The jobs that upload to the release and sign it ask for
+# their own write scopes below, one job at a time.
+permissions:
+  contents: read
+
 on:
   push:
     tags: ["v*"]
@@ -53,7 +58,7 @@ jobs:
       id-token: write # sign the attestation
       attestations: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Read the version
         id: version
@@ -136,11 +141,21 @@ jobs:
       # What ties Plonk-<version>.zip to this repository, this commit and this
       # workflow run. Without it the app's own promises are only checkable at
       # runtime, on a binary nobody can trace back to the source.
-      - uses: actions/attest-build-provenance@v4
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        id: attest
         with:
           subject-path: |
             Plonk-${{ steps.version.outputs.version }}.zip
             Plonk-${{ steps.version.outputs.version }}.zip.sha256
+
+      # The attestation lives in GitHub's store, which is what `gh attestation
+      # verify` reads. A copy goes on the release too, so the provenance is
+      # visible next to the file it covers and checkable without gh.
+      - name: Copy the attestation next to the archive
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: cp "$BUNDLE" "Plonk-$VERSION.zip.sigstore.json"
 
       - name: Publish the archive
         env:
@@ -181,7 +196,7 @@ jobs:
                 "sha256: \`$SHA\`"
             )"
           fi
-          gh release upload "v$VERSION" "$ZIP" "$ZIP.sha256" --clobber
+          gh release upload "v$VERSION" "$ZIP" "$ZIP.sha256" "$ZIP.sigstore.json" --clobber
 
           {
             echo "### Plonk $VERSION"
@@ -198,7 +213,7 @@ jobs:
       # workflow by, and what it records the tarball's origin from.
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Node 24 for npm 11, which is the first that can publish over OIDC.
       #
       # No registry-url on purpose. Given one, setup-node writes an .npmrc with
@@ -207,7 +222,7 @@ jobs:
       # never tries OIDC at all, because OIDC is what it falls back to only
       # when nothing else claims to be a credential. The default registry is
       # registry.npmjs.org anyway.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
@@ -300,8 +315,15 @@ jobs:
             echo "$VERSION is already in the registry; nothing to do."
             exit 0
           fi
-          curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
-            | tar xz mcp-publisher
+          # A fixed release and its checksum, not `latest`: whatever the
+          # registry ships next week does not get to run in this job until
+          # someone reads its release notes and moves these two lines.
+          MCP_PUBLISHER_VERSION=1.8.1
+          MCP_PUBLISHER_SHA256=a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
+          curl -sSfL -o mcp-publisher.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v$MCP_PUBLISHER_VERSION/mcp-publisher_linux_amd64.tar.gz"
+          echo "$MCP_PUBLISHER_SHA256  mcp-publisher.tar.gz" | sha256sum -c -
+          tar xzf mcp-publisher.tar.gz mcp-publisher
           ./mcp-publisher login github-oidc
           cd mcp && ../mcp-publisher publish
 
@@ -326,9 +348,9 @@ jobs:
       id-token: write # sign the attestation
       attestations: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
@@ -346,15 +368,22 @@ jobs:
 
       - run: ./scripts/build-mcpb.sh
 
-      - uses: actions/attest-build-provenance@v4
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        id: attest
         with:
           subject-path: mcp/plonk-${{ steps.version.outputs.version }}.mcpb
 
+      # Same as the app: the attestation is in GitHub's store, and a copy sits
+      # on the release beside the bundle it covers.
       - name: Publish the bundle
         env:
           GH_TOKEN: ${{ github.token }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
           VERSION: ${{ steps.version.outputs.version }}
-        run: gh release upload "v$VERSION" "mcp/plonk-$VERSION.mcpb" --clobber
+        run: |
+          set -eu
+          cp "$BUNDLE" "mcp/plonk-$VERSION.mcpb.sigstore.json"
+          gh release upload "v$VERSION" "mcp/plonk-$VERSION.mcpb" "mcp/plonk-$VERSION.mcpb.sigstore.json" --clobber
 
       # Smithery listed 0.2.2 for six days after 0.2.5 shipped, because the
       # first publish was run by hand and nothing ran the second. These two

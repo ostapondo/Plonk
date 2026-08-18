@@ -126,7 +126,10 @@ command fails and tells you so.
 Every release also carries a small `Plonk-<version>.zip.sha256` file. Put it
 beside the zip and run `shasum -a 256 -c Plonk-<version>.zip.sha256` to confirm
 the download arrived complete and unchanged. That file is signed the same way
-as the zip, so `gh attestation verify` works on it too.
+as the zip, so `gh attestation verify` works on it too. The attestation itself
+is also on the release as `Plonk-<version>.zip.sigstore.json`, for anyone who
+wants to check it offline with `gh attestation verify --bundle` or with
+[cosign](https://github.com/sigstore/cosign) instead of asking GitHub.
 
 <details>
 <summary>Installing by hand, Intel Macs, tiling managers, and removing it</summary>

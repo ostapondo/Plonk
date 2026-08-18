@@ -51,3 +51,12 @@ updates:
       interval: weekly
     commit-message:
       prefix: app
+
+  # mcp/Dockerfile pins node:20-slim by digest, so the base image only moves
+  # when a pull request moves it. This is what opens that pull request.
+  - package-ecosystem: docker
+    directory: /mcp
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: mcp

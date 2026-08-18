@@ -1,5 +1,10 @@
 name: CI
 
+# A checkout is all any job here needs, so the token can only read. Nothing
+# in this file publishes anything.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -18,7 +23,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: ./scripts/lint.sh
 
   # SECURITY.md asks people to grant Accessibility and Screen Recording on the
@@ -30,14 +35,14 @@ jobs:
   security-claims:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: ./scripts/check-security-claims.sh
 
   app:
     # macos-14 still ships Swift 5.10; Package.swift needs tools version 6.0.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build
         run: swift build
         working-directory: App
@@ -47,8 +52,8 @@ jobs:
   mcp:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 20
           cache: npm
@@ -65,8 +70,8 @@ jobs:
   strings:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 20
       - run: node scripts/check-strings.mjs
@@ -77,8 +82,8 @@ jobs:
   zone-sets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 20
       - run: node scripts/check-zone-sets.mjs
