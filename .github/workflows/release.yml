@@ -306,11 +306,13 @@ jobs:
         run: |
           set -eu
           VERSION="${{ steps.version.outputs.version }}"
-          if curl -sf "https://registry.modelcontextprotocol.io/v0/servers?search=plonk" \
-            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{
-                const found=JSON.parse(d).servers.some(e =>
+          # Fetched to a file and read from there, not piped into node: the
+          # response is data for the script, and a pipe into an interpreter
+          # reads to Scorecard (and to a person skimming) as running it.
+          curl -sf -o registry.json "https://registry.modelcontextprotocol.io/v0/servers?search=plonk"
+          if node -e "const found=JSON.parse(require('fs').readFileSync('registry.json','utf8')).servers.some(e =>
                   e.server.name==='io.github.ostapondo/plonk' && e.server.version===process.argv[1]);
-                process.exit(found?0:1)})" "$VERSION"
+                process.exit(found?0:1)" "$VERSION"
           then
             echo "$VERSION is already in the registry; nothing to do."
             exit 0
