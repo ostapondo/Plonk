@@ -48,13 +48,18 @@ struct Annotation: Identifiable, Equatable {
     static let palette: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .black, .white]
     static let colorNames = ["red", "orange", "yellow", "green", "blue", "purple", "black", "white"]
 
-    init(kind: Kind, points: [CGPoint], colorIndex: Int, width: Double) {
-        self.kind = kind
-        self.points = points
-        self.colorIndex = colorIndex
-        self.width = width
-    }
+    var color: Color { Self.palette[colorIndex.clamped(to: 0...(Self.palette.count - 1))] }
 
+    func boundingRect(in size: CGSize) -> CGRect {
+        guard let first = points.first else { return .zero }
+        let last = points.last ?? first
+        let a = CGPoint(x: first.x * size.width, y: first.y * size.height)
+        let b = CGPoint(x: last.x * size.width, y: last.y * size.height)
+        return CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
+    }
+}
+
+extension Annotation {
     /// Parses a mark sent over the API. Points are 0..1 of the image, origin
     /// top-left, which is the space annotations already live in.
     init?(dict: [String: Any]) {
@@ -65,26 +70,16 @@ struct Annotation: Identifiable, Equatable {
         let points = rawPoints.compactMap { point -> CGPoint? in
             guard let x = (point["x"] as? NSNumber)?.doubleValue,
                   let y = (point["y"] as? NSNumber)?.doubleValue else { return nil }
-            return CGPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
+            return CGPoint(x: x.clamped(to: 0...1), y: y.clamped(to: 0...1))
         }
         guard points.count == rawPoints.count, points.count >= 2 else { return nil }
 
-        self.kind = kind
-        self.points = kind.tracksEveryPoint ? points : [points[0], points[points.count - 1]]
-        self.colorIndex = (dict["color"] as? String)
-            .flatMap { Self.colorNames.firstIndex(of: $0.lowercased()) } ?? 0
         let width = (dict["width"] as? NSNumber)?.doubleValue ?? 0.004
-        self.width = min(max(width, 0.0005), 0.1)
-    }
-
-    var color: Color { Self.palette[min(max(colorIndex, 0), Self.palette.count - 1)] }
-
-    func boundingRect(in size: CGSize) -> CGRect {
-        guard let first = points.first else { return .zero }
-        let last = points.last ?? first
-        let a = CGPoint(x: first.x * size.width, y: first.y * size.height)
-        let b = CGPoint(x: last.x * size.width, y: last.y * size.height)
-        return CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
+        self.init(kind: kind,
+                  points: kind.tracksEveryPoint ? points : [points[0], points[points.count - 1]],
+                  colorIndex: (dict["color"] as? String)
+                      .flatMap { Self.colorNames.firstIndex(of: $0.lowercased()) } ?? 0,
+                  width: width.clamped(to: 0.0005...0.1))
     }
 }
 

@@ -52,10 +52,7 @@ struct SettingsCard<Content: View>: View {
             VStack(alignment: .leading, spacing: 0) {
                 if let title {
                     HStack {
-                        Text(String(localized: title).uppercased())
-                            .font(.system(size: 10, weight: .bold))
-                            .kerning(0.8)
-                            .muted()
+                        Eyebrow(title)
                         Spacer()
                     }
                     .padding(.horizontal, 13)
@@ -159,7 +156,6 @@ struct SegmentedRow<Tag: Hashable>: View {
 /// Anything that is not a row: a shortcut list, a colour picker, an editor.
 /// Keeps the padding and the hairline consistent with the rows around it.
 struct SettingBlock<Content: View>: View {
-    var inset = true
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -167,7 +163,7 @@ struct SettingBlock<Content: View>: View {
             Divider()
             VStack(alignment: .leading, spacing: 8) { content }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, inset ? 13 : 0)
+                .padding(.horizontal, 13)
                 .padding(.vertical, 10)
         }
     }

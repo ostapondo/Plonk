@@ -65,13 +65,51 @@ enum Ink {
     /// to yellow. Grey stays grey — rotating the hue of an unsaturated colour
     /// changes nothing, which is the right answer for the graphite accent.
     static func warmer(_ color: Color) -> Color {
+        rebuilt(color) { hue, saturation, brightness in
+            let step = hue > 0.5 ? 0.14 : -0.14
+            hue = (hue + step + 1).truncatingRemainder(dividingBy: 1)
+            saturation = min(saturation * 1.05, 1)
+            brightness = min(brightness * 1.03, 1)
+        }
+    }
+
+    /// `color` taken apart into HSB, changed by `adjust`, and put back
+    /// together in device RGB. Unchanged when it has no RGB form.
+    static func rebuilt(_ color: Color,
+                        _ adjust: (inout CGFloat, inout CGFloat, inout CGFloat) -> Void) -> Color {
         guard let base = NSColor(color).usingColorSpace(.deviceRGB) else { return color }
-        let step = base.hueComponent > 0.5 ? 0.14 : -0.14
-        let hue = (base.hueComponent + step + 1).truncatingRemainder(dividingBy: 1)
-        return Color(nsColor: NSColor(deviceHue: hue,
-                                      saturation: min(base.saturationComponent * 1.05, 1),
-                                      brightness: min(base.brightnessComponent * 1.03, 1),
-                                      alpha: base.alphaComponent))
+        var hue = base.hueComponent
+        var saturation = base.saturationComponent
+        var brightness = base.brightnessComponent
+        adjust(&hue, &saturation, &brightness)
+        return Color(nsColor: NSColor(deviceHue: hue, saturation: saturation,
+                                      brightness: brightness, alpha: base.alphaComponent))
+    }
+}
+
+/// A small-capitals heading: the eyebrow over a card, a section, a sidebar
+/// group. Sizes vary a little by place, so both are stated at the call.
+struct Eyebrow: View {
+    let text: String
+    var size: CGFloat = 10
+    var kerning: CGFloat = 0.8
+
+    init(_ title: LocalizedStringResource, size: CGFloat = 10, kerning: CGFloat = 0.8) {
+        self.init(verbatim: String(localized: title), size: size, kerning: kerning)
+    }
+
+    /// For text already localized, like a heading a manager handed over.
+    init(verbatim text: String, size: CGFloat = 10, kerning: CGFloat = 0.8) {
+        self.text = text
+        self.size = size
+        self.kerning = kerning
+    }
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(.system(size: size, weight: .bold))
+            .kerning(kerning)
+            .muted()
     }
 }
 
@@ -117,10 +155,7 @@ struct SectionHead: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            Text(String(localized: title).uppercased())
-                .font(.system(size: 10, weight: .bold))
-                .kerning(0.9)
-                .muted()
+            Eyebrow(title, kerning: 0.9)
             Rectangle().fill(Ink.hairline).frame(height: 1)
             if let note {
                 Text(note).font(.caption2).muted().lineLimit(1)

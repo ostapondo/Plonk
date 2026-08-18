@@ -23,20 +23,15 @@ final class MouseOverlay {
     }
 
     func show(_ mode: Mode, at point: NSPoint, tint: NSColor) {
-        let panel = window ?? makePanel()
-        window = panel
-        panel.setFrame(Self.desktopFrame(), display: false)
-        view.frame = panel.contentLayoutRect
+        let panel = preparedPanel()
         let previous = view.mode == mode ? view.point : nil
         view.mode = mode
         view.point = point
         view.tint = tint
-        // A click ring is animating on its own timer; clearing it here would
-        // mean the next pointer sample killed it, so with crosshairs on it
-        // would never be seen at all.
         // Crosshairs move with the pointer, so redrawing the whole desk on
         // every sample would be several megapixels a frame. Only the lines
-        // that left and the ones that arrived are dirty.
+        // that left and the ones that arrived are dirty, unless a click ring
+        // is animating on its own timer: it needs the whole view.
         if case .crosshairs = mode, let previous, view.pulse == nil {
             view.invalidateCrosshairs(at: previous)
             view.invalidateCrosshairs(at: point)
@@ -49,10 +44,7 @@ final class MouseOverlay {
     /// A ring that grows and fades where a click landed. Leaves whatever was
     /// on screen before it alone.
     func pulse(at point: NSPoint, radius: CGFloat, tint: NSColor) {
-        let panel = window ?? makePanel()
-        window = panel
-        panel.setFrame(Self.desktopFrame(), display: false)
-        view.frame = panel.contentLayoutRect
+        let panel = preparedPanel()
         view.tint = tint
         view.pulse = MouseOverlayView.Pulse(point: point, radius: radius, opacity: 1)
         view.needsDisplay = true
@@ -92,6 +84,16 @@ final class MouseOverlay {
     /// The union of every screen, in AppKit coordinates.
     private static func desktopFrame() -> NSRect {
         NSScreen.screens.reduce(NSRect.zero) { $0.isEmpty ? $1.frame : $0.union($1.frame) }
+    }
+
+    /// The panel, made on first use and stretched over every display, since
+    /// screens can have come or gone since the last draw.
+    private func preparedPanel() -> NSPanel {
+        let panel = window ?? makePanel()
+        window = panel
+        panel.setFrame(Self.desktopFrame(), display: false)
+        view.frame = panel.contentLayoutRect
+        return panel
     }
 
     private func makePanel() -> NSPanel {

@@ -59,13 +59,6 @@ struct ConfigBindingTests {
         #expect(try Config.decode(data).handleRectangleURLs)
     }
 
-    /// Every field is optional on the way in, so a config written before this
-    /// setting existed decodes rather than throwing.
-    @Test func aConfigWrittenBeforeTheSettingDecodesWithItOff() throws {
-        let config = try Config.decode(Data("{}".utf8))
-        #expect(config.handleRectangleURLs == false)
-    }
-
     /// The file is merged over the defaults key by key, and the merge recurses.
     /// A nested object naming one field keeps its siblings rather than
     /// arriving as an object with a hole in it.

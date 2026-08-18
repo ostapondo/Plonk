@@ -67,10 +67,9 @@ extension Ink {
     /// Toward white, in HSB, so a mint stays mint instead of turning grey the
     /// way a straight blend with white would.
     static func lighter(_ color: Color) -> Color {
-        guard let base = NSColor(color).usingColorSpace(.deviceRGB) else { return color }
-        return Color(NSColor(hue: base.hueComponent,
-                             saturation: max(base.saturationComponent - 0.28, 0),
-                             brightness: min(base.brightnessComponent + 0.16, 1),
-                             alpha: base.alphaComponent))
+        rebuilt(color) { _, saturation, brightness in
+            saturation = max(saturation - 0.28, 0)
+            brightness = min(brightness + 0.16, 1)
+        }
     }
 }

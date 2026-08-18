@@ -40,17 +40,12 @@ struct URLCommandTests {
 
     /// A script asking for thirds is not broken, it is asking for something
     /// that is a zone set here. It gets told which of the two it is.
-    @Test func aFixedGridActionSaysWhatItIs() {
-        for name in ["first-third", "top-left-ninth", "last-two-thirds", "second-fourth"] {
-            #expect(parse("plonk://execute-action?name=\(name)") == .failure(.fixedGridAction(name)))
-        }
-    }
-
     /// Rectangle keeps adding fractions — twelfths and sixteenths are already
     /// there — and a hand-kept list would answer "nothing is called that" for
     /// each new one, which is the least useful thing it could say.
-    @Test func fractionsRectangleAddedLaterAreStillRecognised() {
-        for name in ["top-left-twelfth", "bottom-right-sixteenth", "top-vertical-third"] {
+    @Test func aFixedGridActionSaysWhatItIs() {
+        for name in ["first-third", "top-left-ninth", "last-two-thirds", "second-fourth",
+                     "top-left-twelfth", "bottom-right-sixteenth", "top-vertical-third"] {
             #expect(parse("plonk://execute-action?name=\(name)") == .failure(.fixedGridAction(name)))
         }
     }

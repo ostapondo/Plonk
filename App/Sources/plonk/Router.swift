@@ -143,11 +143,11 @@ final class Router {
         case ("POST", "/agents/exclusive"):
             respond(agentExclusiveRoute(body))
         case ("POST", "/agents/ask"):
-            guard let prompt = trimmedName(body["prompt"]) else {
+            guard let prompt = Self.trimmedName(body["prompt"]) else {
                 respond(.badRequest("body must include prompt"))
                 return
             }
-            respond(dispatch(prompt: prompt, to: trimmedName(body["agent"])))
+            respond(dispatch(prompt: prompt, to: Self.trimmedName(body["agent"])))
         case ("GET", "/agents/inbox"):
             agentInboxRoute(query: query, agent: agent, respond: respond)
 

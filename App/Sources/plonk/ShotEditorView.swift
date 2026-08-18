@@ -127,13 +127,8 @@ struct ShotEditorView: View {
 
     // MARK: - Output
 
-    @MainActor
-    private func flattened() -> NSImage? {
-        image.annotated(with: annotations)
-    }
-
     private func copy() {
-        guard let output = flattened() else {
+        guard let output = image.annotated(with: annotations) else {
             status = String(localized: .shotEditorRenderFailed)
             return
         }
@@ -142,7 +137,7 @@ struct ShotEditorView: View {
     }
 
     private func save(to destination: ScreenshotManager.Destination) {
-        guard let output = flattened() else {
+        guard let output = image.annotated(with: annotations) else {
             status = String(localized: .shotEditorRenderFailed)
             return
         }

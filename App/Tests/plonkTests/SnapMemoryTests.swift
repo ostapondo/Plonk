@@ -59,7 +59,7 @@ struct SnapMemoryTests {
         for pid in 1...200 {
             memory.record(element(pid_t(pid)), wasAt: before, placedAt: half, screenUUID: "A")
         }
-        #expect(memory.count <= 64)
+        #expect(memory.placements.count <= 64)
         // The most recent survive; the oldest are the ones dropped.
         #expect(memory.takeOriginal(of: element(200)) == before)
         #expect(memory.takeOriginal(of: element(1)) == nil)

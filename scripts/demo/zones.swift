@@ -115,47 +115,39 @@ func editorCursor(at t: Double) -> (point: CGPoint, shift: Bool) {
 /// The editor: the screen dimmed, the draft on top, and the panel that names
 /// the set and says what a click does.
 func drawEditor(at t: Double, alpha: CGFloat, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    fill(CGRect(origin: .zero, size: size), NSColor.black.withAlphaComponent(0.34), in: ctx)
-    for zone in draftZones(at: t) {
-        fill(zone.insetBy(dx: 3, dy: 3), Ink.accent.withAlphaComponent(0.22), radius: 9, in: ctx)
-        stroke(zone.insetBy(dx: 3, dy: 3), Ink.accent.withAlphaComponent(0.95), radius: 9,
-               width: 2.5, in: ctx)
-    }
+    faded(alpha, in: ctx) {
+        fill(CGRect(origin: .zero, size: size), NSColor.black.withAlphaComponent(0.34), in: ctx)
+        for zone in draftZones(at: t) {
+            fill(zone.insetBy(dx: 3, dy: 3), Ink.accent.withAlphaComponent(0.22), radius: 9, in: ctx)
+            stroke(zone.insetBy(dx: 3, dy: 3), Ink.accent.withAlphaComponent(0.95), radius: 9,
+                   width: 2.5, in: ctx)
+        }
 
-    let panel = CGRect(x: size.width / 2 - 300, y: 30, width: 600, height: 84)
-    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 30,
-                  color: NSColor.black.withAlphaComponent(0.4).cgColor)
-    fill(panel, Ink.panel, radius: 14, in: ctx)
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(panel, Ink.line, radius: 14, in: ctx)
-    text("Zone set — “Deep work”", at: CGPoint(x: panel.minX + 24, y: panel.maxY - 34),
-         size: 18, color: Ink.text, weight: .semibold, in: ctx)
-    text("Click a zone to split it · ⇧-click to split the other way",
-         at: CGPoint(x: panel.minX + 24, y: panel.minY + 22), size: 14.5, color: Ink.dim, in: ctx)
-    let save = CGRect(x: panel.maxX - 156, y: panel.midY - 19, width: 132, height: 38)
-    // The button presses itself at the end of the beat, so the set applying has
-    // a cause on screen.
-    let press = pulse(t, 3.85, 3.95, 4.05, 4.15)
-    fill(save, Ink.accent.withAlphaComponent(0.92 - 0.25 * press), radius: 9, in: ctx)
-    text("Save & Apply", at: CGPoint(x: save.midX, y: save.midY - 6), size: 14.5,
-         color: .white, weight: .semibold, align: .centre, in: ctx)
-    ctx.restoreGState()
+        let card = CGRect(x: size.width / 2 - 300, y: 30, width: 600, height: 84)
+        panel(card, radius: 14, border: Ink.line, shadow: NSColor.black.withAlphaComponent(0.4), in: ctx)
+        text("Zone set — “Deep work”", at: CGPoint(x: card.minX + 24, y: card.maxY - 34),
+             size: 18, color: Ink.text, weight: .semibold, in: ctx)
+        text("Click a zone to split it · ⇧-click to split the other way",
+             at: CGPoint(x: card.minX + 24, y: card.minY + 22), size: 14.5, color: Ink.dim, in: ctx)
+        let save = CGRect(x: card.maxX - 156, y: card.midY - 19, width: 132, height: 38)
+        // The button presses itself at the end of the beat, so the set applying has
+        // a cause on screen.
+        let press = pulse(t, 3.85, 3.95, 4.05, 4.15)
+        fill(save, Ink.accent.withAlphaComponent(0.92 - 0.25 * press), radius: 9, in: ctx)
+        text("Save & Apply", at: CGPoint(x: save.midX, y: save.midY - 6), size: 14.5,
+             color: .white, weight: .semibold, align: .centre, in: ctx)
+    }
 }
 
 /// The ⇧ badge that rides the pointer when the next click is a vertical split.
 func drawShiftBadge(at point: CGPoint, alpha: CGFloat, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    let badge = CGRect(x: point.x + 24, y: point.y - 50, width: 36, height: 32)
-    fill(badge, Ink.panel, radius: 8, in: ctx)
-    stroke(badge, Ink.line, radius: 8, in: ctx)
-    text("⇧", at: CGPoint(x: badge.midX, y: badge.midY - 8), size: 17, color: Ink.text,
-         weight: .semibold, align: .centre, in: ctx)
-    ctx.restoreGState()
+    faded(alpha, in: ctx) {
+        let badge = CGRect(x: point.x + 24, y: point.y - 50, width: 36, height: 32)
+        fill(badge, Ink.panel, radius: 8, in: ctx)
+        stroke(badge, Ink.line, radius: 8, in: ctx)
+        text("⇧", at: CGPoint(x: badge.midX, y: badge.midY - 8), size: 17, color: Ink.text,
+             weight: .semibold, align: .centre, in: ctx)
+    }
 }
 
 // MARK: - The windows

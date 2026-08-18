@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { call, text, type LayoutResults } from "../api.js";
+import { call, text, type LaunchResults, type LayoutResults } from "../api.js";
 import { itemsSchema } from "../schemas.js";
 
 export function register(server: McpServer): void {
@@ -29,7 +29,7 @@ export function register(server: McpServer): void {
     "Launch a saved workspace by name. Legacy name kept for older clients — new integrations should call launch_workspace, which adds a 'screen' option to pull the whole workspace onto one monitor. Opens every app that is not running, waits for its windows, and moves them into the saved positions; macOS cannot open an app straight into a position, so windows appear first and jump into place. Returns per-app success and reports apps that never opened a window. Takes up to a minute for a large workspace.",
     { name: z.string() },
     async ({ name }) =>
-      text(await call<LayoutResults>("/workspaces/launch", { method: "POST", body: { name }, timeoutMs: 90_000 }))
+      text(await call<LaunchResults>("/workspaces/launch", { method: "POST", body: { name }, timeoutMs: 90_000 }))
   );
 
   server.tool(

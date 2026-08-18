@@ -152,7 +152,7 @@ final class AgentRegistry {
                     "name": session.name,
                     "version": session.version,
                     "online": isOnline(session, now: now),
-                    "last_seen": ISO8601DateFormatter().string(from: session.lastSeen),
+                    "last_seen": Self.iso.string(from: session.lastSeen),
                     "selected": session.name == selected,
                 ]
                 if let pid = session.pid { entry["pid"] = pid }

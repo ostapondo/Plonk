@@ -18,23 +18,17 @@ struct ZoneSetCanvas: View {
 
     /// Clamped on read, because a display can go away while this page is open
     /// and a stale index writes an assignment for a monitor that is not there.
-    private var screen: Int { min(max(chosen, 0), max(model.screenCount - 1, 0)) }
+    private var screen: Int { chosen.clamped(to: 0...max(model.screenCount - 1, 0)) }
 
     /// The assignment as the page thinks of it: a set name, or nil for edge
     /// snapping. An unassigned screen falls back to the default set.
     private var assigned: String? {
-        guard let name = model.screenAssignments[screen] else { return BuiltinZoneSets.defaultName }
+        let name = model.assignedZoneSet(onScreen: screen)
         return name.isEmpty ? nil : name
     }
 
-    private var zones: [ZoneRect] {
-        guard let assigned else { return [] }
-        return model.zoneSets[assigned] ?? []
-    }
-
-    private var size: String {
-        model.screenDescriptions.indices.contains(screen) ? model.screenDescriptions[screen] : ""
-    }
+    private var zones: [ZoneRect] { model.zones(onScreen: screen) }
+    private var size: String { model.screenDescription(screen) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -83,7 +77,8 @@ struct ZoneSetCanvas: View {
                 }
                 .help(String(localized: .zoneSetPreviewHelp))
                 Button(String(localized: .zoneSetDuplicate)) {
-                    model.actions?.editZoneSet(nextSetName, seed: zones, onScreen: screen)
+                    model.actions?.editZoneSet(model.freeZoneSetName(base: assigned + " copy"),
+                                               seed: zones, onScreen: screen)
                 }
             }
             Button(String(localized: .zoneSetManage)) { model.actions?.openZonePicker() }
@@ -113,8 +108,8 @@ struct ZoneSetCanvas: View {
                         model.actions?.assignZoneSet("", toScreen: screen)
                     }
                     tab(String(localized: .zoneSetNewSet), selected: false, plus: true) {
-                        model.actions?.editZoneSet(nextSetName, seed: [ZoneRect(0, 0, 1, 1)],
-                                                   onScreen: screen)
+                        model.actions?.editZoneSet(model.freeZoneSetName(base: "Set"),
+                                                   seed: [ZoneRect(0, 0, 1, 1)], onScreen: screen)
                     }
                 }
                 .padding(.vertical, 1)
@@ -151,13 +146,6 @@ struct ZoneSetCanvas: View {
         }
         .buttonStyle(.plain)
         .help(title)
-    }
-
-    /// "Set 2", "Set 3" — the first one nobody has taken.
-    private var nextSetName: String {
-        var index = model.zoneSetNames.count + 1
-        while model.zoneSetNames.contains("Set \(index)") { index += 1 }
-        return "Set \(index)"
     }
 
     // MARK: - Canvas

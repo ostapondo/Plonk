@@ -132,22 +132,25 @@ struct BuiltinZoneSetsTests {
         #expect(BuiltinZoneSets.all[BuiltinZoneSets.defaultName] != nil)
     }
 
-    @Test func gridTilesTheWholeScreen() {
-        let zones = BuiltinZoneSets.grid(columns: 3, rows: 2)
-        #expect(zones.count == 6)
-        let area = zones.reduce(0.0) { $0 + $1.w * $1.h }
-        #expect(abs(area - 1.0) < 0.001)
-        #expect(!ZoneGeometry.overlaps(zones, at: Array(zones.indices)))
+    @Test func builtinSetsTileTheWholeScreen() {
+        for (name, zones) in BuiltinZoneSets.all {
+            let area = zones.reduce(0.0) { $0 + $1.w * $1.h }
+            #expect(abs(area - 1.0) < 0.001, "\(name)")
+            #expect(!ZoneGeometry.overlaps(zones, at: Array(zones.indices)), "\(name)")
+        }
     }
 
-    @Test func gridClampsDegenerateInput() {
-        #expect(BuiltinZoneSets.grid(columns: 0, rows: -1).count == 1)
-    }
+}
+
+/// What happens to a set once it is drawn: spanning zones, nudging them with
+/// the keyboard, and telling which one a point or a window belongs to.
+struct ZoneSetEditingTests {
+
+    private let thirds = BuiltinZoneSets.all["Thirds"]!
 
     // MARK: - spanning
 
     @Test func spanningTwoColumnsGivesTheirCombinedWidth() {
-        let thirds = BuiltinZoneSets.all["Thirds"]!
         let span = ZoneGeometry.union(thirds[0], thirds[1])
         assertZone(ZoneRect(span.x, span.y, span.w, span.h), 0, 0, 2.0 / 3, 1)
     }
@@ -170,7 +173,6 @@ struct BuiltinZoneSetsTests {
     }
 
     @Test func coveredReportsOnlyTheZonesInsideTheSpan() {
-        let thirds = BuiltinZoneSets.all["Thirds"]!
         let span = ZoneGeometry.union(thirds[0], thirds[1])
         #expect(ZoneGeometry.covered(thirds, by: span) == [0, 1])
     }
@@ -219,8 +221,6 @@ struct BuiltinZoneSetsTests {
 
     // MARK: - hovering a shared edge
 
-    private let thirds = BuiltinZoneSets.all["Thirds"]!
-
     @Test func nearTheLineBetweenTwoColumnsPicksTheOtherOne() {
         // Just inside the first third, a hair from the boundary at x = 1/3.
         let neighbour = ZoneGeometry.neighbour(thirds, of: 0, atX: 0.33, y: 0.5,
@@ -268,7 +268,6 @@ struct BuiltinZoneSetsTests {
     /// A window over the whole screen has its centre inside every zone of the
     /// set, which is exactly when picking one would be arbitrary.
     @Test func aFullScreenFrameBelongsToNoZone() {
-        let thirds = BuiltinZoneSets.all["Thirds"]!
         #expect(ZoneGeometry.nearest(to: FracRect(0, 0, 1, 1), in: thirds) == nil)
     }
 
@@ -277,7 +276,6 @@ struct BuiltinZoneSetsTests {
     }
 
     @Test func spanningAZoneWithItselfChangesNothing() {
-        let thirds = BuiltinZoneSets.all["Thirds"]!
         let span = ZoneGeometry.union(thirds[1], thirds[1])
         assertZone(ZoneRect(span.x, span.y, span.w, span.h),
                    thirds[1].x, thirds[1].y, thirds[1].w, thirds[1].h)

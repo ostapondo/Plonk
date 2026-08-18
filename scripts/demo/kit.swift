@@ -15,7 +15,7 @@ import CoreText
 // MARK: - Canvas
 
 let fps = 20.0
-var size = CGSize(width: 1200, height: 750)
+let size = CGSize(width: 1200, height: 750)
 
 // MARK: - Timeline
 
@@ -123,6 +123,25 @@ func clipped(_ rect: CGRect, radius: CGFloat, in ctx: CGContext, _ draw: () -> V
     ctx.restoreGState()
 }
 
+/// Draws at `alpha`, or not at all once it would be invisible.
+func faded(_ alpha: CGFloat, in ctx: CGContext, _ draw: () -> Void) {
+    guard alpha > 0.01 else { return }
+    ctx.saveGState()
+    ctx.setAlpha(alpha)
+    draw()
+    ctx.restoreGState()
+}
+
+/// A floating surface: the panel fill under a shadow, with a border on top.
+/// The shadow is switched off again so what is drawn inside stays flat.
+func panel(_ rect: CGRect, radius: CGFloat, border: NSColor, borderWidth: CGFloat = 1,
+           lift: CGFloat = 8, blur: CGFloat = 30, shadow: NSColor = Ink.shadow, in ctx: CGContext) {
+    ctx.setShadow(offset: CGSize(width: 0, height: -lift), blur: blur, color: shadow.cgColor)
+    fill(rect, Ink.panel, radius: radius, in: ctx)
+    ctx.setShadow(offset: .zero, blur: 0, color: nil)
+    stroke(rect, border, radius: radius, width: borderWidth, in: ctx)
+}
+
 func gradient(_ rect: CGRect, _ from: NSColor, _ to: NSColor, in ctx: CGContext) {
     let ramp = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
                           colors: [from.cgColor, to.cgColor] as CFArray, locations: [0, 1])!
@@ -140,16 +159,22 @@ func font(_ pointSize: CGFloat, _ weight: NSFont.Weight = .regular, mono: Bool =
          : NSFont.systemFont(ofSize: pointSize, weight: weight)
 }
 
-@discardableResult
-func text(_ string: String, at point: CGPoint, size fontSize: CGFloat, color: NSColor,
-          weight: NSFont.Weight = .regular, align: Align = .left, tracking: CGFloat = 0,
-          mono: Bool = false, in ctx: CGContext) -> CGFloat {
+private func typeset(_ string: String, size fontSize: CGFloat, color: NSColor, weight: NSFont.Weight,
+                  tracking: CGFloat, mono: Bool) -> (line: CTLine, advance: CGFloat) {
     var attributes: [NSAttributedString.Key: Any] = [
         .font: font(fontSize, weight, mono: mono), .foregroundColor: color,
     ]
     if tracking != 0 { attributes[.kern] = tracking }
     let line = CTLineCreateWithAttributedString(NSAttributedString(string: string, attributes: attributes))
-    let advance = CTLineGetTypographicBounds(line, nil, nil, nil)
+    return (line, CTLineGetTypographicBounds(line, nil, nil, nil))
+}
+
+@discardableResult
+func text(_ string: String, at point: CGPoint, size fontSize: CGFloat, color: NSColor,
+          weight: NSFont.Weight = .regular, align: Align = .left, tracking: CGFloat = 0,
+          mono: Bool = false, in ctx: CGContext) -> CGFloat {
+    let (line, advance) = typeset(string, size: fontSize, color: color, weight: weight,
+                                  tracking: tracking, mono: mono)
     var x = point.x
     if align == .centre { x -= advance / 2 }
     if align == .right { x -= advance }
@@ -160,10 +185,7 @@ func text(_ string: String, at point: CGPoint, size fontSize: CGFloat, color: NS
 
 func width(of string: String, size fontSize: CGFloat, weight: NSFont.Weight = .regular,
            tracking: CGFloat = 0, mono: Bool = false) -> CGFloat {
-    var attributes: [NSAttributedString.Key: Any] = [.font: font(fontSize, weight, mono: mono)]
-    if tracking != 0 { attributes[.kern] = tracking }
-    let line = CTLineCreateWithAttributedString(NSAttributedString(string: string, attributes: attributes))
-    return CTLineGetTypographicBounds(line, nil, nil, nil)
+    typeset(string, size: fontSize, color: .black, weight: weight, tracking: tracking, mono: mono).advance
 }
 
 /// A character-by-character reveal that lands on whole characters, so the text
@@ -214,13 +236,10 @@ func drawDesk(in ctx: CGContext) {
 /// Plonk's status icon: a cube, two faces and a top. `glow` rings it, for the
 /// beats where the app itself is what changed.
 func drawCube(at centre: CGPoint, scale: CGFloat, glow: Double, in ctx: CGContext) {
-    if glow > 0.01 {
-        ctx.saveGState()
-        ctx.setAlpha(CGFloat(glow))
+    faded(CGFloat(glow), in: ctx) {
         fill(CGRect(x: centre.x - 17 * scale, y: centre.y - 17 * scale,
                     width: 34 * scale, height: 34 * scale),
              Ink.amber.withAlphaComponent(0.22), radius: 10 * scale, in: ctx)
-        ctx.restoreGState()
     }
     let body = CGRect(x: centre.x - 8 * scale, y: centre.y - 8 * scale,
                       width: 16 * scale, height: 11 * scale)
@@ -252,46 +271,45 @@ struct Pane {
 private let lineWidths: [CGFloat] = [0.92, 0.68, 0.84, 0.52, 0.76, 0.62, 0.88, 0.46, 0.8, 0.7]
 
 func draw(_ pane: Pane, alpha: CGFloat = 1, in ctx: CGContext) {
-    guard alpha > 0.01, pane.rect.width > 8, pane.rect.height > 8 else { return }
+    guard pane.rect.width > 8, pane.rect.height > 8 else { return }
     // Chrome and body scale with the window: full-size chrome on a small tile
     // reads as a toolbar rather than as a title bar.
     let scale = min(max(pane.rect.width / 560, 0.52), 1)
     let radius: CGFloat = 9 * scale + 3
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    ctx.setShadow(offset: CGSize(width: 0, height: -7 * scale), blur: 26 * scale,
-                  color: Ink.shadow.cgColor)
-    fill(pane.rect, Ink.pane, radius: radius, in: ctx)
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
+    faded(alpha, in: ctx) {
+        ctx.setShadow(offset: CGSize(width: 0, height: -7 * scale), blur: 26 * scale,
+                      color: Ink.shadow.cgColor)
+        fill(pane.rect, Ink.pane, radius: radius, in: ctx)
+        ctx.setShadow(offset: .zero, blur: 0, color: nil)
 
-    let chromeHeight = round(28 * scale)
-    let chrome = CGRect(x: pane.rect.minX, y: pane.rect.maxY - chromeHeight,
-                        width: pane.rect.width, height: chromeHeight)
-    clipped(pane.rect, radius: radius, in: ctx) {
-        fill(chrome, Ink.chrome, in: ctx)
-        fill(CGRect(x: chrome.minX, y: chrome.minY, width: chrome.width, height: 1), Ink.faint, in: ctx)
+        let chromeHeight = round(28 * scale)
+        let chrome = CGRect(x: pane.rect.minX, y: pane.rect.maxY - chromeHeight,
+                            width: pane.rect.width, height: chromeHeight)
+        clipped(pane.rect, radius: radius, in: ctx) {
+            fill(chrome, Ink.chrome, in: ctx)
+            fill(CGRect(x: chrome.minX, y: chrome.minY, width: chrome.width, height: 1), Ink.faint, in: ctx)
 
-        let light = 8.5 * scale
-        for (index, colour) in [rgb(1, 0.37, 0.34), rgb(1, 0.74, 0.18), rgb(0.24, 0.79, 0.33)].enumerated() {
-            fill(CGRect(x: chrome.minX + 13 * scale + CGFloat(index) * (light + 6.5 * scale),
-                        y: chrome.midY - light / 2, width: light, height: light),
-                 colour, radius: light / 2, in: ctx)
+            let light = 8.5 * scale
+            for (index, colour) in [rgb(1, 0.37, 0.34), rgb(1, 0.74, 0.18), rgb(0.24, 0.79, 0.33)].enumerated() {
+                fill(CGRect(x: chrome.minX + 13 * scale + CGFloat(index) * (light + 6.5 * scale),
+                            y: chrome.midY - light / 2, width: light, height: light),
+                     colour, radius: light / 2, in: ctx)
+            }
+            let titleSize = max(9.5, 12.5 * scale)
+            let titleWidth = width(of: pane.title, size: titleSize, weight: .semibold)
+            if titleWidth + 40 * scale < chrome.width {
+                text(pane.title, at: CGPoint(x: chrome.midX, y: chrome.midY - titleSize * 0.36),
+                     size: titleSize, color: Ink.dim, weight: .semibold, align: .centre, in: ctx)
+            }
+            drawBody(pane, in: CGRect(x: pane.rect.minX, y: pane.rect.minY,
+                                      width: pane.rect.width, height: chrome.minY - pane.rect.minY),
+                     scale: scale, in: ctx)
+            if pane.recede > 0.01 {
+                fill(pane.rect, Ink.wallBottom.withAlphaComponent(CGFloat(pane.recede)), in: ctx)
+            }
         }
-        let titleSize = max(9.5, 12.5 * scale)
-        let titleWidth = width(of: pane.title, size: titleSize, weight: .semibold)
-        if titleWidth + 40 * scale < chrome.width {
-            text(pane.title, at: CGPoint(x: chrome.midX, y: chrome.midY - titleSize * 0.36),
-                 size: titleSize, color: Ink.dim, weight: .semibold, align: .centre, in: ctx)
-        }
-        drawBody(pane, in: CGRect(x: pane.rect.minX, y: pane.rect.minY,
-                                  width: pane.rect.width, height: chrome.minY - pane.rect.minY),
-                 scale: scale, in: ctx)
-        if pane.recede > 0.01 {
-            fill(pane.rect, Ink.wallBottom.withAlphaComponent(CGFloat(pane.recede)), in: ctx)
-        }
+        stroke(pane.rect, Ink.line, radius: radius, in: ctx)
     }
-    stroke(pane.rect, Ink.line, radius: radius, in: ctx)
-    ctx.restoreGState()
 }
 
 private func drawBody(_ pane: Pane, in area: CGRect, scale: CGFloat, in ctx: CGContext) {
@@ -327,7 +345,7 @@ private func drawBody(_ pane: Pane, in area: CGRect, scale: CGFloat, in ctx: CGC
                          pane.tint.withAlphaComponent(0.12), in: ctx)
             }
         }
-        textLines(from: hero.minY - 16 * scale, in: content, scale: scale, tint: nil, in: ctx)
+        textLines(from: hero.minY - 16 * scale, in: content, scale: scale, in: ctx)
     case .code:
         // A gutter and indented token bars: code without pretending to be code.
         let gutter = CGRect(x: area.minX, y: area.minY, width: 26 * scale, height: area.height)
@@ -447,15 +465,14 @@ private func drawBody(_ pane: Pane, in area: CGRect, scale: CGFloat, in ctx: CGC
         let heading = CGRect(x: content.minX, y: area.maxY - 24 * scale,
                              width: min(content.width * 0.45, 160 * scale), height: 8 * scale)
         fill(heading, pane.tint.withAlphaComponent(0.9), radius: 4 * scale, in: ctx)
-        textLines(from: heading.minY - 20 * scale, in: content, scale: scale, tint: nil, in: ctx)
+        textLines(from: heading.minY - 20 * scale, in: content, scale: scale, in: ctx)
     }
 }
 
 /// Grey lines that fill whatever room is left. Filled to the bottom rather than
 /// to a fixed count: a window with a third of its content drawn reads as one
 /// that is still loading.
-private func textLines(from top: CGFloat, in content: CGRect, scale: CGFloat,
-                       tint: NSColor?, in ctx: CGContext) {
+private func textLines(from top: CGFloat, in content: CGRect, scale: CGFloat, in ctx: CGContext) {
     var y = top
     var index = 0
     while y > content.minY + 12 * scale {
@@ -487,30 +504,25 @@ extension Frac {
         CGRect(x: desk.minX + desk.width * x, y: desk.maxY - desk.height * (y + h),
                width: desk.width * w, height: desk.height * h)
     }
-    /// The same rectangle with the zone gap taken out, which is the frame a
-    /// window actually lands in.
-    func rect(gap: CGFloat) -> CGRect { rect.insetBy(dx: gap, dy: gap) }
 }
 
 /// The overlay the app draws while a window is being dragged: rounded tiles,
 /// numbered, the drop target lit.
 func drawZones(_ zones: [CGRect], highlighted: Set<Int>, alpha: CGFloat,
                numbers: Bool = true, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    for (index, zone) in zones.enumerated() {
-        let lit = highlighted.contains(index)
-        fill(zone, Ink.accent.withAlphaComponent(lit ? 0.30 : 0.11), radius: 10, in: ctx)
-        stroke(zone, Ink.accent.withAlphaComponent(lit ? 1 : 0.45), radius: 10,
-               width: lit ? 3 : 1.5, in: ctx)
-        guard numbers else { continue }
-        let numberSize = max(24, min(58, min(zone.width, zone.height) * 0.32))
-        text("\(index + 1)", at: CGPoint(x: zone.midX, y: zone.midY - numberSize * 0.37),
-             size: numberSize, color: Ink.accent.withAlphaComponent(lit ? 1 : 0.45),
-             weight: .bold, align: .centre, in: ctx)
+    faded(alpha, in: ctx) {
+        for (index, zone) in zones.enumerated() {
+            let lit = highlighted.contains(index)
+            fill(zone, Ink.accent.withAlphaComponent(lit ? 0.30 : 0.11), radius: 10, in: ctx)
+            stroke(zone, Ink.accent.withAlphaComponent(lit ? 1 : 0.45), radius: 10,
+                   width: lit ? 3 : 1.5, in: ctx)
+            guard numbers else { continue }
+            let numberSize = max(24, min(58, min(zone.width, zone.height) * 0.32))
+            text("\(index + 1)", at: CGPoint(x: zone.midX, y: zone.midY - numberSize * 0.37),
+                 size: numberSize, color: Ink.accent.withAlphaComponent(lit ? 1 : 0.45),
+                 weight: .bold, align: .centre, in: ctx)
+        }
     }
-    ctx.restoreGState()
 }
 
 // MARK: - Chrome the app puts on top
@@ -518,61 +530,53 @@ func drawZones(_ zones: [CGRect], highlighted: Set<Int>, alpha: CGFloat,
 /// A row of key caps, e.g. ⌃⌥2. Big, because at 720px wide a small one is a
 /// smudge.
 func drawKeys(_ keys: [String], centeredAt point: CGPoint, alpha: CGFloat, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    let capHeight: CGFloat = 52
-    let caps = keys.map { max(capHeight, width(of: $0, size: 25, weight: .semibold) + 30) }
-    let total = caps.reduce(0, +) + CGFloat(keys.count - 1) * 9
-    var x = point.x - total / 2
-    for (index, key) in keys.enumerated() {
-        let rect = CGRect(x: x, y: point.y, width: caps[index], height: capHeight)
-        ctx.setShadow(offset: CGSize(width: 0, height: -4), blur: 14, color: Ink.shadow.cgColor)
-        fill(rect, Ink.panel, radius: 11, in: ctx)
-        ctx.setShadow(offset: .zero, blur: 0, color: nil)
-        stroke(rect, Ink.line, radius: 11, width: 1.5, in: ctx)
-        text(key, at: CGPoint(x: rect.midX, y: rect.midY - 10), size: 25, color: Ink.text,
-             weight: .semibold, align: .centre, in: ctx)
-        x += caps[index] + 9
+    faded(alpha, in: ctx) {
+        let capHeight: CGFloat = 52
+        let caps = keys.map { max(capHeight, width(of: $0, size: 25, weight: .semibold) + 30) }
+        let total = caps.reduce(0, +) + CGFloat(keys.count - 1) * 9
+        var x = point.x - total / 2
+        for (index, key) in keys.enumerated() {
+            let rect = CGRect(x: x, y: point.y, width: caps[index], height: capHeight)
+            panel(rect, radius: 11, border: Ink.line, borderWidth: 1.5, lift: 4, blur: 14, in: ctx)
+            text(key, at: CGPoint(x: rect.midX, y: rect.midY - 10), size: 25, color: Ink.text,
+                 weight: .semibold, align: .centre, in: ctx)
+            x += caps[index] + 9
+        }
     }
-    ctx.restoreGState()
 }
 
 /// The pointer, drawn rather than screenshotted so it renders at any size.
 func drawCursor(at point: CGPoint, alpha: CGFloat, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    ctx.setShadow(offset: CGSize(width: 0, height: -2), blur: 7,
-                  color: NSColor.black.withAlphaComponent(0.7).cgColor)
-    let path = CGMutablePath()
-    path.move(to: point)
-    path.addLine(to: CGPoint(x: point.x, y: point.y - 29))
-    path.addLine(to: CGPoint(x: point.x + 7.3, y: point.y - 21.8))
-    path.addLine(to: CGPoint(x: point.x + 12.3, y: point.y - 31.3))
-    path.addLine(to: CGPoint(x: point.x + 17.9, y: point.y - 28.5))
-    path.addLine(to: CGPoint(x: point.x + 12.9, y: point.y - 19))
-    path.addLine(to: CGPoint(x: point.x + 22.4, y: point.y - 17.9))
-    path.closeSubpath()
-    ctx.addPath(path)
-    ctx.setFillColor(NSColor.white.cgColor)
-    ctx.fillPath()
-    ctx.addPath(path)
-    ctx.setStrokeColor(NSColor.black.withAlphaComponent(0.55).cgColor)
-    ctx.setLineWidth(1.2)
-    ctx.strokePath()
-    ctx.restoreGState()
+    faded(alpha, in: ctx) {
+        ctx.setShadow(offset: CGSize(width: 0, height: -2), blur: 7,
+                      color: NSColor.black.withAlphaComponent(0.7).cgColor)
+        let path = CGMutablePath()
+        path.move(to: point)
+        path.addLine(to: CGPoint(x: point.x, y: point.y - 29))
+        path.addLine(to: CGPoint(x: point.x + 7.3, y: point.y - 21.8))
+        path.addLine(to: CGPoint(x: point.x + 12.3, y: point.y - 31.3))
+        path.addLine(to: CGPoint(x: point.x + 17.9, y: point.y - 28.5))
+        path.addLine(to: CGPoint(x: point.x + 12.9, y: point.y - 19))
+        path.addLine(to: CGPoint(x: point.x + 22.4, y: point.y - 17.9))
+        path.closeSubpath()
+        ctx.addPath(path)
+        ctx.setFillColor(NSColor.white.cgColor)
+        ctx.fillPath()
+        ctx.addPath(path)
+        ctx.setStrokeColor(NSColor.black.withAlphaComponent(0.55).cgColor)
+        ctx.setLineWidth(1.2)
+        ctx.strokePath()
+    }
 }
 
 /// The ring a click leaves, so fast clicks read as clicks.
 func drawClick(at point: CGPoint, progress: Double, in ctx: CGContext) {
     guard progress > 0, progress < 1 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(CGFloat(1 - progress))
-    let radius = 30 * CGFloat(progress)
-    stroke(CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2),
-           Ink.accent, radius: radius, width: 3, in: ctx)
-    ctx.restoreGState()
+    faded(CGFloat(1 - progress), in: ctx) {
+        let radius = 30 * CGFloat(progress)
+        stroke(CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2),
+               Ink.accent, radius: radius, width: 3, in: ctx)
+    }
 }
 
 /// The line above the desk that says which of the app's three ways is being
@@ -580,58 +584,50 @@ func drawClick(at point: CGPoint, progress: Double, in ctx: CGContext) {
 /// band so it never covers a window.
 func drawChapter(_ step: String, _ title: String, _ sub: String, alpha: CGFloat,
                  rise: Double = 0, in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    let baseline: CGFloat = 44 - CGFloat(1 - rise) * 12
-    text(step.uppercased(), at: CGPoint(x: 46, y: baseline + 46), size: 13, color: Ink.accent,
-         weight: .bold, tracking: 1.6, in: ctx)
-    text(title, at: CGPoint(x: 46, y: baseline + 14), size: 30, color: Ink.text,
-         weight: .semibold, in: ctx)
-    text(sub, at: CGPoint(x: 46, y: baseline - 14), size: 16, color: Ink.dim, in: ctx)
-    ctx.restoreGState()
+    faded(alpha, in: ctx) {
+        let baseline: CGFloat = 44 - CGFloat(1 - rise) * 12
+        text(step.uppercased(), at: CGPoint(x: 46, y: baseline + 46), size: 13, color: Ink.accent,
+             weight: .bold, tracking: 1.6, in: ctx)
+        text(title, at: CGPoint(x: 46, y: baseline + 14), size: 30, color: Ink.text,
+             weight: .semibold, in: ctx)
+        text(sub, at: CGPoint(x: 46, y: baseline - 14), size: 16, color: Ink.dim, in: ctx)
+    }
 }
 
 /// A centred title, for the frames that end a variant.
 func drawCaption(_ line: String, _ sub: String, alpha: CGFloat, at y: CGFloat = 92,
                  in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    text(line, at: CGPoint(x: size.width / 2, y: y), size: 36, color: Ink.text,
-         weight: .semibold, align: .centre, in: ctx)
-    text(sub, at: CGPoint(x: size.width / 2, y: y - 36), size: 17, color: Ink.dim,
-         align: .centre, in: ctx)
-    ctx.restoreGState()
+    faded(alpha, in: ctx) {
+        text(line, at: CGPoint(x: size.width / 2, y: y), size: 36, color: Ink.text,
+             weight: .semibold, align: .centre, in: ctx)
+        text(sub, at: CGPoint(x: size.width / 2, y: y - 36), size: 17, color: Ink.dim,
+             align: .centre, in: ctx)
+    }
 }
 
 /// The agent's line, typed a character at a time, with a dot that says who is
-/// talking and a caret that stops when the sentence lands.
-func drawPrompt(_ line: String, progress: Double, alpha: CGFloat, y: CGFloat = 46,
+/// talking and a caret that stops when the sentence lands. Centred low on the
+/// stage unless a scene hands it a `frame` of its own.
+func drawPrompt(_ line: String, progress: Double, alpha: CGFloat, frame: CGRect? = nil,
                 label: String = "", in ctx: CGContext) {
-    guard alpha > 0.01 else { return }
-    ctx.saveGState()
-    ctx.setAlpha(alpha)
-    let shown = typed(line, progress)
-    let box = CGRect(x: size.width / 2 - 396, y: y, width: 792, height: 64)
-    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 30, color: Ink.shadow.cgColor)
-    fill(box, Ink.panel, radius: 15, in: ctx)
-    ctx.setShadow(offset: .zero, blur: 0, color: nil)
-    stroke(box, Ink.accent.withAlphaComponent(0.55), radius: 15, width: 1.5, in: ctx)
-    fill(CGRect(x: box.minX + 22, y: box.midY - 5, width: 10, height: 10), Ink.accent,
-         radius: 5, in: ctx)
-    let start = box.minX + 46
-    let advance = text(shown, at: CGPoint(x: start, y: box.midY - 7), size: 16.5, color: Ink.text,
-                       mono: true, in: ctx)
-    if progress < 1 {
-        fill(CGRect(x: start + advance + 2, y: box.midY - 10, width: 9, height: 20),
-             Ink.accent.withAlphaComponent(0.8), radius: 1.5, in: ctx)
+    faded(alpha, in: ctx) {
+        let shown = typed(line, progress)
+        let box = frame ?? CGRect(x: size.width / 2 - 396, y: 46, width: 792, height: 64)
+        panel(box, radius: 15, border: Ink.accent.withAlphaComponent(0.55), borderWidth: 1.5, in: ctx)
+        fill(CGRect(x: box.minX + 22, y: box.midY - 5, width: 10, height: 10), Ink.accent,
+             radius: 5, in: ctx)
+        let start = box.minX + 46
+        let advance = text(shown, at: CGPoint(x: start, y: box.midY - 7), size: 16.5, color: Ink.text,
+                           mono: true, in: ctx)
+        if progress < 1 {
+            fill(CGRect(x: start + advance + 2, y: box.midY - 10, width: 9, height: 20),
+                 Ink.accent.withAlphaComponent(0.8), radius: 1.5, in: ctx)
+        }
+        if !label.isEmpty {
+            text(label, at: CGPoint(x: box.maxX - 22, y: box.midY - 6), size: 13, color: Ink.dim,
+                 weight: .medium, align: .right, in: ctx)
+        }
     }
-    if !label.isEmpty {
-        text(label, at: CGPoint(x: box.maxX - 22, y: box.midY - 6), size: 13, color: Ink.dim,
-             weight: .medium, align: .right, in: ctx)
-    }
-    ctx.restoreGState()
 }
 
 // MARK: - Output

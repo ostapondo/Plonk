@@ -101,7 +101,7 @@ struct Release: Equatable {
             )
         }
         let page = (root["html_url"] as? String).flatMap(URL.init(string:))
-            ?? URL(string: "https://github.com/\(repository)/releases/latest")!
+            ?? releasesPageURL
         return Release(
             version: version,
             downloadURL: download,

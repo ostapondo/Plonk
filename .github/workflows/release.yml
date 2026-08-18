@@ -53,6 +53,8 @@ concurrency:
 jobs:
   app:
     runs-on: macos-15
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     permissions:
       contents: write # create the release, upload the zip
       id-token: write # sign the attestation
@@ -269,6 +271,7 @@ jobs:
           # failure, it is a no-op — publishing again would be the failure.
           if npm view "plonk-mcp@$PACKAGE" version > /dev/null 2>&1; then
             echo "published=yes" >> "$GITHUB_OUTPUT"
+            echo "plonk-mcp@$PACKAGE is already on npm; nothing to publish."
           else
             echo "published=no" >> "$GITHUB_OUTPUT"
           fi
@@ -286,10 +289,6 @@ jobs:
         if: steps.version.outputs.published == 'no'
         working-directory: mcp
         run: npm publish --provenance --access public
-
-      - name: Already published
-        if: steps.version.outputs.published == 'yes'
-        run: echo "plonk-mcp@${{ steps.version.outputs.version }} is already on npm; nothing to do."
 
       # Being on npm is not the same as being findable. The registry at
       # registry.modelcontextprotocol.io is what MCP clients and directories
@@ -361,19 +360,12 @@ jobs:
       - run: npm ci
         working-directory: mcp
 
-      - name: Read the version
-        id: version
-        run: |
-          set -eu
-          . ./version.env
-          echo "version=$MARKETING_VERSION" >> "$GITHUB_OUTPUT"
-
       - run: ./scripts/build-mcpb.sh
 
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         id: attest
         with:
-          subject-path: mcp/plonk-${{ steps.version.outputs.version }}.mcpb
+          subject-path: mcp/plonk-${{ needs.app.outputs.version }}.mcpb
 
       # Same as the app: the attestation is in GitHub's store, and a copy sits
       # on the release beside the bundle it covers.
@@ -381,7 +373,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BUNDLE: ${{ steps.attest.outputs.bundle-path }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.app.outputs.version }}
         run: |
           set -eu
           cp "$BUNDLE" "mcp/plonk-$VERSION.mcpb.sigstore.json"
@@ -398,7 +390,7 @@ jobs:
         continue-on-error: true
         if: env.SMITHERY_API_KEY != ''
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.app.outputs.version }}
         run: |
           set -eu
           # The off-spec build: Smithery validates manifest.tools against the

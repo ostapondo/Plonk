@@ -66,8 +66,4 @@ extension HotkeyAction {
         }
         return Hotkey(keyCode: UInt32(code), control: true, option: true, shift: shift)
     }
-
-    static var defaults: [String: String] {
-        allCases.reduce(into: [:]) { $0[$1.rawValue] = $1.defaultHotkey.spec }
-    }
 }

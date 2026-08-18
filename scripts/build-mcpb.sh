@@ -45,13 +45,12 @@ STAGE=mcp/.mcpb-build
 VERSION=$(node -p 'require("./mcp/package.json").version')
 
 rm -rf "$STAGE"
-mkdir -p "$STAGE/server" "$OUT"
+mkdir -p "$STAGE/server/tools" "$OUT"
 
 # The compiled server, and nothing else from mcp/: no sources, no tests, no
 # tsconfig. A bundle is read by clients, not by contributors.
 (cd mcp && npm run --silent build)
 cp mcp/dist/*.js "$STAGE/server/"
-mkdir -p "$STAGE/server/tools"
 cp mcp/dist/tools/*.js "$STAGE/server/tools/"
 
 # package.json comes along for two reasons: "type": "module", without which
@@ -83,4 +82,4 @@ else
 fi
 
 rm -rf "$STAGE"
-printf "\nwrote %s/plonk-%s%s.mcpb\n" "$OUT" "$VERSION" "$SUFFIX"
+printf "\nwrote %s\n" "$BUNDLE"

@@ -489,6 +489,11 @@
 "zoneSet.onThisScreenNow" = "On this screen now";
 "zoneSet.editThis" = "Edit this set";
 "zoneSet.editCopy" = "Edit a copy of this template";
+"zoneSet.hintPick" = "pick";
+"zoneSet.hintUse" = "use it";
+"zoneSet.hintEdit" = "edit";
+"zoneSet.hintNew" = "new";
+"zoneSet.hintClose" = "close";
 
 /* The fullscreen zone editor. */
 "zoneEditor.name" = "Layout name";
@@ -618,6 +623,9 @@
 "keys.rectangleURLsHelp" = "A URL scheme belongs to one app at a time, so turning this on takes rectangle:// from an installed Rectangle and its own URLs stop working. Off, Plonk still answers plonk://execute-action with the same action names.";
 "keys.setOnPage %@" = "Set on the %@ page";
 "palette.askTheAgent" = "ask the agent";
+"palette.hintNavigate" = "navigate";
+"palette.hintRun" = "run";
+"palette.hintClose" = "close";
 
 /* The panel shown while a workspace comes up. */
 "launch.launching %@" = "Launching %@";

@@ -11,12 +11,7 @@ struct HomePage: View {
     @ObservedObject var model: AppModel
     @Environment(\.colorScheme) private var scheme
 
-    private var guide: GettingStarted {
-        GettingStarted(accessibilityGranted: model.accessibilityGranted,
-                       screenRecordingGranted: model.screenRecordingGranted,
-                       snapped: model.config.sawFirstSnap,
-                       agentConnected: model.config.sawFirstAgent)
-    }
+    private var guide: GettingStarted { model.gettingStarted }
 
     var body: some View {
         ScrollView {
@@ -87,7 +82,7 @@ struct HomePage: View {
                         .kerning(1)
                         .foregroundStyle(model.accent)
                 }
-                .opacity(ready ? 1 : 0)
+                .opacity(model.allPermissionsGranted ? 1 : 0)
                 Text(.homeHeadline)
                     .font(.system(size: 26, weight: .bold))
                     .kerning(-0.4)
@@ -135,18 +130,7 @@ struct HomePage: View {
     /// The set assigned to the main screen, so the picture is of this Mac and
     /// not of a layout nobody chose. Empty means edge snapping, which has no
     /// zones to draw.
-    private var previewZones: [ZoneRect] {
-        guard let name = model.screenAssignments[0] else {
-            return model.zoneSets[BuiltinZoneSets.defaultName] ?? []
-        }
-        return name.isEmpty ? [] : model.zoneSets[name] ?? []
-    }
-
-    /// The same three facts the top bar's pill reports, so the badge cannot
-    /// claim everything is ready while the bar says a permission is missing.
-    private var ready: Bool {
-        model.accessibilityGranted && model.screenRecordingGranted && model.apiWarning == nil
-    }
+    private var previewZones: [ZoneRect] { model.zones(onScreen: 0) }
 
     private func keys(_ action: HotkeyAction) -> [String] {
         model.hotkeyParts[action.rawValue] ?? []

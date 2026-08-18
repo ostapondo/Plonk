@@ -14,10 +14,14 @@ final class ConfigStore {
     private let url: URL
     private let backupURL: URL
 
-    init(directory: URL? = nil) {
-        let dir = directory ?? FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    /// Where the app keeps what it owns: the config, the API token.
+    static var supportDirectory: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Plonk", isDirectory: true)
+    }
+
+    init(directory: URL? = nil) {
+        let dir = directory ?? Self.supportDirectory
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         url = dir.appendingPathComponent("config.json")
         backupURL = dir.appendingPathComponent("config.json.bad")

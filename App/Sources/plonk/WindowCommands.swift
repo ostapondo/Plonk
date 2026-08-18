@@ -91,9 +91,9 @@ final class WindowCommands {
         // and a screen with no zones counts as one, which turns this into
         // "next window over here". Still the useful move.
         let zone = zones
-            .filter { Self.rect(of: $0, in: visible).contains(target.frame.center) }
+            .filter { ZoneGeometry.frame(for: $0.frac, in: visible).contains(target.frame.center) }
             .min { $0.w * $0.h < $1.w * $1.h }
-            .map { Self.rect(of: $0, in: visible) } ?? visible
+            .map { ZoneGeometry.frame(for: $0.frac, in: visible) } ?? visible
 
         guard let next = WindowNavigator.nextInZone(after: current, candidates: all.map(\.frame),
                                                     zone: zone, backwards: backwards) else {
@@ -183,15 +183,6 @@ final class WindowCommands {
         if a.title != b.title { return a.title < b.title }
         if a.frame.minX != b.frame.minX { return a.frame.minX < b.frame.minX }
         return a.frame.minY < b.frame.minY
-    }
-
-    /// Zone rects are fractions of a screen's visible area; window frames are
-    /// absolute AX points. These two turn one into the other.
-    private static func rect(of zone: ZoneRect, in visible: CGRect) -> CGRect {
-        CGRect(x: visible.minX + zone.x * visible.width,
-               y: visible.minY + zone.y * visible.height,
-               width: zone.w * visible.width,
-               height: zone.h * visible.height)
     }
 }
 

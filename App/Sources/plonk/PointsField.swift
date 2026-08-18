@@ -89,7 +89,7 @@ struct PointsField: View {
     }
 
     private func adopt(_ number: Double) {
-        knob = min(max(number, Double(range.lowerBound)), Double(range.upperBound))
+        knob = number.clamped(to: Double(range.lowerBound)...Double(range.upperBound))
         draft = String(Int(number))
     }
 

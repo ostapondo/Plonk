@@ -14,10 +14,8 @@ import ScreenCaptureKit
 // the same Screen Recording permission a screenshot already needs. Nothing is
 // written to disk and nothing is recorded; frames go straight to a layer.
 
-@available(macOS 13.0, *)
 final class CropAndLock: NSObject {
-    /// Panels are kept here so they outlive the call that made them and can be
-    /// closed together when the app quits.
+    /// Panels are kept here so they outlive the call that made them.
     private var panels: [CroppedPanel] = []
 
     /// Picks a region interactively, then floats a live thumbnail of it.
@@ -65,16 +63,9 @@ final class CropAndLock: NSObject {
         }
     }
 
-    var count: Int { panels.count }
-
     /// Pinned crops float over the desk, so a capture has to hide them or it
     /// photographs its own output.
     var visibleWindows: [NSWindow] { panels }
-
-    func closeAll() {
-        panels.forEach { $0.close() }
-        panels.removeAll()
-    }
 
     enum CropError: LocalizedError {
         case cancelled
@@ -93,7 +84,6 @@ final class CropAndLock: NSObject {
 
 // MARK: - The floating panel
 
-@available(macOS 13.0, *)
 final class CroppedPanel: NSPanel {
     private var stream: SCStream?
     private let output = StreamOutput()
@@ -178,31 +168,30 @@ final class CroppedPanel: NSPanel {
     }
 
     override func close() {
+        tearDown()
+        super.close()
+    }
+
+    /// Stops the stream and reports the panel gone. Idempotent, because both
+    /// `close()` and the delegate call arrive for a panel closed by its button.
+    private func tearDown() {
         if let stream {
             Task { try? await stream.stopCapture() }
             self.stream = nil
         }
         onClose?(self)
         onClose = nil
-        super.close()
     }
 }
 
-@available(macOS 13.0, *)
 extension CroppedPanel: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        if let stream {
-            Task { try? await stream.stopCapture() }
-            self.stream = nil
-        }
-        onClose?(self)
-        onClose = nil
+        tearDown()
     }
 }
 
 /// Turns stream buffers into images on whatever queue the stream uses, and
 /// hands them to the layer on the main one.
-@available(macOS 13.0, *)
 private final class StreamOutput: NSObject, SCStreamOutput {
     var onFrame: ((CGImage) -> Void)?
     /// Built once. A CIContext carries GPU state and is meant to be reused;

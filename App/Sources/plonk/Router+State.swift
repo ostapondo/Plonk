@@ -7,9 +7,8 @@ import AppKit
 
 extension Router {
     func state() -> [String: Any] {
-        var zoneSets: [String: [[String: Double]]] = [:]
-        for (name, zones) in BuiltinZoneSets.all { zoneSets[name] = zones.map(\.asDict) }
-        for (name, zones) in store.config.zoneSets { zoneSets[name] = zones.map(\.asDict) }
+        let zoneSets = BuiltinZoneSets.all.merging(store.config.zoneSets) { _, custom in custom }
+            .mapValues { $0.map(\.asDict) }
 
         let screens = windows.screens()
         // Assignments are stored per display UUID; agents work in screen indices.

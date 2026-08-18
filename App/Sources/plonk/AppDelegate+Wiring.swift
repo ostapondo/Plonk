@@ -12,14 +12,22 @@ extension AppDelegate {
                               patterns: store.config.excludedApps)
     }
 
+    /// The same check as a closure, for the managers that hold one.
+    var exclusionCheck: (NSRunningApplication) -> Bool {
+        { [weak self] app in self?.isExcluded(app) ?? false }
+    }
+
+    func zones(onScreen index: Int) -> [ZoneRect] {
+        store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
+    }
+
+    var zoneGapPoints: CGFloat { CGFloat(store.config.zoneGap) }
+
     func setupCommands() {
-        commands.zonesForScreen = { [weak self] index in
-            guard let self else { return [] }
-            return store.config.zones(forKeys: ScreenIdentity.keys(forIndex: index))
-        }
-        commands.isExcluded = { [weak self] app in self?.isExcluded(app) ?? false }
+        commands.zonesForScreen = { [weak self] index in self?.zones(onScreen: index) ?? [] }
+        commands.isExcluded = exclusionCheck
         commands.announce = { HUD.shared.show($0) }
-        commands.zoneGap = { [weak self] in CGFloat(self?.store.config.zoneGap ?? 0) }
+        commands.zoneGap = { [weak self] in self?.zoneGapPoints ?? 0 }
     }
 
     func setupPresenter() {

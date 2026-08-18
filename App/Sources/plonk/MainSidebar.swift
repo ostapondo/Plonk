@@ -21,10 +21,6 @@ struct MainSidebar: View {
     /// bar, so the first thing in the sidebar would sit behind them.
     private static let lights: CGFloat = 34
 
-    private var current: SettingsPage? {
-        model.settingsPages.first { $0.id == model.selectedPage } ?? model.settingsPages.first
-    }
-
     private func pages(of group: SettingsGroup) -> [SettingsPage] {
         model.settingsPages.filter { $0.parent == group.id }
     }
@@ -81,10 +77,7 @@ struct MainSidebar: View {
     // MARK: - Rows
 
     private func heading(_ title: LocalizedStringResource) -> some View {
-        Text(String(localized: title).uppercased())
-            .font(.system(size: 11, weight: .bold))
-            .kerning(0.45)
-            .muted()
+        Eyebrow(title, size: 11, kerning: 0.45)
             .padding(.horizontal, 8)
             .padding(.top, 9)
             .padding(.bottom, 4)
@@ -104,7 +97,7 @@ struct MainSidebar: View {
     }
 
     private func row(_ page: SettingsPage, icon: String) -> some View {
-        let selected = current?.id == page.id
+        let selected = model.currentPage?.id == page.id
         return Button {
             model.selectedPage = page.id
         } label: {

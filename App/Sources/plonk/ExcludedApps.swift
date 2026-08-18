@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 // The list of apps Plonk keeps its hands off, as a list of apps rather than a
 // list of strings.
@@ -27,7 +26,7 @@ struct ExcludedApps: View {
         HStack(spacing: 8) {
             Button(String(localized: .excludedChooseApp), action: chooseApp)
             Menu(String(localized: .excludedAddRunning)) {
-                ForEach(runningApps, id: \.bundleIdentifier) { app in
+                ForEach(AppPicker.runningApps, id: \.bundleIdentifier) { app in
                     Button(app.localizedName ?? String(localized: .excludedUnnamed)) {
                         add(app.bundleIdentifier ?? app.localizedName ?? "")
                     }
@@ -48,57 +47,22 @@ struct ExcludedApps: View {
     }
 
     private func row(for pattern: String) -> some View {
-        let known = Self.installedApp(for: pattern)
-        return HStack(spacing: 10) {
-            if let icon = known?.icon {
-                Image(nsImage: icon).resizable().frame(width: 20, height: 20)
+        let known = AppPicker.installedApp(for: pattern)
+        return AppRow(title: known?.name ?? pattern, icon: known?.icon, removeHelp: .excludedStopExcluding) {
+            model.actions?.update(\.excludedApps, to: model.config.excludedApps.filter { $0 != pattern })
+        } subtitle: {
+            // The pattern is only worth showing when it is not simply the
+            // name already on the line above it.
+            if known != nil {
+                Text(pattern).monospaced()
             } else {
-                Image(systemName: "questionmark.app.dashed")
-                    .frame(width: 20)
-                    .foregroundStyle(.secondary)
+                Text(.excludedMatchedAnywhere)
             }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(known?.name ?? pattern)
-                // The pattern is only worth showing when it is not simply the
-                // name already on the line above it.
-                if known != nil {
-                    Text(pattern)
-                        .font(.caption)
-                        .monospaced()
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(.excludedMatchedAnywhere)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-            Button {
-                model.actions?.update(\.excludedApps, to: model.config.excludedApps.filter { $0 != pattern })
-            } label: {
-                Image(systemName: "minus.circle.fill")
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
-            .help(String(localized: .excludedStopExcluding))
         }
     }
 
-    private var runningApps: [NSRunningApplication] {
-        NSWorkspace.shared.runningApplications
-            .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
-            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
-    }
-
     private func chooseApp() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.application]
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = true
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.prompt = String(localized: .excludedPrompt)
-        guard panel.runModal() == .OK else { return }
-        for url in panel.urls {
+        for url in AppPicker.chooseApps(prompt: .excludedPrompt) {
             // The bundle id, not the name: it survives the app being renamed
             // or localized, and it is what the app reports about itself.
             add(Bundle(url: url)?.bundleIdentifier ?? url.deletingPathExtension().lastPathComponent)
@@ -113,14 +77,5 @@ struct ExcludedApps: View {
         }
         model.actions?.update(\.excludedApps, to: model.config.excludedApps + [pattern])
         typed = ""
-    }
-
-    /// Name and icon for a pattern that happens to be an installed app's
-    /// bundle id. Nil for a bare word, which is left to speak for itself.
-    private static func installedApp(for pattern: String) -> (name: String, icon: NSImage)? {
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: pattern) else { return nil }
-        let name = FileManager.default.displayName(atPath: url.path)
-        return (name.replacingOccurrences(of: ".app", with: ""),
-                NSWorkspace.shared.icon(forFile: url.path))
     }
 }

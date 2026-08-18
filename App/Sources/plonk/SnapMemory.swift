@@ -81,10 +81,6 @@ final class SnapMemory {
         entries.removeValue(forKey: WindowKey(element: window))?.original
     }
 
-    func forget(_ window: AXUIElement) {
-        entries.removeValue(forKey: WindowKey(element: window))
-    }
-
     /// Every remembered placement, newest last.
     var placements: [(window: AXUIElement, frac: FracRect, screenUUID: String?, zoneIndex: Int?)] {
         entries
@@ -96,8 +92,6 @@ final class SnapMemory {
     func habit(ofApp key: String) -> (frac: FracRect, screenUUID: String?, zoneIndex: Int?)? {
         byApp[key]
     }
-
-    var count: Int { entries.count }
 
     /// Drops the least recently touched entries once the table is over
     /// capacity. Windows that have closed are indistinguishable from live ones

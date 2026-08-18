@@ -43,7 +43,7 @@ enum RectangleImport {
         "restore": .unsnap,
     ]
 
-    static let defaultsSuite = "com.knollsoft.Rectangle"
+    static let defaultsSuite = RectangleURLs.bundleID
 
     /// Whether a Rectangle action name is one of its fixed fractions of the
     /// screen, which is a zone set here.

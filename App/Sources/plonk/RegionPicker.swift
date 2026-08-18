@@ -118,18 +118,13 @@ private final class PickerView: NSView {
             onFinish?(nil)
             return
         }
-        // View → screen → CG: the last step flips y, because CG puts the
-        // origin at the top-left of the primary display.
-        let inScreen = window.convertToScreen(convert(selection, to: nil))
-        let primaryMaxY = NSScreen.screens.first?.frame.maxY ?? 0
-        onFinish?(CGRect(x: inScreen.minX, y: primaryMaxY - inScreen.maxY,
-                         width: inScreen.width, height: inScreen.height))
+        // View → screen → CG.
+        onFinish?(CGSpace.flip(window.convertToScreen(convert(selection, to: nil))))
     }
 
     private func selectionInView() -> NSRect? {
         guard let anchor, let current else { return nil }
-        return NSRect(x: min(anchor.x, current.x), y: min(anchor.y, current.y),
-                      width: abs(anchor.x - current.x), height: abs(anchor.y - current.y))
+        return NSRect(spanning: anchor, current)
     }
 
     override func draw(_ dirtyRect: NSRect) {

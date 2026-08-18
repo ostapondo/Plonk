@@ -21,8 +21,7 @@ final class MouseTools {
     private static let clickRadius: CGFloat = 34
 
     private let overlay = MouseOverlay()
-    private var tap: CFMachPort?
-    private var runLoopSource: CFRunLoopSource?
+    private var tap: EventTap?
     private var spotlightToken = 0
     private var lastCrosshair: NSPoint?
 
@@ -63,34 +62,16 @@ final class MouseTools {
             (1 << CGEventType.mouseMoved.rawValue) |
             (1 << CGEventType.leftMouseDragged.rawValue)
 
-        let context = Unmanaged.passUnretained(self).toOpaque()
         // A listen-only tap: these tools watch the pointer, they never take an
         // event away from anybody.
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap, place: .headInsertEventTap, options: .listenOnly,
-            eventsOfInterest: mask,
-            callback: { _, type, event, context in
-                guard let context else { return Unmanaged.passUnretained(event) }
-                Unmanaged<MouseTools>.fromOpaque(context).takeUnretainedValue().handle(type, event)
-                return Unmanaged.passUnretained(event)
-            },
-            userInfo: context
-        ) else {
-            NSLog("Plonk: could not create the mouse-tools event tap")
-            return
+        tap = EventTap(mask: mask, options: .listenOnly, name: "mouse-tools") { [unowned self] type, event in
+            handle(type, event)
+            return Unmanaged.passUnretained(event)
         }
-        self.tap = tap
-        let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
-        runLoopSource = source
-        CGEvent.tapEnable(tap: tap, enable: true)
         refreshPersistent()
     }
 
     func stop() {
-        if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
-        if let runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes) }
-        runLoopSource = nil
         tap = nil
         overlay.hide()
     }
@@ -126,10 +107,8 @@ final class MouseTools {
         let current = screens.firstIndex { $0.frame.contains(mouse) } ?? 0
         let next = screens[(current + 1) % screens.count]
         let centre = CGPoint(x: next.frame.midX, y: next.frame.midY)
-        // CGWarpMouseCursorPosition works in CG space: origin top-left of the
-        // primary display, y downward, which is the flip of NSScreen's.
-        let primaryMaxY = screens[0].frame.maxY
-        CGWarpMouseCursorPosition(CGPoint(x: centre.x, y: primaryMaxY - centre.y))
+        // CGWarpMouseCursorPosition works in CG space, the flip of NSScreen's.
+        CGWarpMouseCursorPosition(CGSpace.flip(centre))
         // Warping leaves the pointer where it was put but does not redraw it
         // anywhere obvious, so it is worth pointing at.
         flashSpotlight()
@@ -150,16 +129,15 @@ final class MouseTools {
     // MARK: - Tap
 
     private func handle(_ type: CGEventType, _ event: CGEvent) {
-        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
-            return
-        }
         guard !suspended else { return }
         switch type {
         case .leftMouseDown, .rightMouseDown:
             guard highlightEnabled else { return }
             let point = event.unflippedLocation
-            DispatchQueue.main.async { [weak self] in self?.flashClick(at: point) }
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                overlay.pulse(at: point, radius: Self.clickRadius, tint: tint)
+            }
         case .mouseMoved, .leftMouseDragged:
             guard crosshairsEnabled, spotlightToken == 0 || !overlay.isSpotlighting else { return }
             let point = event.unflippedLocation
@@ -170,10 +148,6 @@ final class MouseTools {
         default:
             break
         }
-    }
-
-    private func flashClick(at point: NSPoint) {
-        overlay.pulse(at: point, radius: Self.clickRadius, tint: tint)
     }
 
     /// Back to whatever should be on screen when nothing transient is showing.
@@ -195,8 +169,5 @@ final class MouseTools {
 
 private extension CGEvent {
     /// CG events are in top-left space; AppKit windows are in bottom-left.
-    var unflippedLocation: NSPoint {
-        let primaryMaxY = NSScreen.screens.first?.frame.maxY ?? 0
-        return NSPoint(x: location.x, y: primaryMaxY - location.y)
-    }
+    var unflippedLocation: NSPoint { CGSpace.flip(location) }
 }

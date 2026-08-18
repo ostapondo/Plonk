@@ -218,7 +218,7 @@ struct WorkspacesPage: View {
     }
 
     private func monitorTitle(_ index: Int) -> String {
-        let size = model.screenDescriptions.indices.contains(index) ? model.screenDescriptions[index] : ""
+        let size = model.screenDescription(index)
         return String(localized: index == 0 ? .workspacesMainDisplay(size)
                                             : .workspacesDisplay(index + 1, size))
     }

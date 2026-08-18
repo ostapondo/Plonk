@@ -52,11 +52,7 @@ final class ShotRoutes {
 
         capture(mode, annotate) { [weak self] image in
             guard let self else { return }
-            guard let image else {
-                respond(.conflict(
-                    "capture was cancelled, or Screen Recording permission is missing"))
-                return
-            }
+            guard let image else { return respond(Self.captureCancelled) }
             self.finish(image, body: body, annotate: annotate, respond: respond)
         }
     }
@@ -64,8 +60,8 @@ final class ShotRoutes {
     /// Photographs a named window, whatever is stacked in front of it.
     private func appCaptureRoute(_ body: [String: Any], annotate: Bool,
                                  respond: @escaping (HTTPResponse) -> Void) {
-        let query = WindowCapture.Query(app: trimmed(body["app"]),
-                                        titleContains: trimmed(body["title_contains"]))
+        let query = WindowCapture.Query(app: Router.trimmedName(body["app"]),
+                                        titleContains: Router.trimmedName(body["title_contains"]))
         // Checked before the closure, so a request that names no window is
         // answered the same way whether or not capture has been wired up yet.
         guard !query.isEmpty else {
@@ -130,7 +126,7 @@ final class ShotRoutes {
 
     /// Burns agent-supplied marks into an existing capture.
     func annotateRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let path = trimmed(body["path"]), let raw = body["marks"] as? [[String: Any]], !raw.isEmpty else {
+        guard let path = Router.trimmedName(body["path"]), let raw = body["marks"] as? [[String: Any]], !raw.isEmpty else {
             return .badRequest("body must be {\"path\", \"marks\": [{kind, points:[{x,y}], color?, width?}]}")
         }
         let marks = raw.compactMap { Annotation(dict: $0) }
@@ -185,8 +181,7 @@ final class ShotRoutes {
                         "lines": lines.map(\.asDict),
                     ]
                     if copy, !joined.isEmpty {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(joined, forType: .string)
+                        NSPasteboard.general.replaceContents(with: joined)
                         payload["clipboard"] = true
                     }
                     if lines.isEmpty { payload["note"] = "no text was recognized in that area" }
@@ -195,7 +190,7 @@ final class ShotRoutes {
             }
         }
 
-        if let path = trimmed(body["path"]) {
+        if let path = Router.trimmedName(body["path"]) {
             let expanded = (path as NSString).expandingTildeInPath
             guard let image = NSImage(contentsOfFile: expanded) else {
                 respond(.notFound("no readable image at \(expanded)"))
@@ -210,25 +205,19 @@ final class ShotRoutes {
         }
         let mode = CaptureMode(rawValue: (body["mode"] as? String) ?? "region") ?? .region
         capture(mode, false) { image in
-            guard let image else {
-                respond(.conflict(
-                    "capture was cancelled, or Screen Recording permission is missing"))
-                return
-            }
+            guard let image else { return respond(Self.captureCancelled) }
             read(image)
         }
     }
 
     // MARK: - Helpers
 
+    private static let captureCancelled = HTTPResponse.conflict(
+        "capture was cancelled, or Screen Recording permission is missing")
+
     private static func markedPath(for path: String) -> String {
         let url = URL(fileURLWithPath: path)
         let stem = url.deletingPathExtension().lastPathComponent
         return url.deletingLastPathComponent().appendingPathComponent("\(stem) marked.png").path
-    }
-
-    private func trimmed(_ value: Any?) -> String? {
-        guard let name = (value as? String)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return nil }
-        return name
     }
 }

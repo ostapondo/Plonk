@@ -96,8 +96,9 @@ if [ -z "$REQUIREMENT" ]; then
 	exit 1
 fi
 if [ ! -f "$EXPECTED" ]; then
-	printf '%s\n' "$REQUIREMENT" > "$EXPECTED"
-	echo "note: recorded this release's requirement in $EXPECTED — commit it." >&2
+	echo "error: $EXPECTED is missing, so there is nothing to hold this release to." >&2
+	echo "       Restore it from the repository; do not record this build's own signature." >&2
+	exit 1
 elif [ "$(cat "$EXPECTED")" != "$REQUIREMENT" ]; then
 	cat >&2 <<MSG
 error: this build is signed differently from every release so far.

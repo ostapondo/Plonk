@@ -5,7 +5,7 @@ import Foundation
 
 extension Router {
     func agentHelloRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let name = trimmedName(body["name"]) else {
+        guard let name = Self.trimmedName(body["name"]) else {
             return .badRequest("body must include name")
         }
         agents.register(name: name,
@@ -17,7 +17,7 @@ extension Router {
     }
 
     func selectAgentRoute(_ body: [String: Any]) -> HTTPResponse {
-        let name = trimmedName(body["name"])
+        let name = Self.trimmedName(body["name"])
         store.update { $0.selectedAgent = name }
         return .ok(name.map { ["ok": true, "selected_agent": $0] } ?? ["ok": true])
     }
@@ -43,7 +43,7 @@ extension Router {
             respond(.conflict("\"\(agent)\" cannot read the queue of \"\(name)\"; poll your own name"))
             return
         }
-        let wait = min(max(Double(query["wait"] ?? "0") ?? 0, 0), 25)
+        let wait = (Double(query["wait"] ?? "0") ?? 0).clamped(to: 0...25)
         agents.wait(for: name, seconds: wait) { tasks in
             respond(.ok(["tasks": tasks.map(\.asDict)]))
         }

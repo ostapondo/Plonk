@@ -1,6 +1,11 @@
 // Shared zod schemas for tool inputs.
 import { z } from "zod";
 
+export const pointSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+});
+
 export const frameSchema = z.object({
   x: z.number().min(0).max(1),
   y: z.number().min(0).max(1),

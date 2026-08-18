@@ -7,7 +7,6 @@ import SwiftUI
 
 struct HomeStatus: View {
     @ObservedObject var model: AppModel
-    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -19,8 +18,7 @@ struct HomeStatus: View {
     // MARK: - Agents
 
     private var agents: some View {
-        VStack(spacing: 0) {
-            header(.homeConnectedAgents)
+        SettingsCard(title: .homeConnectedAgents) {
             if model.connectedAgents.isEmpty {
                 row {
                     Text(.homeNoAgentYet)
@@ -53,7 +51,6 @@ struct HomeStatus: View {
                     .labelsHidden().toggleStyle(.switch).controlSize(.small)
             }
         }
-        .card()
     }
 
     /// With no agent selected every agent may drive, so every one of them is
@@ -66,8 +63,7 @@ struct HomeStatus: View {
     // MARK: - Local API
 
     private var api: some View {
-        VStack(spacing: 0) {
-            header(.aiLocalApi)
+        SettingsCard(title: .aiLocalApi) {
             row {
                 Text("127.0.0.1:\(ControlServer.port)")
                     .font(.system(size: 12, design: .monospaced))
@@ -103,34 +99,13 @@ struct HomeStatus: View {
                 Spacer(minLength: 0)
             }
         }
-        .card()
     }
 
     private func revealToken() {
         NSWorkspace.shared.activateFileViewerSelecting([APIToken.url()])
     }
 
-    // MARK: - Pieces
-
-    private func header(_ title: LocalizedStringResource) -> some View {
-        HStack {
-            Text(String(localized: title).uppercased())
-                .font(.system(size: 10, weight: .bold))
-                .kerning(0.8)
-                .muted()
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 11)
-        .padding(.bottom, 8)
-    }
-
     private func row<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack(spacing: 0) {
-            Divider()
-            HStack(spacing: 9) { content() }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
-        }
+        SettingBlock { HStack(spacing: 9) { content() } }
     }
 }

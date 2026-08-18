@@ -71,13 +71,6 @@ final class NewWindowWatcher {
         }
     }
 
-    func stop() {
-        let center = NSWorkspace.shared.notificationCenter
-        workspaceTokens.forEach(center.removeObserver)
-        workspaceTokens = []
-        observers.keys.forEach(unwatch)
-    }
-
     // MARK: - Observers
 
     private func watch(_ app: NSRunningApplication) {

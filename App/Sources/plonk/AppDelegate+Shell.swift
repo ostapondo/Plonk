@@ -96,10 +96,6 @@ extension AppDelegate {
         let started = Date()
         var ticks = 0
         var progress: Timer?
-        // Belt and braces. Both halves are queued on the main thread and the
-        // start is queued first, so FIFO already orders them; this is here so
-        // that stays true if either one ever moves.
-        var done = false
         let beat = {
             ticks += 1
             let dots = String(repeating: "·", count: 1 + ticks % 3)
@@ -108,14 +104,14 @@ extension AppDelegate {
             // beats, and short enough to clear itself if this stops ticking.
             HUD.shared.show(.hudWorking(adapter.name, dots, seconds), duration: 3)
         }
+        // Both halves are queued on the main thread and the start is queued
+        // first, so FIFO keeps stop after start.
         let stop = {
-            done = true
             progress?.invalidate()
             progress = nil
         }
 
         DispatchQueue.main.async {
-            guard !done else { return }
             beat()
             progress = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { _ in beat() }
         }

@@ -2,7 +2,7 @@
 // own instance, so per-session state (clientInfo) stays separate.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createRequire } from "node:module";
-import { call, type AgentIdentity } from "./api.js";
+import { call, type AgentIdentity, type IdentityHolder } from "./api.js";
 import { register as registerState } from "./tools/state.js";
 import { register as registerLayouts } from "./tools/layouts.js";
 import { register as registerWorkspaces } from "./tools/workspaces.js";
@@ -40,7 +40,7 @@ export function createPlonkServer(): McpServer {
  * "pet-project"). The initialized notification can outrun the initialize
  * handler's bookkeeping in the SDK, leaving clientInfo briefly unset, so this
  * polls instead of trusting the callback's timing. */
-export function watchClientInfo(
+function watchClientInfo(
   server: McpServer,
   onKnown: (info: { name: string; version: string }) => void
 ): void {
@@ -56,9 +56,26 @@ export function watchClientInfo(
   server.server.oninitialized = () => poll();
 }
 
+/** Once the client is known, names the holder after it and keeps the app told
+ * about it. Returns a stop function that ends both once they have started. */
+export function bindClient(server: McpServer, holder: IdentityHolder, nextPid: () => number): () => void {
+  let stop = (): void => {};
+  watchClientInfo(server, ({ name, version }) => {
+    const identity = { name, version, pid: nextPid() };
+    holder.identity = identity;
+    const stopHello = startHello(identity);
+    const stopInbox = startInboxLoop(server, identity);
+    stop = () => {
+      stopHello();
+      stopInbox();
+    };
+  });
+  return () => stop();
+}
+
 /** Registers the identity with the app and keeps it marked online with a
  * heartbeat. Returns a stop function for when the session ends. */
-export function startHello(identity: AgentIdentity): () => void {
+function startHello(identity: AgentIdentity): () => void {
   const hello = () =>
     call("/agents/hello", {
       method: "POST",
@@ -80,7 +97,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms).u
  * queue, and draining what this client cannot act on would silently throw the
  * user's words away instead of leaving them for a CLI adapter.
  * Returns a stop function; it is a no-op when the loop never started. */
-export function startInboxLoop(server: McpServer, identity: AgentIdentity): () => void {
+function startInboxLoop(server: McpServer, identity: AgentIdentity): () => void {
   if (!server.server.getClientCapabilities()?.sampling) {
     console.error(
       `plonk-mcp: ${identity.name} does not support MCP sampling, so Plonk cannot hand it spoken ` +

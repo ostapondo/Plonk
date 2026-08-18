@@ -11,10 +11,6 @@ import AppKit
 // across two files; nothing outside DragSnapManager should touch it.
 
 extension DragSnapManager {
-    func updateZone(_ event: NSEvent) {
-        updateZone(event.modifierFlags)
-    }
-
     func updateZone(_ flags: NSEvent.ModifierFlags) {
         let modifierHeld = flags.contains(modifierFlag)
         let spanHeld = flags.contains(Self.spanFlag)

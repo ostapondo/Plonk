@@ -120,10 +120,7 @@ struct Config: Codable {
     /// Assigned set name for a screen, or nil when it has no assignment.
     /// An empty string means edge snapping.
     func zoneAssignment(forKeys keys: [String]) -> String? {
-        for key in keys {
-            if let name = screenZoneSets[key] { return name }
-        }
-        return nil
+        keys.lazy.compactMap { screenZoneSets[$0] }.first
     }
 
     func zones(forKeys keys: [String]) -> [ZoneRect] {

@@ -141,22 +141,16 @@ final class DragSnapManager {
             let resized = abs(f.width - startFrame.width) > 2 || abs(f.height - startFrame.height) > 2
             if moved && !resized {
                 state = .active(win: win, startFrame: startFrame)
-                updateZone(event)
+                updateZone(event.modifierFlags)
             }
         case .active:
-            updateZone(event)
+            updateZone(event.modifierFlags)
         }
     }
 
+    /// A title-bar drag ending is the same drop as one Plonk drove itself.
     private func handleMouseUp() {
-        defer {
-            state = .idle
-            currentZone = nil
-            spanAnchor = nil
-            hideAll()
-        }
-        guard case .active(let win, let startFrame) = state, let zone = currentZone else { return }
-        drop(win, startFrame: startFrame, into: zone)
+        _ = endExternalDrag()
     }
 
     private func drop(_ win: AXUIElement, startFrame: CGRect, into zone: (screenIndex: Int, frac: FracRect)) {

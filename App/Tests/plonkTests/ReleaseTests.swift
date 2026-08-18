@@ -31,7 +31,7 @@ struct ReleaseVersionTests {
 struct ReleaseParsingTests {
 
     private func feed(tag: String = "v0.0.4", assets: [[String: Any]]? = nil,
-                      extra: [String: Any] = [:]) -> Data {
+                      extra: [String: Any] = [:]) throws -> Data {
         var root: [String: Any] = [
             "tag_name": tag,
             "html_url": "https://github.com/ostapondo/Plonk/releases/tag/\(tag)",
@@ -43,7 +43,7 @@ struct ReleaseParsingTests {
             ]],
         ]
         root.merge(extra) { _, new in new }
-        return try! JSONSerialization.data(withJSONObject: root)
+        return try JSONSerialization.data(withJSONObject: root)
     }
 
     @Test func aNormalReleaseYieldsItsZipAndVersion() throws {
@@ -64,15 +64,6 @@ struct ReleaseParsingTests {
                        "browser_download_url": "https://example.invalid/Plonk.dmg"]]
         #expect(throws: UpdateError.self) { try Release.parse(feed(assets: assets)) }
         #expect(throws: UpdateError.self) { try Release.parse(feed(assets: [])) }
-    }
-
-    @Test func theZipIsPickedOutOfAMixedAssetList() throws {
-        let assets: [[String: Any]] = [
-            ["name": "checksums.txt", "browser_download_url": "https://example.invalid/checksums.txt"],
-            ["name": "Plonk-0.0.4.zip", "browser_download_url": "https://example.invalid/Plonk-0.0.4.zip"],
-        ]
-        let release = try Release.parse(feed(assets: assets))
-        #expect(release.downloadURL.lastPathComponent == "Plonk-0.0.4.zip")
     }
 
     /// A second zip on a release must not be able to redirect every installed

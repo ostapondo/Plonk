@@ -33,13 +33,7 @@ final class EventBroadcaster {
         // revision it believes is current.
         connections.append(conn)
         startKeepaliveIfNeeded()
-        conn.send(content: Data(head.utf8), completion: .contentProcessed { [weak self] error in
-            guard error != nil else { return }
-            DispatchQueue.main.async {
-                conn.cancel()
-                self?.forget(conn)
-            }
-        })
+        send(Data(head.utf8), to: conn)
     }
 
     func broadcast(rev: Int, what: String) {
@@ -74,14 +68,17 @@ final class EventBroadcaster {
     }
 
     private func send(_ data: Data) {
-        for conn in connections {
-            conn.send(content: data, completion: .contentProcessed { [weak self] error in
-                guard error != nil else { return }
-                DispatchQueue.main.async {
-                    conn.cancel()
-                    self?.forget(conn)
-                }
-            })
-        }
+        for conn in connections { send(data, to: conn) }
+    }
+
+    /// A send that fails is the client gone; drop the connection.
+    private func send(_ data: Data, to conn: NWConnection) {
+        conn.send(content: data, completion: .contentProcessed { [weak self] error in
+            guard error != nil else { return }
+            DispatchQueue.main.async {
+                conn.cancel()
+                self?.forget(conn)
+            }
+        })
     }
 }

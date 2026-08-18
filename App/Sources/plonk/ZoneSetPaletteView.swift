@@ -40,9 +40,7 @@ struct ZoneSetPaletteView: View {
     }
 
     /// What the screen is on now. No assignment means the default set.
-    private var assigned: String {
-        model.screenAssignments[screenIndex] ?? BuiltinZoneSets.defaultName
-    }
+    private var assigned: String { model.assignedZoneSet(onScreen: screenIndex) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -74,8 +72,7 @@ struct ZoneSetPaletteView: View {
     }
 
     private var screenLabel: String {
-        let size = model.screenDescriptions.indices.contains(screenIndex)
-            ? model.screenDescriptions[screenIndex] : ""
+        let size = model.screenDescription(screenIndex)
         guard model.screenCount > 1 else { return size }
         return String(localized: size.isEmpty ? .zoneSetScreen(screenIndex + 1)
                                               : .zoneSetScreenWithSize(screenIndex + 1, size))
@@ -147,11 +144,11 @@ struct ZoneSetPaletteView: View {
 
     private var footer: some View {
         HStack(spacing: 14) {
-            hint(["↑", "↓"], "pick")
-            hint(["return"], "use it")
-            hint(["E"], "edit")
-            hint(["N"], "new")
-            hint(["esc"], "close")
+            hint(["↑", "↓"], .zoneSetHintPick)
+            hint(["return"], .zoneSetHintUse)
+            hint(["E"], .zoneSetHintEdit)
+            hint(["N"], .zoneSetHintNew)
+            hint(["esc"], .zoneSetHintClose)
             Spacer()
         }
         .padding(.horizontal, 16)
@@ -159,7 +156,7 @@ struct ZoneSetPaletteView: View {
         .overlay(alignment: .top) { Rectangle().fill(Ink.hairline).frame(height: 1) }
     }
 
-    private func hint(_ keys: [String], _ label: String) -> some View {
+    private func hint(_ keys: [String], _ label: LocalizedStringResource) -> some View {
         HStack(spacing: 5) {
             KeyCaps(parts: keys)
             Text(label).font(.system(size: 10.5)).muted()
@@ -203,7 +200,7 @@ struct ZoneSetPaletteView: View {
     private func move(_ delta: Int) {
         let count = rows.count
         guard count > 0 else { return }
-        selection = min(max(selection + delta, 0), count - 1)
+        selection = (selection + delta).clamped(to: 0...(count - 1))
     }
 
     private func startMonitor() {

@@ -10,16 +10,6 @@ import Foundation
 
 extension Config {
     /// Read a config file, tolerating every key it does not have.
-    ///
-    /// Swift synthesizes a decoder that demands every key, and there is no way
-    /// to tell it "use the property's default when one is missing". Spelling
-    /// that out by hand cost a line per field, and a new setting decoded only
-    /// if you remembered to add its line — which is a default that silently
-    /// stops applying, not a compiler error.
-    ///
-    /// So the file is merged over the defaults as JSON first. Every key is then
-    /// present, the synthesized decoder is enough, and adding a setting is the
-    /// field and nothing else.
     static func decode(_ data: Data) throws -> Config {
         guard let stored = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw Failure.notAnObject

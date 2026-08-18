@@ -179,17 +179,13 @@ enum WindowCapture {
             DispatchQueue.main.async { completion(.failure(.notPermitted)) }
             return
         }
-        guard !query.isEmpty else {
-            DispatchQueue.main.async { completion(.failure(.nothingAsked)) }
-            return
-        }
         let all = candidates()
-        let matches = ranked(query, among: all)
-        guard let best = matches.first else {
-            DispatchQueue.main.async { completion(.failure(.noMatch(query, tried: all.count))) }
-            return
+        switch find(query, among: all) {
+        case .failure(let failure):
+            DispatchQueue.main.async { completion(.failure(failure)) }
+        case .success(let best):
+            photograph(ranked(query, among: all), blaming: best, completion: completion)
         }
-        photograph(matches, blaming: best, completion: completion)
     }
 
     /// Tries the matches in turn. A minimized window and one merely parked on

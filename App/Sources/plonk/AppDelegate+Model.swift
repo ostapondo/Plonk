@@ -8,9 +8,7 @@ import AppKit
 
 extension AppDelegate {
     /// Bundle version; empty when running unbundled through `swift run`.
-    var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-    }
+    var appVersion: String { UpdateManager.bundleVersion ?? "" }
 
     /// The whole model, once, at launch. Everything config decides goes
     /// through applyConfig; what is left is fixed for the run or comes from
