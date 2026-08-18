@@ -114,12 +114,24 @@ jobs:
           PLONK_SIGN_IDENTITY: Plonk Signing
         run: ./scripts/release.sh
 
+      # A plain checksum file next to the archive, for anyone who has shasum
+      # but not gh: `shasum -a 256 -c Plonk-<version>.zip.sha256`. On its own
+      # that only proves the download finished, since a tampered zip would
+      # arrive with a tampered checksum beside it — so it is attested below
+      # along with the zip, and the pair can be checked the same way.
+      - name: Write the checksum
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: shasum -a 256 "Plonk-$VERSION.zip" > "Plonk-$VERSION.zip.sha256"
+
       # What ties Plonk-<version>.zip to this repository, this commit and this
       # workflow run. Without it the app's own promises are only checkable at
       # runtime, on a binary nobody can trace back to the source.
       - uses: actions/attest-build-provenance@v4
         with:
-          subject-path: Plonk-${{ steps.version.outputs.version }}.zip
+          subject-path: |
+            Plonk-${{ steps.version.outputs.version }}.zip
+            Plonk-${{ steps.version.outputs.version }}.zip.sha256
 
       - name: Publish the archive
         env:
@@ -128,7 +140,7 @@ jobs:
         run: |
           set -eu
           ZIP="Plonk-$VERSION.zip"
-          SHA=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
+          SHA=$(cut -d' ' -f1 < "$ZIP.sha256")
 
           STATE=$(gh release view "v$VERSION" --json isDraft \
             --jq 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo missing)
@@ -160,7 +172,7 @@ jobs:
                 "sha256: \`$SHA\`"
             )"
           fi
-          gh release upload "v$VERSION" "$ZIP" --clobber
+          gh release upload "v$VERSION" "$ZIP" "$ZIP.sha256" --clobber
 
           {
             echo "### Plonk $VERSION"

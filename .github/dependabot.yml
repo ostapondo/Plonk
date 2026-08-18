@@ -1,0 +1,33 @@
+version: 2
+
+# Weekly rather than daily. Nothing here has enough dependencies to make a
+# daily pull request anything but noise, and a week is well inside the window
+# that matters for a menu bar app with no server behind it.
+updates:
+  # The actions in .github/workflows/. This is the one that earns its keep: an
+  # action is third-party code running with write access to the repository and
+  # the release, and it is the only place in this project where that is true.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+
+  # mcp/package.json, two dependencies: the official MCP SDK and zod.
+  - package-ecosystem: npm
+    directory: /mcp
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: mcp
+
+  # App/Package.swift declares no third-party dependencies at all, so this
+  # opens nothing today. It is here so that the day one is added, it is watched
+  # from the commit that adds it rather than from whenever someone remembers.
+  - package-ecosystem: swift
+    directory: /App
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: app

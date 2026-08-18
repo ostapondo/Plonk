@@ -1,0 +1,57 @@
+name: CodeQL
+
+# Static analysis of the Swift app, on GitHub's free tier for public
+# repositories. It reads the code the way an attacker would rather than the way
+# a compiler does, so what it catches is the class of thing tests do not: a
+# value that reaches a shell, a path built from something a caller controls.
+#
+# Findings land in the Security tab. `security-and-quality` is the wider of the
+# two query suites, so some of what it reports is a correctness smell rather
+# than a vulnerability; both are worth a look on a codebase this size.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly, because a query suite that ships a new rule should find last
+    # week's code with it, not wait for the next commit to that file.
+    - cron: "27 5 * * 1"
+
+jobs:
+  analyze:
+    name: Analyze Swift
+    # Swift analysis only runs on macOS, and macos-14 still ships Swift 5.10
+    # while Package.swift asks for tools version 6.0 — the same reason
+    # ci.yml pins its Swift jobs above it.
+    runs-on: macos-latest
+    timeout-minutes: 90
+    permissions:
+      security-events: write # write the findings to the Security tab
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: swift
+          queries: security-and-quality
+          # Manual rather than autobuild. Autobuild exists to guess at an
+          # Xcode project and a scheme, and there is no .xcodeproj or
+          # .xcworkspace in this repository to guess at: the app is a Swift
+          # package under App/, built by the one command below. Naming it is
+          # both shorter than the guess and the same command scripts/build.sh
+          # runs, so the tree CodeQL reads is the tree that ships.
+          build-mode: manual
+
+      # Debug rather than `-c release` as in scripts/build.sh: CodeQL reads the
+      # source through the compiler as it runs, and the optimiser makes no
+      # difference to what it sees. This is the line ci.yml already builds with.
+      - name: Build
+        run: swift build
+        working-directory: App
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:swift"

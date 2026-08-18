@@ -17,6 +17,8 @@ out loud.</strong><br>
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-12d3a4?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-ffc531?style=flat-square">
   <img alt="MCP" src="https://img.shields.io/badge/MCP-20_tools-8b5cf6?style=flat-square">
+  <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/ostapondo/Plonk/codeql.yml?style=flat-square&label=CodeQL">
+  <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/ostapondo/Plonk?style=flat-square&label=OpenSSF%20Scorecard">
 </p>
 
 <p align="center">
@@ -103,6 +105,28 @@ The cask takes care of that for you.
 
 Running it alongside Rectangle or Magnet is fine, as long as their shortcuts do
 not collide.
+
+**Checking what you downloaded.** Notarizing an app means paying Apple for a
+developer account, and this project does not have one, so Plonk is signed with
+a certificate it made itself. That means macOS cannot tell you who built the
+app. There is a check that answers a more useful question, and you can run it
+yourself: was this exact file built by GitHub from the source in this
+repository?
+
+```sh
+gh attestation verify Plonk-<version>.zip --repo ostapondo/Plonk
+```
+
+Put the number from the file name in place of `<version>`. The command comes
+with the [GitHub CLI](https://cli.github.com), which is `brew install gh`. It
+prints the commit and the workflow run that built the archive. If the file was
+altered after it was built, or was not built from this repository at all, the
+command fails and tells you so.
+
+Every release also carries a small `Plonk-<version>.zip.sha256` file. Put it
+beside the zip and run `shasum -a 256 -c Plonk-<version>.zip.sha256` to confirm
+the download arrived complete and unchanged. That file is signed the same way
+as the zip, so `gh attestation verify` works on it too.
 
 <details>
 <summary>Installing by hand, Intel Macs, tiling managers, and removing it</summary>

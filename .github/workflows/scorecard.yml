@@ -1,0 +1,52 @@
+name: Scorecard
+
+# OpenSSF Scorecard grades this repository's supply chain against a fixed list
+# of checks: are actions pinned, is the release signed, is there a security
+# policy, does a dependency update ever land. It reads only what is already
+# public — no account, no agent, nothing sent from a user's machine.
+#
+# publish_results is what puts the score on the public OpenSSF API, which is
+# what the badge in README.md reads. It publishes the grade and the repository
+# name, nothing about anyone who runs Plonk.
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: "41 5 * * 1"
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # write the findings to the Security tab
+      id-token: write # sign the published result
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Scorecard reads the checkout; it has no use for a token sitting in
+          # .git/config while it does.
+          persist-credentials: false
+
+      - uses: ossf/scorecard-action@v2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      # Kept for the run itself: if the upload below is rejected, the findings
+      # are still downloadable from the run rather than lost.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 5
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
