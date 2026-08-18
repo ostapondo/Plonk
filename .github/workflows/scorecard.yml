@@ -33,7 +33,12 @@ jobs:
           # .git/config while it does.
           persist-credentials: false
 
-      - uses: ossf/scorecard-action@v2
+      # A full version tag, unlike every other action here. ossf publishes no
+      # moving v2: `git ls-remote --tags` on that repository lists v2.4.4 down
+      # to v2.1.2 and no bare major, so @v2 resolves to nothing and the job
+      # fails before it runs a step. Dependabot watches this file, so the pin
+      # moves with a pull request rather than by hand.
+      - uses: ossf/scorecard-action@v2.4.4
         with:
           results_file: results.sarif
           results_format: sarif
