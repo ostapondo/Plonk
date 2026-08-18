@@ -8,8 +8,7 @@ extension AppDelegate {
         awake.apply(store.config)
         awake.onChange = { [weak self] in
             guard let self else { return }
-            model.awakeOn = awake.isOn
-            model.awakeHeld = awake.requested
+            refreshAwakeModel()
             refreshStatusMenu()
             persistAwakeSession()
             // Also fires when the power source or a timeout flips it, which

@@ -80,9 +80,7 @@ extension UpdateManager {
     /// queue is where the routes are answered.
     private func stage(_ archive: URL, of release: Release,
                        requirement: SecRequirement, into installed: URL) {
-        DispatchQueue.main.async { [weak self] in
-            self?.set(phase: .verifying, status: .updateVerifying)
-        }
+        set(phase: .verifying, status: .updateVerifying)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let directory = FileManager.default.temporaryDirectory

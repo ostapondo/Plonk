@@ -127,7 +127,11 @@ extension AppDelegate {
     func applyRectangleURLs(_ config: Config, previous: Config?) {
         let wanted = config.handleRectangleURLs
         guard previous?.handleRectangleURLs != wanted else { return }
-        DispatchQueue.global(qos: .userInitiated).async {
+        setRectangleURLsHandled(wanted, qos: .userInitiated)
+    }
+
+    private func setRectangleURLsHandled(_ wanted: Bool, qos: DispatchQoS.QoSClass) {
+        DispatchQueue.global(qos: qos).async {
             RectangleURLs.setHandled(wanted) { [weak self] holding in
                 self?.model.holdsRectangleURLs = holding
             }
@@ -175,10 +179,6 @@ extension AppDelegate {
     /// arriving while the setting is off means this app is holding one nobody
     /// asked for. Give it back if there is a Rectangle to take it.
     private func returnRectangleURLs() {
-        DispatchQueue.global(qos: .utility).async {
-            RectangleURLs.setHandled(false) { [weak self] holding in
-                self?.model.holdsRectangleURLs = holding
-            }
-        }
+        setRectangleURLsHandled(false, qos: .utility)
     }
 }

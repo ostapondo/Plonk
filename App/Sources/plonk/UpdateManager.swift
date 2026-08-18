@@ -37,11 +37,11 @@ final class UpdateManager {
     /// applied, the same as the schedule behind it, so the first apply of an
     /// "on" reaches it.
     var automatic = false {
-        didSet { if automatic != oldValue { schedule.automatic = automatic } }
+        didSet { schedule.automatic = automatic }
     }
 
-    /// Take the settings as they now stand. `automatic` guards on the value
-    /// changing, because turning the schedule on restarts its countdown.
+    /// Take the settings as they now stand. The schedule guards on the value
+    /// changing, because turning it on restarts its countdown.
     func apply(_ config: Config) {
         automatic = config.updateCheckAutomatically
     }
@@ -69,9 +69,12 @@ final class UpdateManager {
 
     // MARK: - Version
 
-    static var currentVersionText: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+    /// Nil when running unbundled through `swift run`.
+    static var bundleVersion: String? {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
     }
+
+    static var currentVersionText: String { bundleVersion ?? "0" }
 
     static var currentVersion: ReleaseVersion? {
         ReleaseVersion(currentVersionText)
@@ -148,6 +151,6 @@ final class UpdateManager {
             self.status = status
             onChange?()
         }
-        Thread.isMainThread ? apply() : DispatchQueue.main.async(execute: apply)
+        OnMain.run(apply)
     }
 }
