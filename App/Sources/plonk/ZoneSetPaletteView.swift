@@ -144,11 +144,11 @@ struct ZoneSetPaletteView: View {
 
     private var footer: some View {
         HStack(spacing: 14) {
-            hint(["↑", "↓"], "pick")
-            hint(["return"], "use it")
-            hint(["E"], "edit")
-            hint(["N"], "new")
-            hint(["esc"], "close")
+            hint(["↑", "↓"], .zoneSetHintPick)
+            hint(["return"], .zoneSetHintUse)
+            hint(["E"], .zoneSetHintEdit)
+            hint(["N"], .zoneSetHintNew)
+            hint(["esc"], .zoneSetHintClose)
             Spacer()
         }
         .padding(.horizontal, 16)
@@ -156,7 +156,7 @@ struct ZoneSetPaletteView: View {
         .overlay(alignment: .top) { Rectangle().fill(Ink.hairline).frame(height: 1) }
     }
 
-    private func hint(_ keys: [String], _ label: String) -> some View {
+    private func hint(_ keys: [String], _ label: LocalizedStringResource) -> some View {
         HStack(spacing: 5) {
             KeyCaps(parts: keys)
             Text(label).font(.system(size: 10.5)).muted()

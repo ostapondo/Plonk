@@ -28,6 +28,11 @@ extension LocalizedStringResource {
     static let zoneSetOnThisScreenNow = Self.key("zoneSet.onThisScreenNow")
     static let zoneSetEditThis = Self.key("zoneSet.editThis")
     static let zoneSetEditCopy = Self.key("zoneSet.editCopy")
+    static let zoneSetHintPick = Self.key("zoneSet.hintPick")
+    static let zoneSetHintUse = Self.key("zoneSet.hintUse")
+    static let zoneSetHintEdit = Self.key("zoneSet.hintEdit")
+    static let zoneSetHintNew = Self.key("zoneSet.hintNew")
+    static let zoneSetHintClose = Self.key("zoneSet.hintClose")
 
     static func zoneSetScreen(_ number: Int) -> LocalizedStringResource {
         Self.key("zoneSet.screen \(number)")
