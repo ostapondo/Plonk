@@ -9,15 +9,11 @@ struct ShortcutsPage: View {
     @ObservedObject var model: AppModel
 
     private var groups: [(name: LocalizedStringResource, actions: [HotkeyAction])] {
-        var order: [HotkeyAction.Group] = []
-        var byGroup: [HotkeyAction.Group: [HotkeyAction]] = [:]
         // The Guide has its own editable section above; listing it again here
         // would show the same row twice.
-        for action in HotkeyAction.allCases where action.page != "shortcuts" {
-            if !order.contains(action.group) { order.append(action.group) }
-            byGroup[action.group, default: []].append(action)
-        }
-        return order.map { ($0.title, byGroup[$0] ?? []) }
+        HotkeyAction.allCases.filter { $0.page != "shortcuts" }
+            .groupedPreservingOrder(by: \.group)
+            .map { ($0.key.title, $0.elements) }
     }
 
     private func pageTitle(_ id: String) -> String {
