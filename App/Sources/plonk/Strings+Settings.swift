@@ -4,6 +4,17 @@ import Foundation
 // English values live in Resources/en.lproj/Localizable.strings.
 
 extension LocalizedStringResource {
+    static let featuresHelp = Self.key("features.help")
+    static let featuresSwitches = Self.key("features.switches")
+    static let featureZonesDetail = Self.key("feature.zonesDetail")
+    static let featureWorkspacesDetail = Self.key("feature.workspacesDetail")
+    static let featureShotDetail = Self.key("feature.shotDetail")
+    static let featureMouseDetail = Self.key("feature.mouseDetail")
+    static let featureRulerDetail = Self.key("feature.rulerDetail")
+    static let featureVoiceDetail = Self.key("feature.voiceDetail")
+    static let featureAwakeDetail = Self.key("feature.awakeDetail")
+    static let featureActiveDetail = Self.key("feature.activeDetail")
+
     static let awakeKeepNow = Self.key("awake.keepNow")
     static let awakePausedOnBattery = Self.key("awake.pausedOnBattery")
     static let awakeMenuBarGlow = Self.key("awake.menuBarGlow")

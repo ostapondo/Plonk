@@ -27,7 +27,7 @@ final class NewWindowWatcher {
 
     /// Take the settings as they now stand.
     func apply(_ config: Config) {
-        enabled = config.placeNewWindows
+        enabled = config.placeNewWindows && config.isEnabled(.zones)
     }
     /// Where this app's windows have been going, if anywhere: a fraction and
     /// the display it was on.

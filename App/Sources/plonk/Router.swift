@@ -5,7 +5,8 @@ import Network
 // exercised without a status bar or windows.
 //
 //   GET  /ping              liveness, cheap: touches neither AX nor the screen
-//   GET  /state
+//   GET  /state             disabled_features lists what the user switched off;
+//                           a route under one of them answers 409
 //   POST /awake             { on?, minutes?, until?, pid? }
 //   POST /active            { on?, minutes?, until? }   the idle timer, not sleep
 //   POST /layout            { items: [{ app, title?, screen?, frame: {x,y,w,h} }] }
@@ -99,6 +100,12 @@ final class Router {
             selected: store.config.selectedAgent, exclusive: store.config.agentExclusive
         ) {
             respond(.conflict(reason))
+            return
+        }
+        // The user switched the module off, so its routes are refused whoever
+        // asks. Reading state still says which ones, so an agent can tell.
+        if let feature = Feature.owning(path: path), !store.config.isEnabled(feature) {
+            respond(.conflict(feature.offReason))
             return
         }
 

@@ -40,6 +40,9 @@ extension Config {
         rulerEdgeTolerance = rulerEdgeTolerance.clamped(to: EdgeDetector.toleranceRange)
         awakeTimeoutMinutes = max(0, awakeTimeoutMinutes)
         activeTimeoutMinutes = max(0, activeTimeoutMinutes)
+        // A hand-edited file can name a feature twice or one that does not
+        // exist; the list is kept to known ids, each once, in a fixed order.
+        disabledFeatures = Feature.allCases.map(\.rawValue).filter(disabledFeatures.contains)
     }
 
     /// The key a modifier name stands for. Config stores the name because that

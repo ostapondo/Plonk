@@ -43,9 +43,13 @@ final class AwakeManager {
     /// so it has to be cheap and safe to run when nothing it reads moved.
     func apply(_ config: Config) {
         allowOnBattery = config.awakeAllowOnBattery
-        autoWhileCharging = config.awakeAutoWhileCharging
+        autoWhileCharging = config.awakeAutoWhileCharging && config.isEnabled(.awake)
         keepDisplayOn = config.awakeKeepDisplayOn
         timeoutMinutes = config.awakeTimeoutMinutes
+        // Switching the feature off ends a session outright rather than
+        // suspending it: a hold nobody can see in the menu any more should not
+        // be the thing keeping the Mac up.
+        if !config.isEnabled(.awake), requested { set(false) }
     }
 
     var isOnAC: Bool { Self.isOnAC }

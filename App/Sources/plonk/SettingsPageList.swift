@@ -45,6 +45,9 @@ enum SettingsPages {
         SettingsPage(id: "voice", title: .pageVoice, icon: "mic", parent: "automation") {
             AnyView(VoicePage(model: $0))
         },
+        SettingsPage(id: "features", title: .pageFeatures, icon: "switch.2", parent: "settings") {
+            AnyView(FeaturesPage(model: $0))
+        },
         SettingsPage(id: "appearance", title: .pageAppearance, icon: "paintpalette", parent: "settings") {
             AnyView(AppearancePage(model: $0))
         },

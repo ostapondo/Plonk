@@ -1,27 +1,22 @@
 import AppKit
 import SwiftUI
 
-// The menu bar item. A plain click opens the Plonk window; the dropdown moves
-// to right-click and keeps only what is worth doing without opening anything.
-//
-// The dropdown opens with the live zone set drawn across the top, and every
-// rectangle in it sends the front window there. That is the fourth way to place
-// a window: no shortcut to have learned, and nothing to be dragging.
+// The menu bar item. Either button opens the same dropdown: what is worth
+// doing without opening anything, and under Features a switch for every
+// module, so the menu stays only as long as what is switched on.
 
 final class StatusMenuController: NSObject {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
-    /// Rebuilt every time the menu opens, so the grid is the set that is live
-    /// on the screen right now rather than the one that was there at launch.
-    private let zonesHost = NSHostingView(rootView: StatusMenuZones(zones: [], summary: "",
-                                                                    snap: { _ in }))
-
-    /// The set on the main screen, and the line describing what is running.
-    var zonesOnMainScreen: () -> [ZoneRect] = { [] }
-    var setSummary: () -> String = { "" }
-    var onSnapZone: ((Int) -> Void)?
+    /// The switches, as a second menu dropped from the same icon.
+    private let toolsMenu = NSMenu()
+    /// Rebuilt every time the menu opens, and after every flip, so the switches
+    /// show what config holds now.
+    private let featuresHost = NSHostingView(rootView: StatusMenuFeatures(isOn: { _ in true },
+                                                                          toggle: { _, _ in }))
 
     var isAwakeRequested: () -> Bool = { false }
+    var isFeatureEnabled: (Feature) -> Bool = { _ in true }
     var workspaceNames: [String] = []
     /// Connected agents plus whether each one is the user's pick, queried when
     /// the menu opens so it always reflects live presence.
@@ -40,25 +35,22 @@ final class StatusMenuController: NSObject {
     var onSelectAgent: ((String?) -> Void)?
     var onToggleExclusive: (() -> Void)?
     var onOpenUpdate: (() -> Void)?
+    var onToggleFeature: ((Feature, Bool) -> Void)?
 
     private static let keepAwakeTag = 101
     private static let workspacesTag = 102
     private static let agentsTag = 103
     private static let updateTag = 104
+    private static let captureTag = 105
 
-    private static let zonesTag = 105
+    /// Which entry belongs to which feature, so an entry is hidden with it.
+    private static let featureTags: [(tag: Int, feature: Feature)] = [
+        (workspacesTag, .workspaces), (captureTag, .shot), (keepAwakeTag, .awake),
+    ]
 
     override init() {
         super.init()
         menu.delegate = self
-
-        zonesHost.frame = NSRect(x: 0, y: 0, width: StatusMenuZones.width,
-                                 height: StatusMenuZones.height)
-        let zones = NSMenuItem()
-        zones.tag = Self.zonesTag
-        zones.view = zonesHost
-        menu.addItem(zones)
-        menu.addItem(.separator())
 
         menu.addItem(entry(.menuOpenPlonk, #selector(openWindow)))
         menu.addItem(.separator())
@@ -77,11 +69,24 @@ final class StatusMenuController: NSObject {
         agents.submenu = NSMenu()
         menu.addItem(agents)
 
-        menu.addItem(entry(.menuCaptureRegion, #selector(captureRegion), key: "s"))
+        let capture = entry(.menuCaptureRegion, #selector(captureRegion), key: "s")
+        capture.tag = Self.captureTag
+        menu.addItem(capture)
 
         let awake = entry(.menuKeepAwake, #selector(toggleAwake))
         awake.tag = Self.keepAwakeTag
         menu.addItem(awake)
+
+        menu.addItem(.separator())
+        // Not a submenu: the switches open as a menu of their own, dropped
+        // from the icon once this one has closed, so they have the room and
+        // the menu stays a list of things to do.
+        menu.addItem(entry(.menuTools, #selector(openTools)))
+        featuresHost.frame = NSRect(x: 0, y: 0, width: StatusMenuFeatures.width,
+                                    height: StatusMenuFeatures.height)
+        let switches = NSMenuItem()
+        switches.view = featuresHost
+        toolsMenu.addItem(switches)
 
         menu.addItem(.separator())
         // Hidden unless there is something to install, so the menu keeps its
@@ -91,14 +96,12 @@ final class StatusMenuController: NSObject {
         update.isHidden = true
         menu.addItem(update)
         menu.addItem(entry(.menuReportBug, #selector(reportBug)))
-        menu.addItem(NSMenuItem(title: String(localized: .menuQuit),
-                                action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        // Through a selector of its own rather than NSApplication.terminate:
+        // macOS draws an icon beside the standard one, and the whole section
+        // indents to make room for it.
+        menu.addItem(entry(.menuQuit, #selector(quit), key: "q", modifiers: .command))
 
-        // Assigning item.menu permanently would swallow the click, so the button
-        // keeps its action and the menu is attached only for a right-click.
-        item.button?.target = self
-        item.button?.action = #selector(buttonClicked)
-        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        item.menu = menu
     }
 
     func refresh(icon: NSImage, tooltip: String, dimmed: Bool) {
@@ -108,18 +111,6 @@ final class StatusMenuController: NSObject {
         button.title = ""
         button.appearsDisabled = dimmed
         button.toolTip = tooltip
-    }
-
-    @objc private func buttonClicked() {
-        let event = NSApp.currentEvent
-        let wantsMenu = event?.type == .rightMouseUp || event?.modifierFlags.contains(.control) == true
-        guard wantsMenu else {
-            onOpenWindow?()
-            return
-        }
-        item.menu = menu
-        item.button?.performClick(nil)
-        item.menu = nil
     }
 
     private func entry(_ title: LocalizedStringResource, _ action: Selector, key: String = "",
@@ -135,6 +126,17 @@ final class StatusMenuController: NSObject {
     @objc private func toggleAwake() { onToggleAwake?() }
     @objc private func reportBug() { onReportBug?() }
     @objc private func openUpdate() { onOpenUpdate?() }
+    @objc private func quit() { NSApp.terminate(nil) }
+
+    /// Runs after the dropdown has closed. The item's menu is swapped for the
+    /// length of one click so the switches drop from the icon like the
+    /// dropdown does, then put back so the next click opens the dropdown.
+    @objc private func openTools() {
+        refreshFeatures()
+        item.menu = toolsMenu
+        item.button?.performClick(nil)
+        item.menu = menu
+    }
 
     @objc private func launchWorkspace(_ sender: NSMenuItem) {
         onLaunchWorkspace?(sender.title)
@@ -145,20 +147,28 @@ final class StatusMenuController: NSObject {
     }
 
     @objc private func toggleExclusive() { onToggleExclusive?() }
+
+    /// Entries for a feature that is off leave the menu, and the switches show
+    /// the state as it now stands. Run when the menu opens and after every flip,
+    /// so a feature switched off while the menu is up disappears on the spot.
+    private func refreshFeatures() {
+        for (tag, feature) in Self.featureTags {
+            menu.item(withTag: tag)?.isHidden = !isFeatureEnabled(feature)
+        }
+        featuresHost.rootView = StatusMenuFeatures(
+            isOn: { [weak self] feature in self?.isFeatureEnabled(feature) ?? true },
+            toggle: { [weak self] feature, on in
+                self?.onToggleFeature?(feature, on)
+                self?.refreshFeatures()
+            }
+        )
+    }
 }
 
 extension StatusMenuController: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
-        zonesHost.rootView = StatusMenuZones(
-            zones: zonesOnMainScreen(),
-            summary: setSummary(),
-            snap: { [weak self] number in
-                // The menu is tracking its own event loop, so it has to be told
-                // to stop before the window it is about to move can take focus.
-                menu.cancelTracking()
-                self?.onSnapZone?(number)
-            }
-        )
+        guard menu === self.menu else { return }
+        refreshFeatures()
         menu.item(withTag: Self.keepAwakeTag)?.state = isAwakeRequested() ? .on : .off
         if let update = menu.item(withTag: Self.updateTag) {
             let version = updateVersion()

@@ -11,6 +11,26 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Added
+
+- **Tools: a switch for every module.** Under Tools in the menu bar
+  dropdown, which opens a menu of switches from the icon, and on a Tools page under Settings, each of zones, workspaces,
+  screenshots, pointer tools, the ruler, voice, keep awake and stay active has
+  a switch. Off means off everywhere: the page leaves the sidebar, its entry
+  leaves the menu, its shortcuts are released to other apps, its manager
+  stands down and its API routes answer 409 to agents, who can read
+  `disabled_features` in `/state`. Settings are kept, so switching back on
+  restores what was there.
+
+### Changed
+
+- **The menu bar dropdown opens on either button.** A left click used to open
+  the window and a right click the menu; both open the menu now, and Open Plonk
+  is its first line. The zone grid at the top is gone, Quit is Quit, and the
+  bottom section no longer indents around an icon.
+
 ## 0.3.2 — 2026-08-19
 
 ### Fixed

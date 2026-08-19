@@ -7,7 +7,7 @@
 A workspace is a desk you can put away. It remembers the apps, the frame of
 every window, the monitor each one belongs on, and what each app should open on
 the way up. Launching one opens whatever is closed, waits for the windows, and
-puts them back — from the Workspaces page, or right-click the menu bar icon.
+puts them back — from the Workspaces page, or click the menu bar icon.
 Rename, recapture or delete from the workspace's `⋯` menu.
 
 | | |

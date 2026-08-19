@@ -39,9 +39,9 @@ final class MouseTools {
     func apply(_ config: Config) {
         let wasTint = tint
         tint = ZoneAppearance(config).tint
-        highlightEnabled = config.highlightClicksEnabled
-        crosshairsEnabled = config.crosshairsEnabled
-        if config.highlightClicksEnabled || config.crosshairsEnabled {
+        highlightEnabled = config.highlightClicksEnabled && config.isEnabled(.mouse)
+        crosshairsEnabled = config.crosshairsEnabled && config.isEnabled(.mouse)
+        if highlightEnabled || crosshairsEnabled {
             start()
             // A crosshair already on screen is repainted in the new colour
             // now rather than on the next mouse move.

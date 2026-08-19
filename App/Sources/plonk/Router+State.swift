@@ -26,6 +26,8 @@ extension Router {
             "active": active.isOn,
             "active_details": activeState(),
             "accessibility_granted": windows.isTrusted,
+            // Off by the user's choice; a route under one of these answers 409.
+            "disabled_features": store.config.disabledFeatures,
             "excluded_apps": store.config.excludedApps,
             "text_languages": store.config.textLanguages,
             "saved_layouts": store.config.workspaces.keys.sorted(),

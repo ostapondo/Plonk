@@ -5,17 +5,6 @@ import AppKit
 // see AGENTS.md.
 
 extension AppDelegate {
-    /// "2 displays · Priority" — what the menu bar says it is running, above
-    /// the grid it draws. An empty assignment is edge snapping, which is a set
-    /// of no zones rather than no answer.
-    func zoneSetSummary() -> String {
-        let assigned = store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: 0))
-            ?? BuiltinZoneSets.defaultName
-        let set = assigned.isEmpty ? String(localized: .zoneSetEdgeSnapping) : assigned
-        let displays = String(localized: .menuDisplayCount(NSScreen.screens.count))
-        return [displays, set].joined(separator: String(localized: .commonSeparator))
-    }
-
     func assignZoneSet(_ name: String?, toScreen index: Int) {
         store.update { $0.assignZoneSet(name, forKeys: ScreenIdentity.keys(forIndex: index)) }
         commands.relayout(screenIndex: index)
