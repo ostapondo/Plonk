@@ -11,6 +11,15 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## 0.3.2 — 2026-08-19
+
+### Fixed
+
+- **The window's close, minimise and zoom buttons work again.** 0.3.1 moved
+  the traffic lights down into the sidebar's panel, and in doing so moved them
+  out of the strip that takes their clicks: they drew where they should and did
+  nothing when pressed. They are back to working where they are.
+
 ## 0.3.1 — 2026-08-19
 
 ### Changed
