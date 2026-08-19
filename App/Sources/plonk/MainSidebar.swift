@@ -28,6 +28,13 @@ struct MainSidebar: View {
         model.visiblePages.filter { $0.parent == group.id }
     }
 
+    /// Whether a destination is a list rather than one page. Decided on every
+    /// page it has, not on the ones showing: a heading over Automation stays
+    /// when Voice is switched off, and goes only when nothing is left under it.
+    private func isList(_ group: SettingsGroup) -> Bool {
+        model.settingsPages.filter { $0.parent == group.id }.count > 1
+    }
+
     /// The hue a destination's icons carry. Home and Layout share plum, the
     /// app's own colour; the rest step through the palette in the order the
     /// groups are listed.
@@ -55,9 +62,9 @@ struct MainSidebar: View {
                         let children = pages(of: group)
                         // A destination holding one page is that page, and a
                         // heading over a list of one is noise.
-                        if children.count > 1, !rail { heading(group.title) }
+                        if isList(group), !rail, !children.isEmpty { heading(group.title) }
                         ForEach(children) {
-                            row($0, icon: children.count > 1 ? $0.icon : group.icon, hue: hue(of: group))
+                            row($0, icon: isList(group) ? $0.icon : group.icon, hue: hue(of: group))
                         }
                     }
                     if !rail, model.isEnabled(.workspaces), !model.workspaceNames.isEmpty { workspaces }
