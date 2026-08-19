@@ -44,7 +44,5 @@ struct StatusMenuFeatures: View {
         }
         .padding(.horizontal, 14)
         .frame(height: Self.rowHeight)
-        .contentShape(Rectangle())
-        .onTapGesture { toggle(feature, !isOn(feature)) }
     }
 }
