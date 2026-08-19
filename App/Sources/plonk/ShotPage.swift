@@ -13,10 +13,16 @@ struct ShotPage: View {
             SettingsCard(title: .shotCapture) {
                 SettingBlock {
                     HStack(spacing: 8) {
+                        // Chips, not system buttons: bordered draws its label in
+                        // the accent on a barely-there fill, so next to one
+                        // prominent button the other two read as a segmented
+                        // control with Region selected, not as three actions.
                         Button(String(localized: .shotCaptureRegion)) { model.actions?.capture(.region) }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.chipProminent)
                         Button(String(localized: .shotCaptureWindow)) { model.actions?.capture(.window) }
+                            .buttonStyle(.chip)
                         Button(String(localized: .shotCaptureScreen)) { model.actions?.capture(.screen) }
+                            .buttonStyle(.chip)
                     }
                 }
             }
@@ -53,9 +59,14 @@ struct ShotPage: View {
                         TextField(text: $folderDraft) { Text(.shotSaveFolder) }
                             .textFieldStyle(.roundedBorder)
                             .labelsHidden()
-                            .frame(width: 190)
+                            // Flexible: with a rigid 190 the row keeps its width
+                            // when the card runs out, and it is the button that
+                            // gets crushed to a sliver. The field gives instead.
+                            .frame(minWidth: 120, maxWidth: 190)
                             .onSubmit(commitFolder)
                         Button(String(localized: .commonChoose), action: chooseFolder)
+                            .buttonStyle(.chip)
+                            .fixedSize()
                     }
                     .controlSize(.small)
                 }

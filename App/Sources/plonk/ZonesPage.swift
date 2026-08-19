@@ -18,10 +18,7 @@ struct ZonesPage: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 ZoneSetCanvas(model: model)
-                HStack(alignment: .top, spacing: 12) {
-                    dragging
-                    shortcuts
-                }
+                Columns { dragging } trailing: { shortcuts }
                 numbered
                 switching
                 focus
@@ -48,7 +45,8 @@ struct ZonesPage: View {
                          selection: model.binding(\.zonesModifier),
                          options: [(.zonesModifierShift, "shift"),
                                    (.zonesModifierOption, "option"),
-                                   (.zonesModifierControl, "control")])
+                                   (.zonesModifierControl, "control")],
+                         stacked: true)
         }
     }
 

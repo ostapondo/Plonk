@@ -1,50 +1,63 @@
 import AppKit
 import SwiftUI
 
-// The look every page is built from: three surfaces, one hairline, one radius.
+// The look every page is built from: four surfaces, one hairline, one radius.
 //
-// Stated as real colours rather than opacities over whatever macOS supplies.
-// Tinted greys layered on the window background gave two panes that were nearly
-// the same value, and the whole window read flat; a page that is definitely
-// darker than its cards is what makes the cards look like cards.
+// The window is a dark ground. The sidebar is a panel set into it, a step
+// darker; every card on a page is a step lighter. That order is the whole
+// design: the menu recedes, the page comes forward, and the ground between them
+// is what makes both read as things rather than as one flat sheet.
 //
 // Both themes are spelled out because the app has a theme of its own now: a
 // window forced to light while the system is dark cannot ask NSColor what grey
 // to use and get an answer that suits the window it is actually in.
 
 enum Ink {
-    static let radius: CGFloat = 11
+    static let radius: CGFloat = 16
+    /// The sidebar panel's corner, and how far it sits from the window edge.
+    static let panelRadius: CGFloat = 14
+    static let inset: CGFloat = 12
 
-    /// Behind the pages. The sidebar keeps the system material, and this sits
-    /// beside it, a shade further back.
+    /// The ground: what the window is, behind the sidebar and the page.
     static func page(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.047, green: 0.051, blue: 0.067)
-                        : Color(red: 0.957, green: 0.961, blue: 0.973)
+        scheme == .dark ? Color(red: 0.141, green: 0.141, blue: 0.165)
+                        : Color(red: 0.945, green: 0.947, blue: 0.961)
     }
 
-    /// The bar above the page: a shade in front of it, so the page reads as
-    /// something the window contains rather than as the window itself.
-    static func chrome(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.067, green: 0.075, blue: 0.098) : .white
+    /// The sidebar panel, a step behind the ground.
+    static func sidebar(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? Color(red: 0.063, green: 0.063, blue: 0.075)
+                        : Color(red: 0.796, green: 0.812, blue: 0.859)
     }
 
-    /// Everything that is not the page background sits on one of these.
+    /// The bar above a page where one still has one. Same as the ground: the
+    /// window has one surface behind everything now, not two.
+    static func chrome(_ scheme: ColorScheme) -> Color { page(scheme) }
+
+    /// Everything that is not the ground sits on one of these, a step in front.
     static func card(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.086, green: 0.098, blue: 0.129) : .white
+        scheme == .dark ? Color(red: 0.204, green: 0.204, blue: 0.243) : .white
     }
 
     /// A step above a card: selected rows, insets, the strip behind a preview.
     static func raised(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.110, green: 0.125, blue: 0.161)
+        scheme == .dark ? Color(red: 0.255, green: 0.255, blue: 0.298)
                         : Color(red: 0.949, green: 0.953, blue: 0.969)
     }
 
+    /// The pill under the sidebar row that is open: a lift, not the accent.
+    /// The accent belongs to controls; a row that is merely where you are
+    /// does not need to shout it.
+    static func selection(_ scheme: ColorScheme) -> Color {
+        Color.primary.opacity(scheme == .dark ? 0.12 : 0.12)
+    }
+
     static func stroke(_ scheme: ColorScheme) -> Color {
-        Color.primary.opacity(scheme == .dark ? 0.10 : 0.09)
+        Color.primary.opacity(scheme == .dark ? 0.07 : 0.06)
     }
 
     static func shadow(_ scheme: ColorScheme) -> Color {
-        Color.black.opacity(scheme == .dark ? 0.32 : 0.06)
+        Color.black.opacity(scheme == .dark ? 0.24 : 0.10)
     }
 
     static var hairline: Color { Color.primary.opacity(0.08) }
@@ -146,7 +159,7 @@ private struct CardSurface: ViewModifier {
         // redrawn on each resize and scroll.
         return content
             .background(shape.fill(Ink.card(scheme))
-                .shadow(color: Ink.shadow(scheme), radius: 7, y: 2))
+                .shadow(color: Ink.shadow(scheme), radius: scheme == .dark ? 7 : 10, y: 3))
             .overlay(shape.strokeBorder(Ink.stroke(scheme)))
     }
 }
@@ -221,4 +234,33 @@ struct StatusPill: View {
         .background(Capsule().fill(ok ? Ink.card(scheme) : Color.orange.opacity(0.12)))
         .overlay(Capsule().strokeBorder(ok ? Ink.stroke(scheme) : Color.orange.opacity(0.35)))
     }
+}
+
+/// A button drawn as a chip: the label in the text colour on a lift off the
+/// card, or in white on the accent when it is the one thing to press. The
+/// system bordered button paints its label in the accent on a barely-there
+/// fill, which reads as a link on the dark card and gets lost next to a title.
+struct ChipButtonStyle: ButtonStyle {
+    var prominent = false
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var enabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12.5, weight: .semibold))
+            .lineLimit(1)
+            .foregroundStyle(prominent ? Color.white : Color.primary)
+            .padding(.horizontal, 12)
+            .frame(height: 27)
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(prominent ? AnyShapeStyle(Color.accentColor)
+                                : AnyShapeStyle(Color.primary.opacity(scheme == .dark ? 0.10 : 0.07))))
+            .opacity(configuration.isPressed ? 0.7 : enabled ? 1 : 0.4)
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+extension ButtonStyle where Self == ChipButtonStyle {
+    static var chip: ChipButtonStyle { ChipButtonStyle() }
+    static var chipProminent: ChipButtonStyle { ChipButtonStyle(prominent: true) }
 }

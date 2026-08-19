@@ -77,12 +77,37 @@ struct AppearancePage: View {
     }
 
     private var accents: some View {
+        // The swatches and the switch share a line where there is room and
+        // stack where there is not; either way the label stays on one line
+        // instead of folding into a column beside the switch.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 9) {
+                swatches
+                Spacer(minLength: 12)
+                systemAccent
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                swatches
+                systemAccent
+            }
+        }
+        .padding(13)
+        .card()
+    }
+
+    private var swatches: some View {
         HStack(spacing: 9) {
             ForEach(AppearanceSettings.accentChoices, id: \.self) { hex in
                 swatch(hex)
             }
-            Spacer(minLength: 8)
+        }
+        .fixedSize()
+    }
+
+    private var systemAccent: some View {
+        HStack(spacing: 9) {
             Text(.appearanceMatchSystemAccent).font(.system(size: 12)).foregroundStyle(.secondary)
+                .lineLimit(1)
             Toggle("", isOn: Binding(
                 get: { model.config.appearance.accentHex == nil },
                 set: { chooseAccent($0 ? nil : AppearanceSettings.accentChoices.last) }
@@ -90,8 +115,7 @@ struct AppearancePage: View {
             .labelsHidden().toggleStyle(.switch).controlSize(.small)
             .help(String(localized: .appearanceFollowSystemAccent))
         }
-        .padding(13)
-        .card()
+        .fixedSize()
     }
 
     private func swatch(_ hex: String) -> some View {

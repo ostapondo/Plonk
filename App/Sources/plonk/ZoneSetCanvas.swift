@@ -44,19 +44,31 @@ struct ZoneSetCanvas: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(assigned ?? String(localized: .zoneSetEdgeSnapping))
-                    .font(.system(size: 26, weight: .heavy))
-                    .kerning(-0.7)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+        // Beside the title where there is room, under it where there is not:
+        // a button that has been squeezed to "Du…" is not a button.
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                titles
+                Spacer(minLength: 8)
+                actions.fixedSize()
             }
-            Spacer(minLength: 8)
-            actions
+            VStack(alignment: .leading, spacing: 10) {
+                titles
+                actions.fixedSize()
+            }
+        }
+    }
+
+    private var titles: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(assigned ?? String(localized: .zoneSetEdgeSnapping))
+                .font(.system(size: 26, weight: .heavy))
+                .kerning(-0.7)
+                .lineLimit(1)
+            Text(subtitle)
+                .font(.system(size: 12.5))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
     }
 
@@ -89,10 +101,10 @@ struct ZoneSetCanvas: View {
                 Button(String(localized: .zoneSetEdit)) {
                     model.actions?.editZoneSet(assigned, seed: nil, onScreen: screen)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.chipProminent)
             }
         }
-        .controlSize(.small)
+        .buttonStyle(.chip)
     }
 
     // MARK: - Tabs

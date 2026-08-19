@@ -38,9 +38,10 @@ final class WindowPresenter: NSObject {
     func showMainWindow() {
         if main == nil {
             let window = panel(title: String(localized: .appName),
-                               size: NSSize(width: 1000, height: 700),
+                               size: NSSize(width: 1140, height: 820),
                                unified: true,
                                content: MainWindowView(model: model))
+            TrafficLights.inset(in: window)
             main = window
         }
         present(main)
