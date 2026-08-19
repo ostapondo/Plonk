@@ -90,10 +90,13 @@ struct SettingRow<Trailing: View>: View {
         VStack(spacing: 0) {
             Divider()
             if stacked {
+                // Leading, and stated: a VStack takes the width of its widest
+                // child, and the row's own VStack then centred it in the card.
                 VStack(alignment: .leading, spacing: 8) {
                     labels
                     trailing
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 13)
                 .padding(.vertical, 10)
             } else {
@@ -170,5 +173,37 @@ struct SettingBlock<Content: View>: View {
                 .padding(.horizontal, 13)
                 .padding(.vertical, 10)
         }
+    }
+}
+
+/// Two cards side by side where both get room to say what is in them, and one
+/// under the other where they do not. Measured on the row itself rather than
+/// on the window: the sidebar and the insets have already taken their share.
+struct Columns<Leading: View, Trailing: View>: View {
+    var breakpoint: CGFloat = 640
+    @ViewBuilder var leading: Leading
+    @ViewBuilder var trailing: Trailing
+    @State private var width: CGFloat = 0
+
+    var body: some View {
+        Group {
+            if width >= breakpoint {
+                HStack(alignment: .top, spacing: 12) {
+                    leading
+                    trailing
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 16) {
+                    leading
+                    trailing
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .background(GeometryReader { geo in
+            Color.clear
+                .onAppear { width = geo.size.width }
+                .onChange(of: geo.size.width) { width = $0 }
+        })
     }
 }

@@ -21,7 +21,7 @@ struct ShortcutRows: View {
             // Spacer in it is the whole fix.
             HStack(spacing: 10) {
                 thumbnail(action)
-                Text(action.title)
+                Text(action.title).lineLimit(1).truncationMode(.tail)
                 Spacer(minLength: 12)
                 if model.unavailableHotkeys.contains(action.rawValue) {
                     Image(systemName: "exclamationmark.triangle.fill")

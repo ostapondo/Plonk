@@ -8,8 +8,11 @@ import SwiftUI
 // a click that told you nothing — a heading is not a control, and drawing it as
 // one only hid the list it was labelling. Headings now label; rows navigate.
 //
-// Metrics come from the design's macOS mock: a 220pt sidebar, 13pt rows, 11pt
-// headings, and a selected row that is the accent rather than a grey fill.
+// Metrics come from the design's macOS mock: a 228pt panel, 30pt rows at 13pt,
+// 11pt headings in plain case, and a selected row that is a lift off the panel
+// rather than a splash of accent. Colour is carried by the icons instead: each
+// destination's rows take one of the zone hues, so the menu reads in the same
+// palette as the zones it is about.
 
 struct MainSidebar: View {
     @ObservedObject var model: AppModel
@@ -19,10 +22,27 @@ struct MainSidebar: View {
 
     /// Clears the traffic lights: the window runs its content under the title
     /// bar, so the first thing in the sidebar would sit behind them.
-    private static let lights: CGFloat = 34
+    private static let lights: CGFloat = 40
 
     private func pages(of group: SettingsGroup) -> [SettingsPage] {
         model.settingsPages.filter { $0.parent == group.id }
+    }
+
+    /// The hue a destination's icons carry. Home and Layout share plum, the
+    /// app's own colour; the rest step through the palette in the order the
+    /// groups are listed.
+    private func hue(of group: SettingsGroup) -> Color {
+        let zone: Int
+        switch group.id {
+        case "capture": zone = 2
+        case "automation": zone = 3
+        case "settings": zone = 4
+        default: zone = 1
+        }
+        // The zone hues are tuned to fill a rectangle, and sun and mint are too
+        // pale to draw a 13pt glyph on a light panel. Pulled toward ink there,
+        // kept as they are on dark.
+        return scheme == .dark ? Ink.zone(zone) : Ink.deeper(Ink.zone(zone))
     }
 
     var body: some View {
@@ -36,13 +56,16 @@ struct MainSidebar: View {
                         // A destination holding one page is that page, and a
                         // heading over a list of one is noise.
                         if children.count > 1, !rail { heading(group.title) }
-                        ForEach(children) { row($0, icon: children.count > 1 ? $0.icon : group.icon) }
+                        ForEach(children) {
+                            row($0, icon: children.count > 1 ? $0.icon : group.icon, hue: hue(of: group))
+                        }
                     }
                     if !rail, !model.workspaceNames.isEmpty { workspaces }
                 }
                 .padding(.horizontal, 8)
                 .padding(.bottom, 10)
             }
+            if !rail { status }
             footer
         }
     }
@@ -53,23 +76,24 @@ struct MainSidebar: View {
         Button {
             model.actions?.openCommandPalette()
         } label: {
-            HStack(spacing: 7) {
-                Image(systemName: "magnifyingglass").font(.system(size: 12))
+            HStack(spacing: 9) {
+                Image(systemName: "magnifyingglass").font(.system(size: 12, weight: .medium))
                 if !rail {
                     Text(.appRunACommand).font(.system(size: 12.5))
                     Spacer(minLength: 0)
-                    Text("⌘K").font(.system(size: 11, design: .monospaced))
+                    Text("⌘K").font(.system(size: 11, design: .monospaced)).opacity(0.7)
                 }
             }
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 9)
-            .frame(height: 27)
+            .padding(.horizontal, 10)
+            .frame(height: 30)
             .frame(maxWidth: .infinity, alignment: rail ? .center : .leading)
-            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Ink.capFill))
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Color.primary.opacity(0.08)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 10)
         .padding(.bottom, 12)
         .help(String(localized: .appRunACommand))
     }
@@ -77,9 +101,11 @@ struct MainSidebar: View {
     // MARK: - Rows
 
     private func heading(_ title: LocalizedStringResource) -> some View {
-        Eyebrow(title, size: 11, kerning: 0.45)
-            .padding(.horizontal, 8)
-            .padding(.top, 9)
+        Text(title)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(.primary.opacity(0.4))
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
             .padding(.bottom, 4)
     }
 
@@ -96,36 +122,35 @@ struct MainSidebar: View {
         }
     }
 
-    private func row(_ page: SettingsPage, icon: String) -> some View {
+    private func row(_ page: SettingsPage, icon: String, hue: Color) -> some View {
         let selected = model.currentPage?.id == page.id
         return Button {
             model.selectedPage = page.id
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 12.5))
+                    .font(.system(size: rail ? 14 : 12.5, weight: .medium))
                     .frame(width: 16)
-                    .foregroundStyle(selected ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
+                    .foregroundStyle(hue)
                 if !rail {
                     Text(page.title).font(.system(size: 13, weight: selected ? .semibold : .regular))
                     Spacer(minLength: 6)
                     if let badge = badge(page) {
                         Text(badge)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.system(size: 11.5))
                             .lineLimit(1)
-                            .foregroundStyle(selected ? AnyShapeStyle(.white.opacity(0.75))
-                                                      : AnyShapeStyle(.tertiary))
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            .foregroundStyle(selected ? Color.white : Color.primary)
-            .padding(.horizontal, 8)
-            .frame(height: 27)
+            .foregroundStyle(Color.primary)
+            .padding(.leading, 12)
+            .padding(.trailing, 10)
+            .frame(height: 30)
             .frame(maxWidth: .infinity, alignment: rail ? .center : .leading)
             .background(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(selected ? AnyShapeStyle(Ink.gradient(model.accent))
-                                   : AnyShapeStyle(Color.clear))
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(selected ? Ink.selection(scheme) : Color.clear)
             )
             .contentShape(Rectangle())
         }
@@ -134,28 +159,63 @@ struct MainSidebar: View {
     }
 
     private var workspaces: some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 2) {
             heading(.appWorkspaces)
             // A row opens the Workspaces page, where each one has its own
             // Launch button. Launching opens apps and moves windows, and a
             // sidebar click is too easy to land by accident for that.
-            ForEach(model.workspaceNames.prefix(4), id: \.self) { name in
+            ForEach(Array(model.workspaceNames.prefix(4).enumerated()), id: \.offset) { index, name in
                 Button {
                     model.selectedPage = "workspaces"
                 } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "rectangle.3.group").font(.system(size: 12.5)).frame(width: 16)
+                    HStack(spacing: 10) {
+                        // A dot in a zone hue with the initial in it: the same
+                        // mark the workspace carries everywhere else it is
+                        // drawn, and colour in a menu that is otherwise grey.
+                        ZStack {
+                            Circle().fill(Ink.zone([0, 5, 4, 2][index % 4]))
+                            Text(String(name.prefix(1)).uppercased())
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                        .frame(width: 16, height: 16)
                         Text(name).font(.system(size: 13)).lineLimit(1)
                         Spacer(minLength: 0)
                     }
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .frame(height: 27)
+                    .foregroundStyle(Color.primary)
+                    .padding(.leading, 12)
+                    .padding(.trailing, 10)
+                    .frame(height: 30)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .help(String(localized: .appOpenWorkspace(name)))
             }
+        }
+    }
+
+    // MARK: - Status
+
+    /// Whether the app can do its job, said only when something is wrong.
+    /// Three green chips that are green every day teach people to stop reading
+    /// them, and then the one that matters goes unread too. Agents that are
+    /// connected are a fact, not a fault, and sit in the footer.
+    @ViewBuilder private var status: some View {
+        if !model.allPermissionsGranted {
+            VStack(alignment: .leading, spacing: 5) {
+                if !model.accessibilityGranted {
+                    StatusPill(title: .appAccessibility, ok: false, fix: PrivacySettings.openAccessibility)
+                }
+                if !model.screenRecordingGranted {
+                    StatusPill(title: .appScreenRecording, ok: false,
+                               fix: PrivacySettings.openScreenRecording)
+                }
+                if let warning = model.apiWarning {
+                    StatusPill(title: .aiLocalApi, ok: false).help(warning)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 10)
         }
     }
 
@@ -186,6 +246,19 @@ struct MainSidebar: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
+                // Who is driving, in the same quiet type as the version: a
+                // green dot and a count, not a chip that outshouts the menu.
+                if !model.connectedAgents.isEmpty {
+                    HStack(spacing: 5) {
+                        Circle().fill(Color.green).frame(width: 5, height: 5)
+                        Text(.appAgentCount(model.connectedAgents.count))
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    .help(model.connectedAgents.joined(separator: ", "))
+                    .padding(.trailing, 4)
+                }
                 Button { model.actions?.reportBug() } label: {
                     Image(systemName: "ladybug").font(.system(size: 12)).foregroundStyle(.secondary)
                 }

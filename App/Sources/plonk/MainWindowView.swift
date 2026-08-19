@@ -1,54 +1,53 @@
 import AppKit
 import SwiftUI
 
-// The app's main window: sidebar, a bar that says where you are and whether
-// anything is wrong, and the page itself.
+// The app's main window: a sidebar set into the ground as its own panel, and
+// the page beside it.
 //
 // Deliberately not a NavigationSplitView: its collapse button hides the sidebar
 // outright and floats over the content pane. And no collapse button of our own
 // either, because a bare toggle sitting in the corner of a sidebar is not a
 // control macOS has. The sidebar drops to an icon rail on its own when the
 // window gets narrow, and never goes away.
+//
+// No bar over the page: the sidebar already says where you are, and the page
+// opens with its own title. Whether anything is wrong is said in the sidebar,
+// above the footer, and only when something is.
 
 struct MainWindowView: View {
     @ObservedObject var model: AppModel
     @Environment(\.colorScheme) private var scheme
 
-    private static let wide: CGFloat = 220
-    private static let rail: CGFloat = 58
-    private static let railBelow: CGFloat = 780
-    /// The unified toolbar height macOS uses, and the design with it.
-    private static let bar: CGFloat = 38
-
-    /// The page, and only the page. The destination it belongs to is a heading
-    /// in the sidebar now, so repeating it here said the same word twice.
-    private var title: String {
-        guard let current = model.currentPage else { return String(localized: .appName) }
-        return String(localized: current.title)
-    }
+    static let wide: CGFloat = 228
+    /// Wide enough for the traffic lights, which sit inside the panel now.
+    static let rail: CGFloat = 76
+    /// Under this window width the sidebar is the icon rail. The presenter
+    /// reads it too, to centre the traffic lights in whichever panel is drawn.
+    static let railBelow: CGFloat = 780
+    /// Between the sidebar panel and the page.
+    private static let gutter: CGFloat = 14
 
     var body: some View {
         GeometryReader { geo in
             let rail = geo.size.width < Self.railBelow
-            HStack(spacing: 0) {
+            HStack(spacing: Self.gutter) {
                 MainSidebar(model: model, rail: rail)
                     .frame(width: rail ? Self.rail : Self.wide)
-                    .background(VisualEffect(material: .sidebar, state: .followsWindowActiveState))
-                Divider()
-                VStack(spacing: 0) {
-                    topBar
-                    Divider()
-                    Group {
-                        if let current = model.currentPage { current.make(model) }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(page)
+                    .background(RoundedRectangle(cornerRadius: Ink.panelRadius, style: .continuous)
+                        .fill(Ink.sidebar(scheme)))
+                    .overlay(RoundedRectangle(cornerRadius: Ink.panelRadius, style: .continuous)
+                        .strokeBorder(Ink.stroke(scheme)))
+                Group {
+                    if let current = model.currentPage { current.make(model) }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .padding(Ink.inset)
+            .background(page)
         }
-        // The window hides its title bar so our own header is the only one, but
-        // the hosting view still insets the content by its height. Without this
-        // the top bar hangs below an empty strip the width of the window.
+        // The window hides its title bar so the sidebar reaches the top edge,
+        // but the hosting view still insets the content by its height. Without
+        // this everything hangs below an empty strip the width of the window.
         .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 620, minHeight: 520)
         // Both, and deliberately: `tint` is what system controls read, and the
@@ -68,50 +67,17 @@ struct MainWindowView: View {
         .onAppear { if model.selectedPage == nil { model.selectedPage = model.settingsPages.first?.id } }
     }
 
-    // MARK: - Top bar
-
-    // Permissions only earn room when one is missing. Three chips that are
-    // green every day teach people to stop reading them, and then the one that
-    // matters goes unread too.
-    private var topBar: some View {
-        HStack(spacing: 7) {
-            Text(title).font(.system(size: 13, weight: .bold))
-            Spacer(minLength: 12)
-            if model.allPermissionsGranted {
-                StatusPill(title: .appAllPermissionsGranted, ok: true)
-            } else {
-                if !model.accessibilityGranted {
-                    StatusPill(title: .appAccessibility, ok: false, fix: PrivacySettings.openAccessibility)
-                }
-                if !model.screenRecordingGranted {
-                    StatusPill(title: .appScreenRecording, ok: false,
-                               fix: PrivacySettings.openScreenRecording)
-                }
-                if let warning = model.apiWarning {
-                    StatusPill(title: .aiLocalApi, ok: false).help(warning)
-                }
-            }
-            if !model.connectedAgents.isEmpty {
-                StatusPill(title: .appAgentCount(model.connectedAgents.count), ok: true)
-                    .help(model.connectedAgents.joined(separator: ", "))
-            }
-        }
-        // No search button here: the sidebar already carries "Run a command"
-        // with the same shortcut on it, and one way in is one way in.
-        .padding(.horizontal, 14)
-        .frame(height: Self.bar)
-        .background(Ink.chrome(scheme))
-    }
-
-    /// The page background, with the accent bleeding in from the corners the
-    /// way it does behind the hero. Flat charcoal is correct and lifeless; this
-    /// is the one place the window is allowed a bit of colour.
+    /// The ground: the desktop showing through, the page colour over it, and
+    /// the accent bleeding in from two corners the way it does behind the hero.
+    /// Flat charcoal is correct and lifeless; this is the one place the window
+    /// is allowed a bit of colour.
     private var page: some View {
         ZStack {
-            Ink.page(scheme)
-            RadialGradient(colors: [model.accent.opacity(scheme == .dark ? 0.16 : 0.10), .clear],
+            VisualEffect(material: .underWindowBackground, state: .followsWindowActiveState)
+            Ink.page(scheme).opacity(scheme == .dark ? 0.88 : 0.92)
+            RadialGradient(colors: [model.accent.opacity(scheme == .dark ? 0.16 : 0.20), .clear],
                            center: .init(x: 0.85, y: -0.05), startRadius: 0, endRadius: 620)
-            RadialGradient(colors: [Ink.warmer(model.accent).opacity(scheme == .dark ? 0.10 : 0.07),
+            RadialGradient(colors: [Ink.warmer(model.accent).opacity(scheme == .dark ? 0.10 : 0.14),
                                     .clear],
                            center: .init(x: 0.02, y: 1.05), startRadius: 0, endRadius: 520)
         }

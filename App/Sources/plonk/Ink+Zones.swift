@@ -64,6 +64,15 @@ extension Ink {
             : .white
     }
 
+    /// Toward ink: the same hue, more saturated and darker, for a glyph or a
+    /// line on a light surface. Sun at full brightness is invisible there.
+    static func deeper(_ color: Color) -> Color {
+        rebuilt(color) { _, saturation, brightness in
+            saturation = min(saturation + 0.15, 1)
+            brightness = max(brightness - 0.22, 0)
+        }
+    }
+
     /// Toward white, in HSB, so a mint stays mint instead of turning grey the
     /// way a straight blend with white would.
     static func lighter(_ color: Color) -> Color {

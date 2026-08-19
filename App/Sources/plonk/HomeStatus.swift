@@ -9,10 +9,7 @@ struct HomeStatus: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            agents
-            api
-        }
+        Columns { agents } trailing: { api }
     }
 
     // MARK: - Agents
