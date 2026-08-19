@@ -5,11 +5,26 @@ import AppKit
 // so they sit inside the panel, the way the design draws them.
 
 enum TrafficLights {
+    /// How far down from the window's top edge the buttons are centred: in
+    /// the middle of the strip `MainSidebar` leaves clear for them.
+    static let centre: CGFloat = Ink.inset + 20
+
     /// AppKit lays the buttons out again on every resize and when the window
     /// enters or leaves full screen, so the move is re-applied then, and it is
     /// stated against where the buttons started so applying it twice lands in
     /// the same place.
     static func inset(in window: NSWindow) {
+        // The buttons live in the title bar view, and a click only reaches
+        // them while they are inside it: a button moved below a 28-point title
+        // bar still draws, and does nothing when pressed. An empty unified
+        // toolbar makes the bar tall enough to hold them where they go, and
+        // draws nothing of its own under a transparent title bar.
+        let toolbar = NSToolbar(identifier: "plonk.main.titlebar")
+        toolbar.showsBaselineSeparator = false
+        window.toolbar = toolbar
+        window.toolbarStyle = .unified
+        window.titlebarSeparatorStyle = .none
+
         // Where AppKit put them, taken once. The move is stated against that
         // rather than against wherever the button is now, so applying it a
         // second time lands in the same place instead of a step further.
@@ -27,8 +42,13 @@ enum TrafficLights {
             let rail = window.frame.width < MainWindowView.railBelow
             let left = Ink.inset + (rail ? (MainWindowView.rail - span) / 2 : 10)
             for (button, origin) in home {
-                button.setFrameOrigin(NSPoint(x: origin.x - first + left,
-                                              y: origin.y - Ink.inset - 6))
+                // Vertical placement is stated from the window's top edge and
+                // converted into the button's superview, so it holds whichever
+                // way that view's coordinates run and however tall the bar is.
+                let mid = NSPoint(x: 0, y: window.frame.height - centre)
+                let y = (button.superview?.convert(mid, from: nil).y ?? origin.y + button.frame.height / 2)
+                    - button.frame.height / 2
+                button.setFrameOrigin(NSPoint(x: origin.x - first + left, y: y))
             }
         }
         nudge()
