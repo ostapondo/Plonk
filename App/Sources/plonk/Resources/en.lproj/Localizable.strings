@@ -389,10 +389,23 @@
 "page.awake" = "Keep awake";
 "page.active" = "Stay active";
 "page.update" = "Updates";
+"page.features" = "Features";
+
+/* The Features page and the menu bar submenu of the same name: one switch per
+   module. The detail lines say what goes quiet when a switch is off. */
+"features.help" = "Switch off whatever you do not use. A feature that is off leaves the sidebar and the menu bar, its shortcuts stop, and agents are told it is off. Its settings are kept for when it comes back.";
+"features.switches" = "What Plonk does";
+"feature.zonesDetail" = "Drag to snap, the placement shortcuts and zone sets, and placing windows for agents.";
+"feature.workspacesDetail" = "Saving and launching a set of apps and windows.";
+"feature.shotDetail" = "Screenshots, annotation, text capture and crops.";
+"feature.mouseDetail" = "Click highlights, crosshairs and finding the pointer.";
+"feature.rulerDetail" = "Measuring what is on screen, by hover or by drag.";
+"feature.voiceDetail" = "Push-to-talk, for commands and for sentences to an agent.";
+"feature.awakeDetail" = "Keeping the Mac from sleeping, by hand, by schedule or for a process.";
+"feature.activeDetail" = "Keeping you shown as available in chat apps.";
 
 /* The menu bar item. */
 "menu.openPlonk" = "Open Plonk";
-"menu.sendToZone %lld" = "Send the front window to zone %lld";
 "menu.launchWorkspace" = "Launch Workspace";
 "menu.noWorkspaces" = "No workspaces saved yet";
 "menu.activeAgent" = "Active Agent";
@@ -404,7 +417,8 @@
 "menu.updateAvailable" = "Update Available";
 "menu.updateTo %@" = "Update to %@…";
 "menu.reportBug" = "Report a Bug";
-"menu.quit" = "Quit Plonk";
+"menu.quit" = "Quit";
+"menu.features" = "Features";
 
 /* Updates. The status line is shown on the page and also handed to an agent
    asking about /update/state; the machine-readable half of that answer is the

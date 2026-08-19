@@ -179,9 +179,31 @@ extension AppModel {
         BuiltinZoneSets.all.merging(config.zoneSets) { _, user in user }
     }
 
-    /// The page on show, or the first one before anything has been picked.
+    /// The pages worth showing: every one whose feature is on, and every one
+    /// that has no feature to be off. What the sidebar draws.
+    var visiblePages: [SettingsPage] {
+        settingsPages.filter { page in Feature.owning(page: page.id).map(isEnabled) ?? true }
+    }
+
+    /// The page on show, or the first one before anything has been picked. A
+    /// page whose feature was just switched off gives way to the first.
     var currentPage: SettingsPage? {
-        settingsPages.first { $0.id == selectedPage } ?? settingsPages.first
+        visiblePages.first { $0.id == selectedPage } ?? visiblePages.first
+    }
+
+    func isEnabled(_ feature: Feature) -> Bool { config.isEnabled(feature) }
+
+    /// The switch for a whole feature, written through config like any setting.
+    func binding(_ feature: Feature) -> Binding<Bool> {
+        Binding(
+            get: { self.config.isEnabled(feature) },
+            set: { [weak self] on in
+                guard let self else { return }
+                var updated = config
+                updated.setEnabled(feature, on)
+                actions?.update(\.disabledFeatures, to: updated.disabledFeatures)
+            }
+        )
     }
 
     /// The same three facts everywhere they are summed up, so Home cannot say

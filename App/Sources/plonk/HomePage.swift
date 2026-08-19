@@ -188,15 +188,21 @@ struct HomePage: View {
                           ? .homeHotkeysDetail
                           : .homeHotkeysTaken(model.unavailableHotkeys.joined(separator: ", ")),
                       toggle: model.binding(\.hotkeysEnabled))
-            Divider()
-            switchRow(.homeDragToSnap, "rectangle.3.group",
-                      detail: .homeDragToSnapDetail,
-                      toggle: model.binding(\.dragSnapEnabled))
-            Divider()
-            switchRow(.homeKeepAwake, "cup.and.saucer",
-                      detail: model.awakeHeld && !model.awakeOn
-                          ? LocalizedStringResource.homeKeepAwakePaused : .homeKeepAwakeDetail,
-                      toggle: model.binding(\.awakeHeld, set: { $0.setAwake($1) }))
+            // Rows for a feature the user switched off are left out: a switch
+            // for a thing the app is not doing would be a switch that lies.
+            if model.isEnabled(.zones) {
+                Divider()
+                switchRow(.homeDragToSnap, "rectangle.3.group",
+                          detail: .homeDragToSnapDetail,
+                          toggle: model.binding(\.dragSnapEnabled))
+            }
+            if model.isEnabled(.awake) {
+                Divider()
+                switchRow(.homeKeepAwake, "cup.and.saucer",
+                          detail: model.awakeHeld && !model.awakeOn
+                              ? LocalizedStringResource.homeKeepAwakePaused : .homeKeepAwakeDetail,
+                          toggle: model.binding(\.awakeHeld, set: { $0.setAwake($1) }))
+            }
             Divider()
             switchRow(.homeLaunchAtLogin, "power",
                       detail: .homeLaunchAtLoginDetail,

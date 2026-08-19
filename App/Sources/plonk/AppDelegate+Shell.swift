@@ -194,7 +194,8 @@ extension AppDelegate {
         // Every action but the one that opened this. Running it would hide the
         // window to reach the front app and then reopen the palette on top of
         // nothing, which is a loop with a side effect.
-        for action in HotkeyAction.allCases where action != .commandPalette {
+        for action in HotkeyAction.allCases
+        where action != .commandPalette && store.config.activeHotkeys[action] != nil {
             result.append(PlonkCommand(id: "hotkey.\(action.rawValue)",
                                        title: String(localized: action.title),
                                        group: String(localized: action.group.title),
@@ -203,7 +204,7 @@ extension AppDelegate {
             })
         }
 
-        for name in model.workspaceNames {
+        for name in model.workspaceNames where store.config.isEnabled(.workspaces) {
             result.append(PlonkCommand(id: "workspace.\(name)",
                                        title: String(localized: .paletteLaunchWorkspace(name)),
                                        group: String(localized: .paletteGroupWorkspaces)) { [weak self] in
@@ -211,7 +212,7 @@ extension AppDelegate {
             })
         }
 
-        for name in model.zoneSetNames {
+        for name in model.zoneSetNames where store.config.isEnabled(.zones) {
             // The main screen, said out loud: the palette has no cursor to read
             // a screen from the way the shortcut does.
             result.append(PlonkCommand(id: "zoneset.\(name)",
@@ -221,28 +222,32 @@ extension AppDelegate {
             })
         }
 
-        result.append(PlonkCommand(id: "app.zoneSetPalette",
-                                   title: String(localized: .palettePickZoneSet),
-                                   group: String(localized: .paletteGroupZoneSets)) { [weak self] in
-            self?.openZoneSetPalette()
-        })
-        result.append(PlonkCommand(id: "app.editZones", title: String(localized: .paletteEditZoneSets),
-                                   group: String(localized: .paletteGroupZoneSets)) { [weak self] in
-            self?.openZonePicker()
-        })
-        result.append(PlonkCommand(id: "app.awake",
-                                   title: awake.requested ? String(localized: .paletteStopAwake)
-                                                          : String(localized: .paletteKeepAwake),
-                                   group: String(localized: .paletteGroupGadgets)) { [weak self] in
-            guard let self else { return }
-            setAwake(!awake.requested)
-        })
+        if store.config.isEnabled(.zones) {
+            result.append(PlonkCommand(id: "app.zoneSetPalette",
+                                       title: String(localized: .palettePickZoneSet),
+                                       group: String(localized: .paletteGroupZoneSets)) { [weak self] in
+                self?.openZoneSetPalette()
+            })
+            result.append(PlonkCommand(id: "app.editZones", title: String(localized: .paletteEditZoneSets),
+                                       group: String(localized: .paletteGroupZoneSets)) { [weak self] in
+                self?.openZonePicker()
+            })
+        }
+        if store.config.isEnabled(.awake) {
+            result.append(PlonkCommand(id: "app.awake",
+                                       title: awake.requested ? String(localized: .paletteStopAwake)
+                                                              : String(localized: .paletteKeepAwake),
+                                       group: String(localized: .paletteGroupGadgets)) { [weak self] in
+                guard let self else { return }
+                setAwake(!awake.requested)
+            })
+        }
         result.append(PlonkCommand(id: "app.update", title: String(localized: .paletteCheckUpdates),
                                    group: String(localized: .paletteGroupGadgets)) { [weak self] in
             self?.checkForUpdates()
         })
 
-        for page in SettingsPages.all {
+        for page in model.visiblePages {
             result.append(PlonkCommand(id: "page.\(page.id)",
                                        title: String(localized:
                                            .paletteOpenPage(String(localized: page.title))),

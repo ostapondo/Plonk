@@ -32,7 +32,7 @@ final class HotkeyManager {
     /// enabling registers whatever is bound, and it should be the new set, not
     /// the old one for a moment.
     func apply(_ config: Config) {
-        bindings = config.resolvedHotkeys
+        bindings = config.activeHotkeys
         setEnabled(config.hotkeysEnabled)
     }
 

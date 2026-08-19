@@ -25,7 +25,7 @@ struct MainSidebar: View {
     private static let lights: CGFloat = 40
 
     private func pages(of group: SettingsGroup) -> [SettingsPage] {
-        model.settingsPages.filter { $0.parent == group.id }
+        model.visiblePages.filter { $0.parent == group.id }
     }
 
     /// The hue a destination's icons carry. Home and Layout share plum, the
@@ -60,7 +60,7 @@ struct MainSidebar: View {
                             row($0, icon: children.count > 1 ? $0.icon : group.icon, hue: hue(of: group))
                         }
                     }
-                    if !rail, !model.workspaceNames.isEmpty { workspaces }
+                    if !rail, model.isEnabled(.workspaces), !model.workspaceNames.isEmpty { workspaces }
                 }
                 .padding(.horizontal, 8)
                 .padding(.bottom, 10)

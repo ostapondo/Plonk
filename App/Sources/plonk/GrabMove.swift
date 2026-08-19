@@ -93,11 +93,11 @@ final class GrabMove {
     /// event tap that can swallow clicks has no business existing while the
     /// feature is off, so the tap follows the setting rather than the launch.
     func apply(_ config: Config) {
-        enabled = config.grabMoveEnabled
+        enabled = config.grabMoveEnabled && config.isEnabled(.zones)
         modifierFlag = config.grabMoveModifierFlag
         allowResize = config.grabMoveResize
         showGeometry = config.grabMoveShowGeometry
-        if config.grabMoveEnabled { start() } else { stop() }
+        if enabled { start() } else { stop() }
     }
 
     /// Silently does nothing without Accessibility, which is the same

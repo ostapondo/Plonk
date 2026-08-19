@@ -10,8 +10,10 @@ struct ShortcutsPage: View {
 
     private var groups: [(name: LocalizedStringResource, actions: [HotkeyAction])] {
         // The Guide has its own editable section above; listing it again here
-        // would show the same row twice.
+        // would show the same row twice. A feature that is off keeps its
+        // bindings but not its rows: they lead to a page that is not there.
         HotkeyAction.allCases.filter { $0.page != "shortcuts" }
+            .filter { Feature.owning($0).map(model.isEnabled) ?? true }
             .groupedPreservingOrder(by: \.group)
             .map { ($0.key.title, $0.elements) }
     }

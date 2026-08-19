@@ -40,6 +40,9 @@ final class ActiveManager {
     var apps: [String] = [] { didSet { if apps != oldValue { reevaluate() } } }
     var allowOnBattery = false { didSet { if allowOnBattery != oldValue { reevaluate() } } }
     var timeoutMinutes = 0
+    /// The feature as a whole. Off drops the hold and ignores the schedule
+    /// until it is on again; both are kept, so nothing has to be set up twice.
+    var enabled = true { didSet { if enabled != oldValue { reevaluate() } } }
 
     /// Take the settings as they now stand. Called after every config change.
     func apply(_ config: Config) {
@@ -47,6 +50,7 @@ final class ActiveManager {
         apps = config.activeApps
         allowOnBattery = config.activeAllowOnBattery
         timeoutMinutes = config.activeTimeoutMinutes
+        enabled = config.isEnabled(.active)
     }
 
     /// nil follows the schedule and the app list. A value is the user having
@@ -105,7 +109,7 @@ final class ActiveManager {
 
     /// What is wanted once the manual hold is taken into account, still before
     /// the power check. What the toggle on the page shows.
-    var wants: Bool { manual ?? automatic }
+    var wants: Bool { enabled && (manual ?? automatic) }
 
     // MARK: - Control
 

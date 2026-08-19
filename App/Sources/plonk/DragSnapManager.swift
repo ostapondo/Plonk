@@ -68,7 +68,7 @@ final class DragSnapManager {
     /// Take the settings as they now stand. Called after every config change,
     /// so nothing here may cost more than a few assignments.
     func apply(_ config: Config) {
-        enabled = config.dragSnapEnabled
+        enabled = config.dragSnapEnabled && config.isEnabled(.zones)
         requireModifier = config.zonesRequireShift
         modifierFlag = config.zonesModifierFlag
         showOnAllMonitors = config.zonesOnAllMonitors

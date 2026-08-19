@@ -107,6 +107,9 @@ struct Config: Codable {
     // through the environment, never as text in the line; see
     // AgentAdapter.invocation. Edited in config.json for now.
     var agentAdapters: [AgentAdapter] = []
+    /// Modules switched off as a whole, by Feature id. Stored as the off list
+    /// so a feature added later comes up on, the way a fresh install has it.
+    var disabledFeatures: [String] = []
     /// Theme and accent; see AppearanceSettings.
     var appearance = AppearanceSettings()
     var workspaces: [String: Workspace] = [:]
@@ -119,6 +122,23 @@ struct Config: Codable {
     var screenZoneSets: [String: String] = [:]
 
     init() {}
+
+    func isEnabled(_ feature: Feature) -> Bool {
+        !disabledFeatures.contains(feature.rawValue)
+    }
+
+    mutating func setEnabled(_ feature: Feature, _ on: Bool) {
+        disabledFeatures.removeAll { $0 == feature.rawValue }
+        if !on { disabledFeatures.append(feature.rawValue) }
+    }
+
+    /// Hotkeys for whatever is on: a shortcut belonging to a feature that is
+    /// off is not registered, so the key goes to whichever app wants it.
+    var activeHotkeys: [HotkeyAction: Hotkey] {
+        resolvedHotkeys.filter { action, _ in
+            Feature.owning(action).map(isEnabled) ?? true
+        }
+    }
 
     /// Assigned set name for a screen, or nil when it has no assignment.
     /// An empty string means edge snapping.
