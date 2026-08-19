@@ -210,8 +210,8 @@ agent can call.
 | **A shortcut guide** | Every shortcut the front app actually has, read from its own menus, so it is never out of date |
 | **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display |
 
-Any of them can be switched off, from Features in the menu bar dropdown or the
-Features page. Off means gone: out of the sidebar, out of the menu, its
+Any of them can be switched off, from Tools in the menu bar dropdown or the
+Tools page. Off means gone: out of the sidebar, out of the menu, its
 shortcuts released, and its tools refused to agents until it is back on.
 
 </details>

@@ -16,7 +16,7 @@ extension LocalizedStringResource {
     static let menuUpdateAvailable = Self.key("menu.updateAvailable")
     static let menuReportBug = Self.key("menu.reportBug")
     static let menuQuit = Self.key("menu.quit")
-    static let menuFeatures = Self.key("menu.features")
+    static let menuTools = Self.key("menu.tools")
 
     static func menuUpdateTo(_ version: String) -> LocalizedStringResource {
         Self.key("menu.updateTo \(version)")

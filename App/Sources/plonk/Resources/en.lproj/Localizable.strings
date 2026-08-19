@@ -389,12 +389,12 @@
 "page.awake" = "Keep awake";
 "page.active" = "Stay active";
 "page.update" = "Updates";
-"page.features" = "Features";
+"page.features" = "Tools";
 
-/* The Features page and the menu bar submenu of the same name: one switch per
+/* The Tools page and the menu bar menu of the same name: one switch per
    module. The detail lines say what goes quiet when a switch is off. */
-"features.help" = "Switch off whatever you do not use. A feature that is off leaves the sidebar and the menu bar, its shortcuts stop, and agents are told it is off. Its settings are kept for when it comes back.";
-"features.switches" = "What Plonk does";
+"features.help" = "Switch off whatever you do not use. A tool that is off leaves the sidebar and the menu bar, its shortcuts stop, and agents are told it is off. Its settings are kept for when it comes back.";
+"features.switches" = "Tools";
 "feature.zonesDetail" = "Drag to snap, the placement shortcuts and zone sets, and placing windows for agents.";
 "feature.workspacesDetail" = "Saving and launching a set of apps and windows.";
 "feature.shotDetail" = "Screenshots, annotation, text capture and crops.";
@@ -418,7 +418,7 @@
 "menu.updateTo %@" = "Update to %@…";
 "menu.reportBug" = "Report a Bug";
 "menu.quit" = "Quit";
-"menu.features" = "Features";
+"menu.tools" = "Tools";
 
 /* Updates. The status line is shown on the page and also handed to an agent
    asking about /update/state; the machine-readable half of that answer is the

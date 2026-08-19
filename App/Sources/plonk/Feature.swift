@@ -93,6 +93,6 @@ enum Feature: String, CaseIterable, Identifiable {
     /// What an agent reads back when a route it called is switched off.
     var offReason: String {
         "\(rawValue) is switched off in Plonk, so this request was not carried out. "
-            + "The user can switch it back on under Features in Plonk's menu bar menu or in the app."
+            + "The user can switch it back on under Tools in Plonk's menu bar menu or in the app."
     }
 }

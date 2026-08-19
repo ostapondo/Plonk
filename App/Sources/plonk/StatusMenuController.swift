@@ -8,6 +8,8 @@ import SwiftUI
 final class StatusMenuController: NSObject {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
+    /// The switches, as a second menu dropped from the same icon.
+    private let toolsMenu = NSMenu()
     /// Rebuilt every time the menu opens, and after every flip, so the switches
     /// show what config holds now.
     private let featuresHost = NSHostingView(rootView: StatusMenuFeatures(isOn: { _ in true },
@@ -40,7 +42,6 @@ final class StatusMenuController: NSObject {
     private static let agentsTag = 103
     private static let updateTag = 104
     private static let captureTag = 105
-    private static let featuresTag = 106
 
     /// Which entry belongs to which feature, so an entry is hidden with it.
     private static let featureTags: [(tag: Int, feature: Feature)] = [
@@ -77,15 +78,15 @@ final class StatusMenuController: NSObject {
         menu.addItem(awake)
 
         menu.addItem(.separator())
+        // Not a submenu: the switches open as a menu of their own, dropped
+        // from the icon once this one has closed, so they have the room and
+        // the menu stays a list of things to do.
+        menu.addItem(entry(.menuTools, #selector(openTools)))
         featuresHost.frame = NSRect(x: 0, y: 0, width: StatusMenuFeatures.width,
                                     height: StatusMenuFeatures.height)
-        let features = NSMenuItem(title: String(localized: .menuFeatures), action: nil, keyEquivalent: "")
-        features.tag = Self.featuresTag
         let switches = NSMenuItem()
         switches.view = featuresHost
-        features.submenu = NSMenu()
-        features.submenu?.addItem(switches)
-        menu.addItem(features)
+        toolsMenu.addItem(switches)
 
         menu.addItem(.separator())
         // Hidden unless there is something to install, so the menu keeps its
@@ -126,6 +127,16 @@ final class StatusMenuController: NSObject {
     @objc private func reportBug() { onReportBug?() }
     @objc private func openUpdate() { onOpenUpdate?() }
     @objc private func quit() { NSApp.terminate(nil) }
+
+    /// Runs after the dropdown has closed. The item's menu is swapped for the
+    /// length of one click so the switches drop from the icon like the
+    /// dropdown does, then put back so the next click opens the dropdown.
+    @objc private func openTools() {
+        refreshFeatures()
+        item.menu = toolsMenu
+        item.button?.performClick(nil)
+        item.menu = menu
+    }
 
     @objc private func launchWorkspace(_ sender: NSMenuItem) {
         onLaunchWorkspace?(sender.title)

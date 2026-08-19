@@ -15,8 +15,8 @@ one of those.
 
 ### Added
 
-- **Features: a switch for every module.** Under Features in the menu bar
-  dropdown, and on a Features page under Settings, each of zones, workspaces,
+- **Tools: a switch for every module.** Under Tools in the menu bar
+  dropdown, which opens a menu of switches from the icon, and on a Tools page under Settings, each of zones, workspaces,
   screenshots, pointer tools, the ruler, voice, keep awake and stay active has
   a switch. Off means off everywhere: the page leaves the sidebar, its entry
   leaves the menu, its shortcuts are released to other apps, its manager
