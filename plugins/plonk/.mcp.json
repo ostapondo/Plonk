@@ -2,7 +2,7 @@
   "mcpServers": {
     "plonk": {
       "command": "npx",
-      "args": ["-y", "plonk-mcp@0.3.0"]
+      "args": ["-y", "plonk-mcp@0.3.1"]
     }
   }
 }

@@ -14,7 +14,7 @@
       "displayName": "Plonk",
       "source": "./plugins/plonk",
       "description": "Drive the Plonk window manager from Claude Code: place windows, launch saved workspaces, hold sleep off, take screenshots, read text off the screen with on-device OCR.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "homepage": "https://ostapondo.github.io/Plonk/",
       "license": "MIT",
       "keywords": ["macos", "window-manager", "workspaces", "screenshots", "ocr", "productivity"]

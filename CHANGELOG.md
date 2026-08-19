@@ -11,7 +11,21 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
-## Unreleased
+## 0.3.1 — 2026-08-19
+
+### Changed
+
+- **The window has been redrawn.** The sidebar is a dark panel set into the
+  window, the page's cards sit a step lighter on the ground between them, and
+  the bar over the page is gone: the menu says where you are and every page
+  opens with its own title. The menu carries the zone palette, one hue per
+  destination, with the ⌘K search under the traffic lights, workspaces as
+  coloured dots and connected agents as a line in the footer; permissions
+  only speak up when one is missing. Light mode gets the same three steps as
+  dark. Narrow windows stop breaking: two-column blocks collapse, the zone set
+  header drops its buttons under the title, shortcut names truncate instead of
+  folding into a column, and a text field beside a button gives way instead of
+  the button.
 
 ### Fixed
 
