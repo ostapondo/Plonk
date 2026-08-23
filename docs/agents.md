@@ -69,6 +69,7 @@ agent nor a settings window — a Makefile, a Raycast script, a shell alias.
 `npm i -g plonk-mcp`, then:
 
 ```sh
+plonk ping                       # is the app up
 plonk state [--json]             # screens, windows, zone sets, workspaces
 plonk snap <app> <zone>          # drop a window into a numbered zone
 plonk workspaces                 # list the saved ones
