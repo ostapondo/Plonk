@@ -11,6 +11,16 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Changed
+
+- **The screen numbers only appear when you ask for them.** Opening the Zones
+  page or moving the screen selector used to flash every display's number over
+  whatever was on it. Preview does that now, and it draws each screen's own
+  layout on it at the same time, so one press answers both which monitor is
+  which and what is on it.
+
 ## 0.3.4 — 2026-08-23
 
 ### Added
