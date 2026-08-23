@@ -695,6 +695,7 @@
 "awake.statusAutoCharging" = "auto (charging)";
 "awake.statusUntilProcess %lld" = "on until process %lld exits";
 "awake.statusPausedOnBattery" = "paused on battery";
+"awake.statusLidClosed" = "on, even with the lid closed";
 
 /* Stay active, in one phrase, for the page and for an agent asking. */
 "active.statusOn" = "on";

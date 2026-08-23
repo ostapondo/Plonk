@@ -38,6 +38,7 @@ extension LocalizedStringResource {
     static let awakeStatusOff = Self.key("awake.statusOff")
     static let awakeStatusAutoCharging = Self.key("awake.statusAutoCharging")
     static let awakeStatusPausedOnBattery = Self.key("awake.statusPausedOnBattery")
+    static let awakeStatusLidClosed = Self.key("awake.statusLidClosed")
 
     static func awakeStatusUntilProcess(_ pid: Int) -> LocalizedStringResource {
         Self.key("awake.statusUntilProcess \(pid)")
