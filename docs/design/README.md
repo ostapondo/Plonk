@@ -121,6 +121,10 @@ git clone --branch claude/plonk-design-system-3uuj2h --single-branch \
   before predated this design and are deleted rather than left to contradict
   it. Re-shoot from the built app once the screens match, and point the site
   back at real captures — a mockup is the target, not the product.
+- **`shots/` still shows a page that was renamed.** Keep awake and Stay active
+  became one page called Pulse in 0.3.5. `mac.html` says so; the JPEGs beside
+  it were shot before that and still label the sidebar entry the old way, and
+  `docs/index.html` shows one of them. Re-shoot when the shots are replaced.
 - **`shots.js` does not reproduce what is committed.** It writes PNGs at 2x;
   `shots/` holds JPEGs downscaled to 1600px wide, and the step between them is
   somebody's hands. Either put the resize in the script or commit what it
