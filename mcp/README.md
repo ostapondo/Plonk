@@ -1,10 +1,10 @@
 # plonk-mcp
 
 The MCP server for [Plonk](https://github.com/ostapondo/plonk), a macOS menu bar
-app that is ten utilities at once, a window manager among them. It lets an agent
-work the desk: apply layouts across monitors, save and relaunch workspaces, snap
-windows into zones, keep the screen awake, take and annotate screenshots, and
-read text off the screen without uploading a pixel.
+app that is eight utilities at once, a window manager among them. It lets an
+agent work the desk: apply layouts across monitors, save and relaunch
+workspaces, snap windows into zones, keep the screen awake, take and annotate
+screenshots, and read text off the screen without uploading a pixel.
 
 > browser on the left 60%, terminal top right, notes bottom right
 >
@@ -59,6 +59,8 @@ config to tell two sessions of the same client apart.
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, assigned per monitor |
 | `set_awake` | Keep the Mac awake, optionally time-limited, optionally also holding your chat status at available |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
+| `extract_text` | Read the words off the screen, with a box per line in the same coordinates `annotate_screenshot` draws in |
+| `measure_screen` | How far a point can travel each way before it meets an edge, or the distance between two points, in points and pixels |
 | `select_agent` | Make an agent the active one, optionally the only one allowed to control |
 | `check_for_update` · `install_update` | Ask GitHub for a newer release and install it |
 

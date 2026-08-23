@@ -26,6 +26,8 @@ git clone https://github.com/ostapondo/plonk && cd plonk
 ./scripts/lint.sh                          # style rules, no dependencies
 (cd mcp && npm ci && npm test)             # the MCP server
 node scripts/check-zone-sets.mjs           # the layouts in zone-sets/
+node scripts/check-strings.mjs             # every word the user reads
+./scripts/check-security-claims.sh         # what SECURITY.md promises
 ```
 
 Each line is a subshell, so the block runs as written from the repository root.
@@ -34,11 +36,12 @@ already done.
 
 ## Pick something
 
-If you want one handed to you: [issue #21][21]. `plonk state` tells a person to
-"ask the user to launch Plonk.app", which, in a shell, means asking themselves.
-The fix is a message in `mcp/src/api.ts`, a test in `mcp/test/`, and `npm test`.
-Nothing else. That is the shape of most of the work here: one file, one seam, one
-test.
+If you want one handed to you: [issue #15][15]. `plonk` answers `--help` but not
+`--version`, which is the first thing you type when a bug report asks which one
+you are on, and the same missing value makes a shell session register with a
+blank version. The fix is reading `version` out of `package.json` in
+`mcp/src/cli.ts`, a test in `mcp/test/`, and `npm test`. Nothing else. That is
+the shape of most of the work here: one file, one seam, one test.
 
 The rest, roughly in order of how much of the repo you have to hold in your head.
 The first two need no Swift at all. The third needs no Swift on your machine.
@@ -48,7 +51,8 @@ The first two need no Swift at all. The third needs no Swift on your machine.
   `plonk state --json`, drop them in a file. That folder has its own CI job and
   answers in about twenty seconds. Good ones ship as built-ins.
   [`zone-sets/README.md`](zone-sets/README.md) has the format.
-- **[needs-hardware][hw].** See below. The single most useful thing you can send.
+- **[needs-hardware][hw].** See below. The single most useful thing you can
+  send, and it needs no code at all.
 - **Something in `mcp/`.** The MCP server and the `plonk` CLI are TypeScript, a
   thin proxy over the app's HTTP API. They build and test anywhere, Linux
   included, with no Mac in sight. `npm ci && npm test` in `mcp/` is the whole
@@ -68,14 +72,15 @@ The first two need no Swift at all. The third needs no Swift on your machine.
 Issues tagged **[good first issue][gfi]** name the file to open, what done looks
 like, and the command that proves it. Comment on one to claim it.
 
-Issues tagged **[reserved][res]** are deliberately left alone: the maintainer is
-not working on them and will not start. Say so on the thread and it is yours.
+Issues tagged **[reserved][res]**, when there are any, are deliberately left
+alone: the maintainer is not working on them and will not start. Say so on the
+thread and it is yours.
 
 [gfi]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [res]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3Areserved-for-contributors
 [hw]: https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3Aneeds-hardware
+[15]: https://github.com/ostapondo/plonk/issues/15
 [17]: https://github.com/ostapondo/plonk/issues/17
-[21]: https://github.com/ostapondo/plonk/issues/21
 
 ## Hardware nobody here has
 
@@ -88,8 +93,11 @@ is reachable from the unit suite. `App/Tests/plonkTests/` runs without one on
 purpose.
 
 A report from a desk that is not this one is worth more than a patch. The
-[needs-hardware][hw] label is that list, and answering one means running a few
-shortcuts and pasting what happened.
+[needs-hardware][hw] label is where those requests are tagged, and answering one
+means running a few shortcuts and pasting what happened. An empty list there is
+not a gap that got filled: it means nobody has asked for a particular desk
+lately. Open an issue with the arrangement you have and what happened, and it
+gets the label.
 
 `scripts/testbench.sh` opens throwaway TextEdit windows so you never have to
 move your real ones:

@@ -15,7 +15,8 @@ it.
 
 | | |
 | --- | --- |
-| **Editor** | Click to split, `⇧`-click to split vertically, drag a divider to resize neighbours, `✕` to delete and let them heal over the gap |
+| **Editor** | Click to cut a zone into top and bottom, right-click or `⇧`-click into left and right, `✕` to delete and let the neighbours heal over the gap |
+| **Dividers** | Drag one to resize both sides at once. It is pulled onto halves, thirds, quarters and the edges of neighbouring zones from within twelve points, and left exactly where you drop it otherwise |
 | **Per monitor** | Each screen gets its own set, remembered by display, not by index |
 | **Overlap** | Allowed — the smallest zone under the cursor wins |
 | **Trigger** | On drag, or only with a modifier held. Holding it inverts the mode, so a free move stays one keypress away |
