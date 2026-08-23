@@ -32,16 +32,18 @@
 "awake.after4Hours" = "4 hours";
 "awake.after8Hours" = "8 hours";
 
-"awake.schedule" = "Schedule";
-"awake.onASchedule" = "On a schedule";
-"awake.onAScheduleHelp" = "Switches itself on inside these hours, and off again after them";
+"awake.starts" = "Starts by itself";
+"awake.startsHelp" = "Any one of these is reason enough: the session runs while at least one of them holds, and ends when the last one lets go. Switching it on or off by hand overrides them until they next change.";
+"awake.onASchedule" = "Inside these hours";
+"awake.onAScheduleHelp" = "Switches itself on inside the window below, and off again after it";
 "awake.from" = "From";
 "awake.to" = "To";
 "awake.days" = "Days";
 "awake.sameTimeHelp" = "Set two different times for the schedule to run";
 
+"awake.whileAppOpen" = "While an app is open";
 "awake.apps" = "Apps";
-"awake.appsHelp" = "Runs while any of these is open, and stops when the last one quits";
+"awake.appsHelp" = "Runs while any of the apps below is open, and stops when the last one quits";
 "awake.noApps" = "No apps yet";
 "awake.chooseApp" = "Choose app";
 "awake.addRunning" = "Add running app";
@@ -54,8 +56,8 @@
 "awake.keepDisplayOnHelp" = "When off, only the system stays awake and the screen may still sleep";
 "awake.allowOnBattery" = "Allow on battery";
 "awake.allowOnBatteryHelp" = "When off, the session pauses while unplugged and resumes when you plug in";
-"awake.autoWhileCharging" = "Automatically while charging";
-"awake.autoWhileChargingHelp" = "Starts a session whenever the Mac is plugged in";
+"awake.autoWhileCharging" = "While charging";
+"awake.autoWhileChargingHelp" = "Runs whenever the Mac is plugged in, and stops when it is unplugged";
 "awake.lidClosed" = "Keep running with the lid closed";
 "awake.lidClosedHelp" = "Stops the Mac sleeping at all, so it asks for your password once. Sleep comes back when you switch this off, or when Plonk quits";
 

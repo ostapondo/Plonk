@@ -16,7 +16,8 @@ extension LocalizedStringResource {
     static let awakeAfter4Hours = Self.key("awake.after4Hours")
     static let awakeAfter8Hours = Self.key("awake.after8Hours")
 
-    static let awakeSchedule = Self.key("awake.schedule")
+    static let awakeStarts = Self.key("awake.starts")
+    static let awakeStartsHelp = Self.key("awake.startsHelp")
     static let awakeOnASchedule = Self.key("awake.onASchedule")
     static let awakeOnAScheduleHelp = Self.key("awake.onAScheduleHelp")
     static let awakeFrom = Self.key("awake.from")
@@ -24,6 +25,7 @@ extension LocalizedStringResource {
     static let awakeDays = Self.key("awake.days")
     static let awakeSameTimeHelp = Self.key("awake.sameTimeHelp")
 
+    static let awakeWhileAppOpen = Self.key("awake.whileAppOpen")
     static let awakeApps = Self.key("awake.apps")
     static let awakeAppsHelp = Self.key("awake.appsHelp")
     static let awakeNoApps = Self.key("awake.noApps")

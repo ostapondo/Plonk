@@ -35,6 +35,14 @@ one of those.
     `available` beside `awake`. `/state` reports one `awake_details` with the
     schedule and the apps in it; `active` and `active_details` are gone, and
     `active` is no longer a switchable feature in `disabled_features`.
+- **Everything that starts a session by itself is in one card.** The schedule,
+  the watched apps and the charger were spread over two cards and a third
+  page's Power section, and the app list armed itself by having anything in it,
+  which read as though the schedule and the apps were two halves of one rule.
+  They are three independent reasons: each has a switch, and the card says the
+  rule out loud — any one of them is enough, and the session ends when the last
+  one lets go. An app list can now be kept while switched off, the way the
+  schedule keeps its hours.
 - **The screen numbers only appear when you ask for them.** Opening the Zones
   page or moving the screen selector used to flash every display's number over
   whatever was on it. Preview does that now, and it draws each screen's own

@@ -67,9 +67,11 @@ struct Config: Codable {
     // resets the idle timer, which is what keeps chat apps from showing you as
     // Away. See AwakeManager.
     var awakeAvailable = false
-    // What starts a session without being asked, beside the charger above: the
-    // hours it covers and the apps whose being open arms it.
+    // What starts a session without being asked: the hours it covers, and the
+    // apps whose being open arms it. Each has a switch of its own, so a list
+    // can be kept while it is not in use, the way the schedule keeps its hours.
     var awakeSchedule = AwakeSchedule()
+    var awakeAppsEnabled = false
     var awakeApps: [String] = []
     // Whether a hand-made session was on when the app last quit, so it survives
     // a relaunch. Unix epoch seconds; nil means the session had no limit.

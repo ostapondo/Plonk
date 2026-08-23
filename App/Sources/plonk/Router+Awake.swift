@@ -47,6 +47,7 @@ extension Router {
             "lid_closed": store.config.awakeLidClosed,
             "session_ends": awake.sessionEnd.map { ISO8601DateFormatter().string(from: $0) } ?? "",
             "bound_pid": awake.boundPID ?? 0,
+            "apps_enabled": store.config.awakeAppsEnabled,
             "apps": awake.apps,
             "schedule": [
                 "enabled": schedule.enabled,

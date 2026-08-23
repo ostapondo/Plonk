@@ -64,8 +64,10 @@ final class AwakeManager {
     var allowOnBattery = true { didSet { if allowOnBattery != oldValue { reevaluate() } } }
     var autoWhileCharging = false { didSet { if autoWhileCharging != oldValue { reevaluate() } } }
     var schedule = AwakeSchedule() { didSet { if schedule != oldValue { reevaluate() } } }
-    /// Bundle ids. The session runs while any of them is running.
+    /// Bundle ids. The session runs while any of them is running, and only
+    /// while the list is switched on: an unused list is kept, not emptied.
     var apps: [String] = [] { didSet { if apps != oldValue { reevaluate() } } }
+    var appsEnabled = false { didSet { if appsEnabled != oldValue { reevaluate() } } }
     /// The feature as a whole. Off drops the hold and ignores the triggers
     /// until it is on again; both are kept, so nothing has to be set up twice.
     var enabled = true { didSet { if enabled != oldValue { reevaluate() } } }
@@ -88,6 +90,7 @@ final class AwakeManager {
         keepDisplayOn = config.awakeKeepDisplayOn
         timeoutMinutes = config.awakeTimeoutMinutes
         schedule = config.awakeSchedule
+        appsEnabled = config.awakeAppsEnabled
         apps = config.awakeApps
     }
 

@@ -5,6 +5,12 @@ import SwiftUI
 //
 // The cards are in the order the questions come: what it does, when it starts
 // by itself, and what power gets to override it.
+//
+// All three automatic triggers sit in one card with a switch each, because they
+// are one question — what starts this without me — and any of them answering
+// yes is enough. Split across cards, with the app list armed by being non-empty
+// and the charger filed under Power, the page read as though the schedule and
+// the apps were two halves of one rule rather than two independent reasons.
 
 struct AwakePage: View {
     @ObservedObject var model: AppModel
@@ -44,7 +50,7 @@ struct AwakePage: View {
                     .fixedSize()
                 }
             }
-            SettingsCard(title: .awakeSchedule) {
+            SettingsCard(title: .awakeStarts, note: .awakeStartsHelp) {
                 ToggleRow(title: .awakeOnASchedule,
                           detail: .awakeOnAScheduleHelp,
                           isOn: model.binding(\.awakeSchedule.enabled))
@@ -63,11 +69,17 @@ struct AwakePage: View {
                     }
                     SettingRow(title: .awakeDays, stacked: true) { days }
                 }
-            }
-            SettingsCard(title: .awakeApps) {
-                SettingRow(title: .awakeAppsHelp, stacked: true) {
-                    AwakeApps(model: model)
+                ToggleRow(title: .awakeWhileAppOpen,
+                          detail: .awakeAppsHelp,
+                          isOn: model.binding(\.awakeAppsEnabled))
+                if model.config.awakeAppsEnabled {
+                    SettingRow(title: .awakeApps, stacked: true) {
+                        AwakeApps(model: model)
+                    }
                 }
+                ToggleRow(title: .awakeAutoWhileCharging,
+                          detail: .awakeAutoWhileChargingHelp,
+                          isOn: model.binding(\.awakeAutoWhileCharging))
             }
             SettingsCard(title: .awakePower) {
                 ToggleRow(title: .awakeKeepDisplayOn,
@@ -76,9 +88,6 @@ struct AwakePage: View {
                 ToggleRow(title: .awakeAllowOnBattery,
                           detail: .awakeAllowOnBatteryHelp,
                           isOn: model.binding(\.awakeAllowOnBattery))
-                ToggleRow(title: .awakeAutoWhileCharging,
-                          detail: .awakeAutoWhileChargingHelp,
-                          isOn: model.binding(\.awakeAutoWhileCharging))
                 if model.hasLid {
                     ToggleRow(title: .awakeLidClosed,
                               detail: .awakeLidClosedHelp,

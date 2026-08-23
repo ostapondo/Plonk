@@ -101,6 +101,12 @@ extension Config {
         if stored["awakeApps"] == nil, let apps = stored["activeApps"] {
             stored["awakeApps"] = apps
         }
+        // A list was its own switch back then: naming an app was the whole of
+        // arming it. Now the switch is separate, so a list that was in use has
+        // to be switched on to go on being in use.
+        if stored["awakeAppsEnabled"] == nil, !((stored["awakeApps"] as? [Any])?.isEmpty ?? true) {
+            stored["awakeAppsEnabled"] = true
+        }
         guard stored["awakeAvailable"] == nil else { return stored }
         // A Mac with either trigger set up was asking to be shown as available,
         // so the merged session comes up at that level — unless the feature

@@ -17,7 +17,7 @@ extension AwakeManager {
     var scheduleIsOpen: Bool { schedule.contains(Date()) }
 
     var appIsRunning: Bool {
-        guard !apps.isEmpty else { return false }
+        guard appsEnabled, !apps.isEmpty else { return false }
         let wanted = Set(apps.map { $0.lowercased() })
         return NSWorkspace.shared.runningApplications.contains {
             guard let id = $0.bundleIdentifier?.lowercased() else { return false }
