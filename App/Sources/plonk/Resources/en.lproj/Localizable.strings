@@ -18,56 +18,49 @@
 "common.points" = "pt";
 "common.separator" = " · ";
 
-/* Keep awake. */
+/* Pulse: keep the Mac awake, and optionally keep you shown as available. */
+"awake.subtitle" = "One session: hold the Mac up, and optionally hold your chat status at available.";
 "awake.keepNow" = "Keep awake now";
-"awake.pausedOnBattery" = "Paused: on battery, and battery use is not allowed below";
-"awake.menuBarGlow" = "The menu bar cube glows amber while active";
+"awake.available" = "Also show me as available";
+"awake.availableHelp" = "Chat apps read how long it is since you last touched the keyboard. This resets that clock with a Shift keypress every two minutes, so Slack and Teams stop showing you as Away";
 "awake.turnOffAfter" = "Turn off after";
 "awake.never" = "Never";
 "awake.after15Minutes" = "15 minutes";
 "awake.after30Minutes" = "30 minutes";
 "awake.after1Hour" = "1 hour";
 "awake.after2Hours" = "2 hours";
+"awake.after4Hours" = "4 hours";
+"awake.after8Hours" = "8 hours";
+
+"awake.schedule" = "Schedule";
+"awake.onASchedule" = "On a schedule";
+"awake.onAScheduleHelp" = "Switches itself on inside these hours, and off again after them";
+"awake.from" = "From";
+"awake.to" = "To";
+"awake.days" = "Days";
+"awake.sameTimeHelp" = "Set two different times for the schedule to run";
+
+"awake.apps" = "Apps";
+"awake.appsHelp" = "Runs while any of these is open, and stops when the last one quits";
+"awake.noApps" = "No apps yet";
+"awake.chooseApp" = "Choose app";
+"awake.addRunning" = "Add running app";
+"awake.unnamed" = "Unnamed";
+"awake.prompt" = "Watch";
+"awake.remove" = "Stop watching this app";
+
 "awake.power" = "Power";
 "awake.keepDisplayOn" = "Keep the display on";
 "awake.keepDisplayOnHelp" = "When off, only the system stays awake and the screen may still sleep";
 "awake.allowOnBattery" = "Allow on battery";
-"awake.allowOnBatteryHelp" = "When off, keep-awake pauses while unplugged and resumes when you plug in";
+"awake.allowOnBatteryHelp" = "When off, the session pauses while unplugged and resumes when you plug in";
 "awake.autoWhileCharging" = "Automatically while charging";
-"awake.autoWhileChargingHelp" = "Keeps the Mac awake whenever it is plugged in";
+"awake.autoWhileChargingHelp" = "Starts a session whenever the Mac is plugged in";
 "awake.lidClosed" = "Keep running with the lid closed";
 "awake.lidClosedHelp" = "Stops the Mac sleeping at all, so it asks for your password once. Sleep comes back when you switch this off, or when Plonk quits";
 
-/* Stay active. */
-"active.subtitle" = "Chat apps read how long it is since you last touched the keyboard. This resets that clock.";
-"active.stayActive" = "Stay active now";
-"active.stayActiveHelp" = "Sends a Shift keypress every two minutes, which also keeps the Mac awake";
-"active.turnOffAfter" = "Turn off after";
-"active.never" = "Never";
-"active.after30Minutes" = "30 minutes";
-"active.after1Hour" = "1 hour";
-"active.after4Hours" = "4 hours";
-"active.after8Hours" = "8 hours";
-"active.schedule" = "Schedule";
-"active.onASchedule" = "On a schedule";
-"active.onAScheduleHelp" = "Switches itself on inside these hours, and off again after them";
-"active.from" = "From";
-"active.to" = "To";
-"active.days" = "Days";
-"active.sameTimeHelp" = "Set two different times for the schedule to run";
-"active.apps" = "Apps";
-"active.appsHelp" = "Stay active runs while any of these is open, and stops when the last one quits";
-"active.noApps" = "No apps yet";
-"active.power" = "Power";
-"active.allowOnBattery" = "Allow on battery";
-"active.allowOnBatteryHelp" = "When off, stay active pauses while unplugged and resumes when you plug in";
-"active.needsAccessibility" = "Plonk needs Accessibility to post the keypress. Without it nothing is sent.";
-"active.openSettings" = "Open Settings";
-"active.chooseApp" = "Choose app";
-"active.addRunning" = "Add running app";
-"active.unnamed" = "Unnamed";
-"active.prompt" = "Watch";
-"active.remove" = "Stop watching this app";
+"awake.needsAccessibility" = "Plonk needs Accessibility to post the keypress. Without it the Mac still stays awake, but nothing is sent and chat apps go on showing you as Away.";
+"awake.openSettings" = "Open Settings";
 
 /* Screenshots. */
 "shot.capture" = "Capture";
@@ -388,8 +381,7 @@
 "page.voice" = "Voice";
 "page.appearance" = "Appearance";
 "page.shortcuts" = "Keyboard";
-"page.awake" = "Keep awake";
-"page.active" = "Stay active";
+"page.awake" = "Pulse";
 "page.update" = "Updates";
 "page.features" = "Tools";
 
@@ -403,8 +395,7 @@
 "feature.mouseDetail" = "Click highlights, crosshairs and finding the pointer.";
 "feature.rulerDetail" = "Measuring what is on screen, by hover or by drag.";
 "feature.voiceDetail" = "Push-to-talk, for commands and for sentences to an agent.";
-"feature.awakeDetail" = "Keeping the Mac from sleeping, by hand, by schedule or for a process.";
-"feature.activeDetail" = "Keeping you shown as available in chat apps.";
+"feature.awakeDetail" = "Keeping the Mac awake, and you shown as available: by hand, on a schedule, while an app runs, or for a process.";
 
 /* The menu bar item. */
 "menu.openPlonk" = "Open Plonk";
@@ -689,23 +680,19 @@
 "hud.copiedToClipboard" = "Copied to clipboard";
 "hud.saved" = "Saved";
 
-/* Keep-awake, in one word, for the menu bar tooltip and for an agent asking. */
+/* Pulse, in one phrase, for the menu bar tooltip and for an agent asking. */
 "awake.statusOn" = "on";
 "awake.statusOff" = "off";
+"awake.statusAvailable" = "on, and shown as available";
 "awake.statusAutoCharging" = "auto (charging)";
+"awake.statusSchedule" = "on for the scheduled hours";
+"awake.statusApp" = "on while a watched app is running";
+"awake.statusUntil %@" = "on until %@";
 "awake.statusUntilProcess %lld" = "on until process %lld exits";
 "awake.statusPausedOnBattery" = "paused on battery";
+"awake.statusNoAccessibility" = "awake, but not available: Accessibility not granted";
 "awake.statusLidClosed" = "on, even with the lid closed";
-
-/* Stay active, in one phrase, for the page and for an agent asking. */
-"active.statusOn" = "on";
-"active.statusOff" = "off";
-"active.statusSchedule" = "on for the scheduled hours";
-"active.statusApp" = "on while a watched app is running";
-"active.statusUntil %@" = "on until %@";
-"active.statusPausedOnBattery" = "paused on battery";
-"active.statusNoAccessibility" = "off: Accessibility not granted";
-"menu.tooltip %@" = "Plonk — keep-awake: %@";
+"menu.tooltip %@" = "Plonk — Pulse: %@";
 
 /* Stand-in for an app that will not say what it is called. */
 "guide.thisApp" = "This app";

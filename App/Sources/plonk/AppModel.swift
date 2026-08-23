@@ -12,11 +12,10 @@ protocol AppActions: AnyObject {
     /// setting therefore adds no method here.
     func update<Value>(_ path: WritableKeyPath<Config, Value>, to value: Value)
 
-    /// Keep-awake and stay-active are held by their managers, not by a stored
-    /// flag: switching either by hand holds against the schedule until the
-    /// schedule itself changes, which a config field could not express.
+    /// The keep-awake session is held by its manager, not by a stored flag:
+    /// switching it by hand holds against the schedule until the schedule
+    /// itself changes, which a config field could not express.
     func setAwake(_ on: Bool)
-    func setActive(_ on: Bool)
 
     /// Binding an action frees the combination wherever else it was, so it
     /// goes through `Config.bind` rather than a plain write. See Config+Edits.
@@ -83,8 +82,13 @@ final class AppModel: ObservableObject {
     /// The settings, as saved. Written only by AppDelegate, off ConfigStore.
     @Published var config = Config()
 
-    // Keep-awake, as the manager has it rather than as it was last saved.
+    // The keep-awake session, as the manager has it rather than as it was last
+    // saved. `awakeOn` is the assertion, `awakeAvailableNow` the idle nudge.
     @Published var awakeOn = false
+    @Published var awakeAvailableNow = false
+    @Published var awakeStatus: LocalizedStringResource = .awakeStatusOff
+    /// Whether Accessibility is granted, which only the available level needs.
+    @Published var awakeTrusted = true
     /// Whether the manager is holding, which is not `config.awakeRequested`:
     /// that one is only what to restore after a relaunch. Named apart so a
     /// key path cannot mean both.
@@ -92,12 +96,6 @@ final class AppModel: ObservableObject {
     /// Whether this Mac has a lid, which decides whether the lid-closed switch
     /// is worth showing at all.
     @Published var hasLid = true
-    // Stay active, likewise.
-    @Published var activeOn = false
-    @Published var activeRequested = false
-    @Published var activeStatus: LocalizedStringResource = .activeStatusOff
-    @Published var activeTrusted = true
-
     // Which bindings macOS refused, and how the ones it took should read.
     @Published var unavailableHotkeys: [String] = []
     @Published var hotkeyDisplays: [String: String] = [:]
@@ -275,7 +273,7 @@ extension AppModel {
     }
 
     /// State a manager or macOS owns rather than the config, written through
-    /// the command that owns it: keep-awake, stay-active, the login item.
+    /// the command that owns it: the keep-awake session, the login item.
     func binding<Value>(_ keyPath: KeyPath<AppModel, Value>,
                         set: @escaping (AppActions, Value) -> Void) -> Binding<Value> {
         Binding(

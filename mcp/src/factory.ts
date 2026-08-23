@@ -7,7 +7,6 @@ import { register as registerState } from "./tools/state.js";
 import { register as registerLayouts } from "./tools/layouts.js";
 import { register as registerWorkspaces } from "./tools/workspaces.js";
 import { register as registerZones } from "./tools/zones.js";
-import { register as registerActive } from "./tools/active.js";
 import { register as registerAwake } from "./tools/awake.js";
 import { register as registerScreenshot } from "./tools/screenshot.js";
 import { register as registerAnnotate } from "./tools/annotate.js";
@@ -25,7 +24,6 @@ export function createPlonkServer(): McpServer {
   registerLayouts(server);
   registerZones(server);
   registerAwake(server);
-  registerActive(server);
   registerScreenshot(server);
   registerAnnotate(server);
   registerText(server);

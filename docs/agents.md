@@ -21,8 +21,7 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 | `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops, launched from nothing |
 | `snap_window` | Drop a window into a numbered zone |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
-| `set_awake` | Keep-awake — for N minutes, until a time, or until a process exits |
-| `set_active` | Stay active — resets the idle timer so chat apps do not show Away |
+| `set_awake` | Keep the Mac awake — for N minutes, until a time, or until a process exits — and with `available`, reset the idle timer too so chat apps do not show Away |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
 | `extract_text` | Read the words off the screen and hand back text, with a box for every line in the same coordinates `annotate_screenshot` draws in |
 | `measure_screen` | How far a point can go each way before it meets an edge, or the distance between two points, in points and pixels — no image, no eyeballing |

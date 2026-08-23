@@ -7,8 +7,9 @@ import Network
 //   GET  /ping              liveness, cheap: touches neither AX nor the screen
 //   GET  /state             disabled_features lists what the user switched off;
 //                           a route under one of them answers 409
-//   POST /awake             { on?, minutes?, until?, pid? }
-//   POST /active            { on?, minutes?, until? }   the idle timer, not sleep
+//   POST /awake             { on?, minutes?, until?, pid?, available? }
+//                           available also resets the idle timer, which is what
+//                           chat apps read; see AwakeManager
 //   POST /layout            { items: [{ app, title?, screen?, frame: {x,y,w,h} }] }
 //   POST /workspaces/save   { name, items?, move_existing? }  no items = snapshot the desktop
 //   POST /workspaces/launch { name, screen? }   screen pulls it onto one monitor
@@ -43,7 +44,6 @@ final class Router {
     let store: ConfigStore
     let windows: WindowManager
     let awake: AwakeManager
-    let active: ActiveManager
     let agents: AgentRegistry
     let changes: ChangeBus
     /// The `/shot` routes, which answer after the request has been left behind.
@@ -70,12 +70,10 @@ final class Router {
     var didChangeZones: (() -> Void)?
 
     init(store: ConfigStore, windows: WindowManager, awake: AwakeManager,
-         active: ActiveManager = ActiveManager(),
          agents: AgentRegistry = AgentRegistry(), changes: ChangeBus = ChangeBus()) {
         self.store = store
         self.windows = windows
         self.awake = awake
-        self.active = active
         self.agents = agents
         self.changes = changes
         self.shots = ShotRoutes(store: store)
@@ -118,8 +116,6 @@ final class Router {
 
         case ("POST", "/awake"):
             handleAwake(body: body, respond: respond)
-        case ("POST", "/active"):
-            handleActive(body: body, respond: respond)
 
         case ("POST", "/layout"):
             respond(layoutRoute(body))

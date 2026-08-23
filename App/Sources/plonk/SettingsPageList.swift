@@ -54,11 +54,8 @@ enum SettingsPages {
         SettingsPage(id: "shortcuts", title: .pageShortcuts, icon: "keyboard", parent: "settings") {
             AnyView(ShortcutsPage(model: $0))
         },
-        SettingsPage(id: "awake", title: .pageAwake, icon: "cup.and.saucer", parent: "settings") {
+        SettingsPage(id: "awake", title: .pageAwake, icon: "waveform.path.ecg", parent: "settings") {
             AnyView(AwakePage(model: $0))
-        },
-        SettingsPage(id: "active", title: .pageActive, icon: "person.wave.2", parent: "settings") {
-            AnyView(ActivePage(model: $0))
         },
         SettingsPage(id: "update", title: .pageUpdate, icon: "arrow.down.circle", parent: "settings") {
             AnyView(UpdatePage(model: $0))

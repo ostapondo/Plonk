@@ -15,6 +15,26 @@ one of those.
 
 ### Changed
 
+- **Keep awake and Stay active are one feature, called Pulse.** They were never
+  two: a power assertion stops the Mac sleeping without touching the idle
+  counter Slack and Teams read, so keep-awake alone still left you Away, and
+  resetting that counter postpones sleep, so stay-active always implied
+  keep-awake. Two switches for one thing, one of which quietly did the other's
+  job. Now there is one session with a level — hold the Mac up, and optionally
+  hold your chat status at available with it — and every way of starting one
+  works at either level. The schedule and the watched apps used to arm only
+  stay-active; a process binding used to end only keep-awake. All of them now
+  start and end the one session, so `set_awake` with a `pid` can keep you
+  available for exactly as long as a build runs.
+  - Your setup carries over. A schedule or a watched-app list from Stay active
+    comes across as it was, and turns the level on, unless the feature had been
+    switched off in Tools. The two settings that existed twice — allow on
+    battery, turn off after — keep their keep-awake values; check them if you
+    had them set differently on each page.
+  - `set_active` is gone. `set_awake` takes `available` instead, and reports
+    `available` beside `awake`. `/state` reports one `awake_details` with the
+    schedule and the apps in it; `active` and `active_details` are gone, and
+    `active` is no longer a switchable feature in `disabled_features`.
 - **The screen numbers only appear when you ask for them.** Opening the Zones
   page or moving the screen selector used to flash every display's number over
   whatever was on it. Preview does that now, and it draws each screen's own

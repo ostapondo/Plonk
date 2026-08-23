@@ -74,13 +74,41 @@ extension Config {
         }
     }
 
-    /// Renames a key an older release wrote. Configs written before workspaces
-    /// could launch apps hold bare item arrays under "layouts".
+    /// Renames the keys older releases wrote, so a config file that predates a
+    /// change still says what it meant.
     private static func migrated(_ stored: [String: Any]) -> [String: Any] {
-        guard stored["workspaces"] == nil,
-              let layouts = stored["layouts"] as? [String: Any] else { return stored }
         var stored = stored
-        stored["workspaces"] = layouts.mapValues { ["items": $0] }
+        // Configs written before workspaces could launch apps hold bare item
+        // arrays under "layouts".
+        if stored["workspaces"] == nil, let layouts = stored["layouts"] as? [String: Any] {
+            stored["workspaces"] = layouts.mapValues { ["items": $0] }
+        }
+        return staying(available: stored)
+    }
+
+    /// Stay active was a feature beside keep-awake until they were merged. Its
+    /// schedule and its watched apps are triggers of the one session now, so
+    /// they move across under the names that survived.
+    ///
+    /// Its own battery and timeout rules are dropped rather than merged: two
+    /// settings became one, and keep-awake's is the one the same user was
+    /// already reading on the page that is still there.
+    private static func staying(available stored: [String: Any]) -> [String: Any] {
+        var stored = stored
+        if stored["awakeSchedule"] == nil, let schedule = stored["activeSchedule"] {
+            stored["awakeSchedule"] = schedule
+        }
+        if stored["awakeApps"] == nil, let apps = stored["activeApps"] {
+            stored["awakeApps"] = apps
+        }
+        guard stored["awakeAvailable"] == nil else { return stored }
+        // A Mac with either trigger set up was asking to be shown as available,
+        // so the merged session comes up at that level — unless the feature
+        // behind them was switched off, which said the opposite just as plainly.
+        let off = (stored["disabledFeatures"] as? [Any])?.contains { ($0 as? String) == "active" }
+        let scheduled = (stored["awakeSchedule"] as? [String: Any])?["enabled"] as? Bool ?? false
+        let watched = !((stored["awakeApps"] as? [Any])?.isEmpty ?? true)
+        if (scheduled || watched) && off != true { stored["awakeAvailable"] = true }
         return stored
     }
 }
