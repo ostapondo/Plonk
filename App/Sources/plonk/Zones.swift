@@ -73,19 +73,41 @@ enum ZoneGeometry {
         return room > 0 ? rect.insetBy(dx: room, dy: room) : rect
     }
 
+    /// Rounds to the grid, which is what a keyboard step and a click-split use:
+    /// both want a tidy fraction rather than the exact pixel asked for.
     static func snapValue(_ v: Double) -> Double {
         (v / grid).rounded() * grid
     }
 
-    static func snap(_ zone: ZoneRect) -> ZoneRect {
-        let w = max(snapValue(zone.w), minSide)
-        let h = max(snapValue(zone.h), minSide)
-        return ZoneRect(
-            snapValue(zone.x).clamped(to: 0...(1 - w)),
-            snapValue(zone.y).clamped(to: 0...(1 - h)),
-            w,
-            h
-        )
+    /// The fractions a dragged divider is drawn to: halves, thirds, quarters,
+    /// fifths and sixths of the screen.
+    static let stops: [Double] = {
+        var values: Set<Double> = []
+        for parts in 2...6 {
+            for step in 1..<parts { values.insert(Double(step) / Double(parts)) }
+        }
+        return values.sorted()
+    }()
+
+    /// Where a dragged edge lands: the nearest stop, or an edge another zone
+    /// already keeps so columns line up, but only when one of them is within
+    /// `tolerance`. Anything further away stays exactly where it was put.
+    ///
+    /// A magnet rather than a grid, because the editor used to round every edge
+    /// to a twentieth of the screen once the mouse came up. On a 5120-point
+    /// display that is a 256-point step: the divider jumped away from the
+    /// pointer on release, and half the positions on the screen could not be
+    /// asked for at all. Tolerance is in the same fractions as the value and
+    /// the caller works it out from points, so the pull is the same distance on
+    /// a laptop as on an ultrawide.
+    static func magnet(_ value: Double, to edges: [Double] = [], tolerance: Double) -> Double {
+        var best = value
+        var closest = tolerance
+        for candidate in stops + edges where abs(candidate - value) < closest {
+            closest = abs(candidate - value)
+            best = candidate
+        }
+        return best
     }
 
     /// Smallest rect covering both zones, which is what dropping a window

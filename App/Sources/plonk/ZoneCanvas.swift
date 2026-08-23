@@ -34,6 +34,10 @@ struct ZoneCanvas: View {
 
     @State private var interaction: Interaction?
     @State private var began = false
+    /// Whether shift was down when the press started; see the split in `drag`.
+    @State private var shifted = false
+    /// How close a divider has to come to a stop before it is pulled onto it.
+    private static let magnetPoints: CGFloat = 12
     @State private var liveZones: [ZoneRect]?
     @State private var lastValid: [ZoneRect]?
 
@@ -80,10 +84,12 @@ struct ZoneCanvas: View {
                 if !began {
                     began = true
                     lastValid = nil
+                    shifted = NSEvent.modifierFlags.contains(.shift)
                     interaction = begin(at: value.startLocation, in: size)
                 }
                 guard let interaction, case .resize(let items) = interaction else { return }
-                let candidate = apply(items, value: value, size: size)
+                let delta = pull(items, translation: value.translation, size: size)
+                let candidate = apply(items, dx: delta.dx, dy: delta.dy)
                 if !ZoneGeometry.overlaps(candidate, at: items.map(\.index)) {
                     lastValid = candidate
                 }
@@ -92,26 +98,64 @@ struct ZoneCanvas: View {
             .onEnded { value in
                 defer { began = false; interaction = nil; liveZones = nil; lastValid = nil }
                 switch interaction {
-                case .resize(let items):
+                case .resize:
+                    // What was drawn is what is kept: the magnet has already
+                    // done its pulling while the divider was under the pointer.
                     guard let result = lastValid else { return }
-                    onChange?(snapped(result, at: items.map(\.index)))
+                    onChange?(result)
                 case .split(let index, let point):
                     let moved = abs(value.translation.width) > 4 || abs(value.translation.height) > 4
                     guard !moved else { return }
-                    split(index, at: point, vertical: NSEvent.modifierFlags.contains(.shift), in: size)
+                    // Read at mouse-down as well as now: a modifier let go of
+                    // early, or taken up late, still means what it looked like.
+                    let vertical = shifted || NSEvent.modifierFlags.contains(.shift)
+                    split(index, at: point, vertical: vertical, in: size)
                 case nil:
                     break
                 }
             }
     }
 
-    /// Snapping can push a zone into its neighbor; keep the unsnapped result then.
-    private func snapped(_ zones: [ZoneRect], at indices: [Int]) -> [ZoneRect] {
-        var candidate = zones
-        for index in indices where candidate.indices.contains(index) {
-            candidate[index] = ZoneGeometry.snap(candidate[index])
+    /// How far the drag actually moves the divider: the pointer's translation,
+    /// then pulled onto a stop or a neighbouring edge if one is close. Both
+    /// sides of a divider are moved by the same amount, so they cannot come
+    /// apart however hard the magnet pulls.
+    private func pull(_ items: [(index: Int, origin: ZoneRect, edges: Edges)],
+                      translation: CGSize, size: CGSize) -> (dx: Double, dy: Double) {
+        var dx = Double(translation.width / size.width)
+        var dy = Double(translation.height / size.height)
+        let moved = Set(items.map(\.index))
+        if let anchor = items.compactMap(horizontalAnchor).first {
+            dx = ZoneGeometry.magnet(anchor + dx, to: edges(on: .horizontal, excluding: moved),
+                                     tolerance: Double(Self.magnetPoints / size.width)) - anchor
         }
-        return ZoneGeometry.overlaps(candidate, at: indices) ? zones : candidate
+        if let anchor = items.compactMap(verticalAnchor).first {
+            dy = ZoneGeometry.magnet(anchor + dy, to: edges(on: .vertical, excluding: moved),
+                                     tolerance: Double(Self.magnetPoints / size.height)) - anchor
+        }
+        return (dx, dy)
+    }
+
+    private func horizontalAnchor(_ item: (index: Int, origin: ZoneRect, edges: Edges)) -> Double? {
+        if item.edges.contains(.left) { return item.origin.x }
+        if item.edges.contains(.right) { return item.origin.x + item.origin.w }
+        return nil
+    }
+
+    private func verticalAnchor(_ item: (index: Int, origin: ZoneRect, edges: Edges)) -> Double? {
+        if item.edges.contains(.top) { return item.origin.y }
+        if item.edges.contains(.bottom) { return item.origin.y + item.origin.h }
+        return nil
+    }
+
+    private enum Axis { case horizontal, vertical }
+
+    /// The edges the zones standing still already keep, so a divider lines up
+    /// with the column above it instead of landing a few points off.
+    private func edges(on axis: Axis, excluding moved: Set<Int>) -> [Double] {
+        zones.enumerated().filter { !moved.contains($0.offset) }.flatMap { _, z in
+            axis == .horizontal ? [z.x, z.x + z.w] : [z.y, z.y + z.h]
+        }
     }
 
     private func split(_ index: Int, at point: CGPoint, vertical: Bool, in size: CGSize) {
@@ -155,10 +199,8 @@ struct ZoneCanvas: View {
     }
 
     private func apply(_ items: [(index: Int, origin: ZoneRect, edges: Edges)],
-                       value: DragGesture.Value, size: CGSize) -> [ZoneRect] {
+                       dx: Double, dy: Double) -> [ZoneRect] {
         var result = zones
-        let dx = value.translation.width / size.width
-        let dy = value.translation.height / size.height
         for (index, origin, edges) in items {
             guard result.indices.contains(index) else { continue }
             var z = origin
