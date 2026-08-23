@@ -87,6 +87,9 @@ final class AppModel: ObservableObject {
     /// that one is only what to restore after a relaunch. Named apart so a
     /// key path cannot mean both.
     @Published var awakeHeld = false
+    /// Whether this Mac has a lid, which decides whether the lid-closed switch
+    /// is worth showing at all.
+    @Published var hasLid = true
     // Stay active, likewise.
     @Published var activeOn = false
     @Published var activeRequested = false

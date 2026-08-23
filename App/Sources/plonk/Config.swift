@@ -57,6 +57,11 @@ struct Config: Codable {
     var awakeAllowOnBattery = true
     var awakeAutoWhileCharging = false
     var awakeKeepDisplayOn = true
+    // Whether the Mac keeps running with the lid shut. Unlike the settings
+    // around it this one is a hold rather than a preference: it disables sleep
+    // system-wide, so LidSleep hands it back when the app is not there to own
+    // it, and AppDelegate.setupLidSleep clears it on the next launch.
+    var awakeLidClosed = false
     var awakeTimeoutMinutes = 0
     // Whether keep-awake was on when the app last quit, so it survives a
     // relaunch. Unix epoch seconds; nil means the session had no limit.

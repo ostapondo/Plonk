@@ -34,6 +34,11 @@ struct AwakePage: View {
                 ToggleRow(title: .awakeAutoWhileCharging,
                           detail: .awakeAutoWhileChargingHelp,
                           isOn: model.binding(\.awakeAutoWhileCharging))
+                if model.hasLid {
+                    ToggleRow(title: .awakeLidClosed,
+                              detail: .awakeLidClosedHelp,
+                              isOn: model.binding(\.awakeLidClosed))
+                }
             }
         }
     }

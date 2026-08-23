@@ -35,6 +35,8 @@
 "awake.allowOnBatteryHelp" = "When off, keep-awake pauses while unplugged and resumes when you plug in";
 "awake.autoWhileCharging" = "Automatically while charging";
 "awake.autoWhileChargingHelp" = "Keeps the Mac awake whenever it is plugged in";
+"awake.lidClosed" = "Keep running with the lid closed";
+"awake.lidClosedHelp" = "Stops the Mac sleeping at all, so it asks for your password once. Sleep comes back when you switch this off, or when Plonk quits";
 
 /* Stay active. */
 "active.subtitle" = "Chat apps read how long it is since you last touched the keyboard. This resets that clock.";
