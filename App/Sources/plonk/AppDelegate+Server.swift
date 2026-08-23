@@ -4,7 +4,7 @@ import AppKit
 
 extension AppDelegate {
     func setupServer() {
-        router = Router(store: store, windows: windows, awake: awake, active: active, agents: agents)
+        router = Router(store: store, windows: windows, awake: awake, agents: agents)
         router.changes.onEvent = { [weak self] rev, what in
             self?.eventBroadcaster.broadcast(rev: rev, what: what)
         }

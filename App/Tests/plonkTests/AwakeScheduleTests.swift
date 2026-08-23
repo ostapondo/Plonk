@@ -2,18 +2,18 @@ import Foundation
 import Testing
 @testable import plonk
 
-// When a stay-active window is open. The calendar is injected so the answers do
+// When a scheduled keep-awake window is open. The calendar is injected so the answers do
 // not depend on where the test runs, and the dates below are chosen for their
 // weekdays: 2026-08-10 is a Monday, 2026-08-15 a Saturday.
 
 /// Weekdays only, 09:00 to 18:00.
-private func workdays() -> ActiveSchedule {
-    var schedule = ActiveSchedule()
+private func workdays() -> AwakeSchedule {
+    var schedule = AwakeSchedule()
     schedule.enabled = true
     return schedule
 }
 
-struct ActiveScheduleTests {
+struct AwakeScheduleTests {
 
     @Test func offWhenNotEnabled() {
         var schedule = workdays()
@@ -82,23 +82,23 @@ struct ActiveScheduleTests {
     // MARK: - Clock text
 
     @Test func clockTextRoundTrips() {
-        #expect(ActiveSchedule.clock(0) == "00:00")
-        #expect(ActiveSchedule.clock(9 * 60 + 5) == "09:05")
-        #expect(ActiveSchedule.clock(23 * 60 + 59) == "23:59")
-        #expect(ActiveSchedule.minutes(fromClock: "09:05") == 9 * 60 + 5)
-        #expect(ActiveSchedule.minutes(fromClock: "00:00") == 0)
+        #expect(AwakeSchedule.clock(0) == "00:00")
+        #expect(AwakeSchedule.clock(9 * 60 + 5) == "09:05")
+        #expect(AwakeSchedule.clock(23 * 60 + 59) == "23:59")
+        #expect(AwakeSchedule.minutes(fromClock: "09:05") == 9 * 60 + 5)
+        #expect(AwakeSchedule.minutes(fromClock: "00:00") == 0)
     }
 
     @Test func badClockTextIsRefused() {
-        #expect(ActiveSchedule.minutes(fromClock: "24:00") == nil)
-        #expect(ActiveSchedule.minutes(fromClock: "09:60") == nil)
-        #expect(ActiveSchedule.minutes(fromClock: "9") == nil)
-        #expect(ActiveSchedule.minutes(fromClock: "nine") == nil)
-        #expect(ActiveSchedule.minutes(fromClock: "-1:00") == nil)
+        #expect(AwakeSchedule.minutes(fromClock: "24:00") == nil)
+        #expect(AwakeSchedule.minutes(fromClock: "09:60") == nil)
+        #expect(AwakeSchedule.minutes(fromClock: "9") == nil)
+        #expect(AwakeSchedule.minutes(fromClock: "nine") == nil)
+        #expect(AwakeSchedule.minutes(fromClock: "-1:00") == nil)
     }
 
     @Test func theDayBeforeSundayIsSaturday() {
-        #expect(ActiveSchedule.previousWeekday(1) == 7)
-        #expect(ActiveSchedule.previousWeekday(2) == 1)
+        #expect(AwakeSchedule.previousWeekday(1) == 7)
+        #expect(AwakeSchedule.previousWeekday(2) == 1)
     }
 }

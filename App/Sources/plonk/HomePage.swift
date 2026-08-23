@@ -151,7 +151,7 @@ struct HomePage: View {
                 model.actions?.openZonePicker()
             }
             tile(model.awakeHeld ? LocalizedStringResource.homeAwakeOn : .homeKeepAwake,
-                 "cup.and.saucer", keys: []) {
+                 "waveform.path.ecg", keys: []) {
                 model.actions?.setAwake(!model.awakeHeld)
             }
         }
@@ -198,7 +198,7 @@ struct HomePage: View {
             }
             if model.isEnabled(.awake) {
                 Divider()
-                switchRow(.homeKeepAwake, "cup.and.saucer",
+                switchRow(.homeKeepAwake, "waveform.path.ecg",
                           detail: model.awakeHeld && !model.awakeOn
                               ? LocalizedStringResource.homeKeepAwakePaused : .homeKeepAwakeDetail,
                           toggle: model.binding(\.awakeHeld, set: { $0.setAwake($1) }))

@@ -31,7 +31,7 @@ extension Router {
     /// Everything that changes windows or config. Reads and screenshots stay
     /// open to every agent; hello must stay open or nobody could register.
     // /update is guarded because installing one quits and relaunches the app.
-    private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake", "/active", "/update"]
+    private static let guardedPrefixes = ["/layout", "/layouts", "/workspaces", "/zones", "/awake", "/update"]
     // /agents/ask is guarded too: a prompt is a way to move windows by proxy,
     // and it can launch an adapter's shell command outright.
     private static let guardedPaths: Set<String> = ["/agents/select", "/agents/exclusive", "/agents/ask"]

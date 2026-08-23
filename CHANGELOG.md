@@ -11,6 +11,44 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Changed
+
+- **Keep awake and Stay active are one feature, called Pulse.** They were never
+  two: a power assertion stops the Mac sleeping without touching the idle
+  counter Slack and Teams read, so keep-awake alone still left you Away, and
+  resetting that counter postpones sleep, so stay-active always implied
+  keep-awake. Two switches for one thing, one of which quietly did the other's
+  job. Now there is one session with a level — hold the Mac up, and optionally
+  hold your chat status at available with it — and every way of starting one
+  works at either level. The schedule and the watched apps used to arm only
+  stay-active; a process binding used to end only keep-awake. All of them now
+  start and end the one session, so `set_awake` with a `pid` can keep you
+  available for exactly as long as a build runs.
+  - Your setup carries over. A schedule or a watched-app list from Stay active
+    comes across as it was, and turns the level on, unless the feature had been
+    switched off in Tools. The two settings that existed twice — allow on
+    battery, turn off after — keep their keep-awake values; check them if you
+    had them set differently on each page.
+  - `set_active` is gone. `set_awake` takes `available` instead, and reports
+    `available` beside `awake`. `/state` reports one `awake_details` with the
+    schedule and the apps in it; `active` and `active_details` are gone, and
+    `active` is no longer a switchable feature in `disabled_features`.
+- **Everything that starts a session by itself is in one card.** The schedule,
+  the watched apps and the charger were spread over two cards and a third
+  page's Power section, and the app list armed itself by having anything in it,
+  which read as though the schedule and the apps were two halves of one rule.
+  They are three independent reasons: each has a switch, and the card says the
+  rule out loud — any one of them is enough, and the session ends when the last
+  one lets go. An app list can now be kept while switched off, the way the
+  schedule keeps its hours.
+- **The screen numbers only appear when you ask for them.** Opening the Zones
+  page or moving the screen selector used to flash every display's number over
+  whatever was on it. Preview does that now, and it draws each screen's own
+  layout on it at the same time, so one press answers both which monitor is
+  which and what is on it.
+
 ## 0.3.4 — 2026-08-23
 
 ### Added

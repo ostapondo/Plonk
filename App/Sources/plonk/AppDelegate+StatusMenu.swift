@@ -7,7 +7,7 @@ import AppKit
 extension AppDelegate {
     func setupStatusMenu() {
         statusMenu = StatusMenuController()
-        statusMenu.isAwakeRequested = { [weak self] in self?.awake.requested ?? false }
+        statusMenu.isAwakeRequested = { [weak self] in self?.awake.wants ?? false }
         statusMenu.isFeatureEnabled = { [weak self] feature in self?.store.config.isEnabled(feature) ?? true }
         statusMenu.onToggleFeature = { [weak self] feature, on in
             self?.store.update { $0.setEnabled(feature, on) }

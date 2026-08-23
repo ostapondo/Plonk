@@ -2,9 +2,9 @@ import Foundation
 
 // Turning what someone typed into a moment in time.
 //
-// Kept out of Router, which owns the route table rather than
-// parsers. /awake and /active both take a deadline; "until 17:00" is the same
-// question wherever it is asked from.
+// Kept out of Router, which owns the route table rather than parsers. /awake
+// takes a deadline; "until 17:00" is the same question wherever it is asked
+// from.
 
 extension Router {
     /// The optional "until" of a request body: nil when absent, .failure with
