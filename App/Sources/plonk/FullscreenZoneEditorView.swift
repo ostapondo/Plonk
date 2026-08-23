@@ -1,7 +1,8 @@
 import SwiftUI
 
-// Borderless grid editor shown over the actual screen. Click a zone to split
-// it (⇧ for a vertical split), drag a divider to resize, ✕ deletes.
+// Borderless grid editor shown over the actual screen. Click a zone to split it
+// top and bottom, right-click to split it left and right, drag a divider to
+// resize, ✕ deletes.
 // Edits stay in the draft until Save & Apply, so Cancel and Esc are lossless
 // and the saved set never sees a half-finished layout.
 
