@@ -25,6 +25,14 @@ extension AppDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
 
+    /// Which monitor is which, said on the monitors. The tint is the one the
+    /// zone overlay uses, so the flash and the zones it is about are the same
+    /// colour.
+    func identifyScreens(selected: Int) {
+        guard NSScreen.screens.count > 1 else { return }
+        screenTags.show(selected: selected, tint: ZoneAppearance(store.config).tint)
+    }
+
     /// Grab-and-move, the pointer tools and the new-window watcher all need
     /// Accessibility to arm, and on a first run it has just been asked for and
     /// not yet given. Rather than making each of them dead until the next

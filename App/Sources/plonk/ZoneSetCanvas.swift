@@ -137,6 +137,11 @@ struct ZoneSetCanvas: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .fixedSize()
+                // Numbering monitors in a settings window is guesswork until
+                // the monitors say which is which, so they do: on arrival, and
+                // again whenever the choice moves.
+                .onChange(of: chosen) { model.actions?.identifyScreens(selected: $0) }
+                .onAppear { model.actions?.identifyScreens(selected: screen) }
             }
         }
     }

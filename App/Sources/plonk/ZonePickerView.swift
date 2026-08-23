@@ -64,6 +64,7 @@ struct ZonePickerView: View {
             ForEach(0..<model.screenCount, id: \.self) { screen in
                 Button {
                     selectedScreen = screen
+                    model.actions?.identifyScreens(selected: screen)
                 } label: {
                     VStack(spacing: 2) {
                         Text("\(screen + 1)").font(.title2.bold())
@@ -82,6 +83,7 @@ struct ZonePickerView: View {
                 .buttonStyle(.plain)
             }
         }
+        .onAppear { model.actions?.identifyScreens(selected: selectedScreen) }
     }
 
     private func cardGrid(edgeCard: Bool, names: [String]) -> some View {

@@ -43,6 +43,8 @@ protocol AppActions: AnyObject {
     func renameZoneSet(_ old: String, to new: String) -> Bool
     func deleteZoneSet(_ name: String)
     func togglePreview(zoneSet name: String, onScreen index: Int)
+    /// Flash the display numbers on the displays themselves.
+    func identifyScreens(selected: Int)
     func openZonePicker()
     /// The zone sets, listed over whatever is on screen, for the monitor the
     /// pointer is on.
