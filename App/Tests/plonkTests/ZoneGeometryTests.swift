@@ -12,23 +12,26 @@ private func assertZone(_ zone: ZoneRect, _ x: Double, _ y: Double, _ w: Double,
 
 struct ZoneGeometryTests {
 
-    // MARK: - snap
+    // MARK: - snapping and the magnet
 
-    @Test func snapRoundsToGrid() {
-        let snapped = ZoneGeometry.snap(ZoneRect(0.213, 0.478, 0.331, 0.512))
-        assertZone(snapped, 0.2, 0.5, 0.35, 0.5)
+    @Test func snapValueRoundsToGrid() {
+        #expect(abs(ZoneGeometry.snapValue(0.213) - 0.2) < 0.0001)
+        #expect(abs(ZoneGeometry.snapValue(0.478) - 0.5) < 0.0001)
     }
 
-    @Test func snapEnforcesMinimumSize() {
-        let snapped = ZoneGeometry.snap(ZoneRect(0.5, 0.5, 0.01, 0.01))
-        #expect(snapped.w >= ZoneGeometry.minSide)
-        #expect(snapped.h >= ZoneGeometry.minSide)
+    @Test func aDividerIsPulledOntoAStopOnlyFromClose() {
+        #expect(abs(ZoneGeometry.magnet(0.507, tolerance: 0.01) - 0.5) < 0.0001)
+        // Further off than the tolerance the exact position is kept, which is
+        // the thing the old grid could not do.
+        #expect(abs(ZoneGeometry.magnet(0.437, tolerance: 0.01) - 0.437) < 0.0001)
     }
 
-    @Test func snapClampsInsideBounds() {
-        let snapped = ZoneGeometry.snap(ZoneRect(0.97, 0.97, 0.2, 0.2))
-        #expect(snapped.x + snapped.w <= 1.0001)
-        #expect(snapped.y + snapped.h <= 1.0001)
+    @Test func aDividerLinesUpWithAnEdgeAnotherZoneKeeps() {
+        #expect(abs(ZoneGeometry.magnet(0.283, to: [0.28], tolerance: 0.01) - 0.28) < 0.0001)
+    }
+
+    @Test func theNearestCandidateWins() {
+        #expect(abs(ZoneGeometry.magnet(0.34, to: [0.36], tolerance: 0.05) - 1.0 / 3.0) < 0.0001)
     }
 
     // MARK: - overlaps
