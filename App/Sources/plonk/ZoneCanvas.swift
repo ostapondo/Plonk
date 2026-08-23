@@ -73,6 +73,11 @@ struct ZoneCanvas: View {
             }
             .contentShape(Rectangle())
             .gesture(editable ? drag(in: geo.size) : nil)
+            .overlay {
+                if editable {
+                    RightClickCatcher { splitZone(at: $0, in: geo.size) }
+                }
+            }
         }
     }
 
@@ -158,6 +163,29 @@ struct ZoneCanvas: View {
         }
     }
 
+    /// The right button splits the other way from the left one. Nothing else in
+    /// the editor uses it, and a button is easier to hold than a modifier: the
+    /// ⇧-click that used to be the only way to cut a zone left and right is
+    /// still there, but it is no longer the only way.
+    private func splitZone(at point: CGPoint, in size: CGSize) {
+        guard let index = zoneIndex(at: point, in: size) else { return }
+        split(index, at: point, vertical: true, in: size)
+    }
+
+    /// The smallest zone the point is inside, which is the one a click means
+    /// when zones abut: the outer one is not the one being aimed at.
+    private func zoneIndex(at point: CGPoint, in size: CGSize) -> Int? {
+        let px = Double(point.x / size.width)
+        let py = Double(point.y / size.height)
+        var hit: (index: Int, area: Double)?
+        for (index, z) in zones.enumerated()
+        where px >= z.x && px <= z.x + z.w && py >= z.y && py <= z.y + z.h {
+            let area = z.w * z.h
+            if hit == nil || area < hit!.area { hit = (index, area) }
+        }
+        return hit?.index
+    }
+
     private func split(_ index: Int, at point: CGPoint, vertical: Bool, in size: CGSize) {
         let fraction = vertical ? Double(point.x / size.width) : Double(point.y / size.height)
         if let result = ZoneGeometry.split(zones, at: index, fraction: fraction, vertical: vertical) {
@@ -172,7 +200,6 @@ struct ZoneCanvas: View {
         let bandY = 12 / size.height
 
         var resizeItems: [(index: Int, origin: ZoneRect, edges: Edges)] = []
-        var insideHit: (index: Int, area: Double)?
         for (index, z) in zones.enumerated() {
             if px >= z.x - bandX, px <= z.x + z.w + bandX, py >= z.y - bandY, py <= z.y + z.h + bandY {
                 var edges: Edges = []
@@ -188,13 +215,9 @@ struct ZoneCanvas: View {
                 if z.y + z.h > 0.999 { edges.remove(.bottom) }
                 if !edges.isEmpty { resizeItems.append((index, z, edges)) }
             }
-            if px >= z.x, px <= z.x + z.w, py >= z.y, py <= z.y + z.h {
-                let area = z.w * z.h
-                if insideHit == nil || area < insideHit!.area { insideHit = (index, area) }
-            }
         }
         if !resizeItems.isEmpty { return .resize(items: resizeItems) }
-        if let insideHit { return .split(index: insideHit.index, point: point) }
+        if let index = zoneIndex(at: point, in: size) { return .split(index: index, point: point) }
         return nil
     }
 

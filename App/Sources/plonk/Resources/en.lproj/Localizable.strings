@@ -513,8 +513,8 @@
 
 /* The fullscreen zone editor. */
 "zoneEditor.name" = "Layout name";
-"zoneEditor.split" = "Split: click a zone, hold ⇧ while clicking for a vertical split.";
-"zoneEditor.resize" = "Resize: drag a border or handle — neighboring zones follow.";
+"zoneEditor.split" = "Split: click a zone to cut it into top and bottom, right-click (or ⇧-click) to cut it into left and right.";
+"zoneEditor.resize" = "Resize: drag a border or handle, and the neighboring zones follow. Dividers are pulled onto halves, thirds and quarters when they come close, and stay exactly where you drop them otherwise.";
 "zoneEditor.delete" = "Delete: ✕ removes a zone and neighbors fill the space.";
 "zoneEditor.keyboard" = "Keyboard: ⇥ selects, arrows move, ⇧arrows resize, S splits, ⇧S splits vertically, ⌫ deletes.";
 "zoneEditor.saveAndApply" = "Save & Apply";
