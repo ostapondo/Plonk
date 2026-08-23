@@ -19,6 +19,9 @@ The loop CI runs, from the repository root. Paste the ones you ran:
   ./scripts/test.sh
   ./scripts/lint.sh
   (cd mcp && npm ci && npm test)
+  node scripts/check-zone-sets.mjs
+  node scripts/check-strings.mjs
+  ./scripts/check-security-claims.sh
 
 None of them need a signing certificate.
 -->

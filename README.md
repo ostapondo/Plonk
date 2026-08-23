@@ -315,7 +315,7 @@ that tests it. [SECURITY.md](SECURITY.md) says where each promise stops.
 
 ## Build
 
-Five commands, and they are what CI runs on every pull request. Each line is a
+Seven commands, and they are what CI runs on every pull request. Each line is a
 subshell, so paste the block from the repository root.
 
 ```sh
@@ -324,6 +324,8 @@ subshell, so paste the block from the repository root.
 ./scripts/lint.sh                          # style rules, no dependencies
 (cd mcp && npm ci && npm test)             # the MCP server
 node scripts/check-zone-sets.mjs           # the layouts in zone-sets/
+node scripts/check-strings.mjs             # every word the user reads
+./scripts/check-security-claims.sh         # what SECURITY.md promises
 ```
 
 None of that needs a signing certificate. Zone geometry, config decoding, HTTP
@@ -349,10 +351,11 @@ need a signing certificate.
 - **[good first issue][gfi]** issues are written to be picked up cold. Each says
   where the code is and how to tell it worked, and carries a prompt you can hand
   to an agent, since [AGENTS.md](AGENTS.md) already explains the repo to one.
-- **[needs-hardware][hw]** issues need neither Swift nor a certificate, and are
-  the most useful thing anyone can send. A window manager breaks on arrangements
-  the author cannot see, so a report from three monitors or an ultrawide is
-  worth more than a patch.
+- **[needs-hardware][hw]** is where a request for a desk nobody here has gets
+  tagged, and answering one needs neither Swift nor a certificate. A window
+  manager breaks on arrangements the author cannot see, so a report from three
+  monitors or an ultrawide is worth more than a patch. An empty list is not a
+  filled gap: open an issue with the arrangement you have and what happened.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) has the rest, including how long a review
 takes. Questions and half-formed ideas go to
