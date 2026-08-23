@@ -198,6 +198,12 @@ struct ZoneKeyCatcher: NSViewRepresentable {
 
         override var acceptsFirstResponder: Bool { true }
 
+        /// Keys only. SwiftUI's `allowsHitTesting(false)` keeps SwiftUI's own
+        /// gestures away from this view but leaves it in the AppKit hierarchy,
+        /// where it covers the canvas and was quietly eating every right-click
+        /// before the canvas could be told about it.
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             window?.makeFirstResponder(self)
