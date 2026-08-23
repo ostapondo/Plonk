@@ -15,7 +15,7 @@
 | `⌃⌥⇧1`–`⌃⌥⇧9` | Swap the whole zone set on this screen |
 | `⌃⌥L` | The zone sets as a list on screen — pick one, or press `E` to edit it |
 | `⌃⌥⇧` arrows | Focus the window that is actually in that direction |
-| `` ⌃⌥` `` | Next window in this zone |
+| `` ⌃⌥` `` · `` ⌃⌥⇧` `` | Next window in this zone · the previous one |
 | `⌃⌥Z` | Flash the zones |
 | `⌃⌥S` · `⌃⌥T` | Grab a region · lift the text out of one |
 | `⌃⌥P` · `⌃⌥⇧P` | Pin a live crop on top · pin a still one |

@@ -37,9 +37,9 @@ substitution away. [Coming from Rectangle](docs/from-rectangle.md) is the whole
 of it.
 
 **Zones you draw.** Not a preset grid. Any number of zones, any size, a
-different set per monitor, overlapping if that suits you. Click a zone to split
-it, `⇧`-click to split the other way: a narrow rail for chat, a wide middle
-split in two, a strip for the terminal.
+different set per monitor, overlapping if that suits you. Click a zone to cut it
+into top and bottom, right-click to cut it into left and right: a narrow rail
+for chat, a wide middle split in two, a strip for the terminal.
 
 **Workspaces that remember which monitor.** Save the desk: the apps, every
 window's frame, and the display each one belongs on. Launch it onto an empty
@@ -210,9 +210,11 @@ agent can call.
 | **A shortcut guide** | Every shortcut the front app actually has, read from its own menus, so it is never out of date |
 | **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display |
 
-Any of them can be switched off, from Tools in the menu bar dropdown or the
-Tools page. Off means gone: out of the sidebar, out of the menu, its
-shortcuts released, and its tools refused to agents until it is back on.
+All but the shortcut guide can be switched off, from Tools in the menu bar
+dropdown or the Tools page. Off means gone: out of the sidebar, out of the
+menu, its shortcuts released, and its tools refused to agents until it is back
+on. The same switches cover zones, workspaces, voice and stay active, so the
+window manager itself can stand down and leave the rest running.
 
 </details>
 
