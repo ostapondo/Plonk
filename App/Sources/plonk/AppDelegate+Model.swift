@@ -142,10 +142,20 @@ extension AppDelegate {
     }
 
     func refreshStatusMenu() {
+        // The lid-closed hold keeps the Mac up on its own, so it lights the
+        // icon whether or not keep-awake is also on: half red for the half of
+        // the state that is new, half amber for the one already known.
+        let icon: NSImage
+        if lidSleep.isArmed {
+            icon = StatusIcon.awakeLidClosed
+        } else {
+            icon = awake.isOn ? StatusIcon.awake : StatusIcon.idle
+        }
+        let status = lidSleep.isArmed ? LocalizedStringResource.awakeStatusLidClosed : awake.statusText
         statusMenu.refresh(
-            icon: awake.isOn ? StatusIcon.awake : StatusIcon.idle,
-            tooltip: String(localized: .menuTooltip(String(localized: awake.statusText))),
-            dimmed: awake.requested && !awake.isOn
+            icon: icon,
+            tooltip: String(localized: .menuTooltip(String(localized: status))),
+            dimmed: !lidSleep.isArmed && awake.requested && !awake.isOn
         )
     }
 
