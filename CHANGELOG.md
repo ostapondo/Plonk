@@ -11,6 +11,38 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Added
+
+- **Keep going with the lid closed.** A switch under Awake > Power that stops
+  the Mac sleeping when the lid is shut, so music keeps playing, a download
+  keeps going and an ssh session stays up. Sleep on lid close is a forced
+  sleep that no power assertion holds off, so this one turns system sleep off
+  outright and asks for your password once. A root guard puts it back when you
+  switch it off, and within a minute of Plonk being gone for good; it outlives
+  a relaunch, so an update does not ask again. The menu bar cube goes half red
+  while the hold is on, and `/state` reports `lid_closed`.
+- **Which monitor is which, said on the monitors.** Opening the Zones page or
+  moving the screen selector flashes the display's number and size on the
+  display itself, the selected one in the zone tint. Picking "screen 2" in a
+  settings window is no longer guesswork.
+
+### Fixed
+
+- **A divider stays where it is dropped.** Dragging one used to round every
+  zone to a twentieth of the screen on release, which on a 5120-point display
+  is a 256-point jump away from the pointer, and made half the positions on the
+  screen impossible to ask for. Dividers are now pulled onto halves, thirds,
+  quarters and the edges of neighbouring zones from within twelve points, and
+  left exactly where they are put otherwise. The pull happens under the
+  pointer, so what you see while dragging is what you get.
+- **Splitting a zone left and right no longer needs a modifier.** The right
+  button does it: left click cuts a zone into top and bottom, right click into
+  left and right. ⇧-click still works, and works more reliably, now that the
+  invisible view reading keys in the editor has stopped swallowing right-button
+  clicks before the canvas could see them.
+
 ## 0.3.3 — 2026-08-19
 
 ### Added
