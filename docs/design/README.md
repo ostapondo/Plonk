@@ -88,9 +88,14 @@ in `shots/`, downscaled to 1600px wide:
 | | |
 | --- | --- |
 | `shots/s-zones.jpg` | the window: sidebar, unified toolbar, the set, the canvas, grouped settings |
-| `shots/s-desks.jpg` | the Desks page, four cards |
+| `shots/s-desks.jpg` | the Workspaces page, four cards |
 | `shots/s-drag.jpg`  | the desktop mid-drag, overlay translucent over real windows |
 | `shots/s-menu.jpg`  | the desktop at rest with the menu bar panel open |
+
+These are drawings, not photographs. `docs/index.html` shows them where
+captures of the built app belong, which was the right trade while the interface
+they describe did not exist yet and is a debt now that it does. Replacing one
+means shooting the real window and dropping it in beside its mockup.
 
 **If you are writing the SwiftUI, `mac.html` is the spec and `shots/` is the
 target.** Take the numbers from the stylesheet, not the markup: the glass is
