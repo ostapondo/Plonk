@@ -1,7 +1,7 @@
 {
   "name": "plonk",
   "description": "Drive the Plonk window manager from Claude Code. Needs the app installed: brew install --cask ostapondo/plonk/plonk",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "author": {
     "name": "ostapondo",
     "url": "https://github.com/ostapondo"
