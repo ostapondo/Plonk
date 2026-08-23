@@ -31,6 +31,8 @@ extension LocalizedStringResource {
     static let awakeAllowOnBatteryHelp = Self.key("awake.allowOnBatteryHelp")
     static let awakeAutoWhileCharging = Self.key("awake.autoWhileCharging")
     static let awakeAutoWhileChargingHelp = Self.key("awake.autoWhileChargingHelp")
+    static let awakeLidClosed = Self.key("awake.lidClosed")
+    static let awakeLidClosedHelp = Self.key("awake.lidClosedHelp")
 
     static let awakeStatusOn = Self.key("awake.statusOn")
     static let awakeStatusOff = Self.key("awake.statusOff")

@@ -50,6 +50,8 @@ export interface AwakeDetails {
   allow_on_battery: boolean;
   auto_while_charging: boolean;
   keep_display_on: boolean;
+  /** Whether the Mac has been told not to sleep when the lid is shut. */
+  lid_closed: boolean;
   session_ends: string;
   /** Non-zero while the session lasts only as long as that process does. */
   bound_pid: number;

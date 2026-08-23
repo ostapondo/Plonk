@@ -205,7 +205,7 @@ agent can call.
 | **Text off the screen** | `⌃⌥T` selects an area and copies the words in it: a screenshot, a paused video, a dialog that will not let you select. On-device |
 | **A ruler** | `⌃⌥R`, then hover: how far the pointer can go each way before it meets an edge, read off the pixels. The width of a row, the height of a bar, the gap between two things. Drag for a straight-line distance. Points and pixels both |
 | **Pin part of the screen** | Float a live crop above everything else. A build log, a chart, a call, visible in a corner while you work over it |
-| **Keep awake** | Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or when a process exits |
+| **Keep awake** | Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or when a process exits. A lid-closed hold keeps the Mac running with the lid shut, and hands sleep back when you switch it off |
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |
 | **A shortcut guide** | Every shortcut the front app actually has, read from its own menus, so it is never out of date |
 | **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display |
