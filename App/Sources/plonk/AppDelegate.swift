@@ -27,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var newWindows: NewWindowWatcher!
     let mouse = MouseTools()
     let crops = CropAndLock()
+    let screenTags = ScreenTags()
     var guidePanel: ShortcutGuidePanel?
     var guideLoading = false
     /// How many captures are in flight; see hideOwnWindows.
