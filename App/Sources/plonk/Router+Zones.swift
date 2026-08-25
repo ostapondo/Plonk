@@ -79,6 +79,74 @@ extension Router {
         return .ok(["ok": true, "deleted": name])
     }
 
+    /// A rule for an app: the zone its windows open into, and optionally the
+    /// display. The display arrives as an index and is stored as a UUID, so a
+    /// rule written for the second monitor still means that monitor after the
+    /// screens are renumbered.
+    func setAppRuleRoute(_ body: [String: Any]) -> HTTPResponse {
+        guard let app = Self.trimmedName(body["app"]),
+              let zone = (body["zone"] as? NSNumber)?.intValue else {
+            return .badRequest("body must be {\"app\", \"zone\": 1-based index, \"screen\"?}")
+        }
+        guard zone >= 1 else {
+            return .badRequest("zone must be at least 1")
+        }
+        var screenUUID: String?
+        var screenIndex: Int?
+        if let screen = (body["screen"] as? NSNumber)?.intValue {
+            guard let uuid = ScreenIdentity.uuid(forIndex: screen) else {
+                return .notFound("no screen \(screen)")
+            }
+            // A rule for a zone the named screen does not have would sit in
+            // the list and never fire; better refused now, with the count.
+            if case .failure(let refusal) = numberedZones(onScreen: screen, holding: zone) {
+                return refusal.response
+            }
+            screenUUID = uuid
+            screenIndex = screen
+        } else if body["screen"] != nil, !(body["screen"] is NSNull) {
+            return .badRequest("screen must be a monitor index")
+        }
+        let rule = AppRule(app: app, zone: zone, screenUUID: screenUUID)
+        store.update { $0.appRules = AppRules.upsert(rule, in: $0.appRules) }
+        // What was kept, not what was asked: the store trims and bounds.
+        guard let stored = store.config.appRules.first(where: { AppRules.same($0.app, app) }) else {
+            return .badRequest("app must not be blank")
+        }
+        return .ok(["ok": true, "rule": stored.asDict(screenIndex: screenIndex),
+                    "rules": store.config.appRules.count])
+    }
+
+    /// Why a zone number cannot be used on a screen, as the answer to send.
+    struct ZoneRefusal: Error {
+        let response: HTTPResponse
+    }
+
+    /// The zones a screen has, when it has that many; else why not, the same
+    /// answer whether a window is being placed or a rule written.
+    func numberedZones(onScreen screen: Int, holding number: Int) -> Result<[ZoneRect], ZoneRefusal> {
+        let zones = store.config.zones(forKeys: ScreenIdentity.keys(forIndex: screen))
+        guard !zones.isEmpty else {
+            return .failure(ZoneRefusal(response: .badRequest(
+                "screen \(screen) uses edge snapping, so it has no numbered zones")))
+        }
+        guard zones.indices.contains(number - 1) else {
+            return .failure(ZoneRefusal(response: .badRequest("screen \(screen) has zones 1...\(zones.count)")))
+        }
+        return .success(zones)
+    }
+
+    func deleteAppRuleRoute(_ body: [String: Any]) -> HTTPResponse {
+        guard let app = Self.trimmedName(body["app"]) else {
+            return .badRequest("body must include app")
+        }
+        guard store.config.appRules.contains(where: { AppRules.same($0.app, app) }) else {
+            return .notFound("no rule for \"\(app)\"")
+        }
+        store.update { $0.appRules = AppRules.remove(app: app, from: $0.appRules) }
+        return .ok(["ok": true, "deleted": app])
+    }
+
     /// Zones are addressed by the number the drag overlay draws on them, so
     /// "the middle zone" is whatever the user sees as 2 in a three-zone set.
     func placeInZoneRoute(_ body: [String: Any]) -> HTTPResponse {
@@ -91,12 +159,10 @@ extension Router {
                 ?? windows.screenIndex(ofApp: app, titleContains: title) else {
             return .notFound("app \"\(app)\" is not running")
         }
-        let zones = store.config.zones(forKeys: ScreenIdentity.keys(forIndex: screen))
-        guard !zones.isEmpty else {
-            return .badRequest("screen \(screen) uses edge snapping, so it has no numbered zones")
-        }
-        guard zones.indices.contains(number - 1) else {
-            return .badRequest("screen \(screen) has zones 1...\(zones.count)")
+        let zones: [ZoneRect]
+        switch numberedZones(onScreen: screen, holding: number) {
+        case .success(let set): zones = set
+        case .failure(let refusal): return refusal.response
         }
         let error = windows.place(app: app, titleContains: title, screen: screen,
                                   frac: zones[number - 1].frac,

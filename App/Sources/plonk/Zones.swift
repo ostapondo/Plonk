@@ -178,6 +178,31 @@ enum ZoneGeometry {
         })
     }
 
+    /// The zone a window that has just opened, with nowhere it is meant to
+    /// be, should fill: the empty zone it is already sitting in, if it is
+    /// sitting in one, else the first empty zone. A window macOS restored
+    /// into zone 2 is straightened into zone 2, not packed leftwards.
+    ///
+    /// A window is in a zone when its centre is inside the zone, the test the
+    /// zone cycle uses, or when the zone's centre is inside the window, so a
+    /// window spanning two zones or filling the screen takes every zone it
+    /// covers rather than the one its centre happens to fall in. Nil when
+    /// every zone has something in it.
+    static func firstEmpty(_ zones: [ZoneRect], in visible: CGRect, occupied windows: [CGRect],
+                           preferring point: CGPoint? = nil) -> Int? {
+        let empty = zones.indices.filter { index in
+            let frame = frame(for: zones[index].frac, in: visible)
+            let centre = CGPoint(x: frame.midX, y: frame.midY)
+            return !windows.contains { window in
+                frame.contains(CGPoint(x: window.midX, y: window.midY)) || window.contains(centre)
+            }
+        }
+        if let point, let own = empty.first(where: { frame(for: zones[$0].frac, in: visible).contains(point) }) {
+            return own
+        }
+        return empty.first
+    }
+
     /// True when any zone at the given indices intersects another zone by
     /// more than a hairline (touching edges are fine).
     static func overlaps(_ zones: [ZoneRect], at indices: [Int]) -> Bool {

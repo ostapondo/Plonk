@@ -220,6 +220,12 @@ final class WindowManager {
         screenIndex(containing: frame(ofWindow: win) ?? .zero, in: screens())
     }
 
+    /// The same, for a frame already read, so a caller holding one does not
+    /// ask the app again.
+    func screenIndex(containing frame: CGRect) -> Int {
+        screenIndex(containing: frame, in: screens())
+    }
+
     /// Where a window sits, as a fraction of its screen's visible area. Nil
     /// when there is no frame or no screen to measure against.
     ///

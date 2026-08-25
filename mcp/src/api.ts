@@ -1,122 +1,14 @@
 // Typed HTTP client for the Plonk app's localhost API.
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { z } from "zod";
-import type { workspaceItemsSchema } from "./schemas.js";
 import { notRunningMessage } from "./messages.js";
+import type { ApiError, ApiResponse } from "./types.js";
+
+export type * from "./types.js";
 
 export const BASE = "http://127.0.0.1:43917";
 const DEFAULT_TIMEOUT_MS = 15_000;
 /** Interactive captures and the ruler wait on the user, so they get this budget instead. */
 export const INTERACTIVE_TIMEOUT_MS = 5 * 60_000;
-
-export interface Frame {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export interface Screen {
-  index: number;
-  frame: Frame;
-  visible: Frame;
-}
-
-export interface WindowInfo {
-  app: string;
-  pid: number;
-  title: string;
-  minimized: boolean;
-  screen: number;
-  window_index: number;
-  bundle_id?: string;
-  bundle_path?: string;
-  frame: Frame;
-  fraction?: Frame;
-}
-
-export type WorkspaceItem = z.infer<typeof workspaceItemsSchema>[number];
-
-export interface Workspace {
-  move_existing: boolean;
-  apps: string[];
-  items: WorkspaceItem[];
-}
-
-export interface AwakeDetails {
-  requested: boolean;
-  status: string;
-  power: "ac" | "battery";
-  allow_on_battery: boolean;
-  auto_while_charging: boolean;
-  keep_display_on: boolean;
-  /** Whether the Mac has been told not to sleep when the lid is shut. */
-  lid_closed: boolean;
-  session_ends: string;
-  /** Non-zero while the session lasts only as long as that process does. */
-  bound_pid: number;
-}
-
-export interface AgentInfo {
-  name: string;
-  version: string;
-  pid?: number;
-  online: boolean;
-  last_seen: string;
-  selected: boolean;
-}
-
-export interface State {
-  awake: boolean;
-  awake_details: AwakeDetails;
-  accessibility_granted: boolean;
-  /** Apps drag snapping and the placement shortcuts leave alone. */
-  excluded_apps: string[];
-  /** BCP-47 tags extract_text uses when none are passed; empty means automatic. */
-  text_languages: string[];
-  saved_layouts: string[];
-  workspaces: Record<string, Workspace>;
-  zone_sets: Record<string, Frame[]>;
-  zone_gap: number;
-  zone_set_gaps: Record<string, number>;
-  screen_zone_sets: Record<string, string>;
-  screens: Screen[];
-  windows: WindowInfo[];
-  agents: AgentInfo[];
-  selected_agent?: string;
-  agent_exclusive: boolean;
-}
-
-export interface LayoutItemResult {
-  ok: boolean;
-  app?: string;
-  error?: string;
-}
-
-export interface LayoutResults {
-  results: LayoutItemResult[];
-  accessibility_granted?: boolean;
-}
-
-export interface LaunchItemResult {
-  ok: boolean;
-  app: string;
-  /** Why the app was left alone, e.g. it was already open. */
-  skipped?: string;
-  error?: string;
-}
-
-export interface LaunchResults {
-  ok: boolean;
-  workspace: string;
-  results: LaunchItemResult[];
-}
-
-export interface ApiError {
-  error: string;
-}
-
-export type ApiResponse = Record<string, unknown>;
 
 // Stamped on every request so the app can attribute it to a client and, in
 // exclusive mode, gate on it. One mechanism, one shape: the identity always

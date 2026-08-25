@@ -57,6 +57,7 @@ config to tell two sessions of the same client apart.
 | `apply_layout` · `snap_window` | Place windows by fraction of a screen, or drop one into a numbered zone |
 | `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops that reopen their apps and restore every window |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, assigned per monitor |
+| `set_app_rule` · `clear_app_rule` | Where an app's new windows open: a zone, and optionally a monitor |
 | `set_awake` | Keep the Mac awake, optionally time-limited, optionally also holding your chat status at available |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
 | `extract_text` | Read the words off the screen, with a box per line in the same coordinates `annotate_screenshot` draws in |

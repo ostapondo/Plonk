@@ -28,7 +28,8 @@ it.
 | **Picking one** | `⌃⌥L` draws the sets for that screen as a list: arrows or the digit to pick, `return` to use it, `E` to open it in the editor, `N` for a new one |
 | **Looks** | Gap, colour, opacity, numbers on or off, every monitor's zones shown while dragging. The gap is real — a window keeps that much space around it. That gap is the default; a layout can set its own in the editor's Gap row, or follow the default again |
 | **Exceptions** | A list of apps Plonk keeps its hands off — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works; that names the window on purpose |
-| **New windows** | Optionally, a window that opens goes where that app's last one went |
+| **New windows** | Optionally, a window that opens goes where that app's last one went, or into the first zone nobody is in |
+| **Rules** | An app can be told where its windows open: a zone, and if it matters a monitor. Written down, so it outlives a relaunch where the habit does not, and it wins when both apply. `set_app_rule` is the same thing said to an agent |
 
 ---
 

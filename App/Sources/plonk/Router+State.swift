@@ -13,10 +13,13 @@ extension Router {
         let screens = windows.screens()
         // Assignments are stored per display UUID; agents work in screen indices.
         var assignments: [String: String] = [:]
+        var indexByUUID: [String: Int] = [:]
         for screen in screens {
-            if let name = store.config.zoneAssignment(forKeys: ScreenIdentity.keys(forIndex: screen.index)) {
+            let keys = ScreenIdentity.keys(forIndex: screen.index)
+            if let name = store.config.zoneAssignment(forKeys: keys) {
                 assignments[String(screen.index)] = name
             }
+            if let uuid = keys.first, keys.count > 1 { indexByUUID[uuid] = screen.index }
         }
 
         var state: [String: Any] = [
@@ -40,6 +43,11 @@ extension Router {
             "zone_gap": store.config.zoneGap,
             "zone_set_gaps": store.config.zoneSetGaps,
             "screen_zone_sets": assignments,
+            "app_rules": store.config.appRules.map { rule in
+                rule.asDict(screenIndex: rule.screenUUID.flatMap { indexByUUID[$0] })
+            },
+            "place_new_windows": store.config.placeNewWindows,
+            "auto_fill_zones": store.config.autoFillZones,
             "screens": screens.map { s in
                 [
                     "index": s.index,

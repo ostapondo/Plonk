@@ -16,7 +16,7 @@ out loud.</strong><br>
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-ff4f81?style=flat-square">
   <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-0-12d3a4?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-ffc531?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-20_tools-8b5cf6?style=flat-square">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-22_tools-8b5cf6?style=flat-square">
   <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/ostapondo/Plonk/codeql.yml?style=flat-square&label=CodeQL">
   <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/ostapondo/Plonk?style=flat-square&label=OpenSSF%20Scorecard">
 </p>
@@ -62,7 +62,7 @@ between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 
 <p align="center">
   <img src="docs/ways.svg" width="720"
-       alt="Four cards, one per way to move a window: drag it and the zones light up, hold ⌘ for two at once; ⌃⌥1 to ⌃⌥9 for the numbered zones with ⌃⌥0 as the oops key; ⌃⌥V to say it, offline and on-device; or ask an agent, through twenty MCP tools">
+       alt="Four cards, one per way to move a window: drag it and the zones light up, hold ⌘ for two at once; ⌃⌥1 to ⌃⌥9 for the numbered zones with ⌃⌥0 as the oops key; ⌃⌥V to say it, offline and on-device; or ask an agent, through twenty-two MCP tools">
 </p>
 
 **Drag it.** Zones light up as you move a window, and it drops into one. Hold
@@ -236,7 +236,7 @@ read the error out of that dialog and tell me what it says
 how tall is that toolbar, in points and in pixels
 ```
 
-Twenty tools across state, layouts, workspaces, zones, keep-awake,
+Twenty-two tools across state, layouts, workspaces, zones, keep-awake,
 screenshots, on-device OCR and measuring. Frames are fractions of a monitor's
 visible area, origin top-left, so "left 60%" is `{x: 0, y: 0, w: 0.6, h: 1}`.
 Several agents can connect at once, each registering itself, with an optional

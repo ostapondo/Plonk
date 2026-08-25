@@ -55,6 +55,15 @@ enum WindowAccess {
         (attribute(win, kAXMinimizedAttribute) as? Bool) ?? false
     }
 
+    /// Whether this is a window in the ordinary sense: a document, a browser,
+    /// a chat. Dialogs, sheets, panels and floating palettes say so in their
+    /// subrole, and none of them belongs in a zone. A window with no subrole
+    /// at all is taken to be standard, since that is what most of them are.
+    static func isStandard(_ win: AXUIElement) -> Bool {
+        guard let subrole = attribute(win, kAXSubroleAttribute) as? String else { return true }
+        return subrole == kAXStandardWindowSubrole
+    }
+
     static func title(of win: AXUIElement) -> String {
         (attribute(win, kAXTitleAttribute) as? String) ?? ""
     }

@@ -69,34 +69,4 @@ extension AppDelegate {
         }
     }
 
-    func setupNewWindows() {
-        newWindows = NewWindowWatcher(windows: windows)
-        newWindows.apply(store.config)
-        newWindows.isExcluded = exclusionCheck
-        newWindows.zoneGap = { [weak self] index in self?.zoneGapPoints(onScreen: index) ?? 0 }
-        newWindows.placement = { [weak self] app in
-            guard let self, let key = app.bundleIdentifier,
-                  let habit = snapMemory.habit(ofApp: key) else { return nil }
-            // The display is named by UUID, so a habit formed on a monitor that
-            // has since been unplugged simply does not apply.
-            guard let uuid = habit.screenUUID, let index = ScreenIdentity.index(forUUID: uuid) else { return nil }
-            // A numbered zone is followed by number, so the habit survives the
-            // set being edited; anything else falls back to the raw fraction.
-            let zones = zones(onScreen: index)
-            if let zone = habit.zoneIndex, zones.indices.contains(zone) {
-                return (zones[zone].frac, index)
-            }
-            return (habit.frac, index)
-        }
-        newWindows.onPlaced = { [weak self] app, window, before, frac, screenIndex in
-            guard let self else { return }
-            snapMemory.record(window, wasAt: before, placedAt: frac,
-                              screenUUID: ScreenIdentity.uuid(forIndex: screenIndex),
-                              zoneIndex: zoneIndex(of: frac, onScreen: screenIndex),
-                              appKey: app.bundleIdentifier)
-            router?.changes.bump("windows")
-        }
-        newWindows.start()
-    }
-
 }
