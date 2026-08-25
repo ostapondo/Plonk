@@ -18,6 +18,27 @@ one of those.
 - **The MCP server reports its installed version.** Run `plonk-mcp --version`
   or `plonk-mcp -v` to print the package version without starting the server.
 
+### Changed
+
+- **Every settings page is drawn the same way.** Four pages — Zones,
+  Workspaces, Appearance and Home — had rolled their own scroll, margins and
+  spacing, so cards sat on a different rhythm depending on which sidebar entry
+  you came from. They share one now. Zones and Appearance gained the heading
+  and the line of description every other page already had; Workspaces keeps
+  its own, drawn by the same code as the rest.
+- **One shape for every measurement.** A number with a range — the zone gap,
+  edge spanning, the overlay's opacity, the ruler's sensitivity — is now one
+  row: the name, a knob and the exact value, with the explanation on hover.
+  Three different shapes were doing this, one of which took three lines per
+  number and one of which showed no value at all. Opacity reads as a
+  percentage rather than as nothing.
+- **A switch that is off hides what it governs.** Turning off "Grab a window
+  anywhere" used to leave its three settings on screen at half brightness,
+  costing the same room switched off as on. They are put away now and come
+  back when it is switched on; nothing is forgotten in between.
+- **Choosing a zone colour no longer shifts the rows under it.** The line
+  under Colour says where the colour comes from in both states instead of
+  appearing only while none was set.
 ## 0.3.5 — 2026-08-23
 
 ### Changed

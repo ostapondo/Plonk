@@ -10,7 +10,6 @@ extension LocalizedStringResource {
     static let workspacesSaveWhatIsOnScreen = Self.key("workspaces.saveWhatIsOnScreen")
     static let workspacesSaveHelp = Self.key("workspaces.saveHelp")
     static let workspacesNone = Self.key("workspaces.none")
-    static let workspacesTitle = Self.key("workspaces.title")
     static let workspacesListHelp = Self.key("workspaces.listHelp")
     static let workspacesHideWindows = Self.key("workspaces.hideWindows")
     static let workspacesShowWindows = Self.key("workspaces.showWindows")

@@ -8,6 +8,25 @@ import SwiftUI
 // fields stretched across the window. These rows decide their own layout, and
 // the card decides where the lines between them go.
 
+/// The scroll a page is laid out in: one column, one set of margins, one
+/// spacing between whatever is in it. A page that rolled its own put its cards
+/// on a different rhythm to the page beside it.
+///
+/// Lazy: a page is laid out card by card as it scrolls into view, so opening it
+/// costs the cards on screen and not the whole page. Zones went from half a
+/// second to under a tenth.
+struct PageScroll<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 14) { content }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+        }
+    }
+}
+
 /// Every page opens the same way: what it is, in display weight, and one line
 /// saying what it is for. Zones names the set, Workspaces names itself, and the
 /// rest follow — a page that opened straight into a list of switches gave no
@@ -18,27 +37,19 @@ struct PageShell<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        // Lazy, here and on the pages that own their scroll view: a page is
-        // laid out card by card as it scrolls into view, so opening it costs
-        // the cards on screen and not the whole page. Zones went from half a
-        // second to under a tenth.
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 26, weight: .heavy))
-                        .kerning(-0.7)
-                    if let subtitle {
-                        Text(subtitle)
-                            .font(.system(size: 12.5))
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+        PageScroll {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 26, weight: .heavy))
+                    .kerning(-0.7)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                content
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
+            content
         }
     }
 }
@@ -132,6 +143,41 @@ struct ToggleRow: View {
     var body: some View {
         SettingRow(title: title, detail: detail) {
             Toggle("", isOn: $isOn).labelsHidden().toggleStyle(.switch).controlSize(.small)
+        }
+    }
+}
+
+/// A colour, and the button that hands it back to whatever it was following.
+/// The picker works in colours; config stores "#RRGGBB", so a hand-edited file
+/// stays readable.
+///
+/// The second line names where the colour is coming from in both states. Drawn
+/// only while nothing was set, it meant picking a colour shortened the row and
+/// shifted everything under it up by a line.
+struct ColorRow: View {
+    let title: LocalizedStringResource
+    /// What the colour falls back to, drawn in the well while nothing is set.
+    let fallback: NSColor
+    /// The second line, before a colour is chosen and after.
+    let following: LocalizedStringResource
+    let custom: LocalizedStringResource
+    /// The name of the colour it falls back to, e.g. "Use the accent".
+    let clearTitle: LocalizedStringResource
+    let hex: String?
+    let commit: (String?) -> Void
+
+    var body: some View {
+        SettingRow(title: title, detail: hex == nil ? following : custom) {
+            HStack(spacing: 10) {
+                ColorPicker("", selection: Binding(
+                    get: { Color(nsColor: ZoneAppearance.color(fromHex: hex) ?? fallback) },
+                    set: { commit(ZoneAppearance.hex(from: NSColor($0))) }
+                ), supportsOpacity: false)
+                .labelsHidden()
+                Button(String(localized: clearTitle)) { commit(nil) }
+                    .controlSize(.small)
+                    .disabled(hex == nil)
+            }
         }
     }
 }

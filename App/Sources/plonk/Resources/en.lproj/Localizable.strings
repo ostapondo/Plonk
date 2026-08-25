@@ -16,6 +16,7 @@
 "common.delete" = "Delete";
 "common.done" = "Done";
 "common.points" = "pt";
+"common.percent" = "%";
 "common.separator" = " · ";
 
 /* Pulse: keep the Mac awake, and optionally keep you shown as available. */
@@ -259,6 +260,7 @@
 "zones.restoreOnDisplayChangeDetail" = "Windows Plonk placed return to the same spot on the same monitor when one is plugged in or unplugged";
 "zones.placeNewWindows" = "Send new windows where that app's last one went";
 "zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits";
+"zones.pageHelp" = "Draw the boxes you actually want, then drop windows into them \u2014 with a drag, a key, or by saying so out loud.";
 "zones.overlay" = "Overlay";
 "zones.overlayHelp" = "The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything; zero switches it off.";
 "zones.gap" = "Default gap";
@@ -266,6 +268,7 @@
 "zones.opacity" = "Opacity";
 "zones.colour" = "Colour";
 "zones.colourFollowsAccent" = "Following the app's accent colour";
+"zones.colourCustom" = "A colour of its own";
 "zones.useTheAccent" = "Use the accent";
 "zones.numberTheZones" = "Number the zones";
 "zones.everyMonitor" = "Show every monitor's zones while dragging";
@@ -283,6 +286,7 @@
 "zones.exclusionsHelp" = "Dragging and the shortcuts skip these — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works, because that names the window on purpose.";
 
 /* Appearance. */
+"appearance.pageHelp" = "Both of these reach past this window: the theme decides how every panel is drawn, and the accent is what the zone overlay and the HUD tint themselves with.";
 "appearance.theme" = "Theme";
 "appearance.themeNote" = "Applies to the window, the HUD and the zone overlay";
 "appearance.accent" = "Accent";
@@ -336,7 +340,6 @@
 "workspaces.saveWhatIsOnScreen" = "Save What Is On Screen";
 "workspaces.saveHelp" = "Type a name and press Save. Every open window is captured with the app it belongs to and the monitor it sits on.";
 "workspaces.none" = "No workspaces yet. Open the apps you want, arrange them, and save above. Launching a workspace opens whatever is missing and puts every window back.";
-"workspaces.title" = "Workspaces";
 "workspaces.listHelp" = "Apps cannot be opened straight into position, so windows appear first and are moved a moment later.";
 "workspaces.hideWindows" = "Hide the windows";
 "workspaces.showWindows" = "Show the windows";

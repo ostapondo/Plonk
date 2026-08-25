@@ -5,9 +5,6 @@ import SwiftUI
 
 struct RulerPage: View {
     @ObservedObject var model: AppModel
-    /// The slider's own value while it is being dragged. Committing per frame
-    /// would rewrite config a hundred times on the way to one number.
-    @State private var knob = Double(EdgeDetector.defaultTolerance)
 
     private static let range =
         Double(EdgeDetector.toleranceRange.lowerBound)...Double(EdgeDetector.toleranceRange.upperBound)
@@ -26,24 +23,14 @@ struct RulerPage: View {
                 }
             }
             SettingsCard(title: .rulerDetection, note: .rulerDetectionHelp) {
-                SettingRow(title: .rulerSensitivity, detail: .rulerSensitivityHelp, stacked: true) {
-                    HStack(spacing: 10) {
-                        Slider(value: $knob, in: Self.range,
-                               onEditingChanged: { editing in
-                                   guard !editing else { return }
-                                   model.actions?.update(\.rulerEdgeTolerance, to: Int(knob.rounded()))
-                               })
-                            .labelsHidden()
-                            .controlSize(.small)
-                        Text("\(Int(knob.rounded()))")
-                            .font(.system(size: 12).monospacedDigit())
-                            .foregroundStyle(.secondary)
-                            .frame(width: 24, alignment: .trailing)
-                    }
+                // A count of grey levels, so no unit: "10 pt" would be a lie
+                // and "10 %" a different one.
+                MeasureRow(title: .rulerSensitivity, help: .rulerSensitivityHelp,
+                           range: Self.range, unit: .plain,
+                           value: Double(model.config.rulerEdgeTolerance)) {
+                    model.actions?.update(\.rulerEdgeTolerance, to: Int($0))
                 }
             }
         }
-        .onAppear { knob = Double(model.config.rulerEdgeTolerance) }
-        .onChange(of: model.config.rulerEdgeTolerance) { knob = Double($0) }
     }
 }
