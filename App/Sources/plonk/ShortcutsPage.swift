@@ -7,6 +7,7 @@ import SwiftUI
 
 struct ShortcutsPage: View {
     @ObservedObject var model: AppModel
+    @Environment(\.colorScheme) private var scheme
 
     private var groups: [(name: LocalizedStringResource, actions: [HotkeyAction])] {
         // The Guide has its own editable section above; listing it again here
@@ -34,20 +35,23 @@ struct ShortcutsPage: View {
             // shortcuts is a button they scroll past.
             fromRectangle
             Group {
-                SettingsCard(title: .shortcutGroupGuide, note: .keysGuideHelp) {
-                    SettingBlock {
+                // One card in sections, the same shape as the Zones page: the
+                // groups are sections of one subject, and a dozen cards read
+                // as a scatter. The two editable bindings lead; every group
+                // after them navigates to the page that owns it.
+                SettingsCard {
+                    CardSection(title: .shortcutGroupGuide, note: .keysGuideHelp, first: true) {
                         ShortcutRows(model: model, actions: [.shortcutGuide])
                     }
-                }
-                SettingsCard(title: .keysPalette, note: .keysPaletteHelp) {
-                    SettingBlock {
+                    CardSection(title: .keysPalette, note: .keysPaletteHelp) {
                         ShortcutRows(model: model, actions: [.commandPalette])
                     }
-                }
-                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
-                    SettingsCard(title: group.name) {
-                        ForEach(group.actions) { action in
-                            SettingBlock { row(action) }
+                    ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                        CardSection(title: group.name) {
+                            LazyVGrid(columns: ShortcutRows.columns,
+                                      alignment: .leading, spacing: 7) {
+                                ForEach(group.actions) { row($0) }
+                            }
                         }
                     }
                 }
@@ -100,6 +104,10 @@ struct ShortcutsPage: View {
                     .font(.caption.weight(.semibold))
                     .muted()
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Ink.raised(scheme)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

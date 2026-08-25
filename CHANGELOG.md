@@ -49,16 +49,30 @@ one of those.
   one glyph and one generic name. Each row now draws the arrangement it
   applies and calls it by the name you gave it, falling back to "Zone set 7"
   only for a place the list does not reach.
+- **Flashing the zones is filed with the zones.** It sat under "Halves,
+  quarters and the rest", among the shortcuts that move a window; it moves
+  none. It is at the top of Numbered zones now, where it is the way to see
+  which number is which before pressing one.
 - **Shortcut lists flow into columns.** A shortcut is a thumbnail, a name and
   a key — 300 points of content — and a full-width card gave each one the
   whole window, names staring at keys across a gulf of nothing. Rows now flow
   into as many columns as the card is wide: one on a narrow window, two or
   three on a desk — and each row sits on a surface of its own, so a key reads
   with its shortcut rather than with the neighbouring column's name. Every
-  page with a shortcut list gets this, the Keyboard page included.
+  page with a shortcut list gets this, the Keyboard page included — which is
+  also one card in sections now, like the Zones page, instead of a dozen cards
+  in a scatter.
 - **A shortcut recorder looks like something to click.** It has a border now
   whether or not it is recording; a flat pill in a column of eleven read as a
   label.
+- **The Zones page puts its settings first and its shortcuts last.** Which
+  zones the screen has, the two ways to drop a window into one by hand, then
+  how it all behaves — the overlay, display changes, the apps left alone. The
+  keys close the page under a labelled rule of their own, as one card in four
+  sections rather than four cards in a scatter, each section's explanation
+  right under its rows. They are the longest thing on the page and the least
+  often changed.
+
 ## 0.3.5 — 2026-08-23
 
 ### Changed
