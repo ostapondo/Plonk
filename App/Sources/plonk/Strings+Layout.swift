@@ -59,6 +59,7 @@ extension LocalizedStringResource {
     static let zonesRestoreOnDisplayChangeDetail = Self.key("zones.restoreOnDisplayChangeDetail")
     static let zonesPlaceNewWindows = Self.key("zones.placeNewWindows")
     static let zonesPlaceNewWindowsDetail = Self.key("zones.placeNewWindowsDetail")
+    static let zonesPageHelp = Self.key("zones.pageHelp")
     static let zonesOverlay = Self.key("zones.overlay")
     static let zonesOverlayHelp = Self.key("zones.overlayHelp")
     static let zonesGap = Self.key("zones.gap")
@@ -66,6 +67,7 @@ extension LocalizedStringResource {
     static let zonesOpacity = Self.key("zones.opacity")
     static let zonesColour = Self.key("zones.colour")
     static let zonesColourFollowsAccent = Self.key("zones.colourFollowsAccent")
+    static let zonesColourCustom = Self.key("zones.colourCustom")
     static let zonesUseTheAccent = Self.key("zones.useTheAccent")
     static let zonesNumberTheZones = Self.key("zones.numberTheZones")
     static let zonesEveryMonitor = Self.key("zones.everyMonitor")
@@ -82,6 +84,7 @@ extension LocalizedStringResource {
     static let zonesExclusions = Self.key("zones.exclusions")
     static let zonesExclusionsHelp = Self.key("zones.exclusionsHelp")
 
+    static let appearancePageHelp = Self.key("appearance.pageHelp")
     static let appearanceTheme = Self.key("appearance.theme")
     static let appearanceThemeNote = Self.key("appearance.themeNote")
     static let appearanceAccent = Self.key("appearance.accent")

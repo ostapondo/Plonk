@@ -15,17 +15,14 @@ struct ZonesPage: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
-                ZoneSetCanvas(model: model)
-                Columns { dragging } trailing: { shortcuts }
-                numbered
-                switching
-                focus
-                desktopChanges
-                ZonesTuning(model: model)
-            }
-            .padding(20)
+        PageShell(title: .pageZones, subtitle: .zonesPageHelp) {
+            ZoneSetCanvas(model: model)
+            Columns { dragging } trailing: { shortcuts }
+            numbered
+            switching
+            focus
+            desktopChanges
+            ZonesTuning(model: model)
         }
     }
 

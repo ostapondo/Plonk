@@ -14,7 +14,7 @@ struct ShortcutRows: View {
     var body: some View {
         ForEach(actions) { action in
             // Deliberately not a LabeledContent, for the reason spelled out on
-            // PointsField: a form row splits itself into a label and a control,
+            // MeasureRow: a form row splits itself into a label and a control,
             // and it put the recorder on a line of its own whatever width the
             // field was given. That cost every row a second line and stretched
             // an 84pt field across the width of the window. A plain row with a
