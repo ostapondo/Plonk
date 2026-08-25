@@ -15,6 +15,15 @@ one of those.
 
 ### Added
 
+- **The click ring is yours to set.** Ring every click was one colour, one
+  size, one shape: the zone colour, 34 points, an outline. Pointer and clicks
+  now says how it is drawn — a colour of its own, a second colour for right
+  clicks so the two can be told apart in a recording, a ring or a filled dot or
+  both, how wide it lands, how heavy its line is and how long it lasts. The
+  crosshairs get the same treatment, with a colour, a thickness and an opacity,
+  and finding the pointer gets the size of its circle and how far the rest of
+  the desk dims behind it. Everything left unset still follows the zone colour,
+  so a setup that was never touched looks exactly as it did.
 - **The MCP server reports its installed version.** Run `plonk-mcp --version`
   or `plonk-mcp -v` to print the package version without starting the server.
 

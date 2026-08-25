@@ -208,7 +208,7 @@ agent can call.
 | **Pulse** | Real power assertions, not a jiggler, and one switch further: also hold your chat status at available, which is the one thing here that fakes input, because Slack and Teams read the idle clock and an assertion never touches it. Sessions start by hand, on a schedule, while an app is open or while charging, and end by themselves: after N minutes, at a wall-clock time, or when a process exits. A lid-closed hold keeps the Mac running with the lid shut, and hands sleep back when you switch it off |
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |
 | **A shortcut guide** | Every shortcut the front app actually has, read from its own menus, so it is never out of date |
-| **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display |
+| **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display. The ring, the crosshairs and the circle each take a colour, a size and a weight, and right clicks can carry a colour of their own |
 
 All but the shortcut guide can be switched off, from Tools in the menu bar
 dropdown or the Tools page. Off means gone: out of the sidebar, out of the
