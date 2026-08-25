@@ -37,6 +37,13 @@ test("a zone set is not empty", () => {
   assert.equal(zonesSchema.safeParse([{ x: 0, y: 0, w: 0.5, h: 1 }]).success, true);
 });
 
+test("a zone may carry a name, and the app decides how long", () => {
+  assert.equal(zonesSchema.safeParse([{ x: 0, y: 0, w: 0.5, h: 1, name: "chat" }]).success, true);
+  assert.equal(zonesSchema.safeParse([{ x: 0, y: 0, w: 0.5, h: 1, name: "  " }]).success, false);
+  // Thirteen speech balloons are 26 code units and 13 characters; the app keeps them.
+  assert.equal(zonesSchema.safeParse([{ x: 0, y: 0, w: 0.5, h: 1, name: "\u{1F4AC}".repeat(13) }]).success, true);
+});
+
 test("a workspace item carries what it takes to launch the app again", () => {
   const item = {
     app: "Visual Studio Code",

@@ -54,7 +54,7 @@ config to tell two sessions of the same client apart.
 | | |
 | --- | --- |
 | `get_state` | Monitors, every open window and where it sits, zone sets, saved workspaces, awake status |
-| `apply_layout` · `snap_window` | Place windows by fraction of a screen, or drop one into a numbered zone |
+| `apply_layout` · `snap_window` | Place windows by fraction of a screen, or drop one into a zone by number or by name |
 | `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops that reopen their apps and restore every window |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, assigned per monitor |
 | `set_awake` | Keep the Mac awake, optionally time-limited, optionally also holding your chat status at available |

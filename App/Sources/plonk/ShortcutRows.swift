@@ -43,6 +43,8 @@ struct ShortcutRows: View {
             // list does not reach.
             if let set = zoneSet(action) {
                 Text(set.name).lineLimit(1).truncationMode(.tail)
+            } else if let named = zoneName(action) {
+                Text(.shortcutZoneNamed(named.number, named.name)).lineLimit(1).truncationMode(.tail)
             } else {
                 Text(action.title).lineLimit(1).truncationMode(.tail)
             }
@@ -122,6 +124,20 @@ struct ShortcutRows: View {
         guard names.indices.contains(number - 1) else { return nil }
         let name = names[number - 1]
         return (name, model.zoneSets[name] ?? [])
+    }
+
+    /// The name a numbered zone has, so the row can say "Zone 3 · chat"
+    /// rather than leaving the reader to count. The key lands on the front
+    /// window's screen, which a settings page cannot know, so a name is only
+    /// printed when every screen's set gives that number the same one.
+    private func zoneName(_ action: HotkeyAction) -> (number: Int, name: String)? {
+        guard let number = action.zoneNumber else { return nil }
+        let names = (0..<max(model.screenCount, 1)).map { screen -> String? in
+            let zones = model.zones(onScreen: screen)
+            return zones.indices.contains(number - 1) ? zones[number - 1].name : nil
+        }
+        guard let name = names.first ?? nil, names.allSatisfy({ $0 == name }) else { return nil }
+        return (number, name)
     }
 
     /// One rectangle of that picture. Filled where the window lands, outlined

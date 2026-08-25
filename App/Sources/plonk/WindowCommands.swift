@@ -34,6 +34,13 @@ final class WindowCommands {
         return (app, window, frame)
     }
 
+    /// The screen the front window is on, the one a numbered zone lands on;
+    /// nil when there is nothing in front that a command would act on. Read
+    /// off the frame `focused` already fetched, not from the window again.
+    func frontScreenIndex() -> Int? {
+        focused().map { windows.screenIndex(containing: $0.frame) }
+    }
+
     func apply(_ preset: Preset) {
         guard let target = focused() else { return }
         let screen = windows.screenIndex(ofWindow: target.window)

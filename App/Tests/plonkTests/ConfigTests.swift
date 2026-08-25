@@ -412,6 +412,6 @@ struct ZoneRectParsingTests {
     @Test func parsesValidDictionary() throws {
         let zone = try #require(ZoneRect(dict: ["x": 0.25, "y": 0, "w": 0.5, "h": 1]))
         #expect(abs(zone.x - 0.25) < 0.001)
-        #expect(abs((zone.asDict["w"] ?? -1) - 0.5) < 0.001)
+        #expect(abs((zone.asDict["w"] as? Double ?? -1) - 0.5) < 0.001)
     }
 }

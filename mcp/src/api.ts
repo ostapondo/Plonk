@@ -76,7 +76,7 @@ export interface State {
   text_languages: string[];
   saved_layouts: string[];
   workspaces: Record<string, Workspace>;
-  zone_sets: Record<string, Frame[]>;
+  zone_sets: Record<string, (Frame & { name?: string })[]>;
   zone_gap: number;
   zone_set_gaps: Record<string, number>;
   screen_zone_sets: Record<string, string>;

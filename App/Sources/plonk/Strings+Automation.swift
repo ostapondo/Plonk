@@ -64,6 +64,10 @@ extension LocalizedStringResource {
         Self.key("voice.announce.zone \(number)")
     }
 
+    static func voiceAnnounceZoneNamed(_ number: Int, _ name: String) -> LocalizedStringResource {
+        Self.key("voice.announce.zoneNamed \(number) \(name)")
+    }
+
     static func voiceAnnounceFocus(_ direction: String) -> LocalizedStringResource {
         Self.key("voice.announce.focus \(direction)")
     }

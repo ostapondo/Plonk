@@ -22,6 +22,9 @@ struct FullscreenZoneEditorView: View {
     /// off means the default gap in Zones › Overlay.
     @State private var ownGap = false
     @State private var gapText = ""
+    /// Which zone's name field has the cursor, by index. Dropped when zones
+    /// come or go, since the index would then point at another zone's name.
+    @FocusState private var editingName: Int?
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -29,6 +32,7 @@ struct FullscreenZoneEditorView: View {
             ZoneCanvas(zones: draft, editable: true, fullscreen: true, selected: selected,
                        gap: gap ?? model.config.zoneGap) { draft = $0 }
                 .ignoresSafeArea()
+                .onChange(of: draft.count) { _ in editingName = nil }
             // Sits behind the panel and takes nothing but keys, so the mouse
             // still reaches the canvas.
             ZoneKeyCatcher { handle($0) }
@@ -53,6 +57,7 @@ struct FullscreenZoneEditorView: View {
                 .textFieldStyle(.roundedBorder)
                 .font(.headline)
             gapRow
+            namesRow
             VStack(alignment: .leading, spacing: 3) {
                 Text(.zoneEditorSplit)
                 Text(.zoneEditorResize)
@@ -109,6 +114,45 @@ struct FullscreenZoneEditorView: View {
         }
     }
 
+    /// A name for each zone, if wanted: what voice and an agent can call it
+    /// by. Kept as typed, cut to the limit, until the set is saved, so a
+    /// space can be typed in the middle of "build log" without the field
+    /// eating it; save cleans it the way every other way in does, and says
+    /// so when a name will not be kept.
+    private var namesRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(.zoneEditorNames)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 6)], alignment: .leading, spacing: 6) {
+                ForEach(draft.indices, id: \.self) { index in
+                    HStack(spacing: 5) {
+                        Text("\(index + 1)")
+                            .font(.caption.monospacedDigit().bold())
+                            .foregroundStyle(Ink.zone(index))
+                            .frame(width: 16, alignment: .trailing)
+                        TextField(String(localized: .shortcutZone(index + 1)), text: name(of: index))
+                            .textFieldStyle(.roundedBorder)
+                            .font(.caption)
+                            .focused($editingName, equals: index)
+                    }
+                }
+            }
+            Text(.zoneEditorNamesHelp)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func name(of index: Int) -> Binding<String> {
+        Binding(
+            get: { draft.indices.contains(index) ? draft[index].name ?? "" : "" },
+            set: { typed in
+                guard draft.indices.contains(index) else { return }
+                let capped = String(typed.prefix(ZoneRect.nameLimit))
+                draft[index].name = capped.isEmpty ? nil : capped
+            }
+        )
+    }
+
     /// What `gapRow` says, as a value: nil for the default. Anything above
     /// the limit is held to it, the way `Config.clamp` would on load.
     private var gap: Double? {
@@ -151,6 +195,17 @@ struct FullscreenZoneEditorView: View {
 
     private func save() {
         guard let actions = model.actions else { return }
+        // The zones first, before anything is written: a rename that has
+        // gone through cannot be taken back when the names turn out wrong.
+        if let refused = draft.compactMap(\.name).first(where: ZoneRect.isRefusedName) {
+            error = String(localized: .zoneEditorNameIsANumber(refused))
+            return
+        }
+        let cleaned = draft.map { ZoneRect($0.x, $0.y, $0.w, $0.h, name: $0.name) }
+        if let taken = ZoneGeometry.duplicateName(in: cleaned) {
+            error = String(localized: .zoneEditorNameUsedTwice(taken))
+            return
+        }
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let target = trimmed.isEmpty ? setName : trimmed
         if seed != nil {
@@ -164,7 +219,7 @@ struct FullscreenZoneEditorView: View {
                 return
             }
         }
-        actions.updateZoneSet(target, zones: draft, gap: gap)
+        actions.updateZoneSet(target, zones: cleaned, gap: gap)
         actions.assignZoneSet(target, toScreen: screenIndex)
         done()
     }
