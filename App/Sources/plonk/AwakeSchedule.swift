@@ -1,6 +1,6 @@
 import Foundation
 
-// When a stay-active window is open.
+// When a scheduled window of the keep-awake session is open.
 //
 // A window is a time of day, an end, and the weekdays it runs on. It is not a
 // pair of timers: a Mac that slept through 09:00 and woke at 11:00 never fires
@@ -11,7 +11,7 @@ import Foundation
 // Minutes from midnight rather than a Date, because the window repeats and a
 // Date does not.
 
-struct ActiveSchedule: Codable, Equatable {
+struct AwakeSchedule: Codable, Equatable {
     var enabled = false
     var start = 9 * 60
     var end = 18 * 60

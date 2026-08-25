@@ -49,6 +49,10 @@ extension AppDelegate {
         guard let zones = store.config.zoneSets[name] ?? BuiltinZoneSets.all[name] else { return }
         dragSnap.showPreview(zones: zones, screenIndex: index,
                              gap: CGFloat(store.config.zoneGap(forSet: name)))
+        // Which monitor the set just landed on, said on the monitors. Showing
+        // a preview is the one moment the numbers are wanted; nothing else
+        // puts them up any more.
+        identifyScreens(selected: index)
         model.previewedZoneSet = name
 
         let token = previewToken

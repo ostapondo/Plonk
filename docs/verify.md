@@ -43,8 +43,12 @@ Updates and it stops happening — including for agents, which get a 409 rather
 than a connection made on your behalf, so the buttons on that page are the only
 thing that can trigger one. `nettop` or Little Snitch will then show a process
 that only ever listens. The URLs compiled into the app are that endpoint, the
-releases page, and the issue tracker that opens when you click Report a bug —
-[Release.swift](../App/Sources/plonk/Release.swift) has all three.
+releases page, and the issue tracker that opens when you click Report a bug.
+The first two are in [Release.swift](../App/Sources/plonk/Release.swift), the
+third at the top of
+[AppDelegate.swift](../App/Sources/plonk/AppDelegate.swift), and
+[check-security-claims.sh](../scripts/check-security-claims.sh) fails the build
+if a fourth ever appears.
 
 ## A web page cannot drive it
 

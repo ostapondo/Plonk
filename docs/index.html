@@ -7,7 +7,7 @@
 <meta name="description" content="A Mac window manager with zones you draw yourself. Drop a window into one by dragging it, by a keystroke, by voice, or by asking an agent over MCP. Plus text lifted off the screen, a ruler, keep-awake, screenshots and pointer tools, in one menu bar app. Everything runs on your Mac. No account, no cloud, no telemetry.">
 <link rel="icon" href="logo-400.png">
 <meta property="og:title" content="Plonk — give every window a place to live">
-<meta property="og:description" content="Draw the boxes you actually want, then drop windows into them: with a drag, a key, or by saying so. Ten menu bar utilities in one app, and twenty MCP tools so an agent can drive all of it. Nothing leaves your Mac.">
+<meta property="og:description" content="Draw the boxes you actually want, then drop windows into them: with a drag, a key, or by saying so. Seven menu bar utilities in one app, and twenty MCP tools so an agent can drive all of it. Nothing leaves your Mac.">
 <meta property="og:image" content="https://ostapondo.github.io/Plonk/social-preview.png">
 <meta property="og:url" content="https://ostapondo.github.io/Plonk/">
 <meta property="og:type" content="website">
@@ -629,8 +629,8 @@ codex mcp add plonk -- npx -y plonk-mcp</pre>
   <!-- ================= NUMBERS ================= -->
   <section class="card glass">
     <div class="stats">
-      <div class="stat a"><b>20</b><span>MCP tools for your agent</span></div>
-      <div class="stat b"><b>10</b><span>utilities behind one icon</span></div>
+      <div class="stat a"><b>21</b><span>MCP tools for your agent</span></div>
+      <div class="stat b"><b>8</b><span>utilities behind one icon</span></div>
       <div class="stat c"><b>0</b><span>dependencies in the app</span></div>
       <div class="stat d"><b>0</b><span>bytes sent to a cloud</span></div>
     </div>
@@ -644,11 +644,12 @@ codex mcp add plonk -- npx -y plonk-mcp</pre>
       <div class="cell"><span class="k">&#8963;&#8997;T</span><b>Text off the screen</b><p>Select an area and the words are in your clipboard &mdash; a screenshot, a paused video, a PDF that will not let you select. On-device.</p></div>
       <div class="cell"><span class="k">&#8963;&#8997;R</span><b>A ruler</b><p>How far the pointer can travel each way before it meets an edge. Points and pixels both, because a 44-point tap target is 88 pixels and only one of those is in the asset.</p></div>
       <div class="cell"><span class="k">&#8963;&#8997;P</span><b>Pin part of the screen</b><p>Float a live crop above everything else: a build log, a chart, a call, visible in a corner while you work over it. Streamed, never written down.</p></div>
-      <div class="cell"><span class="k">awake</span><b>Keep awake</b><p>Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or the moment a process exits.</p></div>
+      <div class="cell"><span class="k">pulse</span><b>Pulse</b><p>Real power assertions, not a jiggler, and one switch further: hold your chat status at available too. Sessions end by themselves: after N minutes, at a wall-clock time, or the moment a process exits.</p></div>
       <div class="cell"><span class="k">&#8963;&#8997;S</span><b>Screenshots</b><p>Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution.</p></div>
       <div class="cell"><span class="k">&#8963;&#8997;&#8679;/</span><b>A shortcut guide</b><p>Every shortcut the front app actually has, read from its own menus rather than from a table someone has to keep up to date.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;/</span><b>Pointer tools</b><p>Find the cursor when you have lost it, ring every click for a screen recording, crosshairs, and a key that warps the pointer to the next display.</p></div>
     </div>
-    <p class="p" style="margin-top:20px"><a href="features.md">Everything else, in full</a> &mdash; pointer tools, grab-and-move, notices, and how an update is checked before it is unpacked.</p>
+    <p class="p" style="margin-top:20px"><a href="features.md">Everything else, in full</a> &mdash; grab-and-move, notices, the module switches, and how an update is checked before it is unpacked.</p>
   </section>
 
   <!-- ================= PRIVACY ================= -->
@@ -708,7 +709,7 @@ curl -so /dev/null -w '%{http_code}\n' \
       <a class="btn ghost" href="https://github.com/ostapondo/plonk">Source on GitHub</a>
       <p class="fine">Signed, built and attested on GitHub's runners &mdash; <a href="verify.md">check the binary against the commit</a> before you open it.</p>
     </div>
-    <p class="p" style="margin-top:22px">Plonk is signed but not notarized, so macOS holds a copy you download by hand; the cask clears that for you. And it is early &mdash; version 0.2.x, one author. Shortcuts, zone files and workspaces are settled; the MCP tool names and the HTTP API can still change between minor versions.</p>
+    <p class="p" style="margin-top:22px">Plonk is signed but not notarized, so macOS holds a copy you download by hand; the cask clears that for you. And it is early &mdash; version 0.3.x, one author. Shortcuts, zone files and workspaces are settled; the MCP tool names and the HTTP API can still change between minor versions.</p>
     <p class="p">Or help build it. It compiles and tests on a plain checkout with no signing certificate and no account: <a href="https://github.com/ostapondo/plonk/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> is five commands long, and the <a href="https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">good first issues</a> each say where the code is and how to tell it worked. The smallest useful change is one JSON file in <a href="https://github.com/ostapondo/plonk/tree/main/zone-sets">zone-sets/</a>.</p>
   </section>
 

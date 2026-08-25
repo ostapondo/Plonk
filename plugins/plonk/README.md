@@ -8,7 +8,7 @@ Two commands instead of finding a JSON config and restarting the client:
 ```
 
 That registers the MCP server, and Claude Code starts it whenever the plugin is
-enabled. The nineteen tools then appear scoped as `mcp__plugin_plonk_plonk__*`,
+enabled. The twenty tools then appear scoped as `mcp__plugin_plonk_plonk__*`,
 which matters if you write hooks against them.
 
 ## It needs the app

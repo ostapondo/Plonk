@@ -63,17 +63,20 @@ struct Config: Codable {
     // it, and AppDelegate.setupLidSleep clears it on the next launch.
     var awakeLidClosed = false
     var awakeTimeoutMinutes = 0
-    // Whether keep-awake was on when the app last quit, so it survives a
-    // relaunch. Unix epoch seconds; nil means the session had no limit.
+    // The level the session runs at: off holds a power assertion, on also
+    // resets the idle timer, which is what keeps chat apps from showing you as
+    // Away. See AwakeManager.
+    var awakeAvailable = false
+    // What starts a session without being asked: the hours it covers, and the
+    // apps whose being open arms it. Each has a switch of its own, so a list
+    // can be kept while it is not in use, the way the schedule keeps its hours.
+    var awakeSchedule = AwakeSchedule()
+    var awakeAppsEnabled = false
+    var awakeApps: [String] = []
+    // Whether a hand-made session was on when the app last quit, so it survives
+    // a relaunch. Unix epoch seconds; nil means the session had no limit.
     var awakeRequested = false
     var awakeSessionEnd: Double?
-    // Stay active. The schedule and the app list are settings; whether it was
-    // switched on by hand is not restored, because a hold made yesterday says
-    // nothing about today.
-    var activeSchedule = ActiveSchedule()
-    var activeApps: [String] = []
-    var activeAllowOnBattery = false
-    var activeTimeoutMinutes = 0
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
     // How different two neighbouring pixels have to be, on one channel of 255,

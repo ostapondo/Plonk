@@ -37,9 +37,9 @@ substitution away. [Coming from Rectangle](docs/from-rectangle.md) is the whole
 of it.
 
 **Zones you draw.** Not a preset grid. Any number of zones, any size, a
-different set per monitor, overlapping if that suits you. Click a zone to split
-it, `⇧`-click to split the other way: a narrow rail for chat, a wide middle
-split in two, a strip for the terminal.
+different set per monitor, overlapping if that suits you. Click a zone to cut it
+into top and bottom, right-click to cut it into left and right: a narrow rail
+for chat, a wide middle split in two, a strip for the terminal.
 
 **Workspaces that remember which monitor.** Save the desk: the apps, every
 window's frame, and the display each one belongs on. Launch it onto an empty
@@ -54,7 +54,7 @@ save that as a workspace called review" is one sentence rather than a script.
 The other seven tools, OCR and a ruler and keep-awake among them, are there
 because each was otherwise its own icon in the menu bar.
 
-**It is early.** Version 0.2.x, one author. Shortcuts, zone files and workspaces
+**It is early.** Version 0.3.x, one author. Shortcuts, zone files and workspaces
 are settled. The MCP tool names and the HTTP API are not, and can still change
 between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 
@@ -205,14 +205,16 @@ agent can call.
 | **Text off the screen** | `⌃⌥T` selects an area and copies the words in it: a screenshot, a paused video, a dialog that will not let you select. On-device |
 | **A ruler** | `⌃⌥R`, then hover: how far the pointer can go each way before it meets an edge, read off the pixels. The width of a row, the height of a bar, the gap between two things. Drag for a straight-line distance. Points and pixels both |
 | **Pin part of the screen** | Float a live crop above everything else. A build log, a chart, a call, visible in a corner while you work over it |
-| **Keep awake** | Real power assertions, not a jiggler. Sessions end by themselves: after N minutes, at a wall-clock time, or when a process exits. A lid-closed hold keeps the Mac running with the lid shut, and hands sleep back when you switch it off |
+| **Pulse** | Real power assertions, not a jiggler, and one switch further: also hold your chat status at available, which is the one thing here that fakes input, because Slack and Teams read the idle clock and an assertion never touches it. Sessions start by hand, on a schedule, while an app is open or while charging, and end by themselves: after N minutes, at a wall-clock time, or when a process exits. A lid-closed hold keeps the Mac running with the lid shut, and hands sleep back when you switch it off |
 | **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |
 | **A shortcut guide** | Every shortcut the front app actually has, read from its own menus, so it is never out of date |
 | **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display |
 
-Any of them can be switched off, from Tools in the menu bar dropdown or the
-Tools page. Off means gone: out of the sidebar, out of the menu, its
-shortcuts released, and its tools refused to agents until it is back on.
+All but the shortcut guide can be switched off, from Tools in the menu bar
+dropdown or the Tools page. Off means gone: out of the sidebar, out of the
+menu, its shortcuts released, and its tools refused to agents until it is back
+on. The same switches cover zones, workspaces and voice, so the window manager
+itself can stand down and leave the rest running.
 
 </details>
 
@@ -234,11 +236,11 @@ read the error out of that dialog and tell me what it says
 how tall is that toolbar, in points and in pixels
 ```
 
-Twenty tools across state, layouts, workspaces, zones, keep-awake, screenshots,
-on-device OCR and measuring. Frames are fractions of a monitor's visible area,
-origin top-left, so "left 60%" is `{x: 0, y: 0, w: 0.6, h: 1}`. Several agents
-can connect at once, each registering itself, with an optional mode that locks
-changes to the active one.
+Twenty tools across state, layouts, workspaces, zones, keep-awake,
+screenshots, on-device OCR and measuring. Frames are fractions of a monitor's
+visible area, origin top-left, so "left 60%" is `{x: 0, y: 0, w: 0.6, h: 1}`.
+Several agents can connect at once, each registering itself, with an optional
+mode that locks changes to the active one.
 
 <p align="center">
   <img src="docs/agent-desk.svg" width="720"
@@ -313,7 +315,7 @@ that tests it. [SECURITY.md](SECURITY.md) says where each promise stops.
 
 ## Build
 
-Five commands, and they are what CI runs on every pull request. Each line is a
+Seven commands, and they are what CI runs on every pull request. Each line is a
 subshell, so paste the block from the repository root.
 
 ```sh
@@ -322,6 +324,8 @@ subshell, so paste the block from the repository root.
 ./scripts/lint.sh                          # style rules, no dependencies
 (cd mcp && npm ci && npm test)             # the MCP server
 node scripts/check-zone-sets.mjs           # the layouts in zone-sets/
+node scripts/check-strings.mjs             # every word the user reads
+./scripts/check-security-claims.sh         # what SECURITY.md promises
 ```
 
 None of that needs a signing certificate. Zone geometry, config decoding, HTTP
@@ -347,10 +351,11 @@ need a signing certificate.
 - **[good first issue][gfi]** issues are written to be picked up cold. Each says
   where the code is and how to tell it worked, and carries a prompt you can hand
   to an agent, since [AGENTS.md](AGENTS.md) already explains the repo to one.
-- **[needs-hardware][hw]** issues need neither Swift nor a certificate, and are
-  the most useful thing anyone can send. A window manager breaks on arrangements
-  the author cannot see, so a report from three monitors or an ultrawide is
-  worth more than a patch.
+- **[needs-hardware][hw]** is where a request for a desk nobody here has gets
+  tagged, and answering one needs neither Swift nor a certificate. A window
+  manager breaks on arrangements the author cannot see, so a report from three
+  monitors or an ultrawide is worth more than a patch. An empty list is not a
+  filled gap: open an issue with the arrangement you have and what happened.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) has the rest, including how long a review
 takes. Questions and half-formed ideas go to

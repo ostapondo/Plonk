@@ -235,11 +235,11 @@ extension AppDelegate {
         }
         if store.config.isEnabled(.awake) {
             result.append(PlonkCommand(id: "app.awake",
-                                       title: awake.requested ? String(localized: .paletteStopAwake)
+                                       title: awake.wants ? String(localized: .paletteStopAwake)
                                                               : String(localized: .paletteKeepAwake),
                                        group: String(localized: .paletteGroupGadgets)) { [weak self] in
                 guard let self else { return }
-                setAwake(!awake.requested)
+                setAwake(!awake.wants)
             })
         }
         result.append(PlonkCommand(id: "app.update", title: String(localized: .paletteCheckUpdates),

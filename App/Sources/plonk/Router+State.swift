@@ -23,8 +23,6 @@ extension Router {
             "rev": changes.rev,
             "awake": awake.isOn,
             "awake_details": awakeState(),
-            "active": active.isOn,
-            "active_details": activeState(),
             "accessibility_granted": windows.isTrusted,
             // Off by the user's choice; a route under one of these answers 409.
             "disabled_features": store.config.disabledFeatures,

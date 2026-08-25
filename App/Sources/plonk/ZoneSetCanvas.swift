@@ -85,11 +85,17 @@ struct ZoneSetCanvas: View {
 
     private var actions: some View {
         HStack(spacing: 7) {
+            // Preview answers "what is where" for the whole desk, not for the
+            // screen this page happens to be showing: every monitor draws the
+            // set it wears, with its number on it. That is also the only
+            // moment the numbers appear, so opening the page never flashes
+            // anything at anybody.
+            Button(String(localized: .zoneSetPreview)) {
+                model.actions?.identifyScreens(selected: screen)
+                model.actions?.flashZones()
+            }
+            .help(String(localized: .zoneSetPreviewHelp))
             if let assigned {
-                Button(String(localized: .zoneSetPreview)) {
-                    model.actions?.togglePreview(zoneSet: assigned, onScreen: screen)
-                }
-                .help(String(localized: .zoneSetPreviewHelp))
                 Button(String(localized: .zoneSetDuplicate)) {
                     model.actions?.editZoneSet(model.freeZoneSetName(base: assigned + " copy"),
                                                seed: zones, onScreen: screen)
@@ -137,11 +143,6 @@ struct ZoneSetCanvas: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .fixedSize()
-                // Numbering monitors in a settings window is guesswork until
-                // the monitors say which is which, so they do: on arrival, and
-                // again whenever the choice moves.
-                .onChange(of: chosen) { model.actions?.identifyScreens(selected: $0) }
-                .onAppear { model.actions?.identifyScreens(selected: screen) }
             }
         }
     }

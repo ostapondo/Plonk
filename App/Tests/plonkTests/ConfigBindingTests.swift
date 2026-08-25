@@ -112,13 +112,41 @@ struct ConfigBindingTests {
     }
 
     /// The merge has to recurse for a type whose defaults are not nil, which is
-    /// what makes this different from the appearance case above: ActiveSchedule
+    /// what makes this different from the appearance case above: AwakeSchedule
     /// has a synthesized decoder and non-zero defaults, so a partial object
     /// without the recursion throws and costs the whole file.
     @Test func aPartialNestedObjectKeepsNonNilDefaults() throws {
-        let config = try Config.decode(Data(#"{"activeSchedule": {"enabled": true}}"#.utf8))
-        #expect(config.activeSchedule.enabled)
-        #expect(config.activeSchedule.start == ActiveSchedule().start)
-        #expect(config.activeSchedule.end == ActiveSchedule().end)
+        let config = try Config.decode(Data(#"{"awakeSchedule": {"enabled": true}}"#.utf8))
+        #expect(config.awakeSchedule.enabled)
+        #expect(config.awakeSchedule.start == AwakeSchedule().start)
+        #expect(config.awakeSchedule.end == AwakeSchedule().end)
+    }
+
+    /// Stay active was a feature of its own until it became a level of the
+    /// keep-awake session. A config written before that still describes what
+    /// the user set up, under the names it had then.
+    @Test func aStayActiveSetupBecomesAnAvailableSession() throws {
+        let config = try Config.decode(Data(#"""
+        {"activeSchedule": {"enabled": true, "start": 480}, "activeApps": ["com.tinyspeck.slackmacgap"]}
+        """#.utf8))
+        #expect(config.awakeSchedule.enabled)
+        #expect(config.awakeSchedule.start == 480)
+        #expect(config.awakeApps == ["com.tinyspeck.slackmacgap"])
+        #expect(config.awakeAvailable)
+    }
+
+    /// Unless the user had switched the feature off, which said the opposite
+    /// just as plainly as the schedule said anything.
+    @Test func aStayActiveSetupThatWasSwitchedOffStaysOff() throws {
+        let config = try Config.decode(Data(#"""
+        {"activeSchedule": {"enabled": true}, "disabledFeatures": ["active"]}
+        """#.utf8))
+        #expect(config.awakeSchedule.enabled)
+        #expect(!config.awakeAvailable)
+        // The word named a feature that no longer exists. Dropping it is
+        // `clamp`'s job, which ConfigStore.load runs over everything it reads.
+        var clamped = config
+        clamped.clamp()
+        #expect(clamped.disabledFeatures.isEmpty)
     }
 }

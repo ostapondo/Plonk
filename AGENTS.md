@@ -55,7 +55,8 @@ is a module. A new module touches five places, nothing else:
 3. A `Router+<Module>.swift` holding its route handlers, and one line per route
    in `Router.handle` under its own path prefix (e.g. `/shot/*`).
 4. An MCP tool file `mcp/src/tools/<module>.ts` with a `register(server)`
-   function, wired in `mcp/src/server.ts`.
+   function, called from `createPlonkServer` in `mcp/src/factory.ts`.
+   `server.ts` only chooses a transport.
 5. A call to the manager's `apply` in `AppDelegate.applyConfig`.
 
 Only a command belongs on `AppActions` — something the app *does*, like taking
@@ -85,11 +86,12 @@ Each line is a subshell, so the block runs as written from the repository root:
 (cd mcp && npm test)             # must pass when mcp/ changed
 node scripts/check-zone-sets.mjs # must pass when zone-sets/ changed
 node scripts/check-strings.mjs   # must pass when any user-facing text changed
+./scripts/check-security-claims.sh  # must pass; CI runs it on every commit
 ./scripts/build.sh               # produces Plonk.app; needs a signing identity
 curl -s 127.0.0.1:43917/ping     # smoke test while the app is running
 ```
 
-The first four need no signing certificate. `build.sh` does, and refuses
+The first six need no signing certificate. `build.sh` does, and refuses
 rather than produce a bundle that cannot hold its permissions; see
 [CONTRIBUTING.md](CONTRIBUTING.md) for why and how to make one.
 

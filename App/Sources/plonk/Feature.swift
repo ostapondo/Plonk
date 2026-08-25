@@ -11,7 +11,7 @@ import Foundation
 // restores exactly what was there.
 
 enum Feature: String, CaseIterable, Identifiable {
-    case zones, workspaces, shot, mouse, ruler, voice, awake, active
+    case zones, workspaces, shot, mouse, ruler, voice, awake
 
     var id: String { rawValue }
 
@@ -27,7 +27,6 @@ enum Feature: String, CaseIterable, Identifiable {
         case .ruler: return .pageRuler
         case .voice: return .pageVoice
         case .awake: return .pageAwake
-        case .active: return .pageActive
         }
     }
 
@@ -41,7 +40,6 @@ enum Feature: String, CaseIterable, Identifiable {
         case .ruler: return .featureRulerDetail
         case .voice: return .featureVoiceDetail
         case .awake: return .featureAwakeDetail
-        case .active: return .featureActiveDetail
         }
     }
 
@@ -53,8 +51,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .mouse: return "cursorarrow.rays"
         case .ruler: return "ruler"
         case .voice: return "mic"
-        case .awake: return "cup.and.saucer"
-        case .active: return "person.wave.2"
+        case .awake: return "waveform.path.ecg"
         }
     }
 
@@ -67,7 +64,6 @@ enum Feature: String, CaseIterable, Identifiable {
         case .shot: return ["/shot"]
         case .ruler: return ["/ruler"]
         case .awake: return ["/awake"]
-        case .active: return ["/active"]
         case .mouse, .voice: return []
         }
     }

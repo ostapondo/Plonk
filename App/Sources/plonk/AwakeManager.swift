@@ -2,34 +2,75 @@ import Foundation
 import IOKit.ps
 import IOKit.pwr_mgt
 
-// Keep-awake, with rules:
-// - manual sessions, optionally time-limited or ending at a wall-clock time
-// - or bound to a process, ending the moment that process does
-// - can be disallowed on battery (pauses until plugged back in)
-// - can engage automatically while charging
-// - holds either a display assertion or a system-only assertion
+// Pulse: one session that keeps the Mac up, and optionally keeps you shown as
+// available in the apps that watch for idleness.
+//
+// These were two features until they were not. A power assertion stops the Mac
+// sleeping without touching the idle counter Slack and Teams read, so keeping
+// the Mac awake alone still left you Away; resetting that counter postpones
+// idle sleep, so staying available always implied staying awake. Two switches
+// for one thing, one of which silently did the other's job.
+//
+// So: one session with a level.
+// - `.awake` holds a power assertion.
+// - `.available` holds the assertion and resets the idle timer with it.
+//
+// And one set of ways to start that session, all of which now work at either
+// level: by hand, for a number of minutes, until a wall-clock time, until a
+// process exits, inside scheduled hours, while a watched app runs, or while the
+// Mac is charging. Before the merge the process binding belonged to one half
+// and the schedule to the other, for no reason either half could give.
 
 final class AwakeManager {
     private var assertionID: IOPMAssertionID = 0
-    private(set) var isOn = false          // assertion currently held
-    private(set) var requested = false     // user/agent asked for keep-awake
+    private let nudge = IdleNudge()
+
+    /// The assertion is held right now.
+    private(set) var isOn = false
+    /// The idle timer is being reset right now. Needs the level, Accessibility
+    /// and a session that is actually holding, so it is not `available`.
+    private(set) var isAvailable = false
     private(set) var sessionEnd: Date?
     /// Set while the session lasts only as long as another process does.
     private(set) var boundPID: Int?
+
+    /// nil follows the schedule, the watched apps and the charger. A value is
+    /// the user having decided by hand, and a bare hand-toggle holds until the
+    /// automatic answer itself changes — switching off at lunch lasts until the
+    /// scheduled window closes, not for thirty seconds until the next tick puts
+    /// it back on.
+    private(set) var manual: Bool?
+    private var manualBaseline = false
+
     private var expiryTimer: Timer?
     private var processWatch: Timer?
+    /// Watches the clock and the app list; owned here because an extension
+    /// cannot hold a stored property. Started by `startWatching`.
+    var watchTimer: Timer?
     var onChange: (() -> Void)?
 
     /// How often a process-bound session checks that its process is still
     /// there. Long enough to be free, short enough that nobody notices.
-    private static let processPollSeconds: TimeInterval = 5
+    static let processPollSeconds: TimeInterval = 5
+    /// How often the schedule and the app list are re-read. The window has to
+    /// be noticed shortly after it opens, not on the minute.
+    static let watchSeconds: TimeInterval = 30
 
     // Each guards on the value actually changing. `apply` hands over the whole
     // config after any setting is written, so most of these are set to what
     // they already held; re-taking the power assertion for a change to some
     // other page's setting is not something the sleep timer should feel.
+    var available = false { didSet { if available != oldValue { reevaluate() } } }
     var allowOnBattery = true { didSet { if allowOnBattery != oldValue { reevaluate() } } }
     var autoWhileCharging = false { didSet { if autoWhileCharging != oldValue { reevaluate() } } }
+    var schedule = AwakeSchedule() { didSet { if schedule != oldValue { reevaluate() } } }
+    /// Bundle ids. The session runs while any of them is running, and only
+    /// while the list is switched on: an unused list is kept, not emptied.
+    var apps: [String] = [] { didSet { if apps != oldValue { reevaluate() } } }
+    var appsEnabled = false { didSet { if appsEnabled != oldValue { reevaluate() } } }
+    /// The feature as a whole. Off drops the hold and ignores the triggers
+    /// until it is on again; both are kept, so nothing has to be set up twice.
+    var enabled = true { didSet { if enabled != oldValue { reevaluate() } } }
     var keepDisplayOn = true {
         didSet {
             guard keepDisplayOn != oldValue, isOn else { return }
@@ -42,50 +83,24 @@ final class AwakeManager {
     /// Take the settings as they now stand. Called after every config change,
     /// so it has to be cheap and safe to run when nothing it reads moved.
     func apply(_ config: Config) {
+        enabled = config.isEnabled(.awake)
+        available = config.awakeAvailable
         allowOnBattery = config.awakeAllowOnBattery
-        autoWhileCharging = config.awakeAutoWhileCharging && config.isEnabled(.awake)
+        autoWhileCharging = config.awakeAutoWhileCharging
         keepDisplayOn = config.awakeKeepDisplayOn
         timeoutMinutes = config.awakeTimeoutMinutes
-        // Switching the feature off ends a session outright rather than
-        // suspending it: a hold nobody can see in the menu any more should not
-        // be the thing keeping the Mac up.
-        if !config.isEnabled(.awake), requested { set(false) }
+        schedule = config.awakeSchedule
+        appsEnabled = config.awakeAppsEnabled
+        apps = config.awakeApps
     }
 
-    var isOnAC: Bool { Self.isOnAC }
+    /// What is wanted once the hand-set hold is taken into account, still
+    /// before the power check. What the toggle on the page shows.
+    var wants: Bool { enabled && (manual ?? automatic) }
 
-    /// Shared with ActiveManager, which needs the same battery guard.
-    static var isOnAC: Bool {
-        // IOPSGetProvidingPowerSourceType returns "AC Power", "Battery Power" or
-        // "UPS Power". A "Get" function, so the string is not ours to release.
-        let type = IOPSGetProvidingPowerSourceType(nil)?.takeUnretainedValue() as String?
-        return type == nil || type == "AC Power"
-    }
+    // MARK: - Control
 
-    /// One word for the menu bar tooltip, and the same one for an agent asking
-    /// what state keep-awake is in.
-    var statusText: LocalizedStringResource {
-        if isOn {
-            guard requested else { return .awakeStatusAutoCharging }
-            if let boundPID { return .awakeStatusUntilProcess(boundPID) }
-            return .awakeStatusOn
-        }
-        if requested { return .awakeStatusPausedOnBattery }
-        return .awakeStatusOff
-    }
-
-    func startObservingPowerSource() {
-        let context = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
-        if let source = IOPSNotificationCreateRunLoopSource({ ctx in
-            guard let ctx else { return }
-            let manager = Unmanaged<AwakeManager>.fromOpaque(ctx).takeUnretainedValue()
-            DispatchQueue.main.async { manager.reevaluate() }
-        }, context)?.takeRetainedValue() {
-            CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode)
-        }
-    }
-
-    /// Start or stop a keep-awake session. Returns an error string when the
+    /// Start or stop a session by hand. Returns an error string when the
     /// request cannot be honoured, nil otherwise.
     ///
     /// - `minutes` overrides the configured default timeout for this session;
@@ -97,7 +112,7 @@ final class AwakeManager {
     @discardableResult
     func set(_ on: Bool, minutes: Int? = nil, until: Date? = nil, pid: Int? = nil) -> String? {
         guard on else {
-            begin(requested: false, sessionEnd: nil, pid: nil)
+            hold(false, end: nil, pid: nil)
             return nil
         }
         if let pid {
@@ -106,21 +121,31 @@ final class AwakeManager {
             guard pid > 0, pid <= Int(Int32.max), Self.isRunning(pid) else {
                 return "no process with pid \(pid) is running"
             }
-            begin(requested: true, sessionEnd: nil, pid: pid)
+            hold(true, end: nil, pid: pid)
             return nil
         }
         if let until {
             guard until > Date() else {
                 return "\(ISO8601DateFormatter().string(from: until)) has already passed"
             }
-            begin(requested: true, sessionEnd: until, pid: nil)
+            hold(true, end: until, pid: nil)
             return nil
         }
         let limit = minutes ?? timeoutMinutes
-        begin(requested: true,
-              sessionEnd: limit > 0 ? Date().addingTimeInterval(TimeInterval(limit) * 60) : nil,
-              pid: nil)
+        hold(true,
+             end: limit > 0 ? Date().addingTimeInterval(TimeInterval(limit) * 60) : nil,
+             pid: nil)
         return nil
+    }
+
+    func toggle() { set(!wants) }
+
+    /// Give the hand-set state back to the schedule, the app list and the
+    /// charger.
+    func endSession() {
+        manual = nil
+        clearSession()
+        reevaluate()
     }
 
     /// Pick a session back up after a relaunch. An end date already in the past
@@ -128,27 +153,17 @@ final class AwakeManager {
     /// sessions are never restored — see `AppDelegate.persistAwakeSession`.
     func restore(sessionEnd end: Date?) {
         if let end, end <= Date() { return }
-        begin(requested: true, sessionEnd: end, pid: nil)
+        hold(true, end: end, pid: nil)
     }
 
-    /// Signal 0 checks for a process without touching it. EPERM means it is
-    /// alive and owned by somebody else — a job started under sudo, say —
-    /// which is still alive.
-    private static func isRunning(_ pid: Int) -> Bool {
-        errno = 0
-        return kill(pid_t(pid), 0) == 0 || errno == EPERM
-    }
-
-    private func begin(requested on: Bool, sessionEnd end: Date?, pid: Int?) {
-        requested = on
-        expiryTimer?.invalidate()
-        expiryTimer = nil
-        processWatch?.invalidate()
-        processWatch = nil
-        boundPID = pid
+    private func hold(_ on: Bool, end: Date?, pid: Int?) {
+        manual = on
+        manualBaseline = automatic
+        clearSession()
         sessionEnd = end
+        boundPID = pid
         if let end {
-            expiryTimer = Timer.common(at: end) { [weak self] in self?.reevaluate() }
+            expiryTimer = Timer.common(at: end) { [weak self] in self?.endSession() }
         }
         if let pid {
             // Polled rather than watched with a kqueue process source: that
@@ -158,40 +173,63 @@ final class AwakeManager {
             // a handful of seconds either way is nothing to a power assertion.
             processWatch = Timer.common(every: Self.processPollSeconds) { [weak self] in
                 guard let self, boundPID == pid else { return }
-                if !Self.isRunning(pid) { set(false) }
+                if !Self.isRunning(pid) { endSession() }
             }
         }
         reevaluate()
     }
 
-    func toggle() { set(!requested) }
+    private func clearSession() {
+        sessionEnd = nil
+        boundPID = nil
+        expiryTimer?.invalidate()
+        expiryTimer = nil
+        processWatch?.invalidate()
+        processWatch = nil
+    }
+
+    // MARK: - Doing it
 
     func reevaluate() {
         if let end = sessionEnd, Date() >= end {
-            requested = false
-            sessionEnd = nil
-            expiryTimer?.invalidate()
-            expiryTimer = nil
-            processWatch?.invalidate()
-            processWatch = nil
-            boundPID = nil
+            manual = nil
+            clearSession()
         }
-        let ac = isOnAC
-        let shouldHold = (requested && (ac || allowOnBattery)) || (autoWhileCharging && ac)
+        // The bare hold was made against a particular automatic answer, so once
+        // that answer changes it has served its purpose. A session with an end
+        // of its own — a countdown, a time, a process — is not bare and ends on
+        // its own terms instead.
+        if manual != nil, sessionEnd == nil, boundPID == nil, automatic != manualBaseline {
+            manual = nil
+        }
+
+        let shouldHold = wants && (isOnAC || allowOnBattery)
         if shouldHold && !isOn {
-            let type = keepDisplayOn ? kIOPMAssertionTypePreventUserIdleDisplaySleep
-                                     : kIOPMAssertionTypePreventUserIdleSystemSleep
-            let result = IOPMAssertionCreateWithName(
-                type as CFString,
-                IOPMAssertionLevel(kIOPMAssertionLevelOn),
-                "Plonk: keep awake" as CFString,
-                &assertionID
-            )
-            isOn = (result == kIOReturnSuccess)
+            takeAssertion()
         } else if !shouldHold && isOn {
             releaseAssertion()
         }
+
+        let shouldNudge = shouldHold && available && isTrusted
+        if shouldNudge && !nudge.isRunning {
+            nudge.start()
+        } else if !shouldNudge && nudge.isRunning {
+            nudge.stop()
+        }
+        isAvailable = nudge.isRunning
         onChange?()
+    }
+
+    private func takeAssertion() {
+        let type = keepDisplayOn ? kIOPMAssertionTypePreventUserIdleDisplaySleep
+                                 : kIOPMAssertionTypePreventUserIdleSystemSleep
+        let result = IOPMAssertionCreateWithName(
+            type as CFString,
+            IOPMAssertionLevel(kIOPMAssertionLevelOn),
+            "Plonk: keep awake" as CFString,
+            &assertionID
+        )
+        isOn = (result == kIOReturnSuccess)
     }
 
     private func releaseAssertion() {

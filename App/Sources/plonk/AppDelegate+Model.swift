@@ -73,7 +73,6 @@ extension AppDelegate {
         mouse.apply(config)
         awake.apply(config)
         lidSleep.apply(config)
-        active.apply(config)
         newWindows.apply(config)
         updates.apply(config)
         applyLoginItem(config, previous: previous)
@@ -89,7 +88,6 @@ extension AppDelegate {
             refreshScreenAssignments()
         }
         refreshAwakeModel()
-        refreshActiveModel()
         refreshHotkeyModel()
         refreshAgentModel()
         refreshUpdateModel()
@@ -155,7 +153,7 @@ extension AppDelegate {
         statusMenu.refresh(
             icon: icon,
             tooltip: String(localized: .menuTooltip(String(localized: status))),
-            dimmed: !lidSleep.isArmed && awake.requested && !awake.isOn
+            dimmed: !lidSleep.isArmed && awake.wants && !awake.isOn
         )
     }
 

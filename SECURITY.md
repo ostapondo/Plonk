@@ -95,7 +95,7 @@ that would let someone else publish under that name does not exist.
 
 **What this does not cover.** Attestations say where a binary came from, not
 that its source is harmless — that part is still reading the code, and there is
-not much of it: ~7,600 lines of Swift and ~530 of TypeScript, with no
+not much of it: ~20,000 lines of Swift and ~1,400 of TypeScript, with no
 third-party Swift dependencies at all
 ([Package.swift](App/Package.swift)) and two on the npm side, the official MCP
 SDK and zod. A Homebrew install checks the cask's sha256 but carries no
