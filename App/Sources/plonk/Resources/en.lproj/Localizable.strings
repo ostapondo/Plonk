@@ -17,6 +17,7 @@
 "common.done" = "Done";
 "common.points" = "pt";
 "common.percent" = "%";
+"common.milliseconds" = "ms";
 "common.separator" = " · ";
 
 /* Pulse: keep the Mac awake, and optionally keep you shown as available. */
@@ -122,12 +123,37 @@
 "ai.example7" = "Screenshot the screen and circle whatever looks broken";
 
 /* Pointer and clicks. */
-"mouse.pointer" = "Pointer";
-"mouse.pointerHelp" = "These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account, and no keystroke is watched at all. They take the zone colour from the Zones page.";
+"mouse.pointerHelp" = "These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account, and no keystroke is watched at all. Anything left without a colour of its own takes the zone colour from the Zones page.";
+"mouse.clicks" = "Click ring";
 "mouse.ringClicks" = "Ring every click";
 "mouse.ringClicksHelp" = "For screen recordings, where a click is otherwise invisible";
+"mouse.colour" = "Colour";
+"mouse.colourFollowsZones" = "Following the zone colour";
+"mouse.colourCustom" = "A colour of its own";
+"mouse.useTheZoneColour" = "Use the zone colour";
+"mouse.rightColour" = "Right clicks";
+"mouse.rightColourFollows" = "Drawn like a left click";
+"mouse.matchLeftClicks" = "Match left clicks";
+"mouse.shape" = "Shape";
+"mouse.shapeRing" = "Ring";
+"mouse.shapeDot" = "Dot";
+"mouse.shapeBoth" = "Both";
+"mouse.size" = "Size";
+"mouse.sizeHelp" = "How wide a click lands, before it grows and fades out";
+"mouse.thickness" = "Thickness";
+"mouse.thicknessHelp" = "How heavy the line is";
+"mouse.fade" = "Fade";
+"mouse.fadeHelp" = "How long a click stays on screen";
+"mouse.crosshairsCard" = "Crosshairs";
 "mouse.crosshairs" = "Crosshairs through the pointer";
 "mouse.crosshairsHelp" = "Full-width and full-height lines, for lining things up";
+"mouse.opacity" = "Opacity";
+"mouse.finding" = "Finding the pointer";
+"mouse.findingHelp" = "The shortcut below dims the desk and leaves a circle round the pointer for about a second. This is that circle.";
+"mouse.circle" = "Circle";
+"mouse.circleHelp" = "How much of the screen stays bright around the pointer";
+"mouse.dimming" = "Dimming";
+"mouse.dimmingHelp" = "How far the rest of the desk goes down while the circle is up";
 "mouse.shortcutsHelp" = "Finding the pointer dims everything but a circle round it, briefly. Jumping warps it to the middle of the next display and flashes it there, which beats pushing a mouse across three monitors.";
 
 /* The points field the settings forms are built from. */

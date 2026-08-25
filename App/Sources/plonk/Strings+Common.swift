@@ -12,6 +12,7 @@ extension LocalizedStringResource {
     static let commonDone = Self.key("common.done")
     static let commonPoints = Self.key("common.points")
     static let commonPercent = Self.key("common.percent")
+    static let commonMilliseconds = Self.key("common.milliseconds")
     static let commonSeparator = Self.key("common.separator")
 
     static func pointsNotWhole(_ field: String) -> LocalizedStringResource {

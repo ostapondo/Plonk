@@ -8,8 +8,10 @@ import AppKit
 //   offers a double-tap of Control as well; that cannot be told apart from a
 //   Control chord without watching every keystroke the user types, which is
 //   not a capability this app is going to take for a convenience.
-// - Highlight clicks: a coloured ring on every press. This is for anyone
-//   recording a demo — a click is invisible in a screen recording otherwise.
+// - Highlight clicks: a coloured ring on every press, or a dot, in whatever
+//   size and colour the page was set to, with right clicks able to carry a
+//   colour of their own. This is for anyone recording a demo — a click is
+//   invisible in a screen recording otherwise.
 // - Crosshairs: full-width and full-height lines through the pointer, for
 //   lining things up and for anyone who needs the cursor to be findable
 //   all the time rather than on demand.
@@ -17,9 +19,6 @@ import AppKit
 //   beats shoving a mouse across three monitors.
 
 final class MouseTools {
-    private static let spotlightRadius: CGFloat = 110
-    private static let clickRadius: CGFloat = 34
-
     private let overlay = MouseOverlay()
     private var tap: EventTap?
     private var spotlightToken = 0
@@ -29,7 +28,8 @@ final class MouseTools {
     var crosshairsEnabled = false {
         didSet { if crosshairsEnabled != oldValue { refreshPersistent() } }
     }
-    var tint: NSColor = .controlAccentColor
+    /// Colours, sizes and how long a ring lasts; see PointerAppearance.
+    var look = PointerAppearance()
 
     /// Take the settings as they now stand. Called after every config change,
     /// so it stops only a tap that is actually running: `stop` also hides the
@@ -37,15 +37,15 @@ final class MouseTools {
     /// behind it. Tearing that down because some other page's setting moved is
     /// a spotlight that blinks out under the user's hand.
     func apply(_ config: Config) {
-        let wasTint = tint
-        tint = ZoneAppearance(config).tint
+        let was = look
+        look = PointerAppearance(config)
         highlightEnabled = config.highlightClicksEnabled && config.isEnabled(.mouse)
         crosshairsEnabled = config.crosshairsEnabled && config.isEnabled(.mouse)
         if highlightEnabled || crosshairsEnabled {
             start()
-            // A crosshair already on screen is repainted in the new colour
-            // now rather than on the next mouse move.
-            if tint != wasTint { refreshPersistent() }
+            // A crosshair already on screen is repainted the way it now looks,
+            // rather than on the next mouse move.
+            if look != was { refreshPersistent() }
         } else if tap != nil {
             stop()
         }
@@ -119,7 +119,7 @@ final class MouseTools {
     func flashSpotlight(duration: TimeInterval = 1.1) {
         spotlightToken += 1
         let generation = spotlightToken
-        overlay.show(.spotlight(radius: Self.spotlightRadius), at: NSEvent.mouseLocation, tint: tint)
+        overlay.show(.spotlight, at: NSEvent.mouseLocation, look: look)
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
             guard let self, spotlightToken == generation else { return }
             refreshPersistent()
@@ -134,16 +134,17 @@ final class MouseTools {
         case .leftMouseDown, .rightMouseDown:
             guard highlightEnabled else { return }
             let point = event.unflippedLocation
+            let right = type == .rightMouseDown
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                overlay.pulse(at: point, radius: Self.clickRadius, tint: tint)
+                overlay.pulse(at: point, right: right, look: look)
             }
         case .mouseMoved, .leftMouseDragged:
             guard crosshairsEnabled, spotlightToken == 0 || !overlay.isSpotlighting else { return }
             let point = event.unflippedLocation
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                overlay.show(.crosshairs, at: point, tint: tint)
+                overlay.show(.crosshairs, at: point, look: look)
             }
         default:
             break
@@ -160,7 +161,7 @@ final class MouseTools {
             return
         }
         if crosshairsEnabled {
-            overlay.show(.crosshairs, at: NSEvent.mouseLocation, tint: tint)
+            overlay.show(.crosshairs, at: NSEvent.mouseLocation, look: look)
         } else {
             overlay.hide()
         }

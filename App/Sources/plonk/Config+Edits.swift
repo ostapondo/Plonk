@@ -13,6 +13,18 @@ extension Config {
     static let edgeSpanLimit = 60.0
     /// Fully transparent zones would be a set the user cannot see to fix.
     static let opacityRange = 0.1...1.0
+    /// What the pointer tools may be tuned to. Bounded rather than free,
+    /// because all of this is drawn over every display at once: a ring the
+    /// width of a desk, or a fade of zero, is a setting that hides the thing
+    /// you would change it back with.
+    static let clickRadiusRange = 8.0...160.0
+    static let clickLineWidthRange = 1.0...12.0
+    static let clickFadeRange = 0.08...0.8
+    static let crosshairLineWidthRange = 1.0...8.0
+    static let spotlightRadiusRange = 40.0...400.0
+    /// Dimming the desk to nothing hides it; dimming it fully hides the rest
+    /// of the screen for as long as the flash lasts.
+    static let dimRange = 0.1...0.95
 
     /// Bind an action, freeing the combination wherever else it was, and
     /// return what lost it. A combination can only drive one action, so this
@@ -37,6 +49,13 @@ extension Config {
         zoneSetGaps = zoneSetGaps.mapValues { $0.clamped(to: 0...Self.gapLimit) }
         zoneOpacity = zoneOpacity.clamped(to: Self.opacityRange)
         zoneEdgeSpanPoints = zoneEdgeSpanPoints.clamped(to: 0...Self.edgeSpanLimit)
+        clickRadius = clickRadius.clamped(to: Self.clickRadiusRange)
+        clickLineWidth = clickLineWidth.clamped(to: Self.clickLineWidthRange)
+        clickFadeSeconds = clickFadeSeconds.clamped(to: Self.clickFadeRange)
+        crosshairLineWidth = crosshairLineWidth.clamped(to: Self.crosshairLineWidthRange)
+        crosshairOpacity = crosshairOpacity.clamped(to: Self.opacityRange)
+        spotlightRadius = spotlightRadius.clamped(to: Self.spotlightRadiusRange)
+        spotlightDim = spotlightDim.clamped(to: Self.dimRange)
         rulerEdgeTolerance = rulerEdgeTolerance.clamped(to: EdgeDetector.toleranceRange)
         awakeTimeoutMinutes = max(0, awakeTimeoutMinutes)
         // A hand-edited file can name a feature twice or one that does not
