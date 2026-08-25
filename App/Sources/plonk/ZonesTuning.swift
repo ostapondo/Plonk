@@ -1,7 +1,7 @@
 import SwiftUI
 
-// The lower half of the Zones page: how the overlay looks, the other way to
-// move a window, and the apps none of it applies to.
+// How the zones behave: the way the overlay is drawn, when Plonk runs it
+// again by itself, and the apps none of it applies to.
 
 struct ZonesTuning: View {
     @ObservedObject var model: AppModel
@@ -9,7 +9,7 @@ struct ZonesTuning: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             appearance
-            grabMove
+            desktopChanges
             exclusions
         }
     }
@@ -51,30 +51,16 @@ struct ZonesTuning: View {
         }
     }
 
-    // MARK: - Grab and move
+    // MARK: - Desktop changes
 
-    private var grabMove: some View {
-        SettingsCard(title: .zonesGrabMove,
-                     note: .zonesGrabMoveHelp) {
-            ToggleRow(title: .zonesGrabAnywhere,
-                      detail: .zonesGrabAnywhereDetail,
-                      isOn: model.binding(\.grabMoveEnabled))
-            // Off means gone rather than greyed. A dimmed row still costs its
-            // full height, so the card scrolled as far switched off as on, and
-            // three settings for something the app is not doing are three
-            // settings in the way of the one that turns it on.
-            if model.config.grabMoveEnabled {
-                SegmentedRow(title: .zonesHold,
-                             selection: model.binding(\.grabMoveModifier),
-                             options: [(.zonesModifierOption, "option"),
-                                       (.zonesModifierCommand, "command"),
-                                       (.zonesModifierControl, "control")])
-                ToggleRow(title: .zonesRightDragResizes,
-                          detail: .zonesRightDragResizesDetail,
-                          isOn: model.binding(\.grabMoveResize))
-                ToggleRow(title: .zonesShowSizeWhileDragging,
-                          isOn: model.binding(\.grabMoveShowGeometry))
-            }
+    private var desktopChanges: some View {
+        SettingsCard(title: .zonesDesktopChanges) {
+            ToggleRow(title: .zonesRestoreOnDisplayChange,
+                      detail: .zonesRestoreOnDisplayChangeDetail,
+                      isOn: model.binding(\.restoreZonesOnScreenChange))
+            ToggleRow(title: .zonesPlaceNewWindows,
+                      detail: .zonesPlaceNewWindowsDetail,
+                      isOn: model.binding(\.placeNewWindows))
         }
     }
 

@@ -60,6 +60,7 @@ extension LocalizedStringResource {
     static let zonesPlaceNewWindows = Self.key("zones.placeNewWindows")
     static let zonesPlaceNewWindowsDetail = Self.key("zones.placeNewWindowsDetail")
     static let zonesPageHelp = Self.key("zones.pageHelp")
+    static let zonesShortcutsHelp = Self.key("zones.shortcutsHelp")
     static let zonesOverlay = Self.key("zones.overlay")
     static let zonesOverlayHelp = Self.key("zones.overlayHelp")
     static let zonesGap = Self.key("zones.gap")

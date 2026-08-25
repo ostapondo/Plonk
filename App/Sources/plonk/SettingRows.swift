@@ -88,6 +88,41 @@ struct SettingsCard<Content: View>: View {
     }
 }
 
+/// A heading inside a card, for a card holding several sections of one
+/// subject: the eyebrow, the rows under it, and the section's explanation
+/// right under its own rows instead of floating beneath the whole card.
+struct CardSection<Content: View>: View {
+    let title: LocalizedStringResource
+    var note: LocalizedStringResource?
+    /// The first section sits straight under the card's edge; a divider there
+    /// would double it.
+    var first = false
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if !first { Divider() }
+            HStack {
+                Eyebrow(title)
+                Spacer()
+            }
+            .padding(.horizontal, 13)
+            .padding(.top, 11)
+            .padding(.bottom, 9)
+        }
+        SettingBlock { content }
+        if let note {
+            Text(note)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 13)
+                .padding(.top, 2)
+                .padding(.bottom, 11)
+        }
+    }
+}
+
 /// One row: a name, an optional second line, and whatever control belongs on
 /// the right. The hairline is drawn above, so a card never ends with one.
 struct SettingRow<Trailing: View>: View {
