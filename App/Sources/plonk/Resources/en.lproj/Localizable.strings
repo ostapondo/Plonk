@@ -16,6 +16,8 @@
 "common.delete" = "Delete";
 "common.done" = "Done";
 "common.points" = "pt";
+"common.percent" = "%";
+"common.milliseconds" = "ms";
 "common.separator" = " · ";
 
 /* Pulse: keep the Mac awake, and optionally keep you shown as available. */
@@ -121,12 +123,37 @@
 "ai.example7" = "Screenshot the screen and circle whatever looks broken";
 
 /* Pointer and clicks. */
-"mouse.pointer" = "Pointer";
-"mouse.pointerHelp" = "These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account, and no keystroke is watched at all. They take the zone colour from the Zones page.";
+"mouse.pointerHelp" = "These only ever read the mouse; nothing is intercepted, so no click or keystroke changes on their account, and no keystroke is watched at all. Anything left without a colour of its own takes the zone colour from the Zones page.";
+"mouse.clicks" = "Click ring";
 "mouse.ringClicks" = "Ring every click";
 "mouse.ringClicksHelp" = "For screen recordings, where a click is otherwise invisible";
+"mouse.colour" = "Colour";
+"mouse.colourFollowsZones" = "Following the zone colour";
+"mouse.colourCustom" = "A colour of its own";
+"mouse.useTheZoneColour" = "Use the zone colour";
+"mouse.rightColour" = "Right clicks";
+"mouse.rightColourFollows" = "Drawn like a left click";
+"mouse.matchLeftClicks" = "Match left clicks";
+"mouse.shape" = "Shape";
+"mouse.shapeRing" = "Ring";
+"mouse.shapeDot" = "Dot";
+"mouse.shapeBoth" = "Both";
+"mouse.size" = "Size";
+"mouse.sizeHelp" = "How wide a click lands, before it grows and fades out";
+"mouse.thickness" = "Thickness";
+"mouse.thicknessHelp" = "How heavy the line is";
+"mouse.fade" = "Fade";
+"mouse.fadeHelp" = "How long a click stays on screen";
+"mouse.crosshairsCard" = "Crosshairs";
 "mouse.crosshairs" = "Crosshairs through the pointer";
 "mouse.crosshairsHelp" = "Full-width and full-height lines, for lining things up";
+"mouse.opacity" = "Opacity";
+"mouse.finding" = "Finding the pointer";
+"mouse.findingHelp" = "The shortcut below dims the desk and leaves a circle round the pointer for about a second. This is that circle.";
+"mouse.circle" = "Circle";
+"mouse.circleHelp" = "How much of the screen stays bright around the pointer";
+"mouse.dimming" = "Dimming";
+"mouse.dimmingHelp" = "How far the rest of the desk goes down while the circle is up";
 "mouse.shortcutsHelp" = "Finding the pointer dims everything but a circle round it, briefly. Jumping warps it to the middle of the next display and flashes it there, which beats pushing a mouse across three monitors.";
 
 /* The points field the settings forms are built from. */
@@ -259,6 +286,8 @@
 "zones.restoreOnDisplayChangeDetail" = "Windows Plonk placed return to the same spot on the same monitor when one is plugged in or unplugged";
 "zones.placeNewWindows" = "Send new windows where that app's last one went";
 "zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits";
+"zones.pageHelp" = "Draw the boxes you actually want, then drop windows into them \u2014 with a drag, a key, or by saying so out loud.";
+"zones.shortcutsHelp" = "Click a key to change it; Delete unbinds";
 "zones.overlay" = "Overlay";
 "zones.overlayHelp" = "The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything; zero switches it off.";
 "zones.gap" = "Default gap";
@@ -266,6 +295,7 @@
 "zones.opacity" = "Opacity";
 "zones.colour" = "Colour";
 "zones.colourFollowsAccent" = "Following the app's accent colour";
+"zones.colourCustom" = "A colour of its own";
 "zones.useTheAccent" = "Use the accent";
 "zones.numberTheZones" = "Number the zones";
 "zones.everyMonitor" = "Show every monitor's zones while dragging";
@@ -283,6 +313,7 @@
 "zones.exclusionsHelp" = "Dragging and the shortcuts skip these — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works, because that names the window on purpose.";
 
 /* Appearance. */
+"appearance.pageHelp" = "Both of these reach past this window: the theme decides how every panel is drawn, and the accent is what the zone overlay and the HUD tint themselves with.";
 "appearance.theme" = "Theme";
 "appearance.themeNote" = "Applies to the window, the HUD and the zone overlay";
 "appearance.accent" = "Accent";
@@ -336,7 +367,6 @@
 "workspaces.saveWhatIsOnScreen" = "Save What Is On Screen";
 "workspaces.saveHelp" = "Type a name and press Save. Every open window is captured with the app it belongs to and the monitor it sits on.";
 "workspaces.none" = "No workspaces yet. Open the apps you want, arrange them, and save above. Launching a workspace opens whatever is missing and puts every window back.";
-"workspaces.title" = "Workspaces";
 "workspaces.listHelp" = "Apps cannot be opened straight into position, so windows appear first and are moved a moment later.";
 "workspaces.hideWindows" = "Hide the windows";
 "workspaces.showWindows" = "Show the windows";

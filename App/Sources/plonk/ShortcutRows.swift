@@ -10,56 +10,101 @@ struct ShortcutRows: View {
     @ObservedObject var model: AppModel
     let actions: [HotkeyAction]
     @State private var recording: HotkeyAction?
+    @Environment(\.colorScheme) private var scheme
+
+    /// A shortcut is 300 points of content, so rows flow into as many columns
+    /// as the card is wide: one on a narrow window, two or three on a desk.
+    /// A single column of them in a full-width card was a page of left-hand
+    /// names staring at right-hand keys across a gulf of nothing.
+    /// Shared with the Keyboard page, whose read-only rows are the same shape.
+    static let columns = [GridItem(.adaptive(minimum: 300, maximum: 430),
+                                   spacing: 14, alignment: .leading)]
 
     var body: some View {
-        ForEach(actions) { action in
-            // Deliberately not a LabeledContent, for the reason spelled out on
-            // PointsField: a form row splits itself into a label and a control,
-            // and it put the recorder on a line of its own whatever width the
-            // field was given. That cost every row a second line and stretched
-            // an 84pt field across the width of the window. A plain row with a
-            // Spacer in it is the whole fix.
-            HStack(spacing: 10) {
-                thumbnail(action)
-                Text(action.title).lineLimit(1).truncationMode(.tail)
-                Spacer(minLength: 12)
-                if model.unavailableHotkeys.contains(action.rawValue) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .help(String(localized: .shortcutAlreadyTaken))
-                }
-                ShortcutField(
-                    display: model.hotkeyDisplays[action.rawValue] ?? String(localized: .shortcutUnbound),
-                    isRecording: recording == action,
-                    onStart: { recording = action },
-                    onFinish: { hotkey in
-                        recording = nil
-                        if let hotkey { model.actions?.setHotkey(action, to: hotkey) }
-                    },
-                    onClear: {
-                        recording = nil
-                        model.actions?.clearHotkey(action)
-                    }
-                )
+        LazyVGrid(columns: Self.columns, alignment: .leading, spacing: 7) {
+            ForEach(actions) { action in
+                row(action)
             }
-            .disabled(!model.config.hotkeysEnabled)
         }
     }
 
-    /// A screen with the target area filled in, same language as the drag overlay.
+    private func row(_ action: HotkeyAction) -> some View {
+        // Deliberately not a LabeledContent, for the reason spelled out on
+        // MeasureRow: a form row splits itself into a label and a control,
+        // and it put the recorder on a line of its own whatever width the
+        // field was given. That cost every row a second line and stretched
+        // an 84pt field across the width of the window. A plain row with a
+        // Spacer in it is the whole fix.
+        HStack(spacing: 10) {
+            thumbnail(action)
+            // A zone set shortcut carries the name of the set that is at
+            // that place in the list today, because that is what pressing
+            // it applies. "Zone set 3" is only the fallback for a place the
+            // list does not reach.
+            if let set = zoneSet(action) {
+                Text(set.name).lineLimit(1).truncationMode(.tail)
+            } else {
+                Text(action.title).lineLimit(1).truncationMode(.tail)
+            }
+            Spacer(minLength: 12)
+            if model.unavailableHotkeys.contains(action.rawValue) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .help(String(localized: .shortcutAlreadyTaken))
+            }
+            ShortcutField(
+                display: model.hotkeyDisplays[action.rawValue] ?? String(localized: .shortcutUnbound),
+                isRecording: recording == action,
+                onStart: { recording = action },
+                onFinish: { hotkey in
+                    recording = nil
+                    if let hotkey { model.actions?.setHotkey(action, to: hotkey) }
+                },
+                onClear: {
+                    recording = nil
+                    model.actions?.clearHotkey(action)
+                }
+            )
+        }
+        // On a surface of its own, because the grid's cells have no other
+        // edge: a key right-aligned in an invisible cell sat nearer the next
+        // shortcut's name than its own.
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+            .fill(Ink.raised(scheme)))
+        .disabled(!model.config.hotkeysEnabled)
+    }
+
+    /// A screen with the target area filled in, same language as the drag
+    /// overlay.
+    ///
+    /// A numbered zone draws the set that is actually on the main screen, the
+    /// target filled and the rest outlined round it, because "Zone 5" names
+    /// nothing on its own — the picture is the only thing on the row that says
+    /// where the window lands. A number the set has no zone for draws an empty
+    /// screen, which is exactly what pressing it does.
     private func thumbnail(_ action: HotkeyAction) -> some View {
         let size = CGSize(width: 34, height: 21)
         return ZStack {
             RoundedRectangle(cornerRadius: 3)
                 .strokeBorder(Color.gray.opacity(0.5), lineWidth: 1)
             if let frac = action.preset?.frac {
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.accentColor.opacity(0.75))
-                    .frame(width: max(frac.w * size.width - 3, 3),
-                           height: max(frac.h * size.height - 3, 3))
-                    .position(x: (frac.x + frac.w / 2) * size.width,
-                              y: (frac.y + frac.h / 2) * size.height)
+                area(frac.x, frac.y, frac.w, frac.h, in: size, inset: 3, fill: 0.75)
+            } else if let number = action.zoneNumber {
+                // Tighter inset than a preset gets: a six-zone set drawn with
+                // the three-point one loses its narrow zones altogether.
+                ForEach(Array(model.zones(onScreen: 0).enumerated()), id: \.offset) { index, zone in
+                    area(zone.x, zone.y, zone.w, zone.h, in: size, inset: 1.5,
+                         fill: index + 1 == number ? 0.75 : 0)
+                }
+            } else if let set = zoneSet(action) {
+                // The whole arrangement rather than one zone of it, so it is
+                // filled throughout and more faintly than a target is.
+                ForEach(Array(set.zones.enumerated()), id: \.offset) { _, zone in
+                    area(zone.x, zone.y, zone.w, zone.h, in: size, inset: 1.5, fill: 0.45)
+                }
             } else {
                 Image(systemName: action.symbol)
                     .font(.system(size: 11))
@@ -67,6 +112,33 @@ struct ShortcutRows: View {
             }
         }
         .frame(width: size.width, height: size.height)
+    }
+
+    /// The set a zone-set shortcut applies today, by its place in the list.
+    /// Nil for every other action, and for a place the list does not reach.
+    private func zoneSet(_ action: HotkeyAction) -> (name: String, zones: [ZoneRect])? {
+        guard let number = action.layoutNumber else { return nil }
+        let names = model.zoneSetNames
+        guard names.indices.contains(number - 1) else { return nil }
+        let name = names[number - 1]
+        return (name, model.zoneSets[name] ?? [])
+    }
+
+    /// One rectangle of that picture. Filled where the window lands, outlined
+    /// where it is only one of the zones around it.
+    private func area(_ x: Double, _ y: Double, _ w: Double, _ h: Double,
+                      in size: CGSize, inset: CGFloat, fill: Double) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 1.5)
+        return Group {
+            if fill > 0 {
+                shape.fill(Color.accentColor.opacity(fill))
+            } else {
+                shape.strokeBorder(Color.gray.opacity(0.4), lineWidth: 0.75)
+            }
+        }
+        .frame(width: max(w * size.width - inset, 2),
+               height: max(h * size.height - inset, 2))
+        .position(x: (x + w / 2) * size.width, y: (y + h / 2) * size.height)
     }
 }
 
@@ -147,8 +219,11 @@ final class RecorderView: NSView {
         label.textColor = recording ? .controlAccentColor : .labelColor
         layer?.backgroundColor = (recording ? NSColor.controlAccentColor.withAlphaComponent(0.18)
                                             : NSColor.quaternaryLabelColor).cgColor
-        layer?.borderWidth = recording ? 1 : 0
-        layer?.borderColor = NSColor.controlAccentColor.cgColor
+        // Bordered whether it is recording or not: a flat pill in a column of
+        // eleven reads as a label, and nothing said it could be clicked.
+        layer?.borderWidth = 1
+        layer?.borderColor = (recording ? NSColor.controlAccentColor
+                                        : NSColor.separatorColor).cgColor
     }
 
     override func mouseDown(with event: NSEvent) {

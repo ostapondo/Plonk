@@ -1,94 +1,66 @@
 import SwiftUI
 
-// The lower half of the Zones page: how the overlay looks, the other way to
-// move a window, and the apps none of it applies to.
+// How the zones behave: the way the overlay is drawn, when Plonk runs it
+// again by itself, and the apps none of it applies to.
 
 struct ZonesTuning: View {
     @ObservedObject var model: AppModel
-    @State private var opacityDraft = 1.0
-
-    /// The picker works in colours; config stores a hex string, so a
-    /// hand-edited file stays readable.
-    private var zoneColor: Binding<Color> {
-        Binding(
-            get: { Color(nsColor: ZoneAppearance.color(fromHex: model.config.zoneColorHex)
-                         ?? model.config.appearance.accent) },
-            set: { model.actions?.update(\.zoneColorHex, to: ZoneAppearance.hex(from: NSColor($0))) }
-        )
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             appearance
-            grabMove
+            desktopChanges
             exclusions
         }
-        .onAppear { opacityDraft = model.config.zoneOpacity }
-        .onChange(of: model.config.zoneOpacity) { opacityDraft = $0 }
     }
 
     // MARK: - Appearance
 
+    // The three measurements first and together, then the colour, then the two
+    // switches. A card that alternates between a number and a switch reads as
+    // a list of unrelated things rather than one question about how the overlay
+    // is drawn.
     private var appearance: some View {
         SettingsCard(title: .zonesOverlay,
                      note: .zonesOverlayHelp) {
-            SettingBlock {
-                PointsField(title: .zonesGap, help: .zonesGapHelp,
-                            placeholder: "0", range: 0...Int(Config.gapLimit), value: model.config.zoneGap) {
-                    model.actions?.update(\.zoneGap, to: $0)
-                }
+            MeasureRow(title: .zonesGap, help: .zonesGapHelp,
+                       range: 0...Config.gapLimit, value: model.config.zoneGap) {
+                model.actions?.update(\.zoneGap, to: $0)
             }
-            SettingRow(title: .zonesOpacity, stacked: true) {
-                Slider(value: $opacityDraft, in: Config.opacityRange) { editing in
-                    if !editing { model.actions?.update(\.zoneOpacity, to: opacityDraft) }
-                }
+            MeasureRow(title: .zonesEdgeSpanning, help: .zonesEdgeSpanningHelp,
+                       range: 0...Config.edgeSpanLimit,
+                       value: model.config.zoneEdgeSpanPoints) {
+                model.actions?.update(\.zoneEdgeSpanPoints, to: $0)
             }
-            SettingRow(title: .zonesColour,
-                       detail: model.config.zoneColorHex == nil
-                           ? LocalizedStringResource.zonesColourFollowsAccent : nil) {
-                HStack(spacing: 10) {
-                    ColorPicker("", selection: zoneColor, supportsOpacity: false).labelsHidden()
-                    Button(String(localized: .zonesUseTheAccent)) { model.actions?.update(\.zoneColorHex, to: nil) }
-                        .controlSize(.small)
-                        .disabled(model.config.zoneColorHex == nil)
-                }
+            MeasureRow(title: .zonesOpacity, range: Config.opacityRange, unit: .percent,
+                       value: model.config.zoneOpacity) {
+                model.actions?.update(\.zoneOpacity, to: $0)
+            }
+            ColorRow(title: .zonesColour,
+                     fallback: model.config.appearance.accent,
+                     following: .zonesColourFollowsAccent,
+                     custom: .zonesColourCustom,
+                     clearTitle: .zonesUseTheAccent,
+                     hex: model.config.zoneColorHex) {
+                model.actions?.update(\.zoneColorHex, to: $0)
             }
             ToggleRow(title: .zonesNumberTheZones,
                       isOn: model.binding(\.zoneNumbersVisible))
             ToggleRow(title: .zonesEveryMonitor,
                       isOn: model.binding(\.zonesOnAllMonitors))
-            SettingBlock {
-                PointsField(title: .zonesEdgeSpanning,
-                            help: .zonesEdgeSpanningHelp,
-                            placeholder: "16", range: 0...Int(Config.edgeSpanLimit), value: model.config.zoneEdgeSpanPoints) {
-                    model.actions?.update(\.zoneEdgeSpanPoints, to: $0)
-                }
-            }
         }
     }
 
-    // MARK: - Grab and move
+    // MARK: - Desktop changes
 
-    private var grabMove: some View {
-        SettingsCard(title: .zonesGrabMove,
-                     note: .zonesGrabMoveHelp) {
-            ToggleRow(title: .zonesGrabAnywhere,
-                      detail: .zonesGrabAnywhereDetail,
-                      isOn: model.binding(\.grabMoveEnabled))
-            Group {
-                SegmentedRow(title: .zonesHold,
-                             selection: model.binding(\.grabMoveModifier),
-                             options: [(.zonesModifierOption, "option"),
-                                       (.zonesModifierCommand, "command"),
-                                       (.zonesModifierControl, "control")])
-                ToggleRow(title: .zonesRightDragResizes,
-                          detail: .zonesRightDragResizesDetail,
-                          isOn: model.binding(\.grabMoveResize))
-                ToggleRow(title: .zonesShowSizeWhileDragging,
-                          isOn: model.binding(\.grabMoveShowGeometry))
-            }
-            .disabled(!model.config.grabMoveEnabled)
-            .opacity(model.config.grabMoveEnabled ? 1 : 0.5)
+    private var desktopChanges: some View {
+        SettingsCard(title: .zonesDesktopChanges) {
+            ToggleRow(title: .zonesRestoreOnDisplayChange,
+                      detail: .zonesRestoreOnDisplayChangeDetail,
+                      isOn: model.binding(\.restoreZonesOnScreenChange))
+            ToggleRow(title: .zonesPlaceNewWindows,
+                      detail: .zonesPlaceNewWindowsDetail,
+                      isOn: model.binding(\.placeNewWindows))
         }
     }
 

@@ -9,18 +9,15 @@ struct AppearancePage: View {
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
-                SectionHead(title: .appearanceTheme, note: .appearanceThemeNote)
-                themes
-                SectionHead(title: .appearanceAccent)
-                accents
-                Text(.appearanceAccentNote)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(20)
+        PageShell(title: .pageAppearance, subtitle: .appearancePageHelp) {
+            SectionHead(title: .appearanceTheme, note: .appearanceThemeNote)
+            themes
+            SectionHead(title: .appearanceAccent)
+            accents
+            Text(.appearanceAccentNote)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

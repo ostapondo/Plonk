@@ -13,37 +13,36 @@ struct HomePage: View {
 
     private var guide: GettingStarted { model.gettingStarted }
 
+    // The one page with no heading of its own: the hero is the heading, and
+    // "Home" set in display weight above a 26-point headline says nothing twice.
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
-                if let warning = model.configWarning {
-                    Label(warning, systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .textSelection(.enabled)
-                        .padding(11)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.10)))
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.orange.opacity(0.35)))
-                }
-                if model.rectangleFound {
-                    RectangleOffer(model: model)
-                }
-                if GettingStarted.isVisible(hidden: model.config.gettingStartedHidden, complete: guide.isComplete) {
-                    GettingStartedCard(model: model)
-                }
-                hero
-                SectionHead(title: .homeQuickActions)
-                quickActions
-                SectionHead(title: .homeWhatIsOn)
-                switches
-                HomeStatus(model: model)
-                Text(.homePrivacy)
+        PageScroll {
+            if let warning = model.configWarning {
+                Label(warning, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .muted()
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .foregroundStyle(.orange)
+                    .textSelection(.enabled)
+                    .padding(11)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.10)))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.orange.opacity(0.35)))
             }
-            .padding(20)
+            if model.rectangleFound {
+                RectangleOffer(model: model)
+            }
+            if GettingStarted.isVisible(hidden: model.config.gettingStartedHidden, complete: guide.isComplete) {
+                GettingStartedCard(model: model)
+            }
+            hero
+            SectionHead(title: .homeQuickActions)
+            quickActions
+            SectionHead(title: .homeWhatIsOn)
+            switches
+            HomeStatus(model: model)
+            Text(.homePrivacy)
+                .font(.caption)
+                .muted()
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 

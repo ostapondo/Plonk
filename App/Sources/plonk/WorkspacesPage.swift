@@ -23,63 +23,49 @@ struct WorkspacesPage: View {
     private let columns = [GridItem(.adaptive(minimum: 330), spacing: 11, alignment: .top)]
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 14) {
-                header
-                if !model.accessibilityGranted {
-                    Label(String(localized: .workspacesGrantAccessibility),
-                          systemImage: "exclamationmark.triangle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                if model.workspaceNames.isEmpty {
-                    Text(.workspacesNone)
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    LazyVGrid(columns: columns, alignment: .leading, spacing: 11) {
-                        ForEach(model.workspaceNames, id: \.self) { desk($0) }
-                    }
-                }
-                Text(.workspacesListHelp)
-                    .font(.caption)
-                    .muted()
+        PageShell(title: .pageWorkspaces, subtitle: .workspacesSaveHelp) {
+            saveForm
+            if !model.accessibilityGranted {
+                Label(String(localized: .workspacesGrantAccessibility),
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(20)
-        }
-    }
-
-    // MARK: - Header
-
-    // The title says what the page is; saving a desk is the one thing it does,
-    // so that sits under it on a line of its own rather than being squeezed in
-    // beside a sentence that wraps.
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(.workspacesTitle)
-                    .font(.system(size: 26, weight: .heavy))
-                    .kerning(-0.7)
-                Text(.workspacesSaveHelp)
+            if model.workspaceNames.isEmpty {
+                Text(.workspacesNone)
                     .font(.system(size: 12.5))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            } else {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 11) {
+                    ForEach(model.workspaceNames, id: \.self) { desk($0) }
+                }
             }
-            HStack(spacing: 7) {
-                TextField(text: $newName, prompt: Text(.workspacesName)) { Text(.workspacesName) }
-                    .textFieldStyle(.roundedBorder)
-                    .labelsHidden()
-                    .frame(width: 190)
-                    .onSubmit(save)
-                Button(String(localized: .commonSave), action: save)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            .controlSize(.small)
+            Text(.workspacesListHelp)
+                .font(.caption)
+                .muted()
+                .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    // MARK: - Saving
+
+    // Saving a desk is the one thing this page does, so it sits straight under
+    // the heading on a line of its own rather than being squeezed in beside a
+    // sentence that wraps.
+    private var saveForm: some View {
+        HStack(spacing: 7) {
+            TextField(text: $newName, prompt: Text(.workspacesName)) { Text(.workspacesName) }
+                .textFieldStyle(.roundedBorder)
+                .labelsHidden()
+                .frame(width: 190)
+                .onSubmit(save)
+            Button(String(localized: .commonSave), action: save)
+                .buttonStyle(.borderedProminent)
+                .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
+        .controlSize(.small)
     }
 
     // MARK: - One desk
