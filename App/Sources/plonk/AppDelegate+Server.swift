@@ -14,9 +14,10 @@ extension AppDelegate {
         // Every source of change funnels into the bus at its own choke point,
         // so no caller has to remember to announce itself. Config, the widest
         // of them, is wired in AppDelegate.watchConfig.
-        windows.onDidPlace = { [weak self] in
+        windows.onDidPlace = { [weak self] window, frame in
             self?.router.changes.bump("windows")
             self?.markGettingStarted { $0.sawFirstSnap = true }
+            self?.desk.placed(window, at: frame)
         }
         agents.onChange = { [weak self] in
             self?.refreshAgentModel()

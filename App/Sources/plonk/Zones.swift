@@ -63,6 +63,18 @@ enum ZoneGeometry {
               by: gap)
     }
 
+    /// The other way: where a frame sits as a share of the visible area. Nil
+    /// when the area has no size to measure against. Not clamped; a window
+    /// hanging over an edge reads as hanging over it, and the caller decides
+    /// whether that is a fraction it will accept.
+    static func fraction(of frame: CGRect, in visible: CGRect) -> FracRect? {
+        guard visible.width > 0, visible.height > 0 else { return nil }
+        return FracRect(Double((frame.minX - visible.minX) / visible.width),
+                        Double((frame.minY - visible.minY) / visible.height),
+                        Double(frame.width / visible.width),
+                        Double(frame.height / visible.height))
+    }
+
     /// Insets a rect by the zone gap without ever turning it inside out: a wide
     /// gap on a narrow zone would otherwise produce a null rect, and the window
     /// would be sent to an infinite origin.

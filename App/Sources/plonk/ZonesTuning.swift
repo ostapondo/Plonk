@@ -58,6 +58,13 @@ struct ZonesTuning: View {
             ToggleRow(title: .zonesRestoreOnDisplayChange,
                       detail: .zonesRestoreOnDisplayChangeDetail,
                       isOn: model.binding(\.restoreZonesOnScreenChange))
+            // Widens the switch above; with that one off there is nothing
+            // to widen, so this one is put away rather than left dead.
+            if model.config.restoreZonesOnScreenChange {
+                ToggleRow(title: .zonesRestoreEveryWindow,
+                          detail: .zonesRestoreEveryWindowDetail,
+                          isOn: model.binding(\.restoreEveryWindowOnScreenChange))
+            }
             ToggleRow(title: .zonesPlaceNewWindows,
                       detail: .zonesPlaceNewWindowsDetail,
                       isOn: model.binding(\.placeNewWindows))

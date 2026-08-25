@@ -12,15 +12,16 @@ extension AppDelegate {
         // This notification also fires for a resolution change, a display
         // waking, and the Dock being resized or auto-hidden. Only a display
         // actually arriving or leaving should move anybody's windows.
-        let displays = Self.attachedDisplays()
+        let displays = ScreenIdentity.attachedDisplays()
         defer { knownDisplays = displays }
-        guard store.config.restoreZonesOnScreenChange, displays != knownDisplays else { return }
+        guard displays != knownDisplays, store.config.restoresPlacementsOnScreenChange else { return }
 
         // macOS sends this before the apps behind those windows have caught up,
         // and several times while a display wakes. Settling first, then placing
         // once, is the difference between windows landing and windows fighting.
+        desk.displaysChanged()
         screenSettleWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.commands.restorePlacements() }
+        let work = DispatchWorkItem { [weak self] in self?.restoreAfterScreenChange(to: displays) }
         screenSettleWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
@@ -52,12 +53,9 @@ extension AppDelegate {
             // manager is added.
             applyConfig()
             newWindows.start()
+            desk.scheduleSnapshot()
             refreshPermissions()
         }
         RunLoop.main.add(timer, forMode: .common)
-    }
-
-    static func attachedDisplays() -> Set<String> {
-        Set(NSScreen.screens.indices.compactMap { ScreenIdentity.uuid(forIndex: $0) })
     }
 }

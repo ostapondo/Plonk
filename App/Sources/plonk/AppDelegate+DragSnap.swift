@@ -42,6 +42,7 @@ extension AppDelegate {
             snapMemory.record(window, wasAt: startFrame, placedAt: placed.frac,
                               screenUUID: ScreenIdentity.uuid(forIndex: placed.screenIndex),
                               appKey: windows.app(ofWindow: window)?.bundleIdentifier)
+            noteForDesk(window)
             router?.changes.bump("windows")
         }
         grabMove.onGrabEnded = { [weak self] window, startFrame in
@@ -53,10 +54,17 @@ extension AppDelegate {
             if !dragSnap.endExternalDrag(), let placed = windows.fraction(ofWindow: window) {
                 snapMemory.record(window, wasAt: startFrame, placedAt: placed.frac,
                                   screenUUID: ScreenIdentity.uuid(forIndex: placed.screenIndex))
+                noteForDesk(window)
             }
             router?.changes.bump("windows")
         }
         grabMove.apply(store.config)
+    }
+
+    /// A grab moves the window itself rather than through a placement, so
+    /// the desk is told here what a placement would have told it.
+    private func noteForDesk(_ window: AXUIElement) {
+        if let frame = windows.frame(ofWindow: window) { desk.placed(window, at: frame) }
     }
 
     /// Which numbered zone a dropped fraction corresponds to, so editing the

@@ -57,6 +57,8 @@ extension LocalizedStringResource {
     static let zonesDesktopChanges = Self.key("zones.desktopChanges")
     static let zonesRestoreOnDisplayChange = Self.key("zones.restoreOnDisplayChange")
     static let zonesRestoreOnDisplayChangeDetail = Self.key("zones.restoreOnDisplayChangeDetail")
+    static let zonesRestoreEveryWindow = Self.key("zones.restoreEveryWindow")
+    static let zonesRestoreEveryWindowDetail = Self.key("zones.restoreEveryWindowDetail")
     static let zonesPlaceNewWindows = Self.key("zones.placeNewWindows")
     static let zonesPlaceNewWindowsDetail = Self.key("zones.placeNewWindowsDetail")
     static let zonesPageHelp = Self.key("zones.pageHelp")

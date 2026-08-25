@@ -116,10 +116,13 @@ final class WindowCommands {
     /// After a display is plugged in or unplugged, put every window Plonk
     /// placed back at the fraction it was placed at, on the display it was
     /// placed on. Windows whose display is gone are left alone: guessing a new
-    /// screen for them would scatter a layout rather than preserve it.
-    func restorePlacements() {
+    /// screen for them would scatter a layout rather than preserve it. Nor are
+    /// the ones in `except`, which the desk has already seen to; where it saw
+    /// them last is a fresher answer than where Plonk once placed them.
+    func restorePlacements(except handled: Set<WindowKey> = []) {
         for placement in memory.placements {
-            guard let uuid = placement.screenUUID, let index = ScreenIdentity.index(forUUID: uuid),
+            guard !handled.contains(WindowKey(element: placement.window)),
+                  let uuid = placement.screenUUID, let index = ScreenIdentity.index(forUUID: uuid),
                   mayTouch(placement.window) else { continue }
             windows.apply(frac: placement.frac, toWindow: placement.window, screenIndex: index,
                           gap: zoneGap?(index) ?? 0)
