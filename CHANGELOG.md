@@ -11,6 +11,13 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
+## Unreleased
+
+### Added
+
+- **The MCP server reports its installed version.** Run `plonk-mcp --version`
+  or `plonk-mcp -v` to print the package version without starting the server.
+
 ## 0.3.5 — 2026-08-23
 
 ### Changed

@@ -8,6 +8,7 @@ import { spawn } from "node:child_process";
 import { BASE, call, INTERACTIVE_TIMEOUT_MS, processIdentityHolder, type State } from "./api.js";
 import { options } from "./args.js";
 import { CLI_NAME } from "./messages.js";
+import { PACKAGE_VERSION } from "./version.js";
 
 const USAGE = `plonk — drive the Plonk menu bar app from a shell
 
@@ -122,6 +123,10 @@ async function awakeWhile(argv: string[]): Promise<never> {
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
+  if (argv.length === 1 && (argv[0] === "--version" || argv[0] === "-v")) {
+    console.log(PACKAGE_VERSION);
+    return;
+  }
   // Everything after `awake while` belongs to the command being run, flags
   // included, so it is taken verbatim rather than parsed for plonk's own.
   // Otherwise `plonk awake while cargo build --release` builds in debug.
@@ -236,7 +241,7 @@ async function main(): Promise<void> {
 
 // Named so the app can attribute the calls, and so "only the active agent
 // controls" can be pointed at the shell like anything else.
-processIdentityHolder().identity = { name: CLI_NAME, version: "", pid: process.pid };
+processIdentityHolder().identity = { name: CLI_NAME, version: PACKAGE_VERSION, pid: process.pid };
 try {
   await main();
 } catch (err) {
