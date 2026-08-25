@@ -39,6 +39,26 @@ one of those.
 - **Choosing a zone colour no longer shifts the rows under it.** The line
   under Colour says where the colour comes from in both states instead of
   appearing only while none was set.
+- **A numbered zone's shortcut shows the zone.** Zone 1 to Zone 9 all carried
+  the same grid glyph, which said nothing that "Zone 5" had not already failed
+  to say. Each row now draws the set that is actually on your main screen, with
+  its own zone filled and the rest outlined round it, the same way Left Half
+  draws a left half. A number the set has no zone for draws an empty screen,
+  which is what pressing it does.
+- **A zone set's shortcut carries the set.** Zone set 1 to Zone set 9 shared
+  one glyph and one generic name. Each row now draws the arrangement it
+  applies and calls it by the name you gave it, falling back to "Zone set 7"
+  only for a place the list does not reach.
+- **Shortcut lists flow into columns.** A shortcut is a thumbnail, a name and
+  a key — 300 points of content — and a full-width card gave each one the
+  whole window, names staring at keys across a gulf of nothing. Rows now flow
+  into as many columns as the card is wide: one on a narrow window, two or
+  three on a desk — and each row sits on a surface of its own, so a key reads
+  with its shortcut rather than with the neighbouring column's name. Every
+  page with a shortcut list gets this, the Keyboard page included.
+- **A shortcut recorder looks like something to click.** It has a border now
+  whether or not it is recording; a flat pill in a column of eleven read as a
+  label.
 ## 0.3.5 — 2026-08-23
 
 ### Changed
