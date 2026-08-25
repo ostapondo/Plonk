@@ -42,6 +42,27 @@ struct Config: Codable {
     // Finding the pointer is a shortcut rather than a toggle, so it has none.
     var highlightClicksEnabled = false
     var crosshairsEnabled = false
+    // How each of them is drawn. Every colour is "#RRGGBB" or nil, and nil is
+    // the zone colour, which is what all three were wired to before any of it
+    // was settable: leave these alone and the desk stays one colour. What the
+    // numbers mean is PointerAppearance's to say.
+    var clickColorHex: String?
+    /// Nil draws a right click exactly like a left one.
+    var rightClickColorHex: String?
+    /// The radius the ring lands at, in points, and how heavy its line is.
+    var clickRadius: Double = 34
+    var clickLineWidth: Double = 3
+    /// ring | dot | both
+    var clickStyle = "ring"
+    /// Seconds a ring takes to grow and fade out.
+    var clickFadeSeconds: Double = 0.24
+    var crosshairColorHex: String?
+    var crosshairLineWidth: Double = 2
+    var crosshairOpacity: Double = 0.7
+    /// The circle finding the pointer leaves bright, and how far down the rest
+    /// of the desk goes while it is up, 0 to 1.
+    var spotlightRadius: Double = 110
+    var spotlightDim: Double = 0.55
     // Apps drag snapping and the placement hotkeys leave alone; see
     // AppExclusions. Explicit placement through the API is never filtered.
     var excludedApps: [String] = []

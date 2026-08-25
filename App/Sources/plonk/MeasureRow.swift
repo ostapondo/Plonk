@@ -18,21 +18,29 @@ import SwiftUI
 /// rather than silently rounded into something nobody asked for. An empty
 /// field is the bottom of the range.
 struct MeasureRow: View {
-    /// What the number is counted in. Percent is the only one that is not the
-    /// stored value: config keeps an opacity as a fraction and a person reads
-    /// it as a percentage, so the field scales up and the commit scales back.
+    /// What the number is counted in. Percent and milliseconds are not the
+    /// stored value: config keeps an opacity as a fraction and a duration in
+    /// seconds, and a person reads a percentage and whole milliseconds, so the
+    /// field scales up and the commit scales back.
     enum Unit {
-        case points, percent, plain
+        case points, percent, milliseconds, plain
 
         var suffix: LocalizedStringResource? {
             switch self {
             case .points: return .commonPoints
             case .percent: return .commonPercent
+            case .milliseconds: return .commonMilliseconds
             case .plain: return nil
             }
         }
 
-        var scale: Double { self == .percent ? 100 : 1 }
+        var scale: Double {
+            switch self {
+            case .percent: return 100
+            case .milliseconds: return 1000
+            case .points, .plain: return 1
+            }
+        }
     }
 
     let title: LocalizedStringResource
