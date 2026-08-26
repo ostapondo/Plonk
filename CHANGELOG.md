@@ -127,6 +127,12 @@ one of those.
   right under its rows. They are the longest thing on the page and the least
   often changed.
 
+### Fixed
+
+- **An invalid click-ring style in a hand-edited config repairs itself.** The
+  overlay already drew a ring for an unknown value, but the settings picker
+  showed no selected style and the invalid value was saved again.
+
 ## 0.3.5 — 2026-08-23
 
 ### Changed

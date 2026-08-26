@@ -55,6 +55,9 @@ extension Config {
         clickRadius = clickRadius.clamped(to: Self.clickRadiusRange)
         clickLineWidth = clickLineWidth.clamped(to: Self.clickLineWidthRange)
         clickFadeSeconds = clickFadeSeconds.clamped(to: Self.clickFadeRange)
+        if PointerAppearance.ClickStyle(rawValue: clickStyle) == nil {
+            clickStyle = PointerAppearance.ClickStyle.ring.rawValue
+        }
         crosshairLineWidth = crosshairLineWidth.clamped(to: Self.crosshairLineWidthRange)
         crosshairOpacity = crosshairOpacity.clamped(to: Self.opacityRange)
         spotlightRadius = spotlightRadius.clamped(to: Self.spotlightRadiusRange)

@@ -48,6 +48,16 @@ struct PointerAppearanceTests {
         #expect(PointerAppearance(config).clickStyle == .dot)
     }
 
+    @Test func clampReplacesAnUnknownStyleButKeepsAKnownOne() {
+        var config = Config()
+        config.clickStyle = "sunburst"
+        config.clamp()
+        #expect(config.clickStyle == "ring")
+        config.clickStyle = "both"
+        config.clamp()
+        #expect(config.clickStyle == "both")
+    }
+
     @Test func theNumbersAreHeldInsideTheirBounds() {
         var config = Config()
         config.clickRadius = 4000
