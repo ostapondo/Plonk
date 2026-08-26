@@ -19,7 +19,8 @@ it.
 | **Dividers** | Drag one to resize both sides at once. It is pulled onto halves, thirds, quarters and the edges of neighbouring zones from within twelve points, and left exactly where you drop it otherwise |
 | **Per monitor** | Each screen gets its own set, remembered by display, not by index |
 | **Overlap** | Allowed — the smallest zone under the cursor wins |
-| **Trigger** | On drag, or only with a modifier held. Holding it inverts the mode, so a free move stays one keypress away |
+| **Trigger** | On drag, or only with a modifier held. Holding it inverts the mode, so a free move stays one keypress away. Or shake: wiggle the window sideways while dragging and the zones come up without the modifier, if that switch is on |
+| **By click** | Hold `⌃⌥Z` and the zones stay up on every screen. Click one, or press its digit while holding, and the front window goes there. Let go and they linger a moment, still clickable |
 | **Span** | Hold `⌘` as well: the zone you started over and the one under the cursor become a single drop, so two columns make one wide window without editing the set |
 | **By number** | `⌃⌥1`–`⌃⌥9` drop the front window into the zone the overlay draws that number on. `⌃⌥0` gives it back the frame it had before Plonk first moved it |
 | **Or none** | Edge snapping instead: middles are halves, top is maximize, corners are quarters |

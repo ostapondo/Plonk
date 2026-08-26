@@ -15,6 +15,14 @@ one of those.
 
 ### Added
 
+- **The zones can be clicked.** Hold `⌃⌥Z` and every screen's zones stay up;
+  click one, or press its digit while holding, and the front window goes
+  there. Let go and they linger a moment, still clickable. A tap is the
+  flash it always was. The overlay never takes focus, so the window that
+  was in front stays in front.
+- **Shake a window to see the zones.** With the modifier required, wiggle a
+  window sideways while dragging it and the zones come up anyway, for the
+  rest of that drag. A switch on the Zones page, off by default.
 - **The click ring is yours to set.** Ring every click was one colour, one
   size, one shape: the zone colour, 34 points, an outline. Pointer and clicks
   now says how it is drawn — a colour of its own, a second colour for right

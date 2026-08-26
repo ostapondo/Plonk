@@ -4,10 +4,22 @@ import AppKit
 
 extension AppDelegate {
     func setupHotkeys() {
-        hotkeys.onAction = { [weak self] action in self?.perform(action) }
+        hotkeys.onAction = { [weak self] action in
+            // The key going down puts the zones up; the key coming back up,
+            // below, lets them linger. Everything else is the same from a key
+            // as from a URL or the palette.
+            if action == .showZones {
+                self?.beginZonePick()
+            } else {
+                self?.perform(action)
+            }
+        }
         hotkeys.onActionUp = { [weak self] action in
-            guard action == .voice else { return }
-            self?.voice.finishCapture()
+            switch action {
+            case .voice: self?.voice.finishCapture()
+            case .showZones: self?.dragSnap.endPick()
+            default: break
+            }
         }
         hotkeys.apply(store.config)
         noticeRectangle()
@@ -30,7 +42,10 @@ extension AppDelegate {
     func perform(_ action: HotkeyAction) {
         switch action {
         case .showZones:
-            dragSnap.previewZones()
+            // From a URL or the palette there is no key to hold, so the zones
+            // come up and linger the way they do after a key is let go.
+            beginZonePick()
+            dragSnap.endPick()
         case .captureRegion:
             runCapture(.region, openEditor: true)
         case .captureText:
@@ -62,6 +77,9 @@ extension AppDelegate {
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)
+                // Pressed while the zones were up to be clicked, the digit
+                // was the pick.
+                dragSnap.cancelPick()
             } else if let number = action.layoutNumber {
                 commands.applyZoneSet(number: number, named: model.zoneSetNames) { [weak self] name, screen in
                     self?.assignZoneSet(name, toScreen: screen)
@@ -72,6 +90,15 @@ extension AppDelegate {
                 commands.apply(preset)
             }
         }
+    }
+
+    /// ⌃⌥Z went down: the zones, up to be clicked, for the window that is in
+    /// front now. An excluded app, or nothing in front, gets the plain flash.
+    func beginZonePick() {
+        let target = NSWorkspace.shared.frontmostApplication.flatMap { app in
+            isExcluded(app) ? nil : windows.focusedWindow(of: app)
+        }
+        dragSnap.beginPick(target: target)
     }
 
     /// Reads the front app's menus and floats them. Pressing the key again
