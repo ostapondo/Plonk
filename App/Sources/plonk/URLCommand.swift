@@ -51,10 +51,6 @@ enum URLCommand: Equatable {
     }
 
     /// Rectangle's names for things this app calls something else.
-    ///
-    /// `next-display` and `previous-display` are deliberately absent: they move
-    /// the window to another screen, and the nearest thing here, `jump-cursor`,
-    /// moves the pointer instead.
     static let aliases: [String: HotkeyAction] = [
         "restore": .unsnap,
         // Rectangle answers to a second name for each half, so a script may
@@ -92,6 +88,10 @@ extension HotkeyAction {
         case .bottomRight: return "bottom-right"
         case .maximize: return "maximize"
         case .center: return "center"
+        case .nextDisplay: return "next-display"
+        case .previousDisplay: return "previous-display"
+        case .larger: return "larger"
+        case .smaller: return "smaller"
         case .unsnap: return "unsnap"
         case .showZones: return "show-zones"
         case .captureRegion: return "capture-region"

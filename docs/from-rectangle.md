@@ -16,6 +16,8 @@ alone, and both apps landed on it.
 | Corners | `⌃⌥U` `⌃⌥I` `⌃⌥J` `⌃⌥K` | the same |
 | Maximize | `⌃⌥↩` | the same |
 | Centre | `⌃⌥C` | the same |
+| Next, previous display | `⌃⌥⌘→` `⌃⌥⌘←` | the same |
+| Larger, smaller | `⌃⌥=` `⌃⌥-` | the same |
 | Put it back | `⌃⌥⌫` | `⌃⌥0` |
 | Thirds | `⌃⌥D` `⌃⌥E` `⌃⌥F` `⌃⌥T` `⌃⌥G` | `⌃⌥1`–`⌃⌥9`, over a zone set |
 
@@ -41,7 +43,8 @@ Rectangle, and then `~/Library/Application Support/Rectangle/RectangleConfig.jso
 if you exported your settings from the old machine. Rectangle does not have to
 be running, or still installed, for the second one.
 
-What comes across: the eight halves and corners, maximize, centre, and restore.
+What comes across: the eight halves and corners, maximize, centre, restore,
+next and previous display, and larger and smaller.
 What does not: thirds, fourths, sixths, eighths, ninths, and the rest of the
 fixed grid. Those are not missing features, they are zone sets here, and there
 is no way to tell which numbered zone a "first third" should become without
@@ -72,21 +75,16 @@ sed -i '' 's|rectangle://execute-action|plonk://execute-action|g' your-script.sh
 ```
 
 `left-half`, `right-half`, `top-half`, `bottom-half`, `top-left`, `top-right`,
-`bottom-left`, `bottom-right`, `maximize` and `center` are spelled exactly as
-Rectangle spells them, and `restore` works as well as `unsnap`. Past that the
+`bottom-left`, `bottom-right`, `maximize`, `center`, `next-display`,
+`previous-display`, `larger` and `smaller` are spelled exactly as Rectangle
+spells them, and `restore` works as well as `unsnap`. Past that the
 names are Plonk's own: `zone-1` to `zone-9`, `zone-set-1` to `zone-set-9`,
 `cycle-zone`, `focus-left`, `capture-text`, `ruler`, `crop-live`, and one for
 every other shortcut.
 
-Two answers you can get instead of a window moving, both of which say so on
-screen rather than failing silently:
-
-- **`first-third` and the rest of the fixed grid.** Named, and told to use a
-  zone number instead.
-- **`next-display` and `previous-display`.** Refused rather than approximated.
-  Those move the window to another screen; the nearest thing here moves the
-  pointer, and answering to the name while doing something else is worse than
-  not answering.
+One answer you can get instead of a window moving, and it says so on screen
+rather than failing silently: **`first-third` and the rest of the fixed grid**
+are named, and told to use a zone number instead.
 
 ### Or let Plonk answer `rectangle://` directly
 

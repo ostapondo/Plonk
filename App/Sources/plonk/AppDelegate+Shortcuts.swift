@@ -74,6 +74,14 @@ extension AppDelegate {
             openCommandPalette()
         case .zoneSetPalette:
             openZoneSetPalette()
+        case .nextDisplay:
+            commands.throwToDisplay(next: true)
+        case .previousDisplay:
+            commands.throwToDisplay(next: false)
+        case .larger:
+            commands.resize(larger: true)
+        case .smaller:
+            commands.resize(larger: false)
         default:
             if let number = action.zoneNumber {
                 commands.snap(toZone: number)

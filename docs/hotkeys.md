@@ -10,7 +10,9 @@
 
 | | |
 | --- | --- |
-| `⌃⌥` arrows, `U I J K`, `↩`, `C` | Halves, quarters, maximize, centre |
+| `⌃⌥` arrows, `U I J K`, `↩`, `C` | Halves, quarters, maximize, centre. A half pressed again takes two thirds, then a third |
+| `⌃⌥⌘←` · `⌃⌥⌘→` | Throw the window to the previous · next display |
+| `⌃⌥-` · `⌃⌥=` | Smaller · larger, 30 points about the centre |
 | `⌃⌥1`–`⌃⌥9`, `⌃⌥0` | Into a numbered zone, or back where it was |
 | `⌃⌥⇧1`–`⌃⌥⇧9` | Swap the whole zone set on this screen |
 | `⌃⌥L` | The zone sets as a list on screen — pick one, or press `E` to edit it |
@@ -39,6 +41,7 @@ open -g "plonk://execute-action?name=ruler"
 
 The names are `left-half`, `right-half`, `top-half`, `bottom-half`,
 `top-left`, `top-right`, `bottom-left`, `bottom-right`, `maximize`, `center`,
+`next-display`, `previous-display`, `larger`, `smaller`,
 `unsnap`, `zone-1` to `zone-9`, `zone-set-1` to `zone-set-9`,
 `zone-set-palette`, `cycle-zone`, `cycle-zone-back`, `focus-left`,
 `focus-right`, `focus-up`, `focus-down`, `show-zones`, `capture-region`,
@@ -49,7 +52,7 @@ The names are `left-half`, `right-half`, `top-half`, `bottom-half`,
 has no second half, so one would leave the microphone listening with nothing to
 close it. Asking for it says so rather than starting it.
 
-The first ten are spelled the way Rectangle spells them, and `restore` is
+The first fourteen are spelled the way Rectangle spells them, and `restore` is
 accepted for `unsnap`, so a config written against `rectangle://` works after
 one substitution. [Coming from Rectangle](from-rectangle.md) has that, and the
 switch that skips it.

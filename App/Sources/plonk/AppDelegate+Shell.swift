@@ -35,6 +35,8 @@ extension AppDelegate {
         case .namedZone(let number, _): commands.snap(toZone: number)
         case .putBack: commands.unsnap()
         case .focus(let direction): commands.moveFocus(direction)
+        case .throwToDisplay(let next): commands.throwToDisplay(next: next)
+        case .resize(let larger): commands.resize(larger: larger)
         case .cycleZone: commands.cycleZone(backwards: false)
         case .showZones: dragSnap.previewZones()
         case .awake(let minutes):
