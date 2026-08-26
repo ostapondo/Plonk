@@ -19,6 +19,11 @@ extension ZoneCanvas {
                 VStack(spacing: 2) {
                     Text("\(index + 1)")
                         .font(.system(size: 40, weight: .bold))
+                    if let name = z.name {
+                        Text(name)
+                            .font(.system(size: 17, weight: .semibold))
+                            .lineLimit(1)
+                    }
                     Text("\(Int(z.w * size.width)) × \(Int(z.h * size.height))")
                         .font(.callout.monospacedDigit())
                 }

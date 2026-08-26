@@ -24,6 +24,10 @@ const SCREENS = ["any", "wide", "ultrawide", "portrait", "laptop"];
 // ZoneGeometry.minSide: the editor cannot draw a zone smaller than this, so a
 // set with one could not be adjusted after it was installed.
 const MIN_SIDE = 0.1;
+// ZoneRect.nameLimit, read from the schema beside the sets so the two cannot
+// drift from each other.
+const NAME_LIMIT = JSON.parse(readFileSync(join(DIR, "schema.json"), "utf8"))
+  .properties.zones.items.properties.name.maxLength;
 
 const errors = [];
 const warnings = [];
@@ -81,14 +85,34 @@ for (const file of files) {
     continue;
   }
 
+  const names = new Set();
   set.zones.forEach((zone, i) => {
     const n = i + 1;
-    const keys = Object.keys(zone ?? {}).sort().join(",");
+    const { name, ...rect } = zone ?? {};
+    const keys = Object.keys(rect).sort().join(",");
     if (keys !== "h,w,x,y") {
-      fail(`zone ${n} must have exactly x, y, w and h`);
+      fail(`zone ${n} must have exactly x, y, w and h, plus an optional name`);
       return;
     }
-    for (const [key, value] of Object.entries(zone)) {
+    // A name is what voice and an agent call the zone by: ZoneRect.cleanName
+    // trims it, cuts it at the limit and refuses a number, and the routes
+    // refuse two zones with one name, so a set that passes here installs
+    // with the names it shows. A number is what Swift's Int reads, sign
+    // included, and padding is any space Swift would trim, zero-width ones
+    // included.
+    if (name !== undefined) {
+      const padded = /^[\s\u200B\uFEFF]|[\s\u200B\uFEFF]$/.test(name);
+      if (typeof name !== "string" || padded || name.length === 0 || name.length > NAME_LIMIT) {
+        fail(`zone ${n}: name must be 1 to ${NAME_LIMIT} characters with no padding`);
+      } else if (/^[+-]?\d+$/.test(name)) {
+        fail(`zone ${n}: "${name}" is a number, and numbers already mean the zone in that place`);
+      } else if (names.has(name.toLowerCase())) {
+        fail(`zone ${n}: the name "${name}" is already used in this set`);
+      } else {
+        names.add(name.toLowerCase());
+      }
+    }
+    for (const [key, value] of Object.entries(rect)) {
       if (typeof value !== "number" || !Number.isFinite(value)) {
         fail(`zone ${n}: ${key} is not a number`);
         return;
@@ -133,9 +157,12 @@ function draw(set, cols = 48, rows = 14) {
       }
     }
     for (const [y, x] of [[y0, x0], [y0, x1], [y1, x0], [y1, x1]]) grid[y][x] = "+";
-    const label = String(i + 1);
+    // The number, with the name beside it where the cell has room, centred.
+    const full = z.name ? `${i + 1} ${z.name}` : String(i + 1);
     const cy = Math.floor((y0 + y1) / 2), cx = Math.floor((x0 + x1) / 2);
-    for (let k = 0; k < label.length; k++) grid[cy][cx + k] = label[k];
+    const label = full.length + 2 <= x1 - x0 ? full : String(i + 1);
+    const start = Math.max(x0 + 1, cx - Math.floor(label.length / 2));
+    for (let k = 0; k < label.length; k++) grid[cy][start + k] = label[k];
   });
   return grid.map((row) => row.join("").replace(/\s+$/, "")).join("\n");
 }

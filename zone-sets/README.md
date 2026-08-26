@@ -88,14 +88,16 @@ A centred column at a readable line length, with margins for notes and sources.
 
 ### Call and Work · [`call-and-work.json`](call-and-work.json)
 
-The work fills zone 1, the call sits top right, notes take the rest.
+The work fills zone 1, the call sits top right, notes take the rest. The
+zones are named, so "put this in notes" works out loud and an agent can say
+`snap_window` with `zone: "call"`.
 
 ```
 +----------------------------------++----------+
-|                                  ||    2     |
+|                                  || 2 call   |
 |                                  |+----------+
-|                1                 |+----------+
-|                                  ||    3     |
+|             1 work               |+----------+
+|                                  || 3 notes  |
 +----------------------------------++----------+
 ```
 
@@ -166,10 +168,15 @@ Three stacked rows, the tall middle one for whatever is being read.
   "screen": "wide",
   "author": "@your-handle",
   "zones": [
-    { "x": 0.3, "y": 0, "w": 0.4, "h": 1 }
+    { "x": 0.3, "y": 0, "w": 0.4, "h": 1, "name": "draft" }
   ]
 }
 ```
+
+`name` on a zone is optional. It is drawn under the number, it is what
+"put this in draft" means out loud, and an agent can pass it to `snap_window`
+instead of the number. Names are unique within a set, ignoring case, and a bare
+number is not a name.
 
 ## The rules, and why
 
@@ -183,6 +190,10 @@ Three stacked rows, the tall middle one for whatever is being read.
   `⌃⌥1` fills. Read left to right, top to bottom — unless the set is built
   around one main zone, in which case put that first and say so in the
   description, the way Focus and Stack and Writing do.
+- **A name is 1 to 24 characters, unique in the set, and not a number.**
+  Voice and the routes look names up ignoring case, so "Chat" and "chat" would
+  be one zone said two ways; and a zone called "2" would fight the zone in
+  second place.
 - **Nothing smaller than 0.1 on a side.** That is `ZoneGeometry.minSide`: the
   editor cannot draw a zone below it, so a smaller one could not be adjusted
   after it was installed.

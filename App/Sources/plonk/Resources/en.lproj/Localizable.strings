@@ -172,7 +172,7 @@
 "shortcut.bottomRight" = "Bottom Right";
 "shortcut.maximize" = "Maximize";
 "shortcut.center" = "Center";
-"shortcut.flashZones" = "Flash the zones";
+"shortcut.flashZones" = "Show the zones, and hold to click one";
 "shortcut.captureRegion" = "Capture a region";
 "shortcut.captureText" = "Copy text from a region";
 "shortcut.pushToTalk" = "Push to talk";
@@ -191,13 +191,20 @@
 "shortcut.guide" = "Show this app's shortcuts";
 "shortcut.commandPalette" = "Open the command palette";
 "shortcut.zoneSetPalette" = "Pick a zone set for this screen";
+"shortcut.nextDisplay" = "Throw to the next display";
+"shortcut.previousDisplay" = "Throw to the previous display";
+"shortcut.larger" = "Larger";
+"shortcut.smaller" = "Smaller";
 "shortcut.zone %lld" = "Zone %lld";
+"shortcut.zoneNamed %lld %@" = "Zone %1$lld · %2$@";
 "shortcut.zoneSet %lld" = "Zone set %lld";
 "shortcut.group.halves" = "Halves";
 "shortcut.group.quarters" = "Quarters";
 "shortcut.group.wholeScreen" = "Whole screen";
 "shortcut.group.numberedZones" = "Numbered zones";
 "shortcut.group.zoneSets" = "Zone sets";
+"shortcut.group.displays" = "Displays";
+"shortcut.group.size" = "Size";
 "shortcut.group.focus" = "Focus";
 "shortcut.group.pointer" = "Pointer";
 "shortcut.group.guide" = "Guide";
@@ -211,6 +218,7 @@
 /* What the HUD says after a spoken command runs, so a command handled here can
    be told from a sentence that went to the agent. */
 "voice.announce.zone %lld" = "Zone %lld";
+"voice.announce.zoneNamed %lld %@" = "Zone %1$lld · %2$@";
 "voice.announce.putBack" = "Put back";
 "voice.announce.focus %@" = "Focus %@";
 "voice.announce.nextInZone" = "Next window in zone";
@@ -274,9 +282,16 @@
 "zones.modifierOption" = "⌥ Option";
 "zones.modifierCommand" = "⌘ Command";
 "zones.modifierControl" = "⌃ Control";
+"zones.shakeToSnap" = "Shake to show the zones";
+"zones.shakeToSnapDetail" = "Wiggle a window sideways while dragging it and the zones come up without the modifier";
 "zones.presets" = "Halves, quarters and the rest";
+"zones.displaysAndSize" = "Between displays, and by size";
+"zones.displaysAndSizeHelp" = "Throwing keeps the zone number where the other display's set has that zone, and the window's share of the screen otherwise. Larger and smaller change both sides by 30 points about the centre; a side against the screen edge stays there.";
+"zones.keys" = "Keys";
+"zones.cycleHalves" = "Press a half twice to cycle its width";
+"zones.cycleHalvesDetail" = "⌃⌥← again takes the left two thirds, then the left third, then the half again. The other three halves do the same";
 "zones.numbered" = "Numbered zones";
-"zones.numberedHelp" = "The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it. Click a key field and press the combination; Esc cancels, Delete unbinds.";
+"zones.numberedHelp" = "The numbers the overlay draws, on whichever screen the front window is on. Hold the first key and the zones stay up: click one, or press its digit while holding, and the front window goes there. ⌃⌥0 gives a window back the frame it had before Plonk first moved it. Click a key field and press the combination; Esc cancels, Delete unbinds.";
 "zones.switching" = "Switch zone sets";
 "zones.switchingHelp" = "Applies the set at that place in the list of zone sets, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set. The last shortcut puts the same list on screen to pick from, or to open one in the editor.";
 "zones.focus" = "Move between windows";
@@ -546,7 +561,11 @@
 "zoneEditor.gap" = "Gap";
 "zoneEditor.gapDefault %lld" = "Default (%lld pt)";
 "zoneEditor.gapOwn" = "Own";
+"zoneEditor.names" = "Names";
+"zoneEditor.namesHelp" = "Optional. A named zone can be spoken to and named to an agent: \"put this in chat\". The number still works, so a name cannot be one.";
 "zoneEditor.nameTaken %@" = "A layout named \"%@\" already exists.";
+"zoneEditor.nameUsedTwice %@" = "Two zones are called \"%@\". Give one of them another name.";
+"zoneEditor.nameIsANumber %@" = "\"%@\" cannot be a name: a number already means the zone in that place.";
 
 /* The screenshot editor. */
 "shotEditor.width" = "Width";

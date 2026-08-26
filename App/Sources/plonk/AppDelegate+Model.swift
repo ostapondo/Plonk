@@ -68,6 +68,7 @@ extension AppDelegate {
 
         applyAppearance()
         hotkeys.apply(config)
+        commands.apply(config)
         dragSnap.apply(config)
         grabMove.apply(config)
         mouse.apply(config)

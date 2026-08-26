@@ -26,8 +26,15 @@ extension DragSnapManager {
         let zones = zonesForScreen?(index) ?? []
 
         if !zones.isEmpty {
+            // A shake stands in for the modifier, once, for the rest of the
+            // drag: there is no un-shaking a window.
+            if shakeEnabled, requireModifier, !shaken,
+               shake.feed(x: p.x, at: ProcessInfo.processInfo.systemUptime) {
+                shaken = true
+            }
             // The modifier inverts the activation mode, so the other behavior stays reachable.
-            guard modifierHeld == requireModifier else {
+            let activated = requireModifier ? (modifierHeld || shaken) : !modifierHeld
+            guard activated else {
                 currentZone = nil
                 hideAll()
                 return

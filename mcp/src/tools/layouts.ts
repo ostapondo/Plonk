@@ -34,10 +34,12 @@ export function register(server: McpServer): void {
 
   server.tool(
     "snap_window",
-    "Drop one window into a numbered zone of the snap-zone set assigned to that monitor. The numbers are the ones Plonk draws on the zones while a window is dragged, so 'the middle zone' of a three-zone set is 2. Zone sets and their per-monitor assignment are in get_state; use apply_layout instead when the user describes a size rather than a zone.",
+    "Drop one window into a zone of the snap-zone set assigned to that monitor, by number or by name. The numbers are the ones Plonk draws on the zones while a window is dragged, so 'the middle zone' of a three-zone set is 2; a name is whatever the set calls a zone ('chat'), listed per zone in get_state.zone_sets, matched ignoring case. Fails with the zones that screen does have, names included, when neither matches. Zone sets and their per-monitor assignment are in get_state; use apply_layout instead when the user describes a size rather than a zone.",
     {
       app: z.string().describe("App name to match, e.g. 'Visual Studio Code'"),
-      zone: z.number().int().min(1).describe("1-based zone number, as shown on the drag overlay"),
+      zone: z
+        .union([z.number().int().min(1), z.string().min(1)])
+        .describe("1-based zone number as shown on the drag overlay, or the zone's name from get_state.zone_sets"),
       title: z.string().optional().describe("Only windows whose title contains this substring"),
       screen: z.number().int().optional().describe("Monitor index; defaults to the one the window is on"),
     },

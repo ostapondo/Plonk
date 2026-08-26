@@ -8,6 +8,10 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     case leftHalf, rightHalf, topHalf, bottomHalf
     case topLeft, topRight, bottomLeft, bottomRight
     case maximize, center
+    /// The front window onto the next display along, or the previous one.
+    case nextDisplay, previousDisplay
+    /// The front window grown or shrunk by a step about its centre.
+    case larger, smaller
     case showZones, captureRegion, captureText
     case voice
     /// The numbered zones of the screen the window is on, as the drag overlay
@@ -86,6 +90,10 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .shortcutGuide: return .shortcutGuide
         case .commandPalette: return .shortcutCommandPalette
         case .zoneSetPalette: return .shortcutZoneSetPalette
+        case .nextDisplay: return .shortcutNextDisplay
+        case .previousDisplay: return .shortcutPreviousDisplay
+        case .larger: return .shortcutLarger
+        case .smaller: return .shortcutSmaller
         default:
             if let number = zoneNumber { return .shortcutZone(number) }
             if let number = layoutNumber { return .shortcutZoneSet(number) }
@@ -114,6 +122,10 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .shortcutGuide: return "keyboard"
         case .commandPalette: return "command"
         case .zoneSetPalette: return "rectangle.3.group"
+        case .nextDisplay: return "arrow.right.to.line"
+        case .previousDisplay: return "arrow.left.to.line"
+        case .larger: return "arrow.up.left.and.arrow.down.right"
+        case .smaller: return "arrow.down.right.and.arrow.up.left"
         default:
             if zoneNumber != nil { return "square.grid.2x2" }
             if layoutNumber != nil { return "rectangle.3.group" }
@@ -126,6 +138,7 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
     /// would break the moment the text was translated.
     enum Group: String, CaseIterable {
         case halves, quarters, wholeScreen, numberedZones, zoneSets
+        case displays, size
         case focus, pointer, guide, crop, ruler, other
 
         var title: LocalizedStringResource {
@@ -135,6 +148,8 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
             case .wholeScreen: return .shortcutGroupWholeScreen
             case .numberedZones: return .shortcutGroupNumberedZones
             case .zoneSets: return .shortcutGroupZoneSets
+            case .displays: return .shortcutGroupDisplays
+            case .size: return .shortcutGroupSize
             case .focus: return .shortcutGroupFocus
             case .pointer: return .shortcutGroupPointer
             case .guide: return .shortcutGroupGuide
@@ -150,6 +165,8 @@ enum HotkeyAction: String, CaseIterable, Identifiable {
         case .leftHalf, .rightHalf, .topHalf, .bottomHalf: return .halves
         case .topLeft, .topRight, .bottomLeft, .bottomRight: return .quarters
         case .maximize, .center: return .wholeScreen
+        case .nextDisplay, .previousDisplay: return .displays
+        case .larger, .smaller: return .size
         case .unsnap: return .numberedZones
         case .cycleZone, .cycleZoneBack, .focusLeft, .focusRight, .focusUp, .focusDown: return .focus
         case .findCursor, .jumpCursor: return .pointer

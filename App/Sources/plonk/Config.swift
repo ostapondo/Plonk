@@ -19,6 +19,10 @@ struct Config: Codable {
     // would silently reset the setting for everyone, so it stays.
     var zonesRequireShift = true
     var zonesModifier = "shift"  // shift | option | control
+    // Whether wiggling a window sideways while dragging brings the zones up
+    // without the modifier. Off by default: a gesture nobody asked for is
+    // a surprise the first time it fires.
+    var shakeToSnap = false
     // How the zone overlay looks and how much room it leaves around a snapped
     // window. The gap is in points and applies to the placed window too, not
     // just the drawing, so zones can be given breathing room.
@@ -31,6 +35,9 @@ struct Config: Codable {
     /// How near the shared edge of two zones the cursor has to come, in points,
     /// before a drop covers both. Zero switches it off.
     var zoneEdgeSpanPoints: Double = 16
+    // Whether a half's key, pressed on a window already in that half, steps
+    // its width through two thirds and a third; see Preset.next.
+    var presetsCycleOnRepeat = true
     // Move and resize a window by dragging anywhere inside it with a modifier
     // held. Off by default: option-drag already means something inside a lot
     // of Mac apps, so this is a choice rather than a surprise.

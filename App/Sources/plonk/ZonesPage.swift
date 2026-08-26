@@ -13,7 +13,7 @@ struct ZonesPage: View {
     /// not flashing the overlay, which moves no window and is filed with the
     /// zones it shows instead.
     private var presetActions: [HotkeyAction] {
-        let grouped: Set<HotkeyAction.Group> = [.numberedZones, .zoneSets, .focus, .other]
+        let grouped: Set<HotkeyAction.Group> = [.numberedZones, .zoneSets, .focus, .other, .displays, .size]
         return HotkeyAction.owned(by: "zones").filter { !grouped.contains($0.group) }
     }
 
@@ -59,6 +59,9 @@ struct ZonesPage: View {
                                    (.zonesModifierOption, "option"),
                                    (.zonesModifierControl, "control")],
                          stacked: true)
+            ToggleRow(title: .zonesShakeToSnap,
+                      detail: .zonesShakeToSnapDetail,
+                      isOn: model.binding(\.shakeToSnap))
         }
     }
 
@@ -72,6 +75,10 @@ struct ZonesPage: View {
         SettingsCard {
             CardSection(title: .zonesPresets, first: true) {
                 ShortcutRows(model: model, actions: presetActions)
+            }
+            CardSection(title: .zonesDisplaysAndSize, note: .zonesDisplaysAndSizeHelp) {
+                ShortcutRows(model: model, actions: HotkeyAction.owned(by: "zones", group: .displays)
+                             + HotkeyAction.owned(by: "zones", group: .size))
             }
             CardSection(title: .zonesNumbered, note: .zonesNumberedHelp) {
                 ShortcutRows(model: model, actions: numberedActions)

@@ -33,6 +33,10 @@ extension LocalizedStringResource {
     static let shortcutGuide = Self.key("shortcut.guide")
     static let shortcutCommandPalette = Self.key("shortcut.commandPalette")
     static let shortcutZoneSetPalette = Self.key("shortcut.zoneSetPalette")
+    static let shortcutNextDisplay = Self.key("shortcut.nextDisplay")
+    static let shortcutPreviousDisplay = Self.key("shortcut.previousDisplay")
+    static let shortcutLarger = Self.key("shortcut.larger")
+    static let shortcutSmaller = Self.key("shortcut.smaller")
     static let shortcutUnbound = Self.key("shortcut.unbound")
     static let shortcutPressKeys = Self.key("shortcut.pressKeys")
     static let shortcutAlreadyTaken = Self.key("shortcut.alreadyTaken")
@@ -42,6 +46,8 @@ extension LocalizedStringResource {
     static let shortcutGroupWholeScreen = Self.key("shortcut.group.wholeScreen")
     static let shortcutGroupNumberedZones = Self.key("shortcut.group.numberedZones")
     static let shortcutGroupZoneSets = Self.key("shortcut.group.zoneSets")
+    static let shortcutGroupDisplays = Self.key("shortcut.group.displays")
+    static let shortcutGroupSize = Self.key("shortcut.group.size")
     static let shortcutGroupFocus = Self.key("shortcut.group.focus")
     static let shortcutGroupPointer = Self.key("shortcut.group.pointer")
     static let shortcutGroupGuide = Self.key("shortcut.group.guide")
@@ -51,6 +57,10 @@ extension LocalizedStringResource {
 
     static func shortcutZone(_ number: Int) -> LocalizedStringResource {
         Self.key("shortcut.zone \(number)")
+    }
+
+    static func shortcutZoneNamed(_ number: Int, _ name: String) -> LocalizedStringResource {
+        Self.key("shortcut.zoneNamed \(number) \(name)")
     }
 
     static func shortcutZoneSet(_ number: Int) -> LocalizedStringResource {
