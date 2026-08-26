@@ -299,6 +299,8 @@
 "zones.desktopChanges" = "When the desktop changes";
 "zones.restoreOnDisplayChange" = "Put windows back after a display change";
 "zones.restoreOnDisplayChangeDetail" = "Windows Plonk placed return to the same spot on the same monitor when one is plugged in or unplugged";
+"zones.restoreEveryWindow" = "Put every window back, not only the ones Plonk placed";
+"zones.restoreEveryWindowDetail" = "Where each window on screen sits is noted as it moves, per set of monitors, and put back when that set returns. Apps left alone stay left alone";
 "zones.placeNewWindows" = "Send new windows where that app's last one went";
 "zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits";
 "zones.pageHelp" = "Draw the boxes you actually want, then drop windows into them \u2014 with a drag, a key, or by saying so out loud.";

@@ -75,6 +75,7 @@ extension AppDelegate {
         awake.apply(config)
         lidSleep.apply(config)
         newWindows.apply(config)
+        desk.apply(config)
         updates.apply(config)
         applyLoginItem(config, previous: previous)
         applyRectangleURLs(config, previous: previous)

@@ -1,5 +1,12 @@
+import ApplicationServices
 import Foundation
 @testable import plonk
+
+/// An AXUIElement for a process that is not being driven still has stable
+/// identity, which is all the memory tests need of one.
+func element(_ pid: pid_t) -> AXUIElement {
+    AXUIElementCreateApplication(pid)
+}
 
 /// A scratch directory of its own per test, gone when the test is, so nothing
 /// here can touch the config or the token the developer's own Plonk runs with.

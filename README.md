@@ -188,7 +188,7 @@ sections above left out.
 
 | | |
 | --- | --- |
-| **[Zones](docs/zones.md)** | Overlap them, gap them, hide the numbers, keep a list of apps Plonk never touches. Windows return to their zone after a display is unplugged and plugged back in |
+| **[Zones](docs/zones.md)** | Overlap them, gap them, hide the numbers, keep a list of apps Plonk never touches. Windows go back where they sat after a display is unplugged and plugged back in, the ones Plonk placed and the rest, from a note of the desk kept as windows move |
 | **[Workspaces](docs/workspaces.md)** | Files, folders or URLs each app should open on the way up, so a desk comes back with the right documents and not just the right apps. Monitors are keyed by UUID, so unplugging one does not scramble them |
 | **Focus that follows the layout** | `⌃⌥⇧←` goes to the window actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
 | **Voice** | Hold `⌃⌥V` and say it. Common commands run in the app, offline. Anything bigger goes to your agent. Recognition is on-device |

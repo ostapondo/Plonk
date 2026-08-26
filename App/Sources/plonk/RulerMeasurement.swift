@@ -93,13 +93,8 @@ struct RulerMeasurement {
             "scale": Double(scale),
             "text": summary,
         ]
-        if visible.width > 0, visible.height > 0 {
-            result["fraction"] = [
-                "x": Double((rect.minX - visible.minX) / visible.width),
-                "y": Double((rect.minY - visible.minY) / visible.height),
-                "w": Double(rect.width / visible.width),
-                "h": Double(rect.height / visible.height),
-            ]
+        if let frac = ZoneGeometry.fraction(of: rect, in: visible) {
+            result["fraction"] = ["x": frac.x, "y": frac.y, "w": frac.w, "h": frac.h]
         }
         if let distance {
             result["distance"] = distance
