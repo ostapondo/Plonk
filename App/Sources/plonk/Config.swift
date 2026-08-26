@@ -84,6 +84,12 @@ struct Config: Codable {
     // Whether a newly opened window goes where that app's windows have been
     // going. Off by default: it moves windows nobody asked it to.
     var placeNewWindows = false
+    // Where an app's windows go the moment they open, written down rather
+    // than remembered; see AppRule. A rule wins over the habit above.
+    var appRules: [AppRule] = []
+    // Whether a window that opens on a screen with a free zone goes into the
+    // first one. Off by default, for the same reason as placeNewWindows.
+    var autoFillZones = false
     // BCP-47 tags for text recognition, e.g. ["uk-UA", "en-US"]. Empty lets
     // Vision pick, which follows the system language.
     var textLanguages: [String] = []

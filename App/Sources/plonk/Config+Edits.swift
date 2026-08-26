@@ -61,6 +61,20 @@ extension Config {
         spotlightDim = spotlightDim.clamped(to: Self.dimRange)
         rulerEdgeTolerance = rulerEdgeTolerance.clamped(to: EdgeDetector.toleranceRange)
         awakeTimeoutMinutes = max(0, awakeTimeoutMinutes)
+        // A rule with nothing to match, a zone below one, or the same app
+        // twice is a line a hand-edited file can produce and nothing can act
+        // on: one rule per app, the first one kept, trimmed. There is no
+        // upper bound on the zone, because a set can hold any number and a
+        // rule for one the set lacks is simply not followed.
+        var seen = Set<String>()
+        appRules = appRules.compactMap { rule in
+            var kept = rule
+            kept.app = rule.app.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !kept.app.isEmpty, seen.insert(AppRules.normalized(kept.app)).inserted else { return nil }
+            kept.zone = max(1, kept.zone)
+            if kept.screenUUID?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true { kept.screenUUID = nil }
+            return kept
+        }
         // A hand-edited file can name a feature twice or one that does not
         // exist; the list is kept to known ids, each once, in a fixed order.
         disabledFeatures = Feature.allCases.map(\.rawValue).filter(disabledFeatures.contains)

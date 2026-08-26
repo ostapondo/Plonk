@@ -11,7 +11,9 @@ import Foundation
 //
 // Entries are keyed by the AX element, which stays equal for the life of a
 // window (AXUIElement supports CFEqual), and are capped: a long session opens
-// and closes far more windows than anyone will ever unsnap.
+// and closes far more windows than anyone will ever unsnap. The cap has room
+// for the windows Plonk places by itself, rules and filled zones among them,
+// so those do not push out a snap the user made and mean to undo.
 
 /// AXUIElement is a CFType, so it needs the CF identity functions rather than
 /// the synthesized ones.
@@ -43,7 +45,7 @@ final class SnapMemory {
         var stamp: Int
     }
 
-    private static let capacity = 64
+    private static let capacity = 256
 
     private var entries: [WindowKey: Entry] = [:]
     /// Where an app's windows have been going, by bundle id — the habit rather

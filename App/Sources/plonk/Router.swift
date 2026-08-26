@@ -20,6 +20,8 @@ import Network
 //                        gap in points is the set's own; null or absent keeps the default
 //   POST /zones/assign   { screen, name? }
 //   POST /zones/delete   { name }
+//   POST /zones/rules    { app, zone, screen? }   where that app's new windows open
+//   POST /zones/rules/delete { app }
 //   POST /shot/capture   { mode?, annotate?, path?, clipboard?, preview? }
 //                        mode "app" also takes { app?, title_contains? } and
 //                        photographs that window even when it is buried
@@ -139,6 +141,10 @@ final class Router {
             respond(assignZoneSetRoute(body))
         case ("POST", "/zones/delete"):
             respond(deleteZoneSetRoute(body))
+        case ("POST", "/zones/rules"):
+            respond(setAppRuleRoute(body))
+        case ("POST", "/zones/rules/delete"):
+            respond(deleteAppRuleRoute(body))
 
         case ("POST", "/agents/hello"):
             respond(agentHelloRoute(body))

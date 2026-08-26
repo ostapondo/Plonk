@@ -25,6 +25,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var dragSnap: DragSnapManager!
     var grabMove: GrabMove!
     var newWindows: NewWindowWatcher!
+    /// The window being placed right now, so the empty-zone search can leave
+    /// it out; see AppDelegate+NewWindows.
+    var placing: (pid: pid_t, frame: CGRect)?
     let mouse = MouseTools()
     let crops = CropAndLock()
     let screenTags = ScreenTags()

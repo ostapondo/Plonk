@@ -72,52 +72,25 @@ enum WindowCapture {
         }
     }
 
-    /// Every normal window on the desktop, front to back, across all Spaces.
-    ///
-    /// `optionAll` also returns the menu bar, the Dock, tooltips, the shadow
-    /// behind an open menu and a fair number of one-pixel helpers no user would
-    /// call a window. Layer 0 is the ordinary-window layer and drops nearly all
-    /// of it; the size floor takes the rest.
+    /// Every normal window on the desktop, front to back, across all Spaces;
+    /// WindowServer says what "normal" leaves out.
     static func candidates(excluding ownPID: pid_t = ProcessInfo.processInfo.processIdentifier)
         -> [Candidate]
     {
-        let info = CGWindowListCopyWindowInfo(.optionAll, kCGNullWindowID) as? [[String: Any]] ?? []
         // The window list carries no bundle id, and an app with six windows
         // would otherwise be looked up six times.
         var bundleIDs: [pid_t: String] = [:]
-        var result: [Candidate] = []
-
-        for entry in info {
-            guard let id = entry[kCGWindowNumber as String] as? CGWindowID,
-                  let pid = entry[kCGWindowOwnerPID as String] as? pid_t, pid != ownPID,
-                  (entry[kCGWindowLayer as String] as? Int) == 0,
-                  let boundsDict = entry[kCGWindowBounds as String] as? [String: Any],
-                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
-                  bounds.width >= minimumSide, bounds.height >= minimumSide
-            else { continue }
-
-            if bundleIDs[pid] == nil {
-                bundleIDs[pid] = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? ""
+        return WindowServer.windows(onScreenOnly: false, excluding: ownPID).map { window in
+            if bundleIDs[window.pid] == nil {
+                bundleIDs[window.pid] = NSRunningApplication(processIdentifier: window.pid)?.bundleIdentifier ?? ""
             }
-            result.append(Candidate(
-                id: id,
-                app: entry[kCGWindowOwnerName as String] as? String ?? "?",
-                bundleID: bundleIDs[pid] ?? "",
-                // Titles need Screen Recording; without it every one is empty,
-                // and a title query then finds nothing. capture() preflights
-                // the permission so that never reaches anyone as a bad match.
-                title: entry[kCGWindowName as String] as? String ?? "",
-                bounds: bounds,
-                // The key is only present when it is true.
-                onScreen: entry[kCGWindowIsOnscreen as String] as? Bool ?? false
-            ))
+            // Titles need Screen Recording; without it every one is empty,
+            // and a title query then finds nothing. capture() preflights the
+            // permission so that never reaches anyone as a bad match.
+            return Candidate(id: window.id, app: window.ownerName, bundleID: bundleIDs[window.pid] ?? "",
+                             title: window.title, bounds: window.bounds, onScreen: window.onScreen)
         }
-        return result
     }
-
-    /// Smaller than this and it is a shadow, a drop target or an off-screen
-    /// scratch surface, never something a person would ask for by name.
-    private static let minimumSide: CGFloat = 40
 
     /// Every window the query matches, best first.
     ///

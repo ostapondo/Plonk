@@ -44,6 +44,10 @@ extension AppDelegate {
     func setupLauncher() {
         launcher.onProgress = { [weak self] name, statuses in
             guard let self else { return }
+            // The launcher is placing these windows itself; the new-window
+            // watcher would only fight it, so it stands down until the last
+            // window has settled.
+            newWindows.suspended = true
             model.launchingWorkspace = name
             model.launchStatuses = statuses
             presenter.showWorkspaceLaunch()
@@ -52,6 +56,10 @@ extension AppDelegate {
             guard let self else { return }
             model.launchStatuses = statuses
             model.launchingWorkspace = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                guard let self, model.launchingWorkspace == nil else { return }
+                newWindows.suspended = false
+            }
             // Anything that failed stays up until the user has read it.
             guard statuses.allSatisfy({ $0.state != .pending && !$0.isFailure }) else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in

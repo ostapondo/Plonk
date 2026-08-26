@@ -4,7 +4,7 @@ import Foundation
 // each side in 0...1. The space itself, and how it relates to AX
 // coordinates, is documented at the top of WindowManager.swift.
 
-struct FracRect {
+struct FracRect: Equatable {
     let x, y, w, h: Double
     init(_ x: Double, _ y: Double, _ w: Double, _ h: Double) {
         self.x = x; self.y = y; self.w = w; self.h = h

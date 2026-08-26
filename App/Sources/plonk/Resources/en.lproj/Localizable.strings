@@ -302,7 +302,9 @@
 "zones.restoreEveryWindow" = "Put every window back, not only the ones Plonk placed";
 "zones.restoreEveryWindowDetail" = "Where each window on screen sits is noted as it moves, per set of monitors, and put back when that set returns. Apps left alone stay left alone";
 "zones.placeNewWindows" = "Send new windows where that app's last one went";
-"zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next one lands there too. Forgotten when Plonk quits";
+"zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next ordinary window lands there too; dialogs and panels stay where they open. Forgotten when Plonk quits";
+"zones.autoFill" = "Fill empty zones with new windows";
+"zones.autoFillDetail" = "A window that opens on a screen with a free zone goes into the first one. A rule or a habit for its app comes first; dialogs and panels stay where they open";
 "zones.pageHelp" = "Draw the boxes you actually want, then drop windows into them \u2014 with a drag, a key, or by saying so out loud.";
 "zones.shortcutsHelp" = "Click a key to change it; Delete unbinds";
 "zones.overlay" = "Overlay";
@@ -328,6 +330,8 @@
 "zones.showSizeWhileDragging" = "Show the size while dragging";
 "zones.exclusions" = "Leave these alone";
 "zones.exclusionsHelp" = "Dragging and the shortcuts skip these — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works, because that names the window on purpose.";
+"zones.rules" = "Where apps open";
+"zones.rulesHelp" = "An app on this list opens its windows into that zone from then on, and onto that screen if one is named. Matched anywhere in the app's name or bundle id, the way an exclusion is; a rule that names the app exactly wins over a bare word. A rule beats the habit of where the last window went, and both beat filling an empty zone. An app on the exceptions list is left alone even with a rule, and so are dialogs and panels.";
 
 /* Appearance. */
 "appearance.pageHelp" = "Both of these reach past this window: the theme decides how every panel is drawn, and the accent is what the zone overlay and the HUD tint themselves with.";
@@ -515,6 +519,12 @@
 "excluded.matchedAnywhere" = "matched anywhere in an app's name or bundle id";
 "excluded.stopExcluding" = "Stop excluding this";
 "excluded.prompt" = "Exclude";
+
+/* Where apps open: the rules list on the Zones page. */
+"rules.none" = "No rules yet — no app is pinned to a zone.";
+"rules.thisScreen" = "The screen it opens on";
+"rules.screenAway" = "A screen that is not attached";
+"rules.remove" = "Remove this rule";
 
 /* Zone sets: the picker, the canvas at the top of the Zones page, and the
    palette that drops onto the screen itself. */

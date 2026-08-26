@@ -52,7 +52,7 @@ extension Router {
     }
 
     static func trimmedName(_ value: Any?) -> String? {
-        guard let name = (value as? String)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return nil }
+        guard let name = (value as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return nil }
         return name
     }
 }

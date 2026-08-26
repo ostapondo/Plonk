@@ -31,7 +31,8 @@ it.
 | **Displays** | Unplug a monitor and plug it back in and the windows go back where they sat, not only the ones Plonk placed: the desk on screen is noted as windows move, per set of monitors, and put back when that set returns. A window Plonk placed that the note has no line for returns to its zone |
 | **Names** | A zone can be called something — chat, editor, log — in the editor. The overlay draws it under the number, "put this in chat" works out loud, and an agent can hand `snap_window` the name instead of the number |
 | **Exceptions** | A list of apps Plonk keeps its hands off — games, remote desktops, anything that manages its own geometry. Asking an agent to place one still works; that names the window on purpose |
-| **New windows** | Optionally, a window that opens goes where that app's last one went |
+| **New windows** | Optionally, a window that opens goes where that app's last one went, or into the first zone nobody is in |
+| **Rules** | An app can be told where its windows open: a zone, and if it matters a monitor. Written down, so it outlives a relaunch where the habit does not, and it wins when both apply. `set_app_rule` is the same thing said to an agent |
 
 ---
 

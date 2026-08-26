@@ -5,7 +5,7 @@
 // neither helps a script, a Raycast command or a Makefile. This is that gap:
 // every subcommand is one HTTP call to 127.0.0.1, and nothing here holds state.
 import { spawn } from "node:child_process";
-import { BASE, call, INTERACTIVE_TIMEOUT_MS, processIdentityHolder, type State } from "./api.js";
+import { BASE, call, INTERACTIVE_TIMEOUT_MS, processIdentityHolder, type AppRule, type State } from "./api.js";
 import { options } from "./args.js";
 import { CLI_NAME } from "./messages.js";
 import { PACKAGE_VERSION } from "./version.js";
@@ -82,6 +82,12 @@ async function summarize(): Promise<never> {
   lines.push(`workspaces ${state.saved_layouts.join(", ") || "none"}`);
   lines.push(`zone sets  ${Object.keys(state.zone_sets).sort().join(", ")}`);
   if (state.excluded_apps?.length) lines.push(`excluded   ${state.excluded_apps.join(", ")}`);
+  if (state.app_rules?.length) {
+    const where = (rule: AppRule) =>
+      rule.screen !== undefined ? ` on screen ${rule.screen}` : rule.screen_uuid ? " on a screen that is not attached" : "";
+    const rules = state.app_rules.map((rule) => `${rule.app} -> zone ${rule.zone}${where(rule)}`);
+    lines.push(`rules      ${rules.join(", ")}`);
+  }
   lines.push(`windows   ${state.windows.length}`);
   for (const window of state.windows) {
     lines.push(`  ${window.app}${window.title ? ` — ${window.title}` : ""} [screen ${window.screen}]`);

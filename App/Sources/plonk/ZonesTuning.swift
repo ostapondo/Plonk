@@ -1,7 +1,8 @@
 import SwiftUI
 
 // How the zones behave: the way the overlay is drawn, when Plonk runs it
-// again by itself, and the apps none of it applies to.
+// again by itself, where an app's windows open, and the apps none of it
+// applies to.
 
 struct ZonesTuning: View {
     @ObservedObject var model: AppModel
@@ -11,6 +12,7 @@ struct ZonesTuning: View {
             appearance
             keys
             desktopChanges
+            rules
             exclusions
         }
     }
@@ -79,6 +81,20 @@ struct ZonesTuning: View {
             ToggleRow(title: .zonesPlaceNewWindows,
                       detail: .zonesPlaceNewWindowsDetail,
                       isOn: model.binding(\.placeNewWindows))
+            ToggleRow(title: .zonesAutoFill,
+                      detail: .zonesAutoFillDetail,
+                      isOn: model.binding(\.autoFillZones))
+        }
+    }
+
+    // MARK: - Rules
+
+    private var rules: some View {
+        SettingsCard(title: .zonesRules,
+                     note: .zonesRulesHelp) {
+            SettingBlock {
+                AppRuleList(model: model)
+            }
         }
     }
 

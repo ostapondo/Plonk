@@ -39,6 +39,19 @@ one of those.
   and finding the pointer gets the size of its circle and how far the rest of
   the desk dims behind it. Everything left unset still follows the zone colour,
   so a setup that was never touched looks exactly as it did.
+- **An app can be told where its windows open.** Where apps open, on the
+  Zones page: pick the app, a zone, and if it matters the monitor, and every
+  window it opens from then on lands there. A rule is written down, so it
+  outlives a relaunch where the habit of "where the last one went" does not,
+  and it wins when both apply. Agents get `set_app_rule` and `clear_app_rule`,
+  and `get_state` lists `app_rules`.
+- **Empty zones can fill themselves.** A switch under When the desktop
+  changes: a window that opens on a screen with a free zone goes into the
+  first one. Most of what a tiling manager does, without it taking over the
+  windows you placed yourself. Off by default, like the habit beside it.
+  Both, and the habit, now leave dialogs, sheets and panels where they open:
+  only a window in the ordinary sense is placed, and hidden apps or windows
+  on another Space no longer count as holding a zone.
 - **The MCP server reports its installed version.** Run `plonk-mcp --version`
   or `plonk-mcp -v` to print the package version without starting the server.
 - **Throw a window to the next display, grow it, shrink it, cycle a half.**

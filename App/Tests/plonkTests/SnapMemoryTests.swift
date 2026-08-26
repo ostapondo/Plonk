@@ -50,12 +50,12 @@ struct SnapMemoryTests {
 
     @Test func staysBoundedAsWindowsComeAndGo() {
         let memory = SnapMemory()
-        for pid in 1...200 {
+        for pid in 1...600 {
             memory.record(element(pid_t(pid)), wasAt: before, placedAt: half, screenUUID: "A")
         }
-        #expect(memory.placements.count <= 64)
+        #expect(memory.placements.count <= 256)
         // The most recent survive; the oldest are the ones dropped.
-        #expect(memory.takeOriginal(of: element(200)) == before)
+        #expect(memory.takeOriginal(of: element(600)) == before)
         #expect(memory.takeOriginal(of: element(1)) == nil)
     }
 }
