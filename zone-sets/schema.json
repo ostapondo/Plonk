@@ -41,7 +41,13 @@
           "x": { "type": "number", "minimum": 0, "maximum": 0.9 },
           "y": { "type": "number", "minimum": 0, "maximum": 0.9 },
           "w": { "type": "number", "minimum": 0.1, "maximum": 1 },
-          "h": { "type": "number", "minimum": 0.1, "maximum": 1 }
+          "h": { "type": "number", "minimum": 0.1, "maximum": 1 },
+          "name": {
+            "description": "Optional. What the zone is called: drawn under its number, spoken to (\"put this in chat\"), and what snap_window takes instead of the number. Unique within the set, ignoring case, and not a bare number.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          }
         }
       }
     }

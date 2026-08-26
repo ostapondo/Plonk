@@ -201,9 +201,10 @@ struct ZoneSetCanvas: View {
         return RoundedRectangle(cornerRadius: 9, style: .continuous)
             .fill(Ink.zoneGradient(index))
             .overlay(alignment: .bottomLeading) {
-                Text("\(index + 1)")
+                Text(zone.name.map { "\(index + 1) · \($0)" } ?? "\(index + 1)")
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Ink.zoneInk(index))
+                    .lineLimit(1)
                     .padding(9)
             }
             .overlay(alignment: .topTrailing) {
