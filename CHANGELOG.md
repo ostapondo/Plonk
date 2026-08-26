@@ -34,6 +34,13 @@ one of those.
   so a setup that was never touched looks exactly as it did.
 - **The MCP server reports its installed version.** Run `plonk-mcp --version`
   or `plonk-mcp -v` to print the package version without starting the server.
+- **A zone can have a name.** Give one to any zone in the editor — chat,
+  editor, build log — and it is drawn under the number in the overlay, on the
+  Zones page and beside the zone's shortcut. Then "put this in chat" works
+  out loud, on the screen the front window is on, and an agent can hand
+  `snap_window` the name instead of the number. The number keeps working;
+  a set with no names loses nothing. Zone sets in `zone-sets/` may carry
+  names too, and Call and Work now does.
 
 ### Changed
 

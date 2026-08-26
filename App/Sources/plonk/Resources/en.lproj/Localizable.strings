@@ -192,6 +192,7 @@
 "shortcut.commandPalette" = "Open the command palette";
 "shortcut.zoneSetPalette" = "Pick a zone set for this screen";
 "shortcut.zone %lld" = "Zone %lld";
+"shortcut.zoneNamed %lld %@" = "Zone %1$lld · %2$@";
 "shortcut.zoneSet %lld" = "Zone set %lld";
 "shortcut.group.halves" = "Halves";
 "shortcut.group.quarters" = "Quarters";
@@ -211,6 +212,7 @@
 /* What the HUD says after a spoken command runs, so a command handled here can
    be told from a sentence that went to the agent. */
 "voice.announce.zone %lld" = "Zone %lld";
+"voice.announce.zoneNamed %lld %@" = "Zone %1$lld · %2$@";
 "voice.announce.putBack" = "Put back";
 "voice.announce.focus %@" = "Focus %@";
 "voice.announce.nextInZone" = "Next window in zone";
@@ -546,7 +548,11 @@
 "zoneEditor.gap" = "Gap";
 "zoneEditor.gapDefault %lld" = "Default (%lld pt)";
 "zoneEditor.gapOwn" = "Own";
+"zoneEditor.names" = "Names";
+"zoneEditor.namesHelp" = "Optional. A named zone can be spoken to and named to an agent: \"put this in chat\". The number still works, so a name cannot be one.";
 "zoneEditor.nameTaken %@" = "A layout named \"%@\" already exists.";
+"zoneEditor.nameUsedTwice %@" = "Two zones are called \"%@\". Give one of them another name.";
+"zoneEditor.nameIsANumber %@" = "\"%@\" cannot be a name: a number already means the zone in that place.";
 
 /* The screenshot editor. */
 "shotEditor.width" = "Width";

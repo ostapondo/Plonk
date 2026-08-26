@@ -19,7 +19,7 @@ Frames are fractions of a monitor's visible area, origin top-left — which is w
 | `get_state` | Monitors, every open window and where it sits, zone sets, saved workspaces, awake status |
 | `apply_layout` | Place any set of windows, across any number of monitors, in one call |
 | `save_workspace` · `launch_workspace` · `delete_workspace` | Named desktops, launched from nothing |
-| `snap_window` | Drop a window into a numbered zone |
+| `snap_window` | Drop a window into a zone, by its number or by the name the set gives it |
 | `save_zone_set` · `assign_zone_set` · `delete_zone_set` | Snap zones, per monitor |
 | `set_awake` | Keep the Mac awake — for N minutes, until a time, or until a process exits — and with `available`, reset the idle timer too so chat apps do not show Away |
 | `take_screenshot` · `annotate_screenshot` | Capture, mark up, hand the image back — `mode: "app"` photographs one named window even when it is buried, without raising it |
@@ -71,7 +71,7 @@ agent nor a settings window — a Makefile, a Raycast script, a shell alias.
 ```sh
 plonk ping                       # is the app up
 plonk state [--json]             # screens, windows, zone sets, workspaces
-plonk snap <app> <zone>          # drop a window into a numbered zone
+plonk snap <app> <zone>          # drop a window into a zone, by number or by name
 plonk workspaces                 # list the saved ones
 plonk launch <name> [--screen N] # launch one, optionally onto one monitor
 plonk save <name>                # save the desktop as one

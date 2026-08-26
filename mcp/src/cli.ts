@@ -13,7 +13,7 @@ import { PACKAGE_VERSION } from "./version.js";
 const USAGE = `plonk — drive the Plonk menu bar app from a shell
 
   plonk state [--json]              screens, windows, zone sets, workspaces
-  plonk snap <app> <zone>           drop a window into a numbered zone
+  plonk snap <app> <zone>           drop a window into a zone, by number or name
   plonk workspaces                  list saved workspaces
   plonk launch <name> [--screen N]  launch one
   plonk save <name>                 save the desktop as one
@@ -153,10 +153,13 @@ async function main(): Promise<void> {
 
     case "snap": {
       const [app, zone] = args;
-      if (!app || zone === undefined) fail("snap needs an app and a zone number, e.g. plonk snap Safari 1");
+      if (!app || zone === undefined) fail("snap needs an app and a zone, e.g. plonk snap Safari 1 or plonk snap Slack chat");
+      // A whole number travels as one, which is what every app so far
+      // expects; anything else is a name, and the app says so if the set
+      // has neither.
       report(await call("/layout/zone", {
         method: "POST",
-        body: { app, zone: number(zone, "zone"), screen },
+        body: { app, zone: Number.isInteger(Number(zone)) ? Number(zone) : zone, screen },
       }));
     }
 
