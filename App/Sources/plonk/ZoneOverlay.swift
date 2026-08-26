@@ -2,7 +2,9 @@ import AppKit
 
 // One borderless click-through window per screen that draws a zone set while a
 // window is being dragged. Zones are numbered so a set with more than a couple
-// of them can be told apart at a glance; the hovered one is emphasized.
+// of them can be told apart at a glance; the hovered one is emphasized. While
+// ⌃⌥Z is held the same window takes clicks instead, and the zone clicked is
+// where the front window goes; see DragSnapManager+Pick.
 
 /// How zones are drawn and how much room they leave. Kept together so the
 /// overlay and the placement that follows a drop cannot drift apart.
@@ -61,8 +63,19 @@ struct ZoneAppearance: Equatable {
 }
 
 final class ZoneOverlay {
-    private let window: NSWindow
+    private let window: NSPanel
     private var zoneViews: [NSView] = []
+    /// Set while the zones are there to be clicked. A picture the rest of the
+    /// time, so a drag over it reaches the window underneath.
+    var interactive = false {
+        didSet {
+            window.ignoresMouseEvents = !interactive
+            window.acceptsMouseMovedEvents = interactive
+        }
+    }
+    /// The zone clicked, and the zone under the pointer or nil off all of them.
+    var onPick: ((Int) -> Void)?
+    var onHover: ((Int?) -> Void)?
     private var numbers: [NSTextField] = []
     /// A zone's name under its number, by zone index, for the zones that have one.
     private var names: [Int: NSTextField] = [:]
@@ -71,16 +84,31 @@ final class ZoneOverlay {
     private var appearance = ZoneAppearance()
 
     init() {
-        window = NSWindow(contentRect: .zero, styleMask: .borderless, backing: .buffered, defer: false)
+        // A panel that never activates: a click on a zone must not bring
+        // Plonk forward, or the window it is for would lose focus to it.
+        window = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
+                         backing: .buffered, defer: false)
         window.isOpaque = false
         window.backgroundColor = .clear
         window.level = .screenSaver
         window.ignoresMouseEvents = true
         window.hasShadow = false
         window.collectionBehavior = [.canJoinAllSpaces, .transient]
-        let content = NSView(frame: .zero)
+        let content = ZoneOverlayView(frame: .zero)
         content.wantsLayer = true
+        content.overlay = self
         window.contentView = content
+    }
+
+    /// The smallest zone drawn under a point in the window, so overlapping
+    /// sets are clickable the way they are droppable.
+    func zoneIndex(at point: NSPoint) -> Int? {
+        var hit: (index: Int, area: CGFloat)?
+        for (index, view) in zoneViews.enumerated() where view.frame.contains(point) {
+            let area = view.frame.width * view.frame.height
+            if hit == nil || area < hit!.area { hit = (index, area) }
+        }
+        return hit?.index
     }
 
     /// `highlighted` is a set rather than one index because a span covers
@@ -172,5 +200,26 @@ final class ZoneOverlay {
     /// Scaled to the zone, so a narrow column does not get a number wider than it is.
     private func numberSize(in rect: NSRect) -> CGFloat {
         min(96, max(22, min(rect.width, rect.height) * 0.34))
+    }
+}
+
+/// The overlay's content: nothing to draw of its own, but the one place a
+/// click or a hover on the zones arrives.
+final class ZoneOverlayView: NSView {
+    weak var overlay: ZoneOverlay?
+
+    /// The first click counts: the panel is never key, so without this the
+    /// click that lands on a zone would only be asked to make it so.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        guard let overlay, overlay.interactive,
+              let zone = overlay.zoneIndex(at: convert(event.locationInWindow, from: nil)) else { return }
+        overlay.onPick?(zone)
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        guard let overlay, overlay.interactive else { return }
+        overlay.onHover?(overlay.zoneIndex(at: convert(event.locationInWindow, from: nil)))
     }
 }

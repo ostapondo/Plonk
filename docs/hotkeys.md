@@ -16,7 +16,7 @@
 | `⌃⌥L` | The zone sets as a list on screen — pick one, or press `E` to edit it |
 | `⌃⌥⇧` arrows | Focus the window that is actually in that direction |
 | `` ⌃⌥` `` · `` ⌃⌥⇧` `` | Next window in this zone · the previous one |
-| `⌃⌥Z` | Flash the zones |
+| `⌃⌥Z` | Show the zones. Hold it and click one, or press its digit, and the front window goes there |
 | `⌃⌥S` · `⌃⌥T` | Grab a region · lift the text out of one |
 | `⌃⌥P` · `⌃⌥⇧P` | Pin a live crop on top · pin a still one |
 | `⌃⌥R` | Measure what is under the pointer |

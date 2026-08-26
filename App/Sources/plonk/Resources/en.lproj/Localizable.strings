@@ -172,7 +172,7 @@
 "shortcut.bottomRight" = "Bottom Right";
 "shortcut.maximize" = "Maximize";
 "shortcut.center" = "Center";
-"shortcut.flashZones" = "Flash the zones";
+"shortcut.flashZones" = "Show the zones, and hold to click one";
 "shortcut.captureRegion" = "Capture a region";
 "shortcut.captureText" = "Copy text from a region";
 "shortcut.pushToTalk" = "Push to talk";
@@ -276,9 +276,11 @@
 "zones.modifierOption" = "⌥ Option";
 "zones.modifierCommand" = "⌘ Command";
 "zones.modifierControl" = "⌃ Control";
+"zones.shakeToSnap" = "Shake to show the zones";
+"zones.shakeToSnapDetail" = "Wiggle a window sideways while dragging it and the zones come up without the modifier";
 "zones.presets" = "Halves, quarters and the rest";
 "zones.numbered" = "Numbered zones";
-"zones.numberedHelp" = "The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it. Click a key field and press the combination; Esc cancels, Delete unbinds.";
+"zones.numberedHelp" = "The numbers the overlay draws, on whichever screen the front window is on. Hold the first key and the zones stay up: click one, or press its digit while holding, and the front window goes there. ⌃⌥0 gives a window back the frame it had before Plonk first moved it. Click a key field and press the combination; Esc cancels, Delete unbinds.";
 "zones.switching" = "Switch zone sets";
 "zones.switchingHelp" = "Applies the set at that place in the list of zone sets, to whichever screen the cursor is on. Windows already sitting in a numbered zone move to where that number is in the new set. The last shortcut puts the same list on screen to pick from, or to open one in the editor.";
 "zones.focus" = "Move between windows";
