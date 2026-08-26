@@ -11,7 +11,7 @@ attestation, so `gh attestation verify` fails on them. That is the whole reason
 [the release workflow](.github/workflows/release.yml) exists now. Do not install
 one of those.
 
-## Unreleased
+## 0.4.0 — 2026-08-26
 
 ### Added
 
