@@ -16,6 +16,8 @@ import Foundation
 enum VoiceCommand: Equatable {
     case preset(Preset)
     case zone(Int)
+    /// A zone reached by its name, kept so the HUD can say which name won.
+    case namedZone(Int, String)
     case putBack
     case focus(WindowNavigator.Direction)
     /// The front window onto the next display, or the previous one.
@@ -36,6 +38,7 @@ enum VoiceCommand: Equatable {
         switch self {
         case .preset(let preset): return preset.title
         case .zone(let number): return .voiceAnnounceZone(number)
+        case .namedZone(let number, let name): return .voiceAnnounceZoneNamed(number, name)
         case .putBack: return .voiceAnnouncePutBack
         case .focus(let direction): return .voiceAnnounceFocus(String(localized: direction.title))
         case .throwToDisplay(let next): return next ? .shortcutNextDisplay : .shortcutPreviousDisplay
@@ -59,7 +62,7 @@ extension VoiceCommand {
     /// The words that mean "move the front window somewhere". Without one of
     /// these, a bare direction is far more likely to be part of a sentence
     /// meant for the agent ("what is left on my calendar") than a command.
-    private static let placeVerbs = ["snap", "put", "move", "send", "shove", "throw", "stick",
+    static let placeVerbs = ["snap", "put", "move", "send", "shove", "throw", "stick",
                                      "drop", "push", "pin"]
     private static let launchVerbs = ["launch", "open", "load", "restore", "bring up", "start"]
 
@@ -74,11 +77,16 @@ extension VoiceCommand {
     ///
     /// `workspaces` are the saved names, so "launch review" only wins when
     /// there is a workspace called review; otherwise the agent hears it and can
-    /// ask what was meant.
-    static func parse(_ transcript: String, workspaces: [String] = []) -> VoiceCommand? {
+    /// ask what was meant. `zoneNames` are the names of the zones on the
+    /// screen the front window is on, in zone order and empty where a zone
+    /// has none, so "put this in chat" can land in whichever number chat is.
+    /// Asked for only once the sentence could mean a zone, since finding the
+    /// front window costs a round trip into its app.
+    static func parse(_ transcript: String, workspaces: [String] = [],
+                      zoneNames: @autoclosure () -> [String] = []) -> VoiceCommand? {
         let text = normalise(transcript)
         guard !text.isEmpty else { return nil }
-        let words = text.split(separator: " ").map(String.init)
+        let words = Self.words(of: text)
 
         // A sentence with two halves is a request, not a command: "put this
         // left and open the terminal" has to go somewhere that can do both.
@@ -93,6 +101,10 @@ extension VoiceCommand {
         if text.contains("show") || text.contains("flash") {
             if text.contains("zone") { return .showZones }
         }
+        // A zone named out loud, before the plain-words check: the name is the
+        // one word here that need not be in the vocabulary, and everything
+        // round it still has to be.
+        if let named = namedZone(words, names: zoneNames()) { return .namedZone(named.number, named.name) }
         // Placement acts on whatever is in front, so it may only run on a
         // sentence that does not name anything else. "Move Chrome to the left
         // half" would otherwise move the front window instead of Chrome, which
@@ -110,23 +122,29 @@ extension VoiceCommand {
 
     /// Every word is one this parser knows, so nothing in the sentence can be
     /// the name of an app, a file or a person.
-    private static func isPlain(_ words: [String]) -> Bool {
+    static func isPlain(_ words: [String]) -> Bool {
         words.allSatisfy { word in
             vocabulary.contains(word) || Int(word) != nil || numberWords[word] != nil
         }
     }
 
-    private static let vocabulary: Set<String> = Set(placeVerbs).union([
+    /// The words that say where on the screen, which a zone named out loud
+    /// has to yield to: "the top left" is the corner, whatever a zone is
+    /// called.
+    static let placementWords: Set<String> = [
+        "left", "right", "top", "bottom", "upper", "lower", "up", "down",
+        "centre", "center", "middle", "half", "halves", "quarter", "quarters", "corner",
+    ]
+
+    static let vocabulary: Set<String> = Set(placeVerbs).union(placementWords).union([
         // what to do, beyond the place verbs
         "make", "maximize", "maximise", "fill", "resize", "go",
         "bigger", "larger", "smaller",
         // what it is done to — never a name, always the front window
         "this", "it", "that", "the", "a", "my", "current", "front", "active",
         "window", "windows", "one",
-        // where
-        "left", "right", "top", "bottom", "upper", "lower", "up", "down",
-        "centre", "center", "middle", "half", "halves", "quarter", "quarters",
-        "corner", "side", "screen", "full", "zone", "display", "monitor",
+        // where, beyond the placement words
+        "side", "screen", "full", "zone", "display", "monitor",
         "next", "previous", "other",
         // joins and politeness
         "to", "in", "into", "on", "onto", "over", "at", "of", "hand", "please", "now",
@@ -151,7 +169,7 @@ extension VoiceCommand {
         return number(words[index + 1])
     }
 
-    private static func number(_ word: String) -> Int? {
+    static func number(_ word: String) -> Int? {
         if let value = Int(word) { return value }
         return numberWords[word]
     }
@@ -162,22 +180,10 @@ extension VoiceCommand {
         return .zone(number)
     }
 
-    /// "throw it to the next screen", "put this on the other monitor": a
-    /// place verb, a display by some name, and which one.
-    private static func throwToDisplay(_ words: [String]) -> VoiceCommand? {
-        guard placeVerbs.contains(where: words.contains),
-              words.contains(where: { ["display", "screen", "monitor"].contains($0) }) else { return nil }
-        if words.contains("next") || words.contains("other") { return .throwToDisplay(next: true) }
-        if words.contains("previous") { return .throwToDisplay(next: false) }
-        return nil
-    }
-
-    /// "make it bigger", "smaller". Every word is one the parser knows, so
-    /// "make Chrome bigger" has already gone to the agent.
-    private static func resize(_ words: [String]) -> VoiceCommand? {
-        if words.contains("bigger") || words.contains("larger") { return .resize(larger: true) }
-        if words.contains("smaller") { return .resize(larger: false) }
-        return nil
+    /// The tokens every match here works on. `text` has been through
+    /// `normalise`; a name has not, and goes through `words(of: normalise(name))`.
+    static func words(of text: String) -> [String] {
+        text.split(separator: " ").map(String.init)
     }
 
     private static func isPutBack(_ text: String) -> Bool {
@@ -247,10 +253,10 @@ extension VoiceCommand {
     /// launches it.
     private static func workspace(in text: String, named workspaces: [String]) -> String? {
         guard launchVerbs.contains(where: { text.contains($0) }) else { return nil }
-        let words = text.split(separator: " ").map(String.init)
+        let words = Self.words(of: text)
         return workspaces
             .filter { name in
-                let wanted = normalise(name).split(separator: " ").map(String.init)
+                let wanted = Self.words(of: normalise(name))
                 guard !wanted.isEmpty, wanted.count <= words.count else { return false }
                 return (0...(words.count - wanted.count)).contains {
                     Array(words[$0..<($0 + wanted.count)]) == wanted

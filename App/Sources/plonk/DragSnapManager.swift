@@ -19,13 +19,21 @@ final class DragSnapManager {
     /// with any of its three choices.
     static let spanFlag: NSEvent.ModifierFlags = .command
 
-    private let windows: WindowManager
+    let windows: WindowManager
     private var monitors: [Any] = []
     var overlays: [Int: ZoneOverlay] = [:]
     var currentZone: (screenIndex: Int, frac: FracRect)?
-    private var previewGeneration = 0
+    var previewGeneration = 0
     /// One end of a span: the zone hovered when Command last went down.
     var spanAnchor: (screenIndex: Int, zoneIndex: Int)?
+    /// The window that was in front when the zones were put up to be clicked;
+    /// see DragSnapManager+Pick.
+    var pickTarget: AXUIElement?
+    /// Whether the window being dragged has been shaken, which stands in for
+    /// the modifier until the drag ends.
+    var shaken = false
+    var shake = ShakeDetector()
+    var shakeEnabled = false
 
     private enum State {
         case idle
@@ -73,6 +81,7 @@ final class DragSnapManager {
         modifierFlag = config.zonesModifierFlag
         showOnAllMonitors = config.zonesOnAllMonitors
         edgeSpanPoints = config.zoneEdgeSpanPoints
+        shakeEnabled = config.shakeToSnap
         look = ZoneAppearance(config)
     }
 
@@ -153,6 +162,7 @@ final class DragSnapManager {
             let resized = abs(f.width - startFrame.width) > 2 || abs(f.height - startFrame.height) > 2
             if moved && !resized {
                 state = .active(win: win, startFrame: startFrame)
+                resetShake()
                 updateZone(event.modifierFlags)
             }
         case .active:
@@ -181,6 +191,7 @@ final class DragSnapManager {
         guard enabled else { return }
         state = .active(win: window, startFrame: startFrame)
         spanAnchor = nil
+        resetShake()
     }
 
     func updateExternalDrag() {
@@ -197,6 +208,7 @@ final class DragSnapManager {
             state = .idle
             currentZone = nil
             spanAnchor = nil
+            resetShake()
             hideAll()
         }
         guard case .active(let win, let startFrame) = state, let zone = currentZone else { return false }
@@ -217,5 +229,15 @@ final class DragSnapManager {
         for (index, overlay) in overlays where index != screenIndex {
             overlay.hide()
         }
+    }
+
+    /// Hides the overlays unless a drag is using them.
+    func hideUnlessDragging() {
+        if case .idle = state { hideAll() }
+    }
+
+    func resetShake() {
+        shaken = false
+        shake.reset()
     }
 }

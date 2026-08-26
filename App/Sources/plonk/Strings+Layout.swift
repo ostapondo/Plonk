@@ -47,6 +47,8 @@ extension LocalizedStringResource {
     static let zonesModifierOption = Self.key("zones.modifierOption")
     static let zonesModifierCommand = Self.key("zones.modifierCommand")
     static let zonesModifierControl = Self.key("zones.modifierControl")
+    static let zonesShakeToSnap = Self.key("zones.shakeToSnap")
+    static let zonesShakeToSnapDetail = Self.key("zones.shakeToSnapDetail")
     static let zonesPresets = Self.key("zones.presets")
     static let zonesDisplaysAndSize = Self.key("zones.displaysAndSize")
     static let zonesDisplaysAndSizeHelp = Self.key("zones.displaysAndSizeHelp")

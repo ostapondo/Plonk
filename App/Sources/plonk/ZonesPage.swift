@@ -59,6 +59,9 @@ struct ZonesPage: View {
                                    (.zonesModifierOption, "option"),
                                    (.zonesModifierControl, "control")],
                          stacked: true)
+            ToggleRow(title: .zonesShakeToSnap,
+                      detail: .zonesShakeToSnapDetail,
+                      isOn: model.binding(\.shakeToSnap))
         }
     }
 

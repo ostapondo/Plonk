@@ -24,7 +24,20 @@ export const itemsSchema = z
   )
   .min(1);
 
-export const zonesSchema = z.array(frameSchema).min(1);
+/** A zone is a frame with, optionally, what it is called. The app decides
+ * what a name may be (it cuts one at 24 characters and refuses a bare
+ * number), the way it decides the gap; measuring it here would count code
+ * units and refuse names the app itself keeps. */
+export const zoneSchema = frameSchema.extend({
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe("What the zone is called, e.g. 'chat': drawn under its number, spoken to, and accepted by snap_window instead of the number. Unique within the set"),
+});
+
+export const zonesSchema = z.array(zoneSchema).min(1);
 
 export const workspaceItemsSchema = z
   .array(

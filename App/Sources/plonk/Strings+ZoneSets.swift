@@ -61,8 +61,18 @@ extension LocalizedStringResource {
     static let zoneEditorSaveAndApply = Self.key("zoneEditor.saveAndApply")
     static let zoneEditorGap = Self.key("zoneEditor.gap")
     static let zoneEditorGapOwn = Self.key("zoneEditor.gapOwn")
+    static let zoneEditorNames = Self.key("zoneEditor.names")
+    static let zoneEditorNamesHelp = Self.key("zoneEditor.namesHelp")
     static func zoneEditorGapDefault(_ points: Int) -> LocalizedStringResource {
         Self.key("zoneEditor.gapDefault \(points)")
+    }
+
+    static func zoneEditorNameIsANumber(_ name: String) -> LocalizedStringResource {
+        Self.key("zoneEditor.nameIsANumber \(name)")
+    }
+
+    static func zoneEditorNameUsedTwice(_ name: String) -> LocalizedStringResource {
+        Self.key("zoneEditor.nameUsedTwice \(name)")
     }
 
     static func zoneEditorNameTaken(_ name: String) -> LocalizedStringResource {

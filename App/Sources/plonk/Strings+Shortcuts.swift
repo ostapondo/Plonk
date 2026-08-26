@@ -59,6 +59,10 @@ extension LocalizedStringResource {
         Self.key("shortcut.zone \(number)")
     }
 
+    static func shortcutZoneNamed(_ number: Int, _ name: String) -> LocalizedStringResource {
+        Self.key("shortcut.zoneNamed \(number) \(name)")
+    }
+
     static func shortcutZoneSet(_ number: Int) -> LocalizedStringResource {
         Self.key("shortcut.zoneSet \(number)")
     }

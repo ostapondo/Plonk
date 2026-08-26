@@ -32,6 +32,7 @@ extension AppDelegate {
         switch command {
         case .preset(let preset): commands.apply(preset)
         case .zone(let number): commands.snap(toZone: number)
+        case .namedZone(let number, _): commands.snap(toZone: number)
         case .putBack: commands.unsnap()
         case .focus(let direction): commands.moveFocus(direction)
         case .throwToDisplay(let next): commands.throwToDisplay(next: next)

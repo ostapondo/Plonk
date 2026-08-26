@@ -19,6 +19,10 @@ struct Config: Codable {
     // would silently reset the setting for everyone, so it stays.
     var zonesRequireShift = true
     var zonesModifier = "shift"  // shift | option | control
+    // Whether wiggling a window sideways while dragging brings the zones up
+    // without the modifier. Off by default: a gesture nobody asked for is
+    // a surprise the first time it fires.
+    var shakeToSnap = false
     // How the zone overlay looks and how much room it leaves around a snapped
     // window. The gap is in points and applies to the placed window too, not
     // just the drawing, so zones can be given breathing room.
