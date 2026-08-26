@@ -57,10 +57,13 @@ struct URLCommandTests {
         #expect(parse("plonk://execute-action?name=bottom-side") == .success(.action(.bottomHalf)))
     }
 
-    /// Moving a window to the next display is a different thing from moving the
-    /// pointer there, so this is refused rather than quietly doing the other.
-    @Test func theDisplayActionsAreNotPretendedTo() {
-        #expect(parse("plonk://execute-action?name=next-display") == .failure(.unknownAction("next-display")))
+    /// Rectangle's names for the four moves this app grew later, so a script
+    /// that already drives them needs nothing but the scheme swapped.
+    @Test func theDisplayAndSizeActionsAnswerToRectanglesNames() {
+        #expect(parse("plonk://execute-action?name=next-display") == .success(.action(.nextDisplay)))
+        #expect(parse("plonk://execute-action?name=previous-display") == .success(.action(.previousDisplay)))
+        #expect(parse("plonk://execute-action?name=larger") == .success(.action(.larger)))
+        #expect(parse("plonk://execute-action?name=smaller") == .success(.action(.smaller)))
     }
 
     /// Push-to-talk finishes on the key coming back up. A URL has no second

@@ -18,6 +18,10 @@ enum VoiceCommand: Equatable {
     case zone(Int)
     case putBack
     case focus(WindowNavigator.Direction)
+    /// The front window onto the next display, or the previous one.
+    case throwToDisplay(next: Bool)
+    /// The front window grown or shrunk by a step.
+    case resize(larger: Bool)
     case cycleZone
     case showZones
     /// nil minutes means no limit — awake until it is turned off.
@@ -34,6 +38,8 @@ enum VoiceCommand: Equatable {
         case .zone(let number): return .voiceAnnounceZone(number)
         case .putBack: return .voiceAnnouncePutBack
         case .focus(let direction): return .voiceAnnounceFocus(String(localized: direction.title))
+        case .throwToDisplay(let next): return next ? .shortcutNextDisplay : .shortcutPreviousDisplay
+        case .resize(let larger): return larger ? .shortcutLarger : .shortcutSmaller
         case .cycleZone: return .voiceAnnounceNextInZone
         case .showZones: return .voiceAnnounceZones
         case .awake(let minutes):
@@ -92,6 +98,8 @@ extension VoiceCommand {
         // half" would otherwise move the front window instead of Chrome, which
         // is worse than the round trip to an agent that can find it.
         if isPlain(words) {
+            if let thrown = throwToDisplay(words) { return thrown }
+            if let sized = resize(words) { return sized }
             if let zone = zone(text, words) { return zone }
             if let preset = preset(text, words) { return .preset(preset) }
         }
@@ -111,6 +119,7 @@ extension VoiceCommand {
     private static let vocabulary: Set<String> = Set(placeVerbs).union([
         // what to do, beyond the place verbs
         "make", "maximize", "maximise", "fill", "resize", "go",
+        "bigger", "larger", "smaller",
         // what it is done to — never a name, always the front window
         "this", "it", "that", "the", "a", "my", "current", "front", "active",
         "window", "windows", "one",
@@ -118,6 +127,7 @@ extension VoiceCommand {
         "left", "right", "top", "bottom", "upper", "lower", "up", "down",
         "centre", "center", "middle", "half", "halves", "quarter", "quarters",
         "corner", "side", "screen", "full", "zone", "display", "monitor",
+        "next", "previous", "other",
         // joins and politeness
         "to", "in", "into", "on", "onto", "over", "at", "of", "hand", "please", "now",
     ])
@@ -150,6 +160,24 @@ extension VoiceCommand {
         guard text.contains("zone") else { return nil }
         guard let number = number(in: words, after: "zone"), (1...9).contains(number) else { return nil }
         return .zone(number)
+    }
+
+    /// "throw it to the next screen", "put this on the other monitor": a
+    /// place verb, a display by some name, and which one.
+    private static func throwToDisplay(_ words: [String]) -> VoiceCommand? {
+        guard placeVerbs.contains(where: words.contains),
+              words.contains(where: { ["display", "screen", "monitor"].contains($0) }) else { return nil }
+        if words.contains("next") || words.contains("other") { return .throwToDisplay(next: true) }
+        if words.contains("previous") { return .throwToDisplay(next: false) }
+        return nil
+    }
+
+    /// "make it bigger", "smaller". Every word is one the parser knows, so
+    /// "make Chrome bigger" has already gone to the agent.
+    private static func resize(_ words: [String]) -> VoiceCommand? {
+        if words.contains("bigger") || words.contains("larger") { return .resize(larger: true) }
+        if words.contains("smaller") { return .resize(larger: false) }
+        return nil
     }
 
     private static func isPutBack(_ text: String) -> Bool {

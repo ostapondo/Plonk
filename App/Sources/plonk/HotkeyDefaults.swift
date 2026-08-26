@@ -11,6 +11,7 @@ extension HotkeyAction {
     var defaultHotkey: Hotkey {
         let code: Int
         var shift = false
+        var command = false
         switch self {
         case .leftHalf: code = kVK_LeftArrow
         case .rightHalf: code = kVK_RightArrow
@@ -22,6 +23,11 @@ extension HotkeyAction {
         case .bottomRight: code = kVK_ANSI_K
         case .maximize: code = kVK_Return
         case .center: code = kVK_ANSI_C
+        // Rectangle's keys for the same four moves, so they carry over.
+        case .nextDisplay: code = kVK_RightArrow; command = true
+        case .previousDisplay: code = kVK_LeftArrow; command = true
+        case .larger: code = kVK_ANSI_Equal
+        case .smaller: code = kVK_ANSI_Minus
         case .showZones: code = kVK_ANSI_Z
         case .captureRegion: code = kVK_ANSI_S
         case .captureText: code = kVK_ANSI_T
@@ -64,6 +70,6 @@ extension HotkeyAction {
         // silently and switch the layout instead.
         case .commandPalette: code = kVK_ANSI_A
         }
-        return Hotkey(keyCode: UInt32(code), control: true, option: true, shift: shift)
+        return Hotkey(keyCode: UInt32(code), control: true, option: true, shift: shift, command: command)
     }
 }

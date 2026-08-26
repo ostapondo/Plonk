@@ -18,10 +18,17 @@ final class WindowCommands {
     /// Empty space left around a snapped window, in points.
     /// The gap for a screen: that of the set it wears.
     var zoneGap: ((Int) -> CGFloat)?
+    /// Whether pressing a half's key again steps its width; see Preset.next.
+    var cyclesHalves = true
 
     init(windows: WindowManager, memory: SnapMemory) {
         self.windows = windows
         self.memory = memory
+    }
+
+    /// Take the settings as they now stand.
+    func apply(_ config: Config) {
+        cyclesHalves = config.presetsCycleOnRepeat
     }
 
     /// The frontmost window, unless its app is excluded or there is none.
@@ -37,10 +44,61 @@ final class WindowCommands {
     func apply(_ preset: Preset) {
         guard let target = focused() else { return }
         let screen = windows.screenIndex(ofWindow: target.window)
-        remember(target, frac: preset.frac, screen: screen)
+        // A half pressed on a window already in it steps to the next width.
+        let current = cyclesHalves ? windows.fraction(ofWindow: target.window)?.frac : nil
+        let frac = preset.next(after: current)
+        remember(target, frac: frac, screen: screen)
         // Presets are halves and quarters of the screen, not zones, so the
         // zone gap does not apply to them.
-        windows.apply(frac: preset.frac, toWindow: target.window, screenIndex: screen)
+        windows.apply(frac: frac, toWindow: target.window, screenIndex: screen)
+    }
+
+    /// Throw the front window to the next display along, or the previous one,
+    /// wrapping round. It keeps its zone number where the other display's set
+    /// has that zone, and its share of the screen otherwise, so a window in
+    /// zone 2 of one monitor lands in zone 2 of the next.
+    func throwToDisplay(next: Bool) {
+        guard let target = focused() else { return }
+        let screens = windows.screens()
+        guard screens.count > 1 else {
+            announce?(String(localized: .hudOneScreenOnly))
+            return
+        }
+        let order = WindowNavigator.displayOrder(screens.map(\.frame))
+        let current = windows.screenIndex(ofWindow: target.window)
+        guard let position = order.firstIndex(of: current) else { return }
+        let destination = order[(position + (next ? 1 : order.count - 1)) % order.count]
+        let zones = zonesForScreen?(destination) ?? []
+        if let placed = memory.placement(of: target.window),
+           placed.screenUUID == ScreenIdentity.uuid(forIndex: current),
+           let zone = placed.zoneIndex, zones.indices.contains(zone) {
+            remember(target, frac: zones[zone].frac, screen: destination, zoneIndex: zone)
+            windows.apply(frac: zones[zone].frac, toWindow: target.window, screenIndex: destination,
+                          gap: zoneGap?(destination) ?? 0)
+            return
+        }
+        guard let share = windows.fraction(ofWindow: target.window) else { return }
+        remember(target, frac: share.frac, screen: destination)
+        windows.apply(frac: share.frac, toWindow: target.window, screenIndex: destination)
+    }
+
+    /// Grow or shrink the front window by a step about its centre; the rules
+    /// are WindowSizing's. Remembered like a snap, so ⌃⌥0 undoes it too.
+    func resize(larger: Bool) {
+        guard let target = focused() else { return }
+        let screens = windows.screens()
+        let screen = windows.screenIndex(ofWindow: target.window)
+        guard screens.indices.contains(screen) else { return }
+        let visible = screens[screen].visible
+        guard visible.width > 0, visible.height > 0 else { return }
+        let rect = WindowSizing.resized(target.frame, by: larger ? WindowSizing.step : -WindowSizing.step,
+                                        within: visible)
+        guard rect != target.frame else { return }
+        let frac = FracRect(Double((rect.minX - visible.minX) / visible.width),
+                            Double((rect.minY - visible.minY) / visible.height),
+                            Double(rect.width / visible.width), Double(rect.height / visible.height))
+        remember(target, frac: frac, screen: screen)
+        windows.restore(frame: rect, toWindow: target.window)
     }
 
     /// Snap to the zone the drag overlay draws that number on.

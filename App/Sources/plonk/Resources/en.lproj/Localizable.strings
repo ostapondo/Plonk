@@ -191,6 +191,10 @@
 "shortcut.guide" = "Show this app's shortcuts";
 "shortcut.commandPalette" = "Open the command palette";
 "shortcut.zoneSetPalette" = "Pick a zone set for this screen";
+"shortcut.nextDisplay" = "Throw to the next display";
+"shortcut.previousDisplay" = "Throw to the previous display";
+"shortcut.larger" = "Larger";
+"shortcut.smaller" = "Smaller";
 "shortcut.zone %lld" = "Zone %lld";
 "shortcut.zoneSet %lld" = "Zone set %lld";
 "shortcut.group.halves" = "Halves";
@@ -198,6 +202,8 @@
 "shortcut.group.wholeScreen" = "Whole screen";
 "shortcut.group.numberedZones" = "Numbered zones";
 "shortcut.group.zoneSets" = "Zone sets";
+"shortcut.group.displays" = "Displays";
+"shortcut.group.size" = "Size";
 "shortcut.group.focus" = "Focus";
 "shortcut.group.pointer" = "Pointer";
 "shortcut.group.guide" = "Guide";
@@ -275,6 +281,11 @@
 "zones.modifierCommand" = "⌘ Command";
 "zones.modifierControl" = "⌃ Control";
 "zones.presets" = "Halves, quarters and the rest";
+"zones.displaysAndSize" = "Between displays, and by size";
+"zones.displaysAndSizeHelp" = "Throwing keeps the zone number where the other display's set has that zone, and the window's share of the screen otherwise. Larger and smaller change both sides by 30 points about the centre; a side against the screen edge stays there.";
+"zones.keys" = "Keys";
+"zones.cycleHalves" = "Press a half twice to cycle its width";
+"zones.cycleHalvesDetail" = "⌃⌥← again takes the left two thirds, then the left third, then the half again. The other three halves do the same";
 "zones.numbered" = "Numbered zones";
 "zones.numberedHelp" = "The numbers the overlay draws, on whichever screen the front window is on. ⌃⌥0 gives a window back the frame it had before Plonk first moved it. Click a key field and press the combination; Esc cancels, Delete unbinds.";
 "zones.switching" = "Switch zone sets";

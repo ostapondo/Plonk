@@ -31,6 +31,9 @@ struct Config: Codable {
     /// How near the shared edge of two zones the cursor has to come, in points,
     /// before a drop covers both. Zero switches it off.
     var zoneEdgeSpanPoints: Double = 16
+    // Whether a half's key, pressed on a window already in that half, steps
+    // its width through two thirds and a third; see Preset.next.
+    var presetsCycleOnRepeat = true
     // Move and resize a window by dragging anywhere inside it with a modifier
     // held. Off by default: option-drag already means something inside a lot
     // of Mac apps, so this is a choice rather than a surprise.

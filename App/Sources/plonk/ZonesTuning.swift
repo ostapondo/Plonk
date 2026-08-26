@@ -9,6 +9,7 @@ struct ZonesTuning: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             appearance
+            keys
             desktopChanges
             exclusions
         }
@@ -48,6 +49,16 @@ struct ZonesTuning: View {
                       isOn: model.binding(\.zoneNumbersVisible))
             ToggleRow(title: .zonesEveryMonitor,
                       isOn: model.binding(\.zonesOnAllMonitors))
+        }
+    }
+
+    // MARK: - Keys
+
+    private var keys: some View {
+        SettingsCard(title: .zonesKeys) {
+            ToggleRow(title: .zonesCycleHalves,
+                      detail: .zonesCycleHalvesDetail,
+                      isOn: model.binding(\.presetsCycleOnRepeat))
         }
     }
 

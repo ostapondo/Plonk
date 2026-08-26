@@ -69,8 +69,9 @@ between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 `⌘` too and it takes two of them at once. Turn on grab-and-move to pull a window
 from anywhere inside it instead of aiming for the title bar.
 
-**Press a key.** `⌃⌥←` for the left half. `⌃⌥1` to `⌃⌥9` for the numbered zones
-on that screen. `⌃⌥0` puts a window back where it was before Plonk touched it.
+**Press a key.** `⌃⌥←` for the left half, and again for two thirds. `⌃⌥1` to
+`⌃⌥9` for the numbered zones on that screen. `⌃⌥⌘→` throws a window to the
+next display. `⌃⌥0` puts a window back where it was before Plonk touched it.
 
 **Say it.** Hold `⌃⌥V` and name the place: "snap this left", "zone three". That
 runs in the app, offline, on-device.
