@@ -8,8 +8,9 @@ import ApplicationServices
 final class WindowManager {
 
     /// Fires on the main queue after any window actually moves, whoever asked —
-    /// hotkeys, drag snapping, workspace launches or the HTTP routes.
-    var onDidPlace: (() -> Void)?
+    /// hotkeys, drag snapping, workspace launches or the HTTP routes — with
+    /// the window and the frame it was given.
+    var onDidPlace: ((AXUIElement, CGRect) -> Void)?
 
     // MARK: - Accessibility
     //
@@ -39,7 +40,7 @@ final class WindowManager {
     @discardableResult
     private func place(_ win: AXUIElement, _ rect: CGRect) -> Bool {
         guard WindowAccess.setFrame(rect, of: win) else { return false }
-        if let onDidPlace { DispatchQueue.main.async(execute: onDidPlace) }
+        if let onDidPlace { DispatchQueue.main.async { onDidPlace(win, rect) } }
         return true
     }
 
@@ -71,7 +72,8 @@ final class WindowManager {
 
     // MARK: - App matching
 
-    private func runningApps() -> [NSRunningApplication] {
+    /// The apps with a Dock tile: the ones with windows worth the name.
+    func runningApps() -> [NSRunningApplication] {
         NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
     }
 
@@ -109,13 +111,12 @@ final class WindowManager {
                 ]
                 if let bundleID = app.bundleIdentifier { entry["bundle_id"] = bundleID }
                 if let path = app.bundleURL?.path { entry["bundle_path"] = path }
-                let v = allScreens[index].visible
-                if !minimized, v.width > 0, v.height > 0 {
+                if !minimized, let frac = ZoneGeometry.fraction(of: f, in: allScreens[index].visible) {
                     entry["fraction"] = [
-                        "x": Double(round((f.minX - v.minX) / v.width * 100) / 100),
-                        "y": Double(round((f.minY - v.minY) / v.height * 100) / 100),
-                        "w": Double(round(f.width / v.width * 100) / 100),
-                        "h": Double(round(f.height / v.height * 100) / 100),
+                        "x": (frac.x * 100).rounded() / 100,
+                        "y": (frac.y * 100).rounded() / 100,
+                        "w": (frac.w * 100).rounded() / 100,
+                        "h": (frac.h * 100).rounded() / 100,
                     ]
                 }
                 result.append(entry)
@@ -235,12 +236,11 @@ final class WindowManager {
         let all = screens()
         guard let f = frame(ofWindow: win), !all.isEmpty else { return nil }
         let index = screenIndex(containing: f, in: all)
-        let v = all[index].visible
-        guard v.width > 0, v.height > 0 else { return nil }
-        let x = min(max(Double((f.minX - v.minX) / v.width), 0), 0.99)
-        let y = min(max(Double((f.minY - v.minY) / v.height), 0), 0.99)
-        let w = min(max(Double(f.width / v.width), 0.01), 1 - x)
-        let h = min(max(Double(f.height / v.height), 0.01), 1 - y)
+        guard let raw = ZoneGeometry.fraction(of: f, in: all[index].visible) else { return nil }
+        let x = min(max(raw.x, 0), 0.99)
+        let y = min(max(raw.y, 0), 0.99)
+        let w = min(max(raw.w, 0.01), 1 - x)
+        let h = min(max(raw.h, 0.01), 1 - y)
         return (FracRect(x, y, w, h), index)
     }
 
@@ -263,9 +263,17 @@ final class WindowManager {
     /// moment anything is raised. Anything that walks this list more than once
     /// has to impose its own order first.
     func allWindows() -> [(app: NSRunningApplication, window: AXUIElement, frame: CGRect, title: String)] {
+        allWindows(of: runningApps())
+    }
+
+    /// The same, for these apps only, so a caller that would skip an app can
+    /// skip asking it anything.
+    func allWindows(of apps: [NSRunningApplication])
+        -> [(app: NSRunningApplication, window: AXUIElement, frame: CGRect, title: String)]
+    {
         let ownPID = ProcessInfo.processInfo.processIdentifier
         var result: [(NSRunningApplication, AXUIElement, CGRect, String)] = []
-        for app in runningApps() where app.processIdentifier != ownPID {
+        for app in apps where app.processIdentifier != ownPID {
             for win in WindowAccess.windows(of: app.processIdentifier) where !WindowAccess.isMinimized(win) {
                 guard let f = frame(ofWindow: win) else { continue }
                 result.append((app, win, f, WindowAccess.title(of: win)))

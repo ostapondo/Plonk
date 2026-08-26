@@ -39,6 +39,10 @@ enum RectangleImport {
         "bottomRight": .bottomRight,
         "maximize": .maximize,
         "center": .center,
+        "nextDisplay": .nextDisplay,
+        "previousDisplay": .previousDisplay,
+        "larger": .larger,
+        "smaller": .smaller,
         // Rectangle's name for what ⌃⌥0 does here.
         "restore": .unsnap,
     ]

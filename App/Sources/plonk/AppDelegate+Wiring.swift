@@ -79,7 +79,8 @@ extension AppDelegate {
             // The dozen things people say most run here, with no agent, no
             // round trip and no network. Everything else takes the long road.
             if store.config.voiceLocalCommands,
-               let command = VoiceCommand.parse(text, workspaces: model.workspaceNames) {
+               let command = VoiceCommand.parse(text, workspaces: model.workspaceNames,
+                                                zoneNames: frontZoneNames) {
                 run(command)
                 HUD.shared.show(.hudRan(String(localized: command.announcement)))
                 return
@@ -92,6 +93,17 @@ extension AppDelegate {
                 HUD.shared.show(.hudSentTo(agent, text))
             }
         }
+    }
+
+    /// What the zones on the front window's screen are called, in order and
+    /// empty where a zone has no name: the screen a spoken "zone" lands on,
+    /// found the way the command that follows finds it. The cursor's screen
+    /// when nothing is in front.
+    var frontZoneNames: [String] {
+        // No set has a name: no round trip into the front app for an answer
+        // that is empty either way.
+        guard store.config.zoneSets.values.contains(where: { $0.contains { $0.name != nil } }) else { return [] }
+        return zones(onScreen: commands.frontScreenIndex() ?? ScreenIdentity.indexUnderCursor).map { $0.name ?? "" }
     }
 
     func openPage(_ id: String) {

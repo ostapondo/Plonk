@@ -3,12 +3,6 @@ import CoreGraphics
 import Testing
 @testable import plonk
 
-// An AXUIElement for a process that is not being driven still has stable
-// identity, which is all these exercise.
-private func element(_ pid: pid_t) -> AXUIElement {
-    AXUIElementCreateApplication(pid)
-}
-
 struct SnapMemoryTests {
 
     private let before = CGRect(x: 10, y: 20, width: 300, height: 400)

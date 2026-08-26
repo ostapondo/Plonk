@@ -83,6 +83,11 @@ final class SnapMemory {
         entries.removeValue(forKey: WindowKey(element: window))?.original
     }
 
+    /// Where a window was last put, if Plonk put it anywhere.
+    func placement(of window: AXUIElement) -> (frac: FracRect, screenUUID: String?, zoneIndex: Int?)? {
+        entries[WindowKey(element: window)].map { ($0.frac, $0.screenUUID, $0.zoneIndex) }
+    }
+
     /// Every remembered placement, newest last.
     var placements: [(window: AXUIElement, frac: FracRect, screenUUID: String?, zoneIndex: Int?)] {
         entries

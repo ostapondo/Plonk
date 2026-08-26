@@ -6,7 +6,7 @@ import { zonesSchema } from "../schemas.js";
 export function register(server: McpServer): void {
   server.tool(
     "save_zone_set",
-    "Create or replace a named zone set used for drag snapping. Zones are rectangles {x,y,w,h} as fractions 0..1 of a screen's visible area, origin TOP-LEFT; each zone must stay inside the screen, but zones may overlap each other (the smallest one under the cursor wins). Pass 'screen' to also assign the set to that monitor so it becomes active immediately. Pass 'gap' to give this set its own spacing around windows in points, or null to make it follow the default gap again; omitting it keeps whatever the set had. Built-in sets already exist: Halves, Thirds, 60 / 40, Quarters, Priority.",
+    "Create or replace a named zone set used for drag snapping. Zones are rectangles {x,y,w,h} as fractions 0..1 of a screen's visible area, origin TOP-LEFT; each zone must stay inside the screen, but zones may overlap each other (the smallest one under the cursor wins). A zone may also carry a 'name' ('chat', 'editor'): it is drawn under the zone's number, the user can say it out loud, and snap_window takes it instead of the number; names must be unique within the set, ignoring case, and cannot be a bare number. Pass 'screen' to also assign the set to that monitor so it becomes active immediately. Pass 'gap' to give this set its own spacing around windows in points, or null to make it follow the default gap again; omitting it keeps whatever the set had. Built-in sets already exist: Halves, Thirds, 60 / 40, Quarters, Priority.",
     {
       name: z.string().describe("Zone set name, e.g. 'coding'"),
       zones: zonesSchema,

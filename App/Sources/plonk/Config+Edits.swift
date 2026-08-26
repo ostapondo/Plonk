@@ -47,6 +47,9 @@ extension Config {
     mutating func clamp() {
         zoneGap = zoneGap.clamped(to: 0...Self.gapLimit)
         zoneSetGaps = zoneSetGaps.mapValues { $0.clamped(to: 0...Self.gapLimit) }
+        // Every writer refuses two zones with one name; a file written by hand
+        // is not a writer, so the later one loses its name here.
+        zoneSets = zoneSets.mapValues(ZoneGeometry.withoutDuplicateNames)
         zoneOpacity = zoneOpacity.clamped(to: Self.opacityRange)
         zoneEdgeSpanPoints = zoneEdgeSpanPoints.clamped(to: 0...Self.edgeSpanLimit)
         clickRadius = clickRadius.clamped(to: Self.clickRadiusRange)

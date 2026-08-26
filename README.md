@@ -69,8 +69,9 @@ between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 `⌘` too and it takes two of them at once. Turn on grab-and-move to pull a window
 from anywhere inside it instead of aiming for the title bar.
 
-**Press a key.** `⌃⌥←` for the left half. `⌃⌥1` to `⌃⌥9` for the numbered zones
-on that screen. `⌃⌥0` puts a window back where it was before Plonk touched it.
+**Press a key.** `⌃⌥←` for the left half, and again for two thirds. `⌃⌥1` to
+`⌃⌥9` for the numbered zones on that screen. `⌃⌥⌘→` throws a window to the
+next display. `⌃⌥0` puts a window back where it was before Plonk touched it.
 
 **Say it.** Hold `⌃⌥V` and name the place: "snap this left", "zone three". That
 runs in the app, offline, on-device.
@@ -187,7 +188,7 @@ sections above left out.
 
 | | |
 | --- | --- |
-| **[Zones](docs/zones.md)** | Overlap them, gap them, hide the numbers, keep a list of apps Plonk never touches. Windows return to their zone after a display is unplugged and plugged back in |
+| **[Zones](docs/zones.md)** | Overlap them, gap them, hide the numbers, keep a list of apps Plonk never touches. Windows go back where they sat after a display is unplugged and plugged back in, the ones Plonk placed and the rest, from a note of the desk kept as windows move |
 | **[Workspaces](docs/workspaces.md)** | Files, folders or URLs each app should open on the way up, so a desk comes back with the right documents and not just the right apps. Monitors are keyed by UUID, so unplugging one does not scramble them |
 | **Focus that follows the layout** | `⌃⌥⇧←` goes to the window actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
 | **Voice** | Hold `⌃⌥V` and say it. Common commands run in the app, offline. Anything bigger goes to your agent. Recognition is on-device |

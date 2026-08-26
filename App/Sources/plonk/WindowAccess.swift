@@ -51,6 +51,13 @@ enum WindowAccess {
         return CGRect(origin: pos, size: size)
     }
 
+    /// Whether the window is no longer there, as opposed to slow to answer:
+    /// a closed window's element is invalid, a busy app's merely times out.
+    static func isGone(_ win: AXUIElement) -> Bool {
+        var value: CFTypeRef?
+        return AXUIElementCopyAttributeValue(win, kAXRoleAttribute as CFString, &value) == .invalidUIElement
+    }
+
     static func isMinimized(_ win: AXUIElement) -> Bool {
         (attribute(win, kAXMinimizedAttribute) as? Bool) ?? false
     }

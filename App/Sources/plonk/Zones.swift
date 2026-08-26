@@ -1,32 +1,9 @@
 import Foundation
 
 // A zone set is a template of fractional rects (origin top-left, 0..1 of a
-// screen's visible area). Sets are screen-agnostic; config assigns a set name
-// per screen. User-defined sets live in config; built-ins are always available.
-
-struct ZoneRect: Codable {
-    var x: Double
-    var y: Double
-    var w: Double
-    var h: Double
-
-    init(_ x: Double, _ y: Double, _ w: Double, _ h: Double) {
-        self.x = x; self.y = y; self.w = w; self.h = h
-    }
-
-    init?(dict: [String: Any]) {
-        guard let x = (dict["x"] as? NSNumber)?.doubleValue,
-              let y = (dict["y"] as? NSNumber)?.doubleValue,
-              let w = (dict["w"] as? NSNumber)?.doubleValue,
-              let h = (dict["h"] as? NSNumber)?.doubleValue,
-              w > 0, h > 0, x >= 0, y >= 0,
-              x + w <= 1.0001, y + h <= 1.0001 else { return nil }
-        self.x = x; self.y = y; self.w = w; self.h = h
-    }
-
-    var frac: FracRect { FracRect(x, y, w, h) }
-    var asDict: [String: Double] { ["x": x, "y": y, "w": w, "h": h] }
-}
+// screen's visible area); the rect itself is ZoneRect. Sets are screen-agnostic;
+// config assigns a set name per screen. User-defined sets live in config;
+// built-ins are always available.
 
 enum BuiltinZoneSets {
     static let defaultName = "Halves"
@@ -178,29 +155,33 @@ enum ZoneGeometry {
         })
     }
 
-    /// The zone a window that has just opened, with nowhere it is meant to
-    /// be, should fill: the empty zone it is already sitting in, if it is
-    /// sitting in one, else the first empty zone. A window macOS restored
-    /// into zone 2 is straightened into zone 2, not packed leftwards.
-    ///
-    /// A window is in a zone when its centre is inside the zone, the test the
-    /// zone cycle uses, or when the zone's centre is inside the window, so a
-    /// window spanning two zones or filling the screen takes every zone it
-    /// covers rather than the one its centre happens to fall in. Nil when
-    /// every zone has something in it.
-    static func firstEmpty(_ zones: [ZoneRect], in visible: CGRect, occupied windows: [CGRect],
-                           preferring point: CGPoint? = nil) -> Int? {
-        let empty = zones.indices.filter { index in
-            let frame = frame(for: zones[index].frac, in: visible)
-            let centre = CGPoint(x: frame.midX, y: frame.midY)
-            return !windows.contains { window in
-                frame.contains(CGPoint(x: window.midX, y: window.midY)) || window.contains(centre)
-            }
+    /// The zone called that, ignoring case; nil for a name no zone in the set
+    /// has. The query is cleaned the way a stored name was, so what was
+    /// accepted as a name is what finds it, and a number finds nothing: the
+    /// routes and the hotkeys already read those.
+    static func index(named name: String, in zones: [ZoneRect]) -> Int? {
+        guard let wanted = ZoneRect.cleanName(name)?.lowercased() else { return nil }
+        return zones.firstIndex { $0.name?.lowercased() == wanted }
+    }
+
+    /// A name two zones share, ignoring case, or nil when every name is its
+    /// own. Two zones with one name would leave "put this in chat" a coin
+    /// toss, so every writer of a set asks this first, and a file that was
+    /// written by hand is put right on the way in.
+    static func duplicateName(in zones: [ZoneRect]) -> String? {
+        var seen = Set<String>()
+        return zones.compactMap(\.name).first { !seen.insert($0.lowercased()).inserted }
+    }
+
+    /// The same set with the later of two zones sharing a name left unnamed.
+    static func withoutDuplicateNames(_ zones: [ZoneRect]) -> [ZoneRect] {
+        var seen = Set<String>()
+        return zones.map { zone in
+            guard let name = zone.name, !seen.insert(name.lowercased()).inserted else { return zone }
+            var unnamed = zone
+            unnamed.name = nil
+            return unnamed
         }
-        if let point, let own = empty.first(where: { frame(for: zones[$0].frac, in: visible).contains(point) }) {
-            return own
-        }
-        return empty.first
     }
 
     /// True when any zone at the given indices intersects another zone by
@@ -224,13 +205,19 @@ enum ZoneGeometry {
         let z = zones[index]
         var result = zones
         let cut = snapValue(fraction)
+        // The zone that stays is changed in place, so whatever it carries
+        // besides its rectangle, a half-typed name in the editor say, stays
+        // as it was; the new half starts with nothing.
+        var kept = z
         if vertical {
             guard cut - z.x >= minSide, z.x + z.w - cut >= minSide else { return nil }
-            result[index] = ZoneRect(z.x, z.y, cut - z.x, z.h)
+            kept.w = cut - z.x
+            result[index] = kept
             result.append(ZoneRect(cut, z.y, z.x + z.w - cut, z.h))
         } else {
             guard cut - z.y >= minSide, z.y + z.h - cut >= minSide else { return nil }
-            result[index] = ZoneRect(z.x, z.y, z.w, cut - z.y)
+            kept.h = cut - z.y
+            result[index] = kept
             result.append(ZoneRect(z.x, cut, z.w, z.y + z.h - cut))
         }
         return result
@@ -246,17 +233,21 @@ enum ZoneGeometry {
         guard zones.indices.contains(index) else { return nil }
         let z = zones[index]
         var result = zones
+        var moved = z
         if resizing {
             let w = snapValue(z.w + dx)
             let h = snapValue(z.h + dy)
             guard w >= minSide, h >= minSide, z.x + w <= 1.0001, z.y + h <= 1.0001 else { return nil }
-            result[index] = ZoneRect(z.x, z.y, w, h)
+            moved.w = w
+            moved.h = h
         } else {
             let x = snapValue(z.x + dx)
             let y = snapValue(z.y + dy)
             guard x >= -0.0001, y >= -0.0001, x + z.w <= 1.0001, y + z.h <= 1.0001 else { return nil }
-            result[index] = ZoneRect(max(x, 0), max(y, 0), z.w, z.h)
+            moved.x = max(x, 0)
+            moved.y = max(y, 0)
         }
+        result[index] = moved
         guard !overlaps(result, at: [index]) else { return nil }
         return result
     }

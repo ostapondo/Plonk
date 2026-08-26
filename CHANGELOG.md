@@ -15,6 +15,21 @@ one of those.
 
 ### Added
 
+- **The windows go back after a display change, not only the ones Plonk
+  placed.** Where each window on screen sits is noted as windows move, per
+  set of monitors, and put back when that set of monitors returns: unplug
+  the desk, work on the laptop, plug it back in, and the desk is as it was.
+  A window Plonk placed that the note has no line for still returns to its
+  zone. A switch under When the desktop changes, on by default beside the
+  one that was there; apps on the exceptions list are left alone as ever.
+- **The zones can be clicked.** Hold `⌃⌥Z` and every screen's zones stay up;
+  click one, or press its digit while holding, and the front window goes
+  there. Let go and they linger a moment, still clickable. A tap is the
+  flash it always was. The overlay never takes focus, so the window that
+  was in front stays in front.
+ - **Shake a window to see the zones.** With the modifier required, wiggle a
+   window sideways while dragging it and the zones come up anyway, for the
+   rest of that drag. A switch on the Zones page, off by default.
 - **The click ring is yours to set.** Ring every click was one colour, one
   size, one shape: the zone colour, 34 points, an outline. Pointer and clicks
   now says how it is drawn — a colour of its own, a second colour for right
@@ -39,6 +54,23 @@ one of those.
   on another Space no longer count as holding a zone.
 - **The MCP server reports its installed version.** Run `plonk-mcp --version`
   or `plonk-mcp -v` to print the package version without starting the server.
+- **Throw a window to the next display, grow it, shrink it, cycle a half.**
+  `⌃⌥⌘→` and `⌃⌥⌘←` send the front window to the next or previous display,
+  into the same zone number where that display has one. `⌃⌥=` and `⌃⌥-`
+  grow and shrink it by 30 points about the centre, with a side against the
+  screen edge staying put. `⌃⌥←` on a window already in the left half takes
+  two thirds, then a third, then the half again, and the other three halves
+  do the same; the Keys card on the Zones page turns the cycle off. Keys,
+  names and cycle are Rectangle's, so they import with the rest, and the
+  `next-display` URL is answered rather than refused. Out loud: "throw it to
+  the next screen", "make it bigger".
+- **A zone can have a name.** Give one to any zone in the editor — chat,
+  editor, build log — and it is drawn under the number in the overlay, on the
+  Zones page and beside the zone's shortcut. Then "put this in chat" works
+  out loud, on the screen the front window is on, and an agent can hand
+  `snap_window` the name instead of the number. The number keeps working;
+   a set with no names loses nothing. Zone sets in `zone-sets/` may carry
+   names too, and Call and Work now does.
 
 ### Changed
 

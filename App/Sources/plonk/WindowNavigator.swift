@@ -67,6 +67,16 @@ enum WindowNavigator {
         return members[(position + step) % members.count]
     }
 
+    /// The displays left to right, then top to bottom, by the corner of each
+    /// frame: the order "the next display" walks, whatever order macOS lists
+    /// them in. Indices into `frames`.
+    static func displayOrder(_ frames: [CGRect]) -> [Int] {
+        frames.indices.sorted { a, b in
+            if frames[a].minX != frames[b].minX { return frames[a].minX < frames[b].minX }
+            return frames[a].minY < frames[b].minY
+        }
+    }
+
     /// Keeps a restored frame on screen: a window remembered on a display that
     /// has since been unplugged would otherwise come back somewhere invisible.
     /// Only nudged into view — the size is what the user asked to get back.

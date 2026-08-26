@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let updates = UpdateManager()
     let model = AppModel()
     let snapMemory = SnapMemory()
+    lazy var desk = DeskWatcher(windows: windows)
     lazy var commands = WindowCommands(windows: windows, memory: snapMemory)
     lazy var launcher = WorkspaceLauncher(windows: windows)
     lazy var presenter = WindowPresenter(model: model)
@@ -73,11 +74,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupNewWindows()
         setupRuler()
         setupServer()
+        setupDesk()
         setupUpdates()
         watchConfig()
         refreshModel()
 
-        knownDisplays = Self.attachedDisplays()
+        knownDisplays = ScreenIdentity.attachedDisplays()
         watchForAccessibility()
         NotificationCenter.default.addObserver(
             self, selector: #selector(screensChanged),
