@@ -87,8 +87,8 @@ final class WindowManager {
 
     // MARK: - Public API
 
-    func listWindows() -> [[String: Any]] {
-        var result: [[String: Any]] = []
+    func windowSnapshots() -> [WindowSnapshot] {
+        var result: [WindowSnapshot] = []
         let allScreens = screens()
         let ownPID = ProcessInfo.processInfo.processIdentifier
         for app in runningApps() where app.processIdentifier != ownPID {
@@ -97,32 +97,27 @@ final class WindowManager {
                 guard let f = frame(ofWindow: win) else { continue }
                 let minimized = WindowAccess.isMinimized(win)
                 let index = screenIndex(containing: f, in: allScreens)
-                var entry: [String: Any] = [
-                    "app": name,
-                    "pid": app.processIdentifier,
-                    "title": WindowAccess.title(of: win),
-                    "minimized": minimized,
-                    "screen": index,
-                    "window_index": windowIndex,
-                    // Doubles, not CGFloat: CGFloat is its own struct, and a
-                    // [String: CGFloat] does not cast to [String: Double].
-                    "frame": ["x": Double(f.origin.x), "y": Double(f.origin.y),
-                              "w": Double(f.width), "h": Double(f.height)],
-                ]
-                if let bundleID = app.bundleIdentifier { entry["bundle_id"] = bundleID }
-                if let path = app.bundleURL?.path { entry["bundle_path"] = path }
-                if !minimized, let frac = ZoneGeometry.fraction(of: f, in: allScreens[index].visible) {
-                    entry["fraction"] = [
-                        "x": (frac.x * 100).rounded() / 100,
-                        "y": (frac.y * 100).rounded() / 100,
-                        "w": (frac.w * 100).rounded() / 100,
-                        "h": (frac.h * 100).rounded() / 100,
-                    ]
+                let raw = minimized ? nil : ZoneGeometry.fraction(of: f, in: allScreens[index].visible)
+                let fraction = raw.map {
+                    FracRect(($0.x * 100).rounded() / 100,
+                             ($0.y * 100).rounded() / 100,
+                             ($0.w * 100).rounded() / 100,
+                             ($0.h * 100).rounded() / 100)
                 }
-                result.append(entry)
+                result.append(WindowSnapshot(
+                    app: name, pid: app.processIdentifier,
+                    title: WindowAccess.title(of: win), minimized: minimized,
+                    screen: index, windowIndex: windowIndex, frame: f,
+                    fraction: fraction, bundleID: app.bundleIdentifier,
+                    bundlePath: app.bundleURL?.path
+                ))
             }
         }
         return result
+    }
+
+    func listWindows() -> [[String: Any]] {
+        windowSnapshots().map(\.asDict)
     }
 
     /// Place one window by app name. Returns an error string, or nil on success.

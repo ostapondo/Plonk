@@ -36,18 +36,31 @@ enum WindowAccess {
         return value
     }
 
+    private static func value(_ el: AXUIElement, _ name: String, type: AXValueType) -> AXValue? {
+        guard let value = attribute(el, name), CFGetTypeID(value) == AXValueGetTypeID() else { return nil }
+        let typed = value as! AXValue
+        guard AXValueGetType(typed) == type else { return nil }
+        return typed
+    }
+
+    private static func elementAttribute(_ el: AXUIElement, _ name: String) -> AXUIElement? {
+        guard let value = attribute(el, name), CFGetTypeID(value) == AXUIElementGetTypeID()
+        else { return nil }
+        return (value as! AXUIElement)
+    }
+
     static func windows(of pid: pid_t) -> [AXUIElement] {
         guard let windows = attribute(application(pid), kAXWindowsAttribute) as? [AXUIElement] else { return [] }
         return windows.filter { (attribute($0, kAXRoleAttribute) as? String) == kAXWindowRole }
     }
 
     static func frame(of win: AXUIElement) -> CGRect? {
-        guard let posVal = attribute(win, kAXPositionAttribute),
-              let sizeVal = attribute(win, kAXSizeAttribute) else { return nil }
+        guard let posVal = value(win, kAXPositionAttribute, type: .cgPoint),
+              let sizeVal = value(win, kAXSizeAttribute, type: .cgSize) else { return nil }
         var pos = CGPoint.zero
         var size = CGSize.zero
-        guard AXValueGetValue(posVal as! AXValue, .cgPoint, &pos),
-              AXValueGetValue(sizeVal as! AXValue, .cgSize, &size) else { return nil }
+        guard AXValueGetValue(posVal, .cgPoint, &pos),
+              AXValueGetValue(sizeVal, .cgSize, &size) else { return nil }
         return CGRect(origin: pos, size: size)
     }
 
@@ -77,10 +90,7 @@ enum WindowAccess {
 
     static func focusedWindow(of app: NSRunningApplication) -> AXUIElement? {
         let pid = app.processIdentifier
-        if let focused = attribute(application(pid), kAXFocusedWindowAttribute),
-           CFGetTypeID(focused) == AXUIElementGetTypeID() {
-            return (focused as! AXUIElement)
-        }
+        if let focused = elementAttribute(application(pid), kAXFocusedWindowAttribute) { return focused }
         return windows(of: pid).first { !isMinimized($0) }
     }
 
@@ -97,9 +107,8 @@ enum WindowAccess {
         // there because a malformed AX tree can contain a cycle.
         for _ in 0..<10 {
             if (attribute(current, kAXRoleAttribute) as? String) == kAXWindowRole { return current }
-            guard let parent = attribute(current, kAXParentAttribute),
-                  CFGetTypeID(parent) == AXUIElementGetTypeID() else { return nil }
-            current = (parent as! AXUIElement)
+            guard let parent = elementAttribute(current, kAXParentAttribute) else { return nil }
+            current = parent
         }
         return nil
     }
