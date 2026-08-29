@@ -70,32 +70,6 @@ extension AppDelegate {
     /// an NSLog nobody reads — which from the palette looked exactly like a
     /// window closing and nothing happening.
     func launchAdapter(_ adapter: AgentAdapter, prompt: String) {
-        let invocation = AgentAdapter.invocation(command: adapter.command, prompt: prompt)
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-lc", invocation.command]
-        process.environment = ProcessInfo.processInfo.environment
-            .merging(invocation.environment) { _, prompt in prompt }
-
-        // A file, not a pipe. A pipe nobody is reading fills at about 64 KB and
-        // the adapter blocks on the write for ever — and `claude -p` printing
-        // its answer clears that easily, so attaching one and reading it only
-        // after exit produces exactly the hang this is supposed to report.
-        // Draining it concurrently would work and needs a lock and a reader;
-        // a file cannot block, and the tail is all the HUD ever shows.
-        let errorLog = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("plonk-adapter-\(UUID().uuidString).log")
-        FileManager.default.createFile(atPath: errorLog.path, contents: nil)
-        let errors = try? FileHandle(forWritingTo: errorLog)
-        process.standardError = errors ?? FileHandle.nullDevice
-        // Discarded outright: nothing reads it, and that is the same trap.
-        process.standardOutput = FileHandle.nullDevice
-
-        // A ticking HUD for as long as it runs. The agent takes tens of seconds
-        // and moves nothing until it has decided what to move, so without this
-        // the whole middle of the job looks identical to nothing happening —
-        // which is exactly what it was mistaken for. The count is what makes it
-        // readable as progress rather than as a stuck label.
         let started = Date()
         var ticks = 0
         var progress: Timer?
@@ -107,48 +81,23 @@ extension AppDelegate {
             // beats, and short enough to clear itself if this stops ticking.
             HUD.shared.show(.hudWorking(adapter.name, dots, seconds), duration: 3)
         }
-        // Both halves are queued on the main thread and the start is queued
-        // first, so FIFO keeps stop after start.
-        let stop = {
+        let stopProgress = {
             progress?.invalidate()
             progress = nil
         }
-
-        DispatchQueue.main.async {
-            beat()
-            progress = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { _ in beat() }
-        }
-
-        process.terminationHandler = { finished in
-            try? errors?.close()
-            let complaint = (try? String(contentsOf: errorLog, encoding: .utf8)) ?? ""
-            try? FileManager.default.removeItem(at: errorLog)
-            let last = complaint.split(separator: "\n").last.map(String.init) ?? ""
-            let seconds = Int(Date().timeIntervalSince(started).rounded())
-            DispatchQueue.main.async {
-                stop()
-                if finished.terminationStatus == 0 {
-                    HUD.shared.show(.hudFinished(adapter.name, seconds))
-                } else {
-                    let failure = String(localized: .hudFailed(adapter.name,
-                                                               Int(finished.terminationStatus)))
-                    HUD.shared.show(failure + (last.isEmpty ? "" : ": \(last.prefix(70))"))
-                }
-            }
-        }
-
-        // Adapters may run for minutes, so they never touch the main thread.
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try process.run()
-            } catch {
-                // terminationHandler never runs for a process that never ran,
-                // so the ticking has to be stopped from here or it ticks for ever.
-                DispatchQueue.main.async {
-                    stop()
-                    HUD.shared.show(.hudWouldNotStart(adapter.name,
-                                                        error.localizedDescription))
-                }
+        beat()
+        progress = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { _ in beat() }
+        adapterRunner.run(adapter, prompt: prompt) { result in
+            stopProgress()
+            switch result {
+            case .finished(let finished) where finished.status == 0:
+                HUD.shared.show(.hudFinished(adapter.name, finished.seconds))
+            case .finished(let finished):
+                let failure = String(localized: .hudFailed(adapter.name, Int(finished.status)))
+                let detail = finished.lastError.isEmpty ? "" : ": \(finished.lastError.prefix(70))"
+                HUD.shared.show(failure + detail)
+            case .couldNotStart(let message):
+                HUD.shared.show(.hudWouldNotStart(adapter.name, message))
             }
         }
     }
