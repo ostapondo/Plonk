@@ -2,6 +2,15 @@
 
 What changed in each release, from a user's side. The commit log has the rest.
 
+## Unreleased
+
+### Changed
+
+- **Background pointer work stays asleep when it is not needed.** Click
+  highlighting no longer listens to every mouse movement, crosshair movement
+  coalesces bursts before redrawing, and drag snapping removes its global
+  monitors while the feature is switched off.
+
 Versions before 0.1.0 shipped in two days and are summarized rather than
 itemized. The dates are real; the tidiness is not — most of what is listed
 under 0.0.4 was written the same afternoon it went out.

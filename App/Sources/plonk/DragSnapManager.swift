@@ -83,15 +83,23 @@ final class DragSnapManager {
         edgeSpanPoints = config.zoneEdgeSpanPoints
         shakeEnabled = config.shakeToSnap
         look = ZoneAppearance(config)
+        if enabled { start() } else { stop() }
     }
 
     func start() {
+        guard monitors.isEmpty else { return }
         if let m = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged, handler: { [weak self] event in
             self?.handleDrag(event)
         }) { monitors.append(m) }
         if let m = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp, handler: { [weak self] _ in
             self?.handleMouseUp()
         }) { monitors.append(m) }
+    }
+
+    func stop() {
+        for monitor in monitors { NSEvent.removeMonitor(monitor) }
+        monitors.removeAll()
+        _ = endExternalDrag()
     }
 
     /// Show one zone set on one screen until hidden (the picker's eye toggle).

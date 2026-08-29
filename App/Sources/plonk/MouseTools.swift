@@ -23,6 +23,8 @@ final class MouseTools {
     private var tap: EventTap?
     private var spotlightToken = 0
     private var lastCrosshair: NSPoint?
+    private var pendingCrosshair: NSPoint?
+    private var crosshairUpdateScheduled = false
 
     var highlightEnabled = false
     var crosshairsEnabled = false {
@@ -38,9 +40,15 @@ final class MouseTools {
     /// a spotlight that blinks out under the user's hand.
     func apply(_ config: Config) {
         let was = look
+        let wasHighlighting = highlightEnabled
+        let wasCrosshairs = crosshairsEnabled
         look = PointerAppearance(config)
         highlightEnabled = config.highlightClicksEnabled && config.isEnabled(.mouse)
         crosshairsEnabled = config.crosshairsEnabled && config.isEnabled(.mouse)
+        if tap != nil,
+           highlightEnabled != wasHighlighting || crosshairsEnabled != wasCrosshairs {
+            stop()
+        }
         if highlightEnabled || crosshairsEnabled {
             start()
             // A crosshair already on screen is repainted the way it now looks,
@@ -56,11 +64,15 @@ final class MouseTools {
     /// grant watcher applies the config again once it lands.
     func start() {
         guard tap == nil, WindowAccess.isTrusted else { return }
-        let mask: CGEventMask =
-            (1 << CGEventType.leftMouseDown.rawValue) |
-            (1 << CGEventType.rightMouseDown.rawValue) |
-            (1 << CGEventType.mouseMoved.rawValue) |
-            (1 << CGEventType.leftMouseDragged.rawValue)
+        var mask: CGEventMask = 0
+        if highlightEnabled {
+            mask |= (1 << CGEventType.leftMouseDown.rawValue)
+                | (1 << CGEventType.rightMouseDown.rawValue)
+        }
+        if crosshairsEnabled {
+            mask |= (1 << CGEventType.mouseMoved.rawValue)
+                | (1 << CGEventType.leftMouseDragged.rawValue)
+        }
 
         // A listen-only tap: these tools watch the pointer, they never take an
         // event away from anybody.
@@ -73,6 +85,9 @@ final class MouseTools {
 
     func stop() {
         tap = nil
+        pendingCrosshair = nil
+        crosshairUpdateScheduled = false
+        lastCrosshair = nil
         overlay.hide()
     }
 
@@ -142,8 +157,16 @@ final class MouseTools {
         case .mouseMoved, .leftMouseDragged:
             guard crosshairsEnabled, spotlightToken == 0 || !overlay.isSpotlighting else { return }
             let point = event.unflippedLocation
+            guard point != lastCrosshair else { return }
+            pendingCrosshair = point
+            guard !crosshairUpdateScheduled else { return }
+            crosshairUpdateScheduled = true
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
+                crosshairUpdateScheduled = false
+                guard let point = pendingCrosshair else { return }
+                pendingCrosshair = nil
+                lastCrosshair = point
                 overlay.show(.crosshairs, at: point, look: look)
             }
         default:
@@ -161,8 +184,11 @@ final class MouseTools {
             return
         }
         if crosshairsEnabled {
-            overlay.show(.crosshairs, at: NSEvent.mouseLocation, look: look)
+            let point = NSEvent.mouseLocation
+            lastCrosshair = point
+            overlay.show(.crosshairs, at: point, look: look)
         } else {
+            lastCrosshair = nil
             overlay.hide()
         }
     }
