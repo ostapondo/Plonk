@@ -47,6 +47,8 @@ final class AwakeManager {
     /// Watches the clock and the app list; owned here because an extension
     /// cannot hold a stored property. Started by `startWatching`.
     var watchTimer: Timer?
+    var wakeToken: NSObjectProtocol?
+    var powerSource: CFRunLoopSource?
     var onChange: (() -> Void)?
 
     /// How often a process-bound session checks that its process is still
@@ -79,6 +81,10 @@ final class AwakeManager {
         }
     }
     var timeoutMinutes = 0
+
+    deinit {
+        stopWatching()
+    }
 
     /// Take the settings as they now stand. Called after every config change,
     /// so it has to be cheap and safe to run when nothing it reads moved.

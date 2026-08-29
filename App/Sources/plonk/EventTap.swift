@@ -1,21 +1,25 @@
 import AppKit
 
+typealias EventTapHandler = (CGEventType, CGEvent) -> Unmanaged<CGEvent>?
+
+protocol EventTapToken: AnyObject {}
+
 /// A CGEvent tap on the main run loop, with the one piece of upkeep every tap
 /// needs: the system disables a tap that ever takes too long, and turning it
 /// back on is the documented recovery. Losing it silently would strand every
 /// event after, so that lives here rather than in each owner. The tap is torn
 /// down when this is released.
-final class EventTap {
+final class EventTap: EventTapToken {
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private let handler: (CGEventType, CGEvent) -> Unmanaged<CGEvent>?
+    private let handler: EventTapHandler
 
     /// nil when the tap cannot be created, which is what happens without
     /// Accessibility. `handler` returns nil to swallow an event; a listen-only
     /// tap's return value is ignored.
     init?(
         mask: CGEventMask, options: CGEventTapOptions, name: String,
-        handler: @escaping (CGEventType, CGEvent) -> Unmanaged<CGEvent>?
+        handler: @escaping EventTapHandler
     ) {
         self.handler = handler
         let context = Unmanaged.passUnretained(self).toOpaque()
