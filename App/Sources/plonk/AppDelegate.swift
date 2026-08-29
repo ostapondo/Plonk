@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let awake = AwakeManager()
     let lidSleep = LidSleep()
     let agents = AgentRegistry()
+    let adapterRunner = AgentAdapterRunner()
     let eventBroadcaster = EventBroadcaster()
     let voice = VoiceManager()
     let hotkeys = HotkeyManager()
