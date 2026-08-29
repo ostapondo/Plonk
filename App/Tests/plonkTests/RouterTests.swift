@@ -105,12 +105,12 @@ struct RouterTests {
             launched = (name, workspace.apps, screen)
             done([["ok": true, "app": "Safari"]])
         }
-        let response = h.post("/workspaces/launch", ["name": "work", "screen": 1])
+        let response = h.post("/workspaces/launch", ["name": "work", "screen": 0])
         #expect(response.status == 200)
         #expect(response.json["ok"] as? Bool == true)
         #expect(launched?.name == "work")
         #expect(launched?.apps == ["Safari"])
-        #expect(launched?.screen == 1)
+        #expect(launched?.screen == 0)
     }
 
     @Test func deletingReportsWhetherItExisted() {

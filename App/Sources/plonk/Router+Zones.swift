@@ -37,12 +37,21 @@ extension Router {
         } else if body["gap"] != nil {
             return .badRequest("gap must be a number of points, or null for the default")
         }
+        let screenKeys: [String]?
+        switch ScreenInput.parse(body["screen"]) {
+        case .omitted:
+            screenKeys = nil
+        case .attached(_, let keys):
+            screenKeys = keys
+        case .invalidType:
+            return .badRequest("screen must be a monitor index")
+        case .notFound(let screen):
+            return .notFound("no screen \(screen)")
+        }
         store.update {
             $0.zoneSets[name] = zones
             if let gap { $0.zoneSetGaps[name] = gap }
-            if let screen = (body["screen"] as? NSNumber)?.intValue {
-                $0.assignZoneSet(name, forKeys: ScreenIdentity.keys(forIndex: screen))
-            }
+            if let screenKeys { $0.assignZoneSet(name, forKeys: screenKeys) }
         }
         didChangeZones?()
         var reply: [String: Any] = ["ok": true, "saved": name, "zones": zones.count]
@@ -51,9 +60,15 @@ extension Router {
     }
 
     func assignZoneSetRoute(_ body: [String: Any]) -> HTTPResponse {
-        guard let screen = (body["screen"] as? NSNumber)?.intValue else {
+        let screenKeys: [String]
+        switch ScreenInput.parse(body["screen"]) {
+        case .attached(_, let keys):
+            screenKeys = keys
+        case .omitted, .invalidType:
             return .badRequest("body must include screen; omit name for the default set "
                                + "(\(BuiltinZoneSets.defaultName)), pass \"edge\" for edge snapping")
+        case .notFound(let index):
+            return .notFound("no screen \(index)")
         }
         let requested = (body["name"] as? String)?.trimmingCharacters(in: .whitespaces)
         let assignment: String?
@@ -68,7 +83,7 @@ extension Router {
             }
             assignment = name
         }
-        store.update { $0.assignZoneSet(assignment, forKeys: ScreenIdentity.keys(forIndex: screen)) }
+        store.update { $0.assignZoneSet(assignment, forKeys: screenKeys) }
         didChangeZones?()
         return .ok(["ok": true])
     }
@@ -101,10 +116,9 @@ extension Router {
         }
         var screenUUID: String?
         var screenIndex: Int?
-        if let screen = (body["screen"] as? NSNumber)?.intValue {
-            guard let uuid = ScreenIdentity.uuid(forIndex: screen) else {
-                return .notFound("no screen \(screen)")
-            }
+        switch ScreenInput.parse(body["screen"]) {
+        case .attached(let screen, let keys):
+            guard let uuid = keys.first else { return .notFound("no screen \(screen)") }
             // A rule for a zone the named screen does not have would sit in
             // the list and never fire; better refused now, with the count.
             if case .failure(let refusal) = numberedZones(onScreen: screen, holding: zone) {
@@ -112,8 +126,12 @@ extension Router {
             }
             screenUUID = uuid
             screenIndex = screen
-        } else if body["screen"] != nil, !(body["screen"] is NSNull) {
+        case .invalidType:
             return .badRequest("screen must be a monitor index")
+        case .notFound(let screen):
+            return .notFound("no screen \(screen)")
+        case .omitted:
+            break
         }
         let rule = AppRule(app: app, zone: zone, screenUUID: screenUUID)
         store.update { $0.appRules = AppRules.upsert(rule, in: $0.appRules) }
@@ -164,8 +182,18 @@ extension Router {
             return .badRequest("body must be {\"app\", \"zone\": 1-based index or name, \"title\"?, \"screen\"?}")
         }
         let title = body["title"] as? String
-        guard let screen = (body["screen"] as? NSNumber)?.intValue
-                ?? windows.screenIndex(ofApp: app, titleContains: title) else {
+        let requestedScreen: Int?
+        switch ScreenInput.parse(body["screen"]) {
+        case .attached(let screen, _):
+            requestedScreen = screen
+        case .omitted:
+            requestedScreen = nil
+        case .invalidType:
+            return .badRequest("screen must be a monitor index")
+        case .notFound(let screen):
+            return .notFound("no screen \(screen)")
+        }
+        guard let screen = requestedScreen ?? windows.screenIndex(ofApp: app, titleContains: title) else {
             return .notFound("app \"\(app)\" is not running")
         }
         let zones = store.config.zones(forKeys: ScreenIdentity.keys(forIndex: screen))

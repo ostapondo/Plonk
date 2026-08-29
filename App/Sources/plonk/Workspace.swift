@@ -83,6 +83,20 @@ struct WorkspaceItem: Codable {
         )
     }
 
+    init?(window snapshot: WindowSnapshot, screenUUID: String? = nil) {
+        guard !snapshot.minimized, let fraction = snapshot.fraction else { return nil }
+        self.init(
+            app: snapshot.app,
+            bundleID: snapshot.bundleID,
+            bundlePath: snapshot.bundlePath,
+            title: snapshot.title.isEmpty ? nil : snapshot.title,
+            windowIndex: snapshot.windowIndex,
+            screen: snapshot.screen,
+            screenUUID: screenUUID,
+            x: fraction.x, y: fraction.y, w: fraction.w, h: fraction.h
+        )
+    }
+
     var asDict: [String: Any] {
         var result: [String: Any] = [
             "app": app,

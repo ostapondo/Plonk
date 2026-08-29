@@ -32,9 +32,7 @@ enum ShortcutGuide {
     private static func collect(pid: pid_t) -> [Item] {
         let application = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(application, 1.0)
-        guard let value = copy(application, kAXMenuBarAttribute),
-              CFGetTypeID(value) == AXUIElementGetTypeID() else { return [] }
-        let bar = value as! AXUIElement
+        guard let bar = element(application, kAXMenuBarAttribute) else { return [] }
 
         var items: [Item] = []
         for topLevel in children(of: bar) {
@@ -98,6 +96,12 @@ enum ShortcutGuide {
 
     private static func string(_ element: AXUIElement, _ attribute: String) -> String? {
         copy(element, attribute) as? String
+    }
+
+    private static func element(_ element: AXUIElement, _ attribute: String) -> AXUIElement? {
+        guard let value = copy(element, attribute), CFGetTypeID(value) == AXUIElementGetTypeID()
+        else { return nil }
+        return (value as! AXUIElement)
     }
 
     private static func children(of element: AXUIElement) -> [AXUIElement] {

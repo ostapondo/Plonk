@@ -29,7 +29,19 @@ final class RulerRoutes {
             return
         }
 
-        let index = (body["screen"] as? NSNumber)?.intValue ?? 0
+        let index: Int
+        switch ScreenInput.parse(body["screen"]) {
+        case .omitted:
+            index = 0
+        case .attached(let attached, _):
+            index = attached
+        case .invalidType:
+            respond(.badRequest("screen must be a monitor index"))
+            return
+        case .notFound(let missing):
+            respond(.notFound("no screen \(missing); get_state lists them"))
+            return
+        }
         guard let screen = windows.screens().first(where: { $0.index == index }) else {
             respond(.notFound("no screen \(index); get_state lists them"))
             return

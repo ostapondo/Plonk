@@ -21,6 +21,14 @@ enum ScreenIdentity {
         return [uuid, String(index)]
     }
 
+    /// Storage keys only when the screen is attached now. Routes use this
+    /// before persisting an index supplied by a client; `keys(forIndex:)`
+    /// deliberately keeps accepting a bare legacy index while reading config.
+    static func attachedKeys(forIndex index: Int) -> [String]? {
+        guard let uuid = uuid(forIndex: index) else { return nil }
+        return [uuid, String(index)]
+    }
+
     /// The screen the pointer is on, falling back to the first one: a shortcut
     /// with no window to read a screen from acts on the one being looked at.
     static var indexUnderCursor: Int {

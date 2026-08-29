@@ -43,7 +43,19 @@ extension Router {
             respond(.failed("launching is not available"))
             return
         }
-        let screen = (body["screen"] as? NSNumber)?.intValue
+        let screen: Int?
+        switch ScreenInput.parse(body["screen"]) {
+        case .omitted:
+            screen = nil
+        case .attached(let index, _):
+            screen = index
+        case .invalidType:
+            respond(.badRequest("screen must be a monitor index"))
+            return
+        case .notFound(let index):
+            respond(.notFound("no screen \(index)"))
+            return
+        }
         launchWorkspace(name, workspace, screen) { results in
             respond(.ok([
                 "ok": results.allSatisfy { $0["ok"] as? Bool == true },
@@ -87,10 +99,9 @@ extension Router {
 
     /// Everything on screen, as a workspace.
     func snapshotWorkspace() -> [WorkspaceItem] {
-        windows.listWindows().compactMap { entry in
-            let screen = entry["screen"] as? Int
-            return WorkspaceItem(window: entry,
-                                 screenUUID: screen.flatMap { ScreenIdentity.uuid(forIndex: $0) })
+        windows.windowSnapshots().compactMap { snapshot in
+            WorkspaceItem(window: snapshot,
+                          screenUUID: ScreenIdentity.uuid(forIndex: snapshot.screen))
         }
     }
 }
