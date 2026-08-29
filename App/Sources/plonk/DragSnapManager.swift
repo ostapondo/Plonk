@@ -20,6 +20,8 @@ final class DragSnapManager {
     static let spanFlag: NSEvent.ModifierFlags = .command
 
     let windows: WindowManager
+    private let addMonitor: (NSEvent.EventTypeMask, @escaping (NSEvent) -> Void) -> Any?
+    private let removeMonitor: (Any) -> Void
     private var monitors: [Any] = []
     var overlays: [Int: ZoneOverlay] = [:]
     var currentZone: (screenIndex: Int, frac: FracRect)?
@@ -69,8 +71,16 @@ final class DragSnapManager {
     /// Reports a finished snap, so the frame the window had can be given back.
     var onSnap: ((_ window: AXUIElement, _ before: CGRect, _ frac: FracRect, _ screenIndex: Int) -> Void)?
 
-    init(windows: WindowManager) {
+    init(
+        windows: WindowManager,
+        addMonitor: @escaping (NSEvent.EventTypeMask, @escaping (NSEvent) -> Void) -> Any? = {
+            NSEvent.addGlobalMonitorForEvents(matching: $0, handler: $1)
+        },
+        removeMonitor: @escaping (Any) -> Void = { NSEvent.removeMonitor($0) }
+    ) {
         self.windows = windows
+        self.addMonitor = addMonitor
+        self.removeMonitor = removeMonitor
     }
 
     /// Take the settings as they now stand. Called after every config change,
@@ -88,16 +98,16 @@ final class DragSnapManager {
 
     func start() {
         guard monitors.isEmpty else { return }
-        if let m = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged, handler: { [weak self] event in
+        if let m = addMonitor(.leftMouseDragged, { [weak self] event in
             self?.handleDrag(event)
         }) { monitors.append(m) }
-        if let m = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp, handler: { [weak self] _ in
+        if let m = addMonitor(.leftMouseUp, { [weak self] _ in
             self?.handleMouseUp()
         }) { monitors.append(m) }
     }
 
     func stop() {
-        for monitor in monitors { NSEvent.removeMonitor(monitor) }
+        for monitor in monitors { removeMonitor(monitor) }
         monitors.removeAll()
         _ = endExternalDrag()
     }

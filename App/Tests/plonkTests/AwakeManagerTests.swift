@@ -4,6 +4,19 @@ import Foundation
 
 struct AwakeManagerTests {
 
+    @Test func watchingIsIdempotentAndStopsSymmetrically() {
+        let awake = AwakeManager()
+        awake.startWatching()
+        let timer = awake.watchTimer
+        #expect(timer != nil)
+        awake.startWatching()
+        #expect(awake.watchTimer === timer)
+        awake.stopWatching()
+        #expect(awake.watchTimer == nil)
+        #expect(awake.wakeToken == nil)
+        #expect(awake.powerSource == nil)
+    }
+
     @Test func restoreResumesASessionThatIsStillRunning() {
         let awake = AwakeManager()
         awake.restore(sessionEnd: Date().addingTimeInterval(600))

@@ -75,8 +75,9 @@ extension AwakeManager {
     /// the timers run for the life of the app, because a window can open at any
     /// time.
     func startWatching() {
+        guard watchTimer == nil else { return }
         watchTimer = Timer.common(every: Self.watchSeconds) { [weak self] in self?.reevaluate() }
-        NSWorkspace.shared.notificationCenter.addObserver(
+        wakeToken = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             // A Mac that slept through the start of the window never saw the
@@ -90,7 +91,21 @@ extension AwakeManager {
             DispatchQueue.main.async { manager.reevaluate() }
         }, context)?.takeRetainedValue() {
             CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode)
+            powerSource = source
         }
         reevaluate()
+    }
+
+    func stopWatching() {
+        watchTimer?.invalidate()
+        watchTimer = nil
+        if let wakeToken {
+            NSWorkspace.shared.notificationCenter.removeObserver(wakeToken)
+            self.wakeToken = nil
+        }
+        if let powerSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), powerSource, .defaultMode)
+            self.powerSource = nil
+        }
     }
 }

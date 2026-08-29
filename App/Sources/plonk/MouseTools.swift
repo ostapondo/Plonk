@@ -20,11 +20,15 @@ import AppKit
 
 final class MouseTools {
     private let overlay = MouseOverlay()
-    private var tap: EventTap?
+    private let tapFactory: (CGEventMask, CGEventTapOptions, String,
+                             @escaping EventTapHandler) -> EventTapToken?
+    private let isTrusted: () -> Bool
+    private var tap: EventTapToken?
     private var spotlightToken = 0
     private var lastCrosshair: NSPoint?
     private var pendingCrosshair: NSPoint?
     private var crosshairUpdateScheduled = false
+    private var tapGeneration = 0
 
     var highlightEnabled = false
     var crosshairsEnabled = false {
@@ -32,6 +36,17 @@ final class MouseTools {
     }
     /// Colours, sizes and how long a ring lasts; see PointerAppearance.
     var look = PointerAppearance()
+
+    init(
+        tapFactory: @escaping (CGEventMask, CGEventTapOptions, String,
+                               @escaping EventTapHandler) -> EventTapToken? = {
+            EventTap(mask: $0, options: $1, name: $2, handler: $3)
+        },
+        isTrusted: @escaping () -> Bool = { WindowAccess.isTrusted }
+    ) {
+        self.tapFactory = tapFactory
+        self.isTrusted = isTrusted
+    }
 
     /// Take the settings as they now stand. Called after every config change,
     /// so it stops only a tap that is actually running: `stop` also hides the
@@ -63,7 +78,7 @@ final class MouseTools {
     /// runs after every config write, so it would fail and log on each. The
     /// grant watcher applies the config again once it lands.
     func start() {
-        guard tap == nil, WindowAccess.isTrusted else { return }
+        guard tap == nil, isTrusted() else { return }
         var mask: CGEventMask = 0
         if highlightEnabled {
             mask |= (1 << CGEventType.leftMouseDown.rawValue)
@@ -76,7 +91,7 @@ final class MouseTools {
 
         // A listen-only tap: these tools watch the pointer, they never take an
         // event away from anybody.
-        tap = EventTap(mask: mask, options: .listenOnly, name: "mouse-tools") { [unowned self] type, event in
+        tap = tapFactory(mask, .listenOnly, "mouse-tools") { [unowned self] type, event in
             handle(type, event)
             return Unmanaged.passUnretained(event)
         }
@@ -85,6 +100,7 @@ final class MouseTools {
 
     func stop() {
         tap = nil
+        tapGeneration += 1
         pendingCrosshair = nil
         crosshairUpdateScheduled = false
         lastCrosshair = nil
@@ -150,8 +166,10 @@ final class MouseTools {
             guard highlightEnabled else { return }
             let point = event.unflippedLocation
             let right = type == .rightMouseDown
+            let generation = tapGeneration
             DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
+                guard let self, tap != nil, highlightEnabled,
+                      tapGeneration == generation else { return }
                 overlay.pulse(at: point, right: right, look: look)
             }
         case .mouseMoved, .leftMouseDragged:
@@ -161,9 +179,12 @@ final class MouseTools {
             pendingCrosshair = point
             guard !crosshairUpdateScheduled else { return }
             crosshairUpdateScheduled = true
+            let generation = tapGeneration
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 crosshairUpdateScheduled = false
+                guard tap != nil, crosshairsEnabled,
+                      tapGeneration == generation else { return }
                 guard let point = pendingCrosshair else { return }
                 pendingCrosshair = nil
                 lastCrosshair = point
