@@ -2,7 +2,7 @@
 
 What changed in each release, from a user's side. The commit log has the rest.
 
-## Unreleased
+## 0.4.1 — 2026-08-30
 
 ### Changed
 
