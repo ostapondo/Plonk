@@ -2,6 +2,14 @@
 
 What changed in each release, from a user's side. The commit log has the rest.
 
+## Unreleased
+
+### Changed
+
+- **Plonk now presents itself as a native macOS toolbox.** The website, README,
+  social card and package metadata treat window management as one module in the
+  suite rather than the identity of the whole app.
+
 ## 0.4.1 — 2026-08-30
 
 ### Changed

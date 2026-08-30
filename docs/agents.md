@@ -1,9 +1,9 @@
 # For agents
 
-This is the part no other Mac window manager has. Plonk exposes its whole
-surface over MCP, so an agent can read the desk, rearrange it, save the result
-and read the screen back — without a screenshot round trip for anything that is
-really just words.
+Plonk exposes the same native toolbox over MCP, so an agent can read and arrange
+the desk, save the result, keep the Mac awake, capture or measure the screen and
+read its words — without a screenshot round trip for anything that is really
+just text.
 
 Frames are fractions of a monitor's visible area, origin top-left — which is why
 "left 60%" is just `{x: 0, y: 0, w: 0.6, h: 1}`.

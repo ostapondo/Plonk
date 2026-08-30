@@ -1,7 +1,26 @@
-# Cube and colour
+# Plonk visual system
 
-The design the site, the README and the app share, and the scripts that render
-its assets.
+The visual language shared by the app, README and site, plus the reproducible
+scripts that render its assets.
+
+## Brand art
+
+The public face is **Placed Matter**, documented in
+[`plonk-visual-philosophy.md`](plonk-visual-philosophy.md). It treats Plonk as
+one modular instrument rather than a catalogue of features: eight abstract
+forms find a precise place around the cube, without feature icons, fake UI or
+generated 3D materials. `render-brand-art.py` produces both committed PNGs from
+the same geometry, fonts and paper texture:
+
+```sh
+uv run --with pillow python docs/design/render-brand-art.py
+```
+
+- `docs/brand-hero.png` is the README and website hero at 1600 × 900.
+- `docs/social-preview.png` is the 2:1 link card at 1280 × 640.
+
+The renderer uses the real app icon and the bundled `canvas-design` fonts. The
+random paper grain is seeded, so identical source produces identical images.
 
 ## Two rules
 
@@ -36,49 +55,13 @@ behind it, and it overlaps the edge of the glass rather than sitting inside it.
 
 ## Regenerating the assets
 
-Every one of these drives the real stylesheets through Chromium, so the pictures
-cannot drift away from the design — change a colour and re-run.
+The interface mockups still drive the real stylesheets through Chromium, so
+those pictures cannot drift away from the design — change a colour and re-run.
 
 ```sh
 npm i playwright && python3 -m pip install pillow   # once
-node docs/design/shoot.js && python3 docs/design/assemble.py   # docs/banner.gif
 node docs/design/shots.js                                       # app screenshots
-
-# docs/social-preview.png, 640x320 at 2x. Chrome directly, because one still
-# frame is not worth a playwright install, and the flags are part of the
-# recipe: two runs with these are byte-identical, and dropping --disable-gpu
-# rasterises differently and produces a different file.
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-  --headless --disable-gpu --hide-scrollbars \
-  --force-device-scale-factor=2 --window-size=640,320 \
-  --screenshot=docs/social-preview.png docs/design/social.html
 ```
-
-`scene.html` is the banner animation. It carries no `animation-delay`: a
-delayed animation has not begun at `currentTime` 0, so frame 0 came out
-un-animated and flashed once per loop, and its phase at 3s no longer matched
-its phase at 0 — a fill mode hides the first fault but not the second.
-50 frames at 60 ms is exactly 3000 ms; GIF stores delays in centiseconds, so
-a frame time that is not a multiple of 10 ms silently rounds and the loop
-drifts. Every animation in the scene is exactly 3s long so the loop closes
-without a stutter, and `shoot.js` pauses them all and steps `currentTime` by
-hand, which is what makes the frames deterministic.
-
-Two things that cost an afternoon each, both now encoded in the scripts:
-
-- `page.screenshot({ animations: 'disabled' })` **rewinds** the animations you
-  just positioned. Do not pass it when sampling frames.
-- GIF `disposal=2` defeats frame differencing. Only the window moves in the
-  banner, so leaving it off took the file from 3.5 MB to 357 KB. Dithering
-  costs another 500 KB on a flat mesh for banding nobody can see at this
-  size. Both are now switched off in `assemble.py` itself, which is the
-  point: the script has to reproduce the committed file, or the claim that
-  the assets cannot drift is not true.
-
-`social.html` is that same drawing at rest: the card GitHub, Slack and every
-other chat window draw when someone pastes the link. One frame needs no
-pipeline, so Chrome writes the PNG straight out. Keep it 1280x640 — what GitHub
-asks for, and what the file it replaced already was.
 
 `mac.html` holds four full-size macOS scenes at real system metrics — 13px body
 text, a 38px unified toolbar, a 220px sidebar, 12px traffic lights — and
