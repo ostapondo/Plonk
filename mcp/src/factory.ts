@@ -121,7 +121,7 @@ function startInboxLoop(server: McpServer, identity: AgentIdentity): () => void 
             messages: [{ role: "user", content: { type: "text", text: task.prompt } }],
             maxTokens: 4_000,
             systemPrompt:
-              "The user sent this through Plonk, the Mac window manager this agent controls over MCP. Act on it with the plonk tools where they apply.",
+              "The user sent this through Plonk, the native Mac toolbox this agent controls over MCP. Act on it with the plonk tools where they apply.",
           })
           .catch((err) => console.error(`plonk-mcp: sampling failed for task ${task.id}:`, err));
       }

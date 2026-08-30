@@ -2,7 +2,7 @@
   "name": "plonk-mcp",
   "version": "0.4.1",
   "mcpName": "io.github.ostapondo/plonk",
-  "description": "MCP server for Plonk, a macOS window manager: zones you draw yourself, workspaces, keep-awake, screenshots and on-device OCR, as tools an agent can call.",
+  "description": "MCP server for Plonk, a native macOS toolbox for windows, workspaces, screenshots, OCR, measuring, keep-awake, pointer tools and voice.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -18,7 +18,7 @@
     "claude",
     "claude-code",
     "macos",
-    "window-manager",
+    "macos-tools",
     "workspaces",
     "zones",
     "screenshots",
