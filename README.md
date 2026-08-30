@@ -47,49 +47,9 @@ windows where they belong.
 layouts, workspaces, screenshots, OCR, measuring, keep-awake and the rest. The
 app stays the source of truth, and the whole surface remains on your Mac.
 
-You most likely already have Rectangle, Magnet, Loop or Raycast. If a fixed grid
-of halves and thirds is all you want, they do it well. Window management is one
-part of Plonk, not the identity of the whole app.
-
-Coming from one of them costs nothing: the ten placement shortcuts are the same
-keys, one button takes the rest, and an existing `rectangle://` script is one
-substitution away. [Coming from Rectangle](docs/from-rectangle.md) is the whole
-of it.
-
 **It is early.** Version 0.4.x, one author. Shortcuts, zone files and workspaces
 are settled. The MCP tool names and the HTTP API are not, and can still change
 between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
-
-## Three ways to move a window
-
-<p align="center">
-  <img src="docs/ways.svg" width="720"
-       alt="Four cards, one per way to move a window: drag it and the zones light up, hold ⌘ for two at once; ⌃⌥1 to ⌃⌥9 for the numbered zones with ⌃⌥0 as the oops key; ⌃⌥V to say it, offline and on-device; or ask an agent, through twenty-two MCP tools">
-</p>
-
-**Drag it.** Zones light up as you move a window, and it drops into one. Hold
-`⌘` too and it takes two of them at once. Turn on grab-and-move to pull a window
-from anywhere inside it instead of aiming for the title bar.
-
-**Press a key.** `⌃⌥←` for the left half, and again for two thirds. `⌃⌥1` to
-`⌃⌥9` for the numbered zones on that screen. `⌃⌥⌘→` throws a window to the
-next display. `⌃⌥0` puts a window back where it was before Plonk touched it.
-
-**Say it.** Hold `⌃⌥V` and name the place: "snap this left", "zone three". That
-runs in the app, offline, on-device.
-
-Five zone sets ship with it, and past those you draw your own. Swap the set on a
-screen and any window already in a numbered zone moves to wherever that number
-is now.
-
-<p align="center">
-  <img src="docs/zone-swap.svg" width="720"
-       alt="The same screen under two zone sets. In the first, zone 1 is a narrow left rail, zone 2 the wide middle, zone 3 the right column; after ⌃⌥⇧2 the shape is different but the numbers are not, so the window in zone 2 is still in zone 2">
-</p>
-
-Colour is the zone number, everywhere it is drawn: 1 rose, 2 plum, 3 blue,
-4 mint, 5 sun, 6 sky. In the overlay you drag into, in the editor, in the menu
-bar, and in every picture on this page. A set can be read before a digit is.
 
 ## Install
 
@@ -191,28 +151,15 @@ and agent routes while keeping its settings for later.
 
 | | |
 | --- | --- |
-| **[Zones](docs/zones.md)** | Overlap them, gap them, hide the numbers, keep a list of apps Plonk never touches. Windows go back where they sat after a display is unplugged and plugged back in, the ones Plonk placed and the rest, from a note of the desk kept as windows move |
-| **[Workspaces](docs/workspaces.md)** | Files, folders or URLs each app should open on the way up, so a desk comes back with the right documents and not just the right apps. Monitors are keyed by UUID, so unplugging one does not scramble them |
-| **Focus that follows the layout** | `⌃⌥⇧←` goes to the window actually on the left, not the one you used last. `` ⌃⌥` `` cycles the windows stacked in one zone |
-| **Voice** | Hold `⌃⌥V` and say it. Common commands run in the app, offline. Anything bigger goes to your agent. Recognition is on-device |
-
-And the [MCP server](#for-agents), which is every one of these as a tool an
-agent can call.
-
-<details>
-<summary>The rest of the toolbox</summary>
-
-<br>
-
-| | |
-| --- | --- |
-| **Text off the screen** | `⌃⌥T` selects an area and copies the words in it: a screenshot, a paused video, a dialog that will not let you select. On-device |
-| **A ruler** | `⌃⌥R`, then hover: how far the pointer can go each way before it meets an edge, read off the pixels. The width of a row, the height of a bar, the gap between two things. Drag for a straight-line distance. Points and pixels both |
-| **Pin part of the screen** | Float a live crop above everything else. A build log, a chart, a call, visible in a corner while you work over it |
-| **Pulse** | Real power assertions, not a jiggler, and one switch further: also hold your chat status at available, which is the one thing here that fakes input, because Slack and Teams read the idle clock and an assertion never touches it. Sessions start by hand, on a schedule, while an app is open or while charging, and end by themselves: after N minutes, at a wall-clock time, or when a process exits. A lid-closed hold keeps the Mac running with the lid shut, and hands sleep back when you switch it off |
-| **Screenshots** | Region, window or screen, then pen, arrow, rectangle, ellipse, highlighter. Saved at native resolution |
-| **A shortcut guide** | Every shortcut the front app actually has, read from its own menus, so it is never out of date |
-| **Pointer tools** | Find the cursor, ring every click for a recording, crosshairs, jump to the next display. The ring, the crosshairs and the circle each take a colour, a size and a weight, and right clicks can carry a colour of their own |
+| **Screenshots and annotation** | Capture a region, window or full screen at native resolution, then add pen strokes, arrows, shapes or highlights before saving |
+| **On-device OCR** | `⌃⌥T` copies words from a screenshot, paused video, dialog or locked PDF without uploading a pixel |
+| **Screen ruler** | `⌃⌥R` reads clearances and dragged distances in both macOS points and physical pixels |
+| **Live crops** | Pin a changing part of the screen above everything else. It streams live and is never written to disk |
+| **Pulse** | Keep the Mac awake by timer, schedule, open app, charging state or process lifetime. It uses real power assertions and hands sleep back when the session ends |
+| **Pointer tools** | Find the cursor, add configurable crosshairs or click rings, and jump the pointer to the next display |
+| **Shortcut guide** | Read every shortcut the front app actually exposes through its menus instead of relying on a stale cheat sheet |
+| **[Zones and workspaces](docs/zones.md)** | Draw window places, save apps and documents as a desk, and return everything to the correct displays. [Workspace details](docs/workspaces.md) |
+| **Voice, CLI and agents** | Run the same tools by name, from speech, the `plonk` command or twenty-two MCP tools. Recognition for common voice commands stays on-device |
 
 All but the shortcut guide can be switched off, from Tools in the menu bar
 dropdown or the Tools page. Off means gone: out of the sidebar, out of the
@@ -220,7 +167,10 @@ menu, its shortcuts released, and its tools refused to agents until it is back
 on. The same switches cover zones, workspaces and voice, so desk arrangement
 can stand down while the rest of Plonk keeps running.
 
-</details>
+If you are coming from Rectangle, Magnet, Loop or Raycast, the familiar window
+shortcuts can come with you. One button imports Rectangle bindings and existing
+`rectangle://` scripts need one substitution. [Coming from Rectangle](docs/from-rectangle.md)
+has the details.
 
 Longer versions: [Zones](docs/zones.md) · [Workspaces](docs/workspaces.md) ·
 [Hotkeys](docs/hotkeys.md) · [Everything else](docs/features.md) ·
@@ -228,28 +178,21 @@ Longer versions: [Zones](docs/zones.md) · [Workspaces](docs/workspaces.md) ·
 
 ## For agents
 
-An agent can read the desk, rearrange it, save the result, and read text back
-off the screen, with no screenshot round trip for anything that is really just
-words.
+An agent gets the same toolbox as the menu bar: capture or read the screen,
+measure an interface, control an awake session, inspect the desk, arrange it and
+save the result.
 
 ```
-browser on the left 60%, terminal top right, notes bottom right
-save that as a workspace called "review"
 keep the Mac awake until this build finishes
 read the error out of that dialog and tell me what it says
 how tall is that toolbar, in points and in pixels
+capture this window and highlight the warning
+put the browser on the left, then save this desk as "review"
 ```
 
-Twenty-two tools across state, layouts, workspaces, zones, keep-awake,
-screenshots, on-device OCR and measuring. Frames are fractions of a monitor's
-visible area, origin top-left, so "left 60%" is `{x: 0, y: 0, w: 0.6, h: 1}`.
-Several agents can connect at once, each registering itself, with an optional
-mode that locks changes to the active one.
-
-<p align="center">
-  <img src="docs/agent-desk.svg" width="720"
-       alt="A sentence typed to an agent becomes a desk: the browser takes the left 0.6 of the screen, the terminal the top right and the notes the bottom right, and the result is saved as a workspace called review">
-</p>
+Twenty-two tools cover state, capture, OCR, measuring, keep-awake, layouts,
+workspaces and zones. Several agents can connect at once, each registering
+itself, with an optional mode that locks changes to the active one.
 
 Setup, if you want the `plonk` CLI or an agent driving it (Node 18+):
 
@@ -356,10 +299,10 @@ need a signing certificate.
   where the code is and how to tell it worked, and carries a prompt you can hand
   to an agent, since [AGENTS.md](AGENTS.md) already explains the repo to one.
 - **[needs-hardware][hw]** is where a request for a desk nobody here has gets
-  tagged, and answering one needs neither Swift nor a certificate. A window
-  manager breaks on arrangements the author cannot see, so a report from three
-  monitors or an ultrawide is worth more than a patch. An empty list is not a
-  filled gap: open an issue with the arrangement you have and what happened.
+  tagged, and answering one needs neither Swift nor a certificate. Desk tools
+  meet hardware the author cannot see, so a report from three monitors or an
+  ultrawide is worth more than a patch. An empty list is not a filled gap: open
+  an issue with the arrangement you have and what happened.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) has the rest, including how long a review
 takes. Questions and half-formed ideas go to

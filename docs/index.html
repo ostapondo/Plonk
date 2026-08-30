@@ -454,7 +454,7 @@ pre .c{color:#9c96b8}
     <p class="lead">Windows, workspaces, screenshots, OCR, measuring, keep-awake, pointer tools, shortcuts, voice and agents. Native, local and modular.</p>
     <div class="cta">
       <a class="btn dark" href="#install">Get Plonk</a>
-      <a class="btn ghost" href="#features">See the tools</a>
+      <a class="btn ghost" href="#toolbox">See the tools</a>
       <p class="fine">macOS 13 or newer, Apple silicon &middot; free and MIT &middot; no account, no cloud, no telemetry</p>
     </div>
 
@@ -480,131 +480,65 @@ pre .c{color:#9c96b8}
     </div>
   </section>
 
-  <!-- ================= THREE WAYS ================= -->
-  <section class="card glass" id="ways">
-    <p class="eyebrow">Three ways</p>
-    <h2 class="h2">Whichever your hands prefer.</h2>
+  <!-- ================= CAPTURE ================= -->
+  <section class="card glass" id="capture">
+    <p class="eyebrow">Capture and understand</p>
+    <h2 class="h2">The screen becomes useful input.</h2>
+    <p class="lead">Keep a visual, pull text out of it, measure it, or pin the part that keeps changing. The pixels stay on your Mac.</p>
+    <div class="grid2">
+      <div class="cell"><span class="k">&#8963;&#8997;S</span><b>Capture and mark up</b><p>Take a region, window or full screen at native resolution, then add a pen stroke, arrow, shape or highlight before saving.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;T</span><b>Copy text from anywhere</b><p>Select words in a paused video, image, dialog or locked PDF. Vision runs on-device and places the result on the clipboard.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;R</span><b>Measure the interface</b><p>Hover for clearances or drag for a straight-line distance. Plonk reports both macOS points and physical pixels.</p></div>
+      <div class="cell"><span class="k">&#8963;&#8997;P</span><b>Pin a live crop</b><p>Keep a build log, chart or call visible above the rest of the desk. The crop streams live and is never written to disk.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= FLOW ================= -->
+  <section class="card glass" id="flow">
+    <p class="eyebrow">Stay in the flow</p>
+    <h2 class="h2">Small tools that disappear<br>until they are needed.</h2>
+    <p class="lead">Keep the Mac awake for the right amount of time, find the pointer, reveal an app's shortcuts, or run any Plonk action by name.</p>
     <div class="rows">
-      <div class="rw">
-        <span class="faceholder" style="--g:var(--z1)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-wink"/></svg></span>
-        <div><b>Drag it</b><p>The zones light up while the window is in your hand. Hold <kbd>&#8984;</kbd> and it takes two of them at once. Grab-and-move lets you pull a window from anywhere inside it, not just the title bar.</p></div>
-      </div>
-      <div class="rw">
-        <span class="faceholder" style="--g:var(--z2)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-focus"/></svg></span>
-        <div><b>Press a key</b><p>Nine zones live on the digits: <kbd>&#8963;&#8997;1</kbd>&ndash;<kbd>&#8963;&#8997;9</kbd>. Zero is the oops key &mdash; it puts a window back exactly where it was before Plonk touched it.</p></div>
-      </div>
-      <div class="rw">
-        <span class="faceholder" style="--g:var(--z3)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-talk"/></svg></span>
-        <div><b>Say it</b><p>Hold <kbd>&#8963;&#8997;V</kbd> and name the place. It listens on the Mac, offline and on-device, and the common commands run in the app itself. Nobody hears you but the laptop.</p></div>
-      </div>
+      <div class="rw"><span class="faceholder" style="--g:var(--z1)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-focus"/></svg></span><div><b>Pulse ends by itself</b><p>Hold sleep off for a timer, until a wall-clock time, while an app is open, while charging, or exactly as long as a process runs.</p></div></div>
+      <div class="rw"><span class="faceholder" style="--g:var(--z2)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-wink"/></svg></span><div><b>Make the pointer visible</b><p>Find a lost cursor, add crosshairs, show click rings in a recording, or jump it to the next display.</p></div></div>
+      <div class="rw"><span class="faceholder" style="--g:var(--z3)"><svg viewBox="0 0 100 112" aria-hidden="true"><use href="#f-talk"/></svg></span><div><b>Ask the app instead of hunting</b><p><kbd>&#8963;&#8997;A</kbd> runs every tool and settings page by name. The shortcut guide reads the front app's actual menus, so its answers do not go stale.</p></div></div>
     </div>
-    <div class="keys">
-      <kbd>&#8963;&#8997;1</kbd><kbd>&#8963;&#8997;&larr;</kbd><kbd>&#8963;&#8997;0</kbd><kbd>&#8963;&#8997;V</kbd>
-    </div>
-    <p class="p" style="margin-top:22px">The whole sheet is on the <a href="hotkeys.md">hotkeys page</a>. Every one of them is rebindable, and any of them can be left unbound.</p>
   </section>
 
-  <!-- ================= ZONES ================= -->
-  <section class="card glass" id="zones">
-    <p class="eyebrow">Zones</p>
-    <h2 class="h2">Not a grid of halves.<br>Your grid.</h2>
-    <p class="lead">Any number of zones, any size, a different set on every monitor, overlapping if that suits you. Click a zone to cut it in half, <b>&#8679;-click cuts the other way</b>. That is the whole editor.</p>
-
-    <div class="screen swap" aria-hidden="true">
-      <div class="z n1 k1">1</div>
-      <div class="z n2 k2">2</div>
-      <div class="z n3 k3">3</div>
-      <div class="z n4 k4">4</div>
-      <div class="z n5 k5">5</div>
-      <span class="setlab l1">Halves</span>
-      <span class="setlab l2">Thirds</span>
-      <span class="setlab l3">Priority</span>
-    </div>
-    <p class="p" style="margin-top:18px"><b>Watch the plum rectangle.</b> Swap the set on a screen and any window already sitting in a numbered zone moves to wherever that number is now &mdash; it changes shape, never its number, and so never its colour. That is the part no preset-grid manager does.</p>
-
-    <div class="rail-mask" aria-hidden="true">
-      <div class="rail">
-        <div class="set"><div class="g prio"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b><b class="n5"></b></div><div class="n">Priority <span>5 zones</span></div></div>
-        <div class="set"><div class="g halves"><b class="n1"></b><b class="n2"></b></div><div class="n">Halves <span>2 zones</span></div></div>
-        <div class="set"><div class="g thirds"><b class="n1"></b><b class="n2"></b><b class="n3"></b></div><div class="n">Thirds <span>3 zones</span></div></div>
-        <div class="set"><div class="g sixty"><b class="n1"></b><b class="n2"></b></div><div class="n">60 / 40 <span>2 zones</span></div></div>
-        <div class="set"><div class="g quarters"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b></div><div class="n">Quarters <span>4 zones</span></div></div>
-        <div class="set"><div class="g prio"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b><b class="n5"></b></div><div class="n">Priority <span>5 zones</span></div></div>
-        <div class="set"><div class="g halves"><b class="n1"></b><b class="n2"></b></div><div class="n">Halves <span>2 zones</span></div></div>
-        <div class="set"><div class="g thirds"><b class="n1"></b><b class="n2"></b><b class="n3"></b></div><div class="n">Thirds <span>3 zones</span></div></div>
-        <div class="set"><div class="g sixty"><b class="n1"></b><b class="n2"></b></div><div class="n">60 / 40 <span>2 zones</span></div></div>
-        <div class="set"><div class="g quarters"><b class="n1"></b><b class="n2"></b><b class="n3"></b><b class="n4"></b></div><div class="n">Quarters <span>4 zones</span></div></div>
-      </div>
-    </div>
-    <p class="p" style="margin-top:20px">Five sets ship in the box; past those you draw your own, or describe it and let an agent build it. <a href="zones.md">Everything zones can do</a> &mdash; overlap, gaps, hiding the numbers, and the list of apps Plonk keeps its hands off.</p>
-  </section>
-
-  <!-- ================= THE APP ================= -->
-  <section class="card glass" id="app">
-    <p class="eyebrow">The app</p>
-    <h2 class="h2">Five places to be, not eleven.</h2>
-    <p class="lead">Anything the app can do has a name you can type. The theme is yours to pick, and the zone overlay and the heads-up display follow it.</p>
+  <!-- ================= ARRANGE ================= -->
+  <section class="card glass" id="arrange">
+    <p class="eyebrow">Arrange and return</p>
+    <h2 class="h2">A desk that fits the work.</h2>
+    <p class="lead">Windows are one module in the toolbox: draw the places you need, save the whole workspace, and bring it back on the correct displays.</p>
     <div class="split">
-      <figure class="shot" style="margin-top:0">
-        <img src="design/shots/s-zones.jpg" width="1600" height="1105" loading="lazy"
-             alt="Plonk's Zones page: a sidebar grouped into Layout, Tools and Automation, a row of zone-set tabs, the Priority set drawn full width in five colours with each zone's fraction printed in it, and grouped settings for dragging, gaps and overlay numbers">
-        <figcaption>Zones. The set you are editing is the page, not a separate window &mdash; and the colour is the number.</figcaption>
-      </figure>
+      <div>
+        <p class="p"><b>Zones are yours.</b> Any count, size or overlap, with a different set per monitor. Place a window by drag, shortcut or voice; swap layouts without losing which numbered place it belongs to.</p>
+        <p class="p"><b>Workspaces remember context.</b> Save apps, frames, displays and the files, folders or URLs each app should open. Display UUIDs keep the desk stable when a monitor is unplugged.</p>
+        <p class="p"><a href="zones.md">Everything about zones</a> &middot; <a href="workspaces.md">How workspaces return</a> &middot; <a href="hotkeys.md">All shortcuts</a></p>
+      </div>
       <figure class="shot" style="margin-top:0">
         <img src="design/shots/s-menu.jpg" width="1600" height="1000" loading="lazy"
-             alt="The Plonk menu bar panel open over a desktop: the current zone set drawn in its five colours, two saved desks with their shortcuts, the capture and ruler tools, and a keep-awake timer">
-        <figcaption>The menu bar. The same set, the same desks, without opening the window.</figcaption>
+             alt="The Plonk menu bar showing a zone set, saved workspaces, capture and ruler actions, and a keep-awake timer">
+        <figcaption>Arrangement lives beside the rest of the toolbox, not above it.</figcaption>
       </figure>
     </div>
-    <div class="grid2">
-      <div class="cell"><span class="k">&#8963;&#8997;A</span><b>Run anything by name</b><p>Every zone, every workspace, every settings page, every shortcut. The same list of verbs an agent gets over MCP, with a search field in front of it.</p></div>
-      <div class="cell"><span class="k">colour</span><b>The number is the colour</b><p>Zone 1 is rose, 2 plum, 3 blue, 4 mint, 5 sun &mdash; in the overlay, in the editor, in the menu bar and on this page. One fact, said twice.</p></div>
-    </div>
-  </section>
-
-  <!-- ================= DESKS ================= -->
-  <section class="card glass" id="workspaces">
-    <p class="eyebrow">Workspaces</p>
-    <h2 class="h2">It remembers <span class="grad-text">which monitor.</span></h2>
-    <p class="lead">Save the desk once: the apps, every window's frame, the display each one belongs on, and what each app should open on the way up. Close the lot, go home, come back &mdash; and it builds itself again.</p>
-    <div class="desks">
-      <div class="desk">
-        <div class="t"><b>review</b><span>&#8963;&#8997;&#8679;R &middot; 2 displays</span></div>
-        <div class="mon">
-          <i style="flex:1.3;background:linear-gradient(160deg,var(--z1-lo),var(--z1))"></i>
-          <i style="flex:2;background:linear-gradient(160deg,var(--z2-lo),var(--z2))"></i>
-          <i style="flex:1;background:linear-gradient(160deg,var(--z3-lo),var(--z3))"></i>
-        </div>
-        <div class="ap"><span>Safari &middot; 6 tabs</span><span>Terminal</span><span>Notes</span></div>
-      </div>
-      <div class="desk">
-        <div class="t"><b>writing</b><span>&#8963;&#8997;&#8679;W &middot; 1 display</span></div>
-        <div class="mon">
-          <i style="flex:2.4;background:linear-gradient(160deg,var(--z4-lo),var(--z4))"></i>
-          <i style="flex:1;background:linear-gradient(160deg,var(--z5-lo),var(--z5))"></i>
-        </div>
-        <div class="ap"><span>iA Writer &middot; ~/drafts</span><span>Music</span></div>
-      </div>
-    </div>
-    <p class="p" style="margin-top:20px">Monitors are keyed by display UUID, so unplugging one does not scramble them. <a href="workspaces.md">How workspaces work</a>, including the one thing macOS will not let them do.</p>
   </section>
 
   <!-- ================= AGENTS ================= -->
   <section class="card glass" id="agents">
     <p class="eyebrow">For agents</p>
-    <h2 class="h2">Or just ask.</h2>
-    <p class="lead">Twenty-two MCP tools across layouts, workspaces, zones, keep-awake, screenshots, on-device OCR and measuring. This is the app's own tool surface, not a generic automation layer bolted on beside it.</p>
+    <h2 class="h2">The same toolbox,<br>without the clicking.</h2>
+    <p class="lead">Twenty-two MCP tools cover capture, OCR, measuring, keep-awake, layouts, workspaces and zones. This is the app's own surface, not generic automation bolted on beside it.</p>
     <div class="term">
-      <div class="u">browser on the left 60%, terminal top right, notes bottom right</div>
-      <div class="r ok">&#10003; 3 windows placed</div>
-      <div class="u">save that as a workspace called &ldquo;review&rdquo;</div>
-      <div class="r ok">&#10003; saved &middot; 2 monitors</div>
       <div class="u">keep the Mac awake until this build finishes</div>
       <div class="r">awake &middot; until npm run build exits</div>
       <div class="u">read the error out of that dialog and tell me what it says</div>
       <div class="r">EADDRINUSE 127.0.0.1:7654</div>
+      <div class="u">measure that toolbar, then capture the warning</div>
+      <div class="r ok">&#10003; 52 pt / 104 px &middot; capture saved</div>
+      <div class="u">put the browser on the left and save this desk as &ldquo;review&rdquo;</div>
+      <div class="r ok">&#10003; placed and saved &middot; 2 monitors</div>
     </div>
-    <p class="p" style="margin-top:20px">Frames are fractions of a monitor's visible area, origin top-left &mdash; so &ldquo;left 60%&rdquo; is literally <b>{x: 0, y: 0, w: 0.6, h: 1}</b>. The same number the app prints inside each zone, so the interface and the API never disagree.</p>
     <div class="split" style="margin-top:20px">
       <pre><span class="c"># Claude Code</span>
 claude mcp add plonk -- npx -y plonk-mcp
@@ -626,22 +560,6 @@ codex mcp add plonk -- npx -y plonk-mcp</pre>
       <div class="stat c"><b>0</b><span>dependencies in the app</span></div>
       <div class="stat d"><b>0</b><span>bytes sent to a cloud</span></div>
     </div>
-  </section>
-
-  <!-- ================= THE REST ================= -->
-  <section class="card glass" id="features">
-    <p class="eyebrow">The toolbox</p>
-    <h2 class="h2">One app. Use only what you need.</h2>
-    <div class="grid2">
-      <div class="cell"><span class="k">&#8963;&#8997;T</span><b>Text off the screen</b><p>Select an area and the words are in your clipboard &mdash; a screenshot, a paused video, a PDF that will not let you select. On-device.</p></div>
-      <div class="cell"><span class="k">&#8963;&#8997;R</span><b>A ruler</b><p>How far the pointer can travel each way before it meets an edge. Points and pixels both, because a 44-point tap target is 88 pixels and only one of those is in the asset.</p></div>
-      <div class="cell"><span class="k">&#8963;&#8997;P</span><b>Pin part of the screen</b><p>Float a live crop above everything else: a build log, a chart, a call, visible in a corner while you work over it. Streamed, never written down.</p></div>
-      <div class="cell"><span class="k">pulse</span><b>Pulse</b><p>Real power assertions, not a jiggler, and one switch further: hold your chat status at available too. Sessions end by themselves: after N minutes, at a wall-clock time, or the moment a process exits.</p></div>
-      <div class="cell"><span class="k">&#8963;&#8997;S</span><b>Screenshots</b><p>Region, window or screen, then pen, arrow, rectangle, ellipse and highlighter. Saved at native resolution.</p></div>
-      <div class="cell"><span class="k">&#8963;&#8997;&#8679;/</span><b>A shortcut guide</b><p>Every shortcut the front app actually has, read from its own menus rather than from a table someone has to keep up to date.</p></div>
-      <div class="cell"><span class="k">&#8963;&#8997;/</span><b>Pointer tools</b><p>Find the cursor when you have lost it, ring every click for a screen recording, crosshairs, and a key that warps the pointer to the next display.</p></div>
-    </div>
-    <p class="p" style="margin-top:20px"><a href="features.md">Everything else, in full</a> &mdash; grab-and-move, notices, the module switches, and how an update is checked before it is unpacked.</p>
   </section>
 
   <!-- ================= PRIVACY ================= -->
