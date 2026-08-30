@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="docs/banner.gif" width="640"
-       alt="The Plonk cube drops a window into the second of four gradient-filled zones, which frames it with a visible gap">
+  <img src="docs/brand-hero.png" width="800"
+       alt="A printed Plonk composition: eight coloured modules arranged around the cube as one system">
 </p>
 
 <h1 align="center">Plonk</h1>
 
-<p align="center"><strong>Give every window a place to live. Draw the boxes you
-actually want, then drop windows into them — with a drag, a key, or by saying so
-out loud.</strong><br>
+<p align="center"><strong>A toolbox for your Mac, behind one menu bar icon.</strong><br>
+Windows, workspaces, screenshots, OCR, a ruler, keep-awake, pointer tools,
+shortcuts, voice and agents — native, local and modular.<br>
 <sub>To plonk is to set a thing down exactly where it belongs.</sub></p>
 
 <p align="center">
@@ -25,36 +25,38 @@ out loud.</strong><br>
   <a href="https://ostapondo.github.io/Plonk/"><strong>ostapondo.github.io/Plonk</strong></a>
 </p>
 
-## Why another one
+## One app instead of eight menu bar icons
+
+Plonk is a small suite of macOS tools that share one interface, one command
+palette and one automation surface. Use all of it, or switch off every module
+you do not need.
+
+**Capture and understand the screen.** Take a region, window or full-screen
+screenshot, annotate it, pin a live crop, copy otherwise unselectable text with
+on-device OCR, or measure an interface in points and pixels.
+
+**Keep the Mac and your workflow moving.** Hold sleep off until a timer, time of
+day or process exit; find the pointer, add crosshairs or click rings; inspect the
+front app's real shortcuts; and run anything by name from one palette.
+
+**Arrange the desk.** Draw snap zones, save workspaces that remember each
+monitor, move windows by drag, shortcut or voice, and let app rules put new
+windows where they belong.
+
+**Let an agent use the same tools.** Plonk ships an MCP server and CLI for
+layouts, workspaces, screenshots, OCR, measuring, keep-awake and the rest. The
+app stays the source of truth, and the whole surface remains on your Mac.
 
 You most likely already have Rectangle, Magnet, Loop or Raycast. If a fixed grid
-of halves and thirds is all you want, they do it well. Plonk is for three things
-they do not do.
+of halves and thirds is all you want, they do it well. Window management is one
+part of Plonk, not the identity of the whole app.
 
 Coming from one of them costs nothing: the ten placement shortcuts are the same
 keys, one button takes the rest, and an existing `rectangle://` script is one
 substitution away. [Coming from Rectangle](docs/from-rectangle.md) is the whole
 of it.
 
-**Zones you draw.** Not a preset grid. Any number of zones, any size, a
-different set per monitor, overlapping if that suits you. Click a zone to cut it
-into top and bottom, right-click to cut it into left and right: a narrow rail
-for chat, a wide middle split in two, a strip for the terminal.
-
-**Workspaces that remember which monitor.** Save the desk: the apps, every
-window's frame, and the display each one belongs on. Launch it onto an empty
-desktop and it rebuilds itself, on the right screens.
-
-**An agent can drive all of it.** Plonk ships an MCP server that covers its
-whole surface: layouts, workspaces, zones, keep-awake, screenshots, on-device
-OCR, measuring. Generic macOS automation servers can nudge a window around. This
-is the window manager itself, so "browser on the left 60%, terminal top right,
-save that as a workspace called review" is one sentence rather than a script.
-
-The other seven tools, OCR and a ruler and keep-awake among them, are there
-because each was otherwise its own icon in the menu bar.
-
-**It is early.** Version 0.3.x, one author. Shortcuts, zone files and workspaces
+**It is early.** Version 0.4.x, one author. Shortcuts, zone files and workspaces
 are settled. The MCP tool names and the HTTP API are not, and can still change
 between minor versions. [CHANGELOG.md](CHANGELOG.md) says what moved.
 
@@ -181,10 +183,11 @@ with the app, and nothing was written anywhere else.
 
 </details>
 
-## What you get
+## The tools
 
-The window manager is four things, and this is the part of each that the
-sections above left out.
+The modules share settings, shortcuts, the menu bar, the command palette and the
+same local API. Turning one off removes its page, menu items, shortcuts, manager
+and agent routes while keeping its settings for later.
 
 | | |
 | --- | --- |
@@ -197,7 +200,7 @@ And the [MCP server](#for-agents), which is every one of these as a tool an
 agent can call.
 
 <details>
-<summary>Seven smaller things, behind the same menu bar icon</summary>
+<summary>The rest of the toolbox</summary>
 
 <br>
 
@@ -214,8 +217,8 @@ agent can call.
 All but the shortcut guide can be switched off, from Tools in the menu bar
 dropdown or the Tools page. Off means gone: out of the sidebar, out of the
 menu, its shortcuts released, and its tools refused to agents until it is back
-on. The same switches cover zones, workspaces and voice, so the window manager
-itself can stand down and leave the rest running.
+on. The same switches cover zones, workspaces and voice, so desk arrangement
+can stand down while the rest of Plonk keeps running.
 
 </details>
 

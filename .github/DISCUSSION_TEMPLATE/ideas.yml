@@ -21,7 +21,7 @@ body:
     attributes:
       label: What happens at your desk today without it
       description: >
-        The concrete version. A window manager accumulates features that sound
+        The concrete version. A toolbox accumulates features that sound
         reasonable and nobody uses, and this is the question that separates them.
     validations:
       required: true

@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plonk — give every window a place to live</title>
-<meta name="description" content="A Mac window manager with zones you draw yourself. Drop a window into one by dragging it, by a keystroke, by voice, or by asking an agent over MCP. Plus text lifted off the screen, a ruler, keep-awake, screenshots and pointer tools, in one menu bar app. Everything runs on your Mac. No account, no cloud, no telemetry.">
+<title>Plonk — a toolbox for your Mac</title>
+<meta name="description" content="A native macOS toolbox behind one menu bar icon: window layouts and workspaces, screenshots and annotation, on-device OCR, measuring, keep-awake, pointer tools, shortcuts, voice and agent control. Local, modular, no account and no telemetry.">
 <link rel="icon" href="logo-400.png">
-<meta property="og:title" content="Plonk — give every window a place to live">
-<meta property="og:description" content="Draw the boxes you actually want, then drop windows into them: with a drag, a key, or by saying so. Seven menu bar utilities in one app, and twenty-two MCP tools so an agent can drive all of it. Nothing leaves your Mac.">
+<meta property="og:title" content="Plonk — a toolbox for your Mac">
+<meta property="og:description" content="Eight native macOS tools behind one icon. Use the whole suite or switch off every module you do not need. Local, modular and agent-ready.">
 <meta property="og:image" content="https://ostapondo.github.io/Plonk/social-preview.png">
 <meta property="og:url" content="https://ostapondo.github.io/Plonk/">
 <meta property="og:type" content="website">
@@ -104,7 +104,8 @@ html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{
   margin:0;background:var(--bg);color:var(--ink);
-  font-family:var(--text);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased
+  font-family:var(--text);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  overflow-x:hidden
 }
 svg{display:block}
 img{max-width:100%;height:auto}
@@ -193,6 +194,7 @@ h1,h2,h3{text-wrap:balance}
 
 /* the cube breaks out of the glass, which is what puts it in front of the page */
 .hero{margin-top:72px}
+.brand-art{display:block;width:100%;border-radius:20px;margin:26px 0 0;border:1px solid var(--line)}
 .stage{display:flex;align-items:flex-end;gap:10px;margin:-86px 0 10px;flex-wrap:wrap}
 .bubble{background:var(--bg);border:2.5px solid var(--ink);border-radius:20px 20px 20px 6px;
   padding:11px 16px;font-size:15px;font-weight:600;margin-bottom:26px}
@@ -447,45 +449,35 @@ pre .c{color:#9c96b8}
 
   <!-- ================= HERO ================= -->
   <section class="card glass hero">
-    <div class="stage">
-      <span class="holder" style="--g:var(--z1);width:136px;height:152px">
-        <svg class="cubey" viewBox="0 0 100 112" style="width:136px;height:152px" role="img" aria-label="The Plonk cube, looking friendly">
-          <polygon fill="#fffdf9" points="12,34 50,12 88,34 50,56"/>
-          <polygon fill="#ff4f81" points="12,34 50,56 50,100 12,78"/>
-          <polygon fill="#3a6bff" points="88,34 50,56 50,100 88,78"/>
-          <g>
-            <ellipse class="eye" cx="25" cy="63" rx="5.2" ry="6.4" fill="#fffdf9"/>
-            <ellipse class="eye" cx="26.2" cy="64.6" rx="2.6" ry="3.2" fill="#12101c"/>
-            <ellipse class="eye b" cx="39" cy="71" rx="5.2" ry="6.4" fill="#fffdf9"/>
-            <ellipse class="eye b" cx="40.2" cy="72.6" rx="2.6" ry="3.2" fill="#12101c"/>
-          </g>
-          <path d="M27,78 Q33,84 40,81" stroke="#12101c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-          <path fill="none" stroke="#12101c" stroke-width="2.6" stroke-linejoin="round" d="M12,34 L50,12 L88,34 L88,78 L50,100 L12,78 Z M12,34 L50,56 L88,34 M50,56 L50,100"/>
-        </svg>
-      </span>
-      <span class="bubble">Right &mdash; where does this one go?</span>
-    </div>
-
-    <h1 class="h1">Give every window <span class="grad-text">a place to live.</span></h1>
-    <p class="lead">Draw the boxes you actually want. Then drop windows into them &mdash; with a drag, a key, or by saying so out loud.</p>
+    <p class="eyebrow">One icon / many ways</p>
+    <h1 class="h1">A toolbox for <span class="grad-text">your Mac.</span></h1>
+    <p class="lead">Windows, workspaces, screenshots, OCR, measuring, keep-awake, pointer tools, shortcuts, voice and agents. Native, local and modular.</p>
     <div class="cta">
       <a class="btn dark" href="#install">Get Plonk</a>
-      <a class="btn ghost" href="#ways">Show me first</a>
+      <a class="btn ghost" href="#features">See the tools</a>
       <p class="fine">macOS 13 or newer, Apple silicon &middot; free and MIT &middot; no account, no cloud, no telemetry</p>
     </div>
 
-    <div class="screen" aria-hidden="true">
-      <div class="z n1 lift" style="left:2%;top:3%;width:29%;height:94%">1<span class="frac">0.29</span></div>
-      <div class="z n2 lift d" style="left:33%;top:3%;width:42%;height:94%">2<span class="frac">0.42</span></div>
-      <div class="z n3 lift" style="left:77%;top:3%;width:21%;height:45%">3<span class="frac">0.21</span></div>
-      <div class="z n4 lift d" style="left:77%;top:52%;width:21%;height:45%">4<span class="frac">0.21</span></div>
-      <div class="win fly" style="left:7%;top:44%;width:32%;height:44%">
-        <div class="bar"><i></i><i></i><i></i></div>
-        <div class="body"><u style="width:72%"></u><u style="width:92%"></u><u style="width:56%"></u></div>
-      </div>
-      <div class="toast">release for <b>zone 2</b> &middot; &#8984; takes two</div>
-    </div>
+    <img class="brand-art" src="brand-hero.png" width="1600" height="900"
+         alt="A printed Plonk composition: eight coloured modules arranged around the cube as one system">
 
+  </section>
+
+  <!-- ================= TOOLBOX ================= -->
+  <section class="card glass" id="toolbox">
+    <p class="eyebrow">Eight tools / one system</p>
+    <h2 class="h2">Keep the parts you use.<br>Switch off the rest.</h2>
+    <p class="lead">Every module shares the menu bar, command palette, shortcuts and local automation surface. Nothing needs a second account, daemon or icon.</p>
+    <div class="grid2">
+      <div class="cell"><span class="k">arrange</span><b>Zones and workspaces</b><p>Place windows your way, then bring the whole desk back on the right monitors.</p></div>
+      <div class="cell"><span class="k">capture</span><b>Screenshots and live crops</b><p>Capture, annotate, or pin a changing part of the screen above everything else.</p></div>
+      <div class="cell"><span class="k">read</span><b>On-device OCR</b><p>Copy words from images, videos and interfaces without uploading a pixel.</p></div>
+      <div class="cell"><span class="k">measure</span><b>A screen ruler</b><p>Read clearances and distances in both points and physical pixels.</p></div>
+      <div class="cell"><span class="k">stay</span><b>Pulse</b><p>Keep the Mac awake by timer, schedule, app, charging state or process lifetime.</p></div>
+      <div class="cell"><span class="k">point</span><b>Pointer tools</b><p>Find the cursor, add crosshairs, show clicks and jump between displays.</p></div>
+      <div class="cell"><span class="k">recall</span><b>Shortcut guide</b><p>Read the front app's real menus instead of relying on a stale cheat sheet.</p></div>
+      <div class="cell"><span class="k">ask</span><b>Voice, CLI and agents</b><p>Use the same app through speech, commands or twenty-two MCP tools.</p></div>
+    </div>
   </section>
 
   <!-- ================= THREE WAYS ================= -->
@@ -601,7 +593,7 @@ pre .c{color:#9c96b8}
   <section class="card glass" id="agents">
     <p class="eyebrow">For agents</p>
     <h2 class="h2">Or just ask.</h2>
-    <p class="lead">Twenty-two MCP tools across layouts, workspaces, zones, keep-awake, screenshots, on-device OCR and measuring. Generic automation can nudge someone else's window around. <b>This is the window manager itself.</b></p>
+    <p class="lead">Twenty-two MCP tools across layouts, workspaces, zones, keep-awake, screenshots, on-device OCR and measuring. This is the app's own tool surface, not a generic automation layer bolted on beside it.</p>
     <div class="term">
       <div class="u">browser on the left 60%, terminal top right, notes bottom right</div>
       <div class="r ok">&#10003; 3 windows placed</div>
@@ -629,7 +621,7 @@ codex mcp add plonk -- npx -y plonk-mcp</pre>
   <!-- ================= NUMBERS ================= -->
   <section class="card glass">
     <div class="stats">
-      <div class="stat a"><b>21</b><span>MCP tools for your agent</span></div>
+      <div class="stat a"><b>22</b><span>MCP tools for your agent</span></div>
       <div class="stat b"><b>8</b><span>utilities behind one icon</span></div>
       <div class="stat c"><b>0</b><span>dependencies in the app</span></div>
       <div class="stat d"><b>0</b><span>bytes sent to a cloud</span></div>
@@ -638,8 +630,8 @@ codex mcp add plonk -- npx -y plonk-mcp</pre>
 
   <!-- ================= THE REST ================= -->
   <section class="card glass" id="features">
-    <p class="eyebrow">And seven smaller things</p>
-    <h2 class="h2">Each was otherwise its own icon in the menu bar.</h2>
+    <p class="eyebrow">The toolbox</p>
+    <h2 class="h2">One app. Use only what you need.</h2>
     <div class="grid2">
       <div class="cell"><span class="k">&#8963;&#8997;T</span><b>Text off the screen</b><p>Select an area and the words are in your clipboard &mdash; a screenshot, a paused video, a PDF that will not let you select. On-device.</p></div>
       <div class="cell"><span class="k">&#8963;&#8997;R</span><b>A ruler</b><p>How far the pointer can travel each way before it meets an edge. Points and pixels both, because a 44-point tap target is 88 pixels and only one of those is in the asset.</p></div>
@@ -661,7 +653,7 @@ codex mcp add plonk -- npx -y plonk-mcp</pre>
       <p class="eyebrow" style="margin:0">Privacy</p>
     </div>
     <h2 class="h2">It isn't watching you.</h2>
-    <p class="lead">No account, no cloud, no telemetry. Plonk moves rectangles around, and that is all it wants from your Mac.</p>
+    <p class="lead">No account, no cloud, no telemetry. Plonk does its work on your Mac and keeps the result there.</p>
     <p class="p">Moving another app's windows costs an Accessibility grant, and a screenshot costs Screen Recording. That is a lot to hand something you installed a minute ago &mdash; so none of this is a promise. <b>It is all checkable from a terminal.</b></p>
     <div class="split" style="margin-top:20px">
       <div>
@@ -709,7 +701,7 @@ curl -so /dev/null -w '%{http_code}\n' \
       <a class="btn ghost" href="https://github.com/ostapondo/plonk">Source on GitHub</a>
       <p class="fine">Signed, built and attested on GitHub's runners &mdash; <a href="verify.md">check the binary against the commit</a> before you open it.</p>
     </div>
-    <p class="p" style="margin-top:22px">Plonk is signed but not notarized, so macOS holds a copy you download by hand; the cask clears that for you. And it is early &mdash; version 0.3.x, one author. Shortcuts, zone files and workspaces are settled; the MCP tool names and the HTTP API can still change between minor versions.</p>
+    <p class="p" style="margin-top:22px">Plonk is signed but not notarized, so macOS holds a copy you download by hand; the cask clears that for you. And it is early &mdash; version 0.4.x, one author. Shortcuts, zone files and workspaces are settled; the MCP tool names and the HTTP API can still change between minor versions.</p>
     <p class="p">Or help build it. It compiles and tests on a plain checkout with no signing certificate and no account: <a href="https://github.com/ostapondo/plonk/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> is five commands long, and the <a href="https://github.com/ostapondo/plonk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">good first issues</a> each say where the code is and how to tell it worked. The smallest useful change is one JSON file in <a href="https://github.com/ostapondo/plonk/tree/main/zone-sets">zone-sets/</a>.</p>
   </section>
 
