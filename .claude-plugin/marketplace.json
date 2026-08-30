@@ -6,18 +6,18 @@
     "url": "https://github.com/ostapondo"
   },
   "metadata": {
-    "description": "Plonk, the macOS window manager, as a Claude Code plugin"
+    "description": "Plonk, the native macOS toolbox, as a Claude Code plugin"
   },
   "plugins": [
     {
       "name": "plonk",
       "displayName": "Plonk",
       "source": "./plugins/plonk",
-      "description": "Drive the Plonk window manager from Claude Code: place windows, launch saved workspaces, hold sleep off, take screenshots, read text off the screen with on-device OCR.",
+      "description": "Use Plonk's macOS toolbox from Claude Code: arrange windows, launch workspaces, hold sleep off, capture and annotate screenshots, run OCR and measure the screen.",
       "version": "0.4.1",
       "homepage": "https://ostapondo.github.io/Plonk/",
       "license": "MIT",
-      "keywords": ["macos", "window-manager", "workspaces", "screenshots", "ocr", "productivity"]
+      "keywords": ["macos", "toolbox", "workspaces", "screenshots", "ocr", "productivity"]
     }
   ]
 }
