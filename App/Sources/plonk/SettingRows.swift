@@ -20,9 +20,9 @@ struct PageScroll<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 14) { content }
+            LazyVStack(alignment: .leading, spacing: 16) { content }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
+                .padding(22)
         }
     }
 }
@@ -38,10 +38,10 @@ struct PageShell<Content: View>: View {
 
     var body: some View {
         PageScroll {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 26, weight: .heavy))
-                    .kerning(-0.7)
+                    .font(.system(size: 27, weight: .semibold))
+                    .kerning(-0.5)
                 if let subtitle {
                     Text(subtitle)
                         .font(.system(size: 12.5))

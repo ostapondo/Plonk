@@ -305,7 +305,7 @@
 "zones.placeNewWindowsDetail" = "Once an app's window has been put in a zone, its next ordinary window lands there too; dialogs and panels stay where they open. Forgotten when Plonk quits";
 "zones.autoFill" = "Fill empty zones with new windows";
 "zones.autoFillDetail" = "A window that opens on a screen with a free zone goes into the first one. A rule or a habit for its app comes first; dialogs and panels stay where they open";
-"zones.pageHelp" = "Draw the boxes you actually want, then drop windows into them \u2014 with a drag, a key, or by saying so out loud.";
+"zones.pageHelp" = "Draw the boxes you actually want, then drop windows into them — with a drag, a key, or by saying so out loud.";
 "zones.shortcutsHelp" = "Click a key to change it; Delete unbinds";
 "zones.overlay" = "Overlay";
 "zones.overlayHelp" = "The gap is real, not decoration: a window dropped into a zone keeps that much space around it. Edge spanning covers both zones when the cursor comes that close to the line between them, without holding anything; zero switches it off.";

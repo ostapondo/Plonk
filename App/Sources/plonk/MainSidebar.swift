@@ -8,11 +8,8 @@ import SwiftUI
 // a click that told you nothing — a heading is not a control, and drawing it as
 // one only hid the list it was labelling. Headings now label; rows navigate.
 //
-// Metrics come from the design's macOS mock: a 228pt panel, 30pt rows at 13pt,
-// 11pt headings in plain case, and a selected row that is a lift off the panel
-// rather than a splash of accent. Colour is carried by the icons instead: each
-// destination's rows take one of the zone hues, so the menu reads in the same
-// palette as the zones it is about.
+// The selected row lifts subtly from the glass panel. Navigation glyphs stay
+// neutral so the zone colours only identify actual zones.
 
 struct MainSidebar: View {
     @ObservedObject var model: AppModel
@@ -35,23 +32,6 @@ struct MainSidebar: View {
         model.settingsPages.filter { $0.parent == group.id }.count > 1
     }
 
-    /// The hue a destination's icons carry. Home and Layout share plum, the
-    /// app's own colour; the rest step through the palette in the order the
-    /// groups are listed.
-    private func hue(of group: SettingsGroup) -> Color {
-        let zone: Int
-        switch group.id {
-        case "capture": zone = 2
-        case "automation": zone = 3
-        case "settings": zone = 4
-        default: zone = 1
-        }
-        // The zone hues are tuned to fill a rectangle, and sun and mint are too
-        // pale to draw a 13pt glyph on a light panel. Pulled toward ink there,
-        // kept as they are on dark.
-        return scheme == .dark ? Ink.zone(zone) : Ink.deeper(Ink.zone(zone))
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear.frame(height: Self.lights)
@@ -64,7 +44,7 @@ struct MainSidebar: View {
                         // heading over a list of one is noise.
                         if isList(group), !rail, !children.isEmpty { heading(group.title) }
                         ForEach(children) {
-                            row($0, icon: isList(group) ? $0.icon : group.icon, hue: hue(of: group))
+                            row($0, icon: isList(group) ? $0.icon : group.icon)
                         }
                     }
                     if !rail, model.isEnabled(.workspaces), !model.workspaceNames.isEmpty { workspaces }
@@ -93,7 +73,7 @@ struct MainSidebar: View {
             }
             .foregroundStyle(.secondary)
             .padding(.horizontal, 10)
-            .frame(height: 30)
+            .frame(height: 34)
             .frame(maxWidth: .infinity, alignment: rail ? .center : .leading)
             .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
                 .fill(Color.primary.opacity(0.08)))
@@ -129,7 +109,7 @@ struct MainSidebar: View {
         }
     }
 
-    private func row(_ page: SettingsPage, icon: String, hue: Color) -> some View {
+    private func row(_ page: SettingsPage, icon: String) -> some View {
         let selected = model.currentPage?.id == page.id
         return Button {
             model.selectedPage = page.id
@@ -138,7 +118,7 @@ struct MainSidebar: View {
                 Image(systemName: icon)
                     .font(.system(size: rail ? 14 : 12.5, weight: .medium))
                     .frame(width: 16)
-                    .foregroundStyle(hue)
+                    .foregroundStyle(selected ? Ink.controlTint(scheme) : Color.secondary)
                 if !rail {
                     Text(page.title).font(.system(size: 13, weight: selected ? .semibold : .regular))
                     Spacer(minLength: 6)
@@ -153,7 +133,7 @@ struct MainSidebar: View {
             .foregroundStyle(Color.primary)
             .padding(.leading, 12)
             .padding(.trailing, 10)
-            .frame(height: 30)
+            .frame(height: 34)
             .frame(maxWidth: .infinity, alignment: rail ? .center : .leading)
             .background(
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
