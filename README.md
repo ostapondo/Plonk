@@ -1,8 +1,3 @@
-<p align="center">
-  <img src="docs/brand-hero.png" width="800"
-       alt="A printed Plonk composition: eight coloured modules arranged around the cube as one system">
-</p>
-
 <h1 align="center">Plonk</h1>
 
 <p align="center"><strong>A toolbox for your Mac, behind one menu bar icon.</strong><br>
@@ -19,6 +14,11 @@ shortcuts, voice and agents — native, local and modular.<br>
   <img alt="MCP" src="https://img.shields.io/badge/MCP-22_tools-8b5cf6?style=flat-square">
   <img alt="CodeQL" src="https://img.shields.io/github/actions/workflow/status/ostapondo/Plonk/codeql.yml?style=flat-square&label=CodeQL">
   <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/ostapondo/Plonk?style=flat-square&label=OpenSSF%20Scorecard">
+</p>
+
+<p align="center">
+  <img src="docs/brand-hero.png" width="800"
+       alt="A printed Plonk composition: eight coloured modules arranged around the cube as one system">
 </p>
 
 <p align="center">
