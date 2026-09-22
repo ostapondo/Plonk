@@ -4,8 +4,12 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ## Unreleased
 
+## 0.4.3 — 2026-09-22
+
 ### Changed
 
+- The release build now includes native Liquid Glass on macOS 26, matching the
+  local preview. Older macOS releases keep the material fallback.
 - The MCP Registry listing uses a shorter description that meets its current
   length limit, and can be republished independently if the registry rejects it.
 

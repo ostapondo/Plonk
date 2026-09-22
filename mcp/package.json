@@ -1,6 +1,6 @@
 {
   "name": "plonk-mcp",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "mcpName": "io.github.ostapondo/plonk",
   "description": "MCP server for Plonk, a native macOS toolbox for windows, workspaces, screenshots, OCR, measuring, keep-awake, pointer tools and voice.",
   "type": "module",
