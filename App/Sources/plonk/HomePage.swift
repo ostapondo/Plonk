@@ -57,19 +57,7 @@ struct HomePage: View {
             heroBody(preview: false)
         }
         .padding(22)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Ink.card(scheme))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(RadialGradient(colors: [model.accent.opacity(0.14), .clear],
-                                             center: .topTrailing, startRadius: 0, endRadius: 460))
-                )
-                // On the shape, not the hero: see CardSurface.
-                .shadow(color: model.accent.opacity(scheme == .dark ? 0.18 : 0.10), radius: 18, y: 6)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .strokeBorder(Ink.gradient(model.accent), lineWidth: 1.2))
+        .card()
     }
 
     private func heroBody(preview: Bool) -> some View {
@@ -80,7 +68,7 @@ struct HomePage: View {
                     Text(.homeReady)
                         .font(.system(size: 10, weight: .bold))
                         .kerning(1)
-                        .foregroundStyle(model.accent)
+                        .foregroundStyle(Ink.controlTint(scheme))
                 }
                 .opacity(model.allPermissionsGranted ? 1 : 0)
                 Text(.homeHeadline)
@@ -100,12 +88,10 @@ struct HomePage: View {
                             KeyCaps(parts: keys(.showZones))
                         }
                         .fixedSize()
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                         .padding(.horizontal, 13)
                         .frame(height: 32)
-                        .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(Ink.gradient(model.accent))
-                            .shadow(color: model.accent.opacity(0.45), radius: 10, y: 3))
+                        .glassSurface(radius: 12)
                     }
                     .buttonStyle(.plain)
                     Button(String(localized: .homeEditZonesButton)) { model.actions?.openZonePicker() }
@@ -121,7 +107,7 @@ struct HomePage: View {
             .frame(maxWidth: preview ? nil : .infinity, alignment: .leading)
             if preview {
                 Spacer(minLength: 0)
-                ZonePreview(zones: previewZones, accent: model.accent)
+                ZonePreview(zones: previewZones)
                     .frame(width: 288, height: 172)
             }
         }
@@ -161,7 +147,8 @@ struct HomePage: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 9) {
                 HStack {
-                    Image(systemName: icon).font(.system(size: 16)).foregroundStyle(model.accent)
+                    Image(systemName: icon).font(.system(size: 16))
+                        .foregroundStyle(Ink.controlTint(scheme))
                     Spacer(minLength: 6)
                     KeyCaps(parts: keys)
                 }
@@ -231,7 +218,6 @@ struct HomePage: View {
 /// the same fractions the overlay uses, so it is a picture of the real layout.
 struct ZonePreview: View {
     let zones: [ZoneRect]
-    let accent: Color
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
@@ -273,8 +259,9 @@ struct ZonePreview: View {
         let height = max(size.height * zone.h - 5, 1)
         let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
         return shape
-            .fill(lit ? accent.opacity(0.26) : Ink.card(scheme))
-            .overlay(shape.strokeBorder(lit ? accent : Ink.stroke(scheme), lineWidth: lit ? 1.5 : 1))
+            .fill(lit ? Ink.raised(scheme) : Ink.card(scheme))
+            .overlay(shape.strokeBorder(lit ? Ink.controlTint(scheme) : Ink.stroke(scheme),
+                                        lineWidth: lit ? 1.5 : 1))
             .overlay(number(index + 1, lit: lit))
             .frame(width: width, height: height)
             .offset(x: size.width * zone.x + 2.5, y: size.height * zone.y + 2.5)
@@ -283,6 +270,6 @@ struct ZonePreview: View {
     private func number(_ value: Int, lit: Bool) -> some View {
         Text("\(value)")
             .font(.system(size: 11, weight: .medium).monospacedDigit())
-            .foregroundStyle(lit ? accent : Color.secondary)
+            .foregroundStyle(lit ? Ink.controlTint(scheme) : Color.secondary)
     }
 }

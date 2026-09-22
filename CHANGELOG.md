@@ -6,6 +6,11 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Changed
 
+- **The app uses a quieter glass interface.** Navigation uses the system glass
+  material on macOS 26, with a material fallback on older macOS releases.
+  Cards sit on neutral translucent surfaces, the window no longer casts an
+  accent glow, and zone colours use a muted palette with readable labels. The
+  Zones description also displays its punctuation correctly.
 - **Plonk now presents itself as a native macOS toolbox.** The website, README,
   social card and package metadata treat window management as one module in the
   suite rather than the identity of the whole app.

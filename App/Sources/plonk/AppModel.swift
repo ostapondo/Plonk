@@ -161,9 +161,6 @@ struct SettingsGroup: Identifiable {
 }
 
 extension AppModel {
-    /// The colour the app draws itself with, ready to hand to SwiftUI.
-    var accent: Color { Color(nsColor: config.appearance.accent) }
-
     // The lists, worked out from `config` when read rather than kept in step
     // with it: a copy would need refreshing after every write, and one write
     // path forgetting is a list that shows yesterday's names.

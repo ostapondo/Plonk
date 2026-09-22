@@ -14,12 +14,13 @@ import SwiftUI
 
 struct RectangleOffer: View {
     @ObservedObject var model: AppModel
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         HStack(alignment: .top, spacing: 11) {
             Image(systemName: "arrow.down.left.and.arrow.up.right.rectangle")
                 .font(.system(size: 15))
-                .foregroundStyle(model.accent)
+                .foregroundStyle(Ink.controlTint(scheme))
             VStack(alignment: .leading, spacing: 3) {
                 Text(.homeRectangleTitle).font(.callout.weight(.medium))
                 Text(.homeRectangleDetail)
@@ -48,7 +49,6 @@ struct RectangleOffer: View {
             }
         }
         .padding(13)
-        .background(RoundedRectangle(cornerRadius: 12).fill(model.accent.opacity(0.08)))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(model.accent.opacity(0.28)))
+        .card()
     }
 }

@@ -16,7 +16,7 @@ enum SettingsPages {
         SettingsGroup(id: "home", title: .groupHome, icon: "house"),
         SettingsGroup(id: "layout", title: .groupLayout, icon: "square.grid.2x2"),
         SettingsGroup(id: "capture", title: .groupCapture, icon: "camera.viewfinder"),
-        SettingsGroup(id: "automation", title: .groupAutomation, icon: "sparkles"),
+        SettingsGroup(id: "automation", title: .groupAutomation, icon: "gearshape.2"),
         SettingsGroup(id: "settings", title: .groupSettings, icon: "slider.horizontal.3"),
     ]
 
@@ -39,7 +39,7 @@ enum SettingsPages {
         SettingsPage(id: "ruler", title: .pageRuler, icon: "ruler", parent: "capture") {
             AnyView(RulerPage(model: $0))
         },
-        SettingsPage(id: "ai", title: .pageAI, icon: "sparkles", parent: "automation") {
+        SettingsPage(id: "ai", title: .pageAI, icon: "server.rack", parent: "automation") {
             AnyView(AIPage(model: $0))
         },
         SettingsPage(id: "voice", title: .pageVoice, icon: "mic", parent: "automation") {

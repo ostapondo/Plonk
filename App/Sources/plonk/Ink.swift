@@ -1,90 +1,60 @@
 import AppKit
 import SwiftUI
 
-// The look every page is built from: four surfaces, one hairline, one radius.
-//
-// The window is a dark ground. The sidebar is a panel set into it, a step
-// darker; every card on a page is a step lighter. That order is the whole
-// design: the menu recedes, the page comes forward, and the ground between them
-// is what makes both read as things rather than as one flat sheet.
-//
-// Both themes are spelled out because the app has a theme of its own now: a
-// window forced to light while the system is dark cannot ask NSColor what grey
-// to use and get an answer that suits the window it is actually in.
+// Neutral content surfaces sit behind glass navigation and controls. Both
+// themes are explicit because the app can override the system appearance.
 
 enum Ink {
-    static let radius: CGFloat = 16
+    static let radius: CGFloat = 18
     /// The sidebar panel's corner, and how far it sits from the window edge.
-    static let panelRadius: CGFloat = 14
-    static let inset: CGFloat = 12
+    static let panelRadius: CGFloat = 20
+    static let inset: CGFloat = 14
 
     /// The ground: what the window is, behind the sidebar and the page.
     static func page(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.141, green: 0.141, blue: 0.165)
-                        : Color(red: 0.945, green: 0.947, blue: 0.961)
+        scheme == .dark ? Color(red: 0.105, green: 0.111, blue: 0.108)
+                        : Color(red: 0.925, green: 0.931, blue: 0.922)
     }
-
-    /// The sidebar panel, a step behind the ground.
-    static func sidebar(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.063, green: 0.063, blue: 0.075)
-                        : Color(red: 0.796, green: 0.812, blue: 0.859)
-    }
-
-    /// The bar above a page where one still has one. Same as the ground: the
-    /// window has one surface behind everything now, not two.
-    static func chrome(_ scheme: ColorScheme) -> Color { page(scheme) }
 
     /// Everything that is not the ground sits on one of these, a step in front.
     static func card(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.204, green: 0.204, blue: 0.243) : .white
+        scheme == .dark ? Color(red: 0.19, green: 0.201, blue: 0.193)
+                        : Color(red: 0.989, green: 0.991, blue: 0.984)
     }
 
     /// A step above a card: selected rows, insets, the strip behind a preview.
     static func raised(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0.255, green: 0.255, blue: 0.298)
-                        : Color(red: 0.949, green: 0.953, blue: 0.969)
+        scheme == .dark ? Color(red: 0.235, green: 0.247, blue: 0.237)
+                        : Color(red: 0.945, green: 0.952, blue: 0.939)
     }
 
     /// The pill under the sidebar row that is open: a lift, not the accent.
     /// The accent belongs to controls; a row that is merely where you are
     /// does not need to shout it.
     static func selection(_ scheme: ColorScheme) -> Color {
-        Color.primary.opacity(scheme == .dark ? 0.12 : 0.12)
+        Color.primary.opacity(scheme == .dark ? 0.13 : 0.09)
     }
 
     static func stroke(_ scheme: ColorScheme) -> Color {
-        Color.primary.opacity(scheme == .dark ? 0.07 : 0.06)
+        Color.primary.opacity(scheme == .dark ? 0.11 : 0.09)
+    }
+
+    static func glassEdge(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? Color.white.opacity(0.17) : Color.white.opacity(0.75)
+    }
+
+    static func controlTint(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? Color(red: 0.61, green: 0.71, blue: 0.65)
+                        : Color(red: 0.30, green: 0.43, blue: 0.36)
     }
 
     static func shadow(_ scheme: ColorScheme) -> Color {
-        Color.black.opacity(scheme == .dark ? 0.24 : 0.10)
+        Color.black.opacity(scheme == .dark ? 0.28 : 0.09)
     }
 
     static var hairline: Color { Color.primary.opacity(0.08) }
-    static var capFill: Color { Color.primary.opacity(0.07) }
+    static var capFill: Color { Color.primary.opacity(0.06) }
     static var capStroke: Color { Color.primary.opacity(0.13) }
-
-    /// The accent and a warmer neighbour of it, for the few places that carry a
-    /// gradient. Derived from the accent rather than fixed, so choosing green
-    /// does not leave a violet edge behind.
-    static func gradient(_ accent: Color) -> LinearGradient {
-        LinearGradient(colors: [warmer(accent), accent],
-                       startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-
-    /// The same colour rotated toward red. Red sits at both ends of the wheel,
-    /// so which way is warmer depends on where the colour starts: violet and
-    /// blue warm up by going round to magenta, green and amber by coming back
-    /// to yellow. Grey stays grey — rotating the hue of an unsaturated colour
-    /// changes nothing, which is the right answer for the graphite accent.
-    static func warmer(_ color: Color) -> Color {
-        rebuilt(color) { hue, saturation, brightness in
-            let step = hue > 0.5 ? 0.14 : -0.14
-            hue = (hue + step + 1).truncatingRemainder(dividingBy: 1)
-            saturation = min(saturation * 1.05, 1)
-            brightness = min(brightness * 1.03, 1)
-        }
-    }
 
     /// `color` taken apart into HSB, changed by `adjust`, and put back
     /// together in device RGB. Unchanged when it has no RGB form.
@@ -158,9 +128,10 @@ private struct CardSurface: ViewModifier {
         // pass, and a page of rows in cards turns into a page of bitmaps being
         // redrawn on each resize and scroll.
         return content
-            .background(shape.fill(Ink.card(scheme))
-                .shadow(color: Ink.shadow(scheme), radius: scheme == .dark ? 7 : 10, y: 3))
-            .overlay(shape.strokeBorder(Ink.stroke(scheme)))
+            .background(shape.fill(.regularMaterial)
+                .overlay(shape.fill(Ink.card(scheme).opacity(scheme == .dark ? 0.40 : 0.55)))
+                .shadow(color: Ink.shadow(scheme), radius: 14, y: 5))
+            .overlay(shape.strokeBorder(Ink.glassEdge(scheme)))
     }
 }
 

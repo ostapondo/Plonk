@@ -33,10 +33,7 @@ struct MainWindowView: View {
             HStack(spacing: Self.gutter) {
                 MainSidebar(model: model, rail: rail)
                     .frame(width: rail ? Self.rail : Self.wide)
-                    .background(RoundedRectangle(cornerRadius: Ink.panelRadius, style: .continuous)
-                        .fill(Ink.sidebar(scheme)))
-                    .overlay(RoundedRectangle(cornerRadius: Ink.panelRadius, style: .continuous)
-                        .strokeBorder(Ink.stroke(scheme)))
+                    .glassSurface(radius: Ink.panelRadius)
                 Group {
                     if let current = model.currentPage { current.make(model) }
                 }
@@ -50,11 +47,8 @@ struct MainWindowView: View {
         // this everything hangs below an empty strip the width of the window.
         .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 620, minHeight: 520)
-        // Both, and deliberately: `tint` is what system controls read, and the
-        // deprecated `accentColor` is the only one that moves `Color.accentColor`
-        // itself — which is what every view drawing its own accent asks for.
-        .tint(model.accent)
-        .accentColor(model.accent)
+        .tint(Ink.controlTint(scheme))
+        .accentColor(Ink.controlTint(scheme))
         // Window-scoped rather than a global hotkey: ⌘K belongs to whichever
         // app is in front, and taking it from all of them would be rude.
         .background(
@@ -67,19 +61,12 @@ struct MainWindowView: View {
         .onAppear { if model.selectedPage == nil { model.selectedPage = model.settingsPages.first?.id } }
     }
 
-    /// The ground: the desktop showing through, the page colour over it, and
-    /// the accent bleeding in from two corners the way it does behind the hero.
-    /// Flat charcoal is correct and lifeless; this is the one place the window
-    /// is allowed a bit of colour.
+    /// A neutral wash over the desktop blur keeps the glass legible in both
+    /// appearances without casting the selected accent across every page.
     private var page: some View {
         ZStack {
             VisualEffect(material: .underWindowBackground, state: .followsWindowActiveState)
-            Ink.page(scheme).opacity(scheme == .dark ? 0.88 : 0.92)
-            RadialGradient(colors: [model.accent.opacity(scheme == .dark ? 0.16 : 0.20), .clear],
-                           center: .init(x: 0.85, y: -0.05), startRadius: 0, endRadius: 620)
-            RadialGradient(colors: [Ink.warmer(model.accent).opacity(scheme == .dark ? 0.10 : 0.14),
-                                    .clear],
-                           center: .init(x: 0.02, y: 1.05), startRadius: 0, endRadius: 520)
+            Ink.page(scheme).opacity(scheme == .dark ? 0.87 : 0.82)
         }
         .ignoresSafeArea()
     }

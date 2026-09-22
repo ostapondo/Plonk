@@ -45,7 +45,7 @@ struct AppearancePage: View {
                 HStack(spacing: 7) {
                     Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 13))
-                        .foregroundStyle(selected ? model.accent : Color.secondary)
+                        .foregroundStyle(selected ? Ink.controlTint(scheme) : Color.secondary)
                     Text(theme.title).font(.system(size: 12.5, weight: .medium))
                     Spacer(minLength: 4)
                     Text(theme.note).font(.system(size: 10.5)).muted()
@@ -55,7 +55,8 @@ struct AppearancePage: View {
             .frame(maxWidth: .infinity)
             .background(RoundedRectangle(cornerRadius: Ink.radius, style: .continuous).fill(Ink.card(scheme)))
             .overlay(RoundedRectangle(cornerRadius: Ink.radius, style: .continuous)
-                .strokeBorder(selected ? model.accent : Ink.stroke(scheme), lineWidth: selected ? 1.5 : 1))
+                .strokeBorder(selected ? Ink.controlTint(scheme) : Ink.stroke(scheme),
+                              lineWidth: selected ? 1.5 : 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -107,7 +108,7 @@ struct AppearancePage: View {
                 .lineLimit(1)
             Toggle("", isOn: Binding(
                 get: { model.config.appearance.accentHex == nil },
-                set: { chooseAccent($0 ? nil : AppearanceSettings.accentChoices.last) }
+                set: { chooseAccent($0 ? nil : AppearanceSettings.accentChoices.first) }
             ))
             .labelsHidden().toggleStyle(.switch).controlSize(.small)
             .help(String(localized: .appearanceFollowSystemAccent))
@@ -141,12 +142,12 @@ struct AppearancePage: View {
 struct ThemePreview: View {
     let theme: AppearanceSettings.Theme
 
-    private static let darkSide = Color(red: 0.059, green: 0.067, blue: 0.086)
-    private static let darkPanel = Color(red: 0.086, green: 0.098, blue: 0.129)
-    private static let darkBar = Color(red: 0.137, green: 0.149, blue: 0.192)
-    private static let lightSide = Color(red: 0.984, green: 0.984, blue: 0.992)
-    private static let lightPanel = Color(red: 0.957, green: 0.961, blue: 0.973)
-    private static let lightBar = Color(red: 0.859, green: 0.878, blue: 0.910)
+    private static let darkSide = Color(red: 0.17, green: 0.18, blue: 0.174)
+    private static let darkPanel = Color(red: 0.105, green: 0.111, blue: 0.108)
+    private static let darkBar = Color(red: 0.35, green: 0.37, blue: 0.35)
+    private static let lightSide = Color(red: 0.967, green: 0.971, blue: 0.962)
+    private static let lightPanel = Color(red: 0.925, green: 0.931, blue: 0.922)
+    private static let lightBar = Color(red: 0.76, green: 0.78, blue: 0.75)
 
     var body: some View {
         switch theme {
@@ -169,7 +170,7 @@ struct ThemePreview: View {
                 }
             }
             .overlay(alignment: .center) {
-                Rectangle().fill(Color.accentColor.opacity(0.8)).frame(width: 1)
+                Rectangle().fill(Color.primary.opacity(0.45)).frame(width: 1)
             }
     }
 
@@ -207,7 +208,7 @@ struct ThemePreview: View {
         GeometryReader { geo in
             RoundedRectangle(cornerRadius: 3)
                 .fill(gradient
-                      ? AnyShapeStyle(Ink.gradient(Color.accentColor))
+                      ? AnyShapeStyle(dark ? Color(white: 0.67) : Color(white: 0.38))
                       : AnyShapeStyle(dark ? Self.darkBar : Self.lightBar))
                 .frame(width: geo.size.width * width, height: 5)
         }
