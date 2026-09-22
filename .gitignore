@@ -6,6 +6,7 @@ App/*.swiftdeps
 App/*.swiftmodule
 .DS_Store
 .vscode/
+graphify-out/
 Plonk.app/
 mcp/node_modules/
 mcp/dist/
