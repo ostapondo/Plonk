@@ -4,6 +4,11 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ## Unreleased
 
+### Changed
+
+- The MCP Registry listing uses a shorter description that meets its current
+  length limit, and can be republished independently if the registry rejects it.
+
 ## 0.4.2 — 2026-09-22
 
 ### Changed
