@@ -8,14 +8,22 @@ struct GlassSurface: ViewModifier {
 
     @ViewBuilder func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        #if compiler(>=6.2)
         if #available(macOS 26, *) {
             content
                 .glassEffect(.regular, in: shape)
         } else {
-            content
-                .background(.regularMaterial, in: shape)
-                .overlay(shape.strokeBorder(Ink.glassEdge(scheme)))
+            materialSurface(content, shape: shape)
         }
+        #else
+        materialSurface(content, shape: shape)
+        #endif
+    }
+
+    private func materialSurface(_ content: Content, shape: RoundedRectangle) -> some View {
+        content
+            .background(.regularMaterial, in: shape)
+            .overlay(shape.strokeBorder(Ink.glassEdge(scheme)))
     }
 }
 
