@@ -4,6 +4,8 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ## Unreleased
 
+## 0.4.2 — 2026-09-22
+
 ### Changed
 
 - **The app uses a quieter glass interface.** Navigation uses the system glass
