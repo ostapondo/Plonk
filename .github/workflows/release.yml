@@ -52,7 +52,8 @@ concurrency:
 
 jobs:
   app:
-    runs-on: macos-15
+    # Xcode 26 compiles native Liquid Glass while preserving the macOS 13 target.
+    runs-on: macos-26
     outputs:
       version: ${{ steps.version.outputs.version }}
     permissions:
