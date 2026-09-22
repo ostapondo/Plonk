@@ -1,7 +1,7 @@
 {
   "name": "plonk",
   "description": "Use the Plonk macOS toolbox from Claude Code. Needs the app installed: brew install --cask ostapondo/plonk/plonk",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": {
     "name": "ostapondo",
     "url": "https://github.com/ostapondo"

@@ -14,7 +14,7 @@
       "displayName": "Plonk",
       "source": "./plugins/plonk",
       "description": "Use Plonk's macOS toolbox from Claude Code: arrange windows, launch workspaces, hold sleep off, capture and annotate screenshots, run OCR and measure the screen.",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "homepage": "https://ostapondo.github.io/Plonk/",
       "license": "MIT",
       "keywords": ["macos", "toolbox", "workspaces", "screenshots", "ocr", "productivity"]
