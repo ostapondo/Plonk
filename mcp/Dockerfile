@@ -2,7 +2,7 @@
 # The Mac menu bar app is not available in a container, so tools respond
 # with a "Plonk.app is not reachable" error when invoked — but the server
 # starts, lists its tools, and speaks MCP over stdio.
-FROM node:26-slim@sha256:14bf3eac4bf209d906d3c41256597d3ab1f926b2e93a79e9bdfe1efd32454239
+FROM node:26-slim@sha256:ec7758ee051e457b468b32bde57b0879010b325bb9862718e9615225ce4aaae1
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 COPY src ./src
