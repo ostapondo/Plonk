@@ -607,6 +607,7 @@
 "tool.rectangle" = "Rectangle";
 "tool.ellipse" = "Ellipse";
 "tool.highlight" = "Highlight";
+"tool.text" = "Text";
 
 /* The shortcut guide, read off whatever app is in front. */
 "guide.filter" = "Filter";

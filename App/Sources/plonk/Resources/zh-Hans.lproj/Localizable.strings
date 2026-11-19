@@ -600,6 +600,7 @@
 "tool.rectangle" = "矩形";
 "tool.ellipse" = "椭圆";
 "tool.highlight" = "荧光笔";
+"tool.text" = "文字";
 
 /* The shortcut guide, read off whatever app is in front. */
 "guide.filter" = "筛选";

@@ -12,6 +12,7 @@ struct Annotation: Identifiable, Equatable {
         case rectangle
         case ellipse
         case highlight
+        case text
 
         var id: String { rawValue }
 
@@ -22,6 +23,7 @@ struct Annotation: Identifiable, Equatable {
             case .rectangle: return "rectangle"
             case .ellipse: return "circle"
             case .highlight: return "highlighter"
+            case .text: return "textformat"
             }
         }
 
@@ -32,6 +34,7 @@ struct Annotation: Identifiable, Equatable {
             case .rectangle: return String(localized: .toolRectangle)
             case .ellipse: return String(localized: .toolEllipse)
             case .highlight: return String(localized: .toolHighlight)
+            case .text: return String(localized: .toolText)
             }
         }
 
@@ -44,6 +47,8 @@ struct Annotation: Identifiable, Equatable {
     var points: [CGPoint]
     var colorIndex: Int
     var width: Double
+    var text: String? = nil
+    var arrowHead: Double? = nil
 
     static let palette: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .black, .white]
     static let colorNames = ["red", "orange", "yellow", "green", "blue", "purple", "black", "white"]
@@ -57,6 +62,14 @@ struct Annotation: Identifiable, Equatable {
         let b = CGPoint(x: last.x * size.width, y: last.y * size.height)
         return CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
     }
+
+    func rebased(to crop: CGRect) -> Self {
+        var result = self
+        result.points = points.map { ImageFit.unitPoint($0, in: crop) }
+        result.width /= crop.width
+        if kind == .arrow { result.arrowHead = (arrowHead ?? max(width * 4, 0.012)) / crop.width }
+        return result
+    }
 }
 
 extension Annotation {
@@ -64,7 +77,7 @@ extension Annotation {
     /// top-left, which is the space annotations already live in.
     init?(dict: [String: Any]) {
         guard let rawKind = (dict["kind"] as? String)?.lowercased(),
-              let kind = Kind(rawValue: rawKind),
+              let kind = Kind(rawValue: rawKind), kind != .text,
               let rawPoints = dict["points"] as? [[String: Any]] else { return nil }
 
         let points = rawPoints.compactMap { point -> CGPoint? in
@@ -131,9 +144,13 @@ enum AnnotationRenderer {
             case .arrow:
                 guard let start = annotation.points.first, let end = annotation.points.last else { continue }
                 let path = arrowPath(from: denormalize(start, size), to: denormalize(end, size),
-                                     head: max(width * 4, size.width * 0.012))
+                                     head: (annotation.arrowHead ?? max(annotation.width * 4, 0.012)) * size.width)
                 context.stroke(path, with: .color(color),
                                style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
+            case .text:
+                guard let text = annotation.text, let start = annotation.points.first else { continue }
+                let label = Text(verbatim: text).font(.system(size: width)).foregroundColor(color)
+                context.draw(label, at: denormalize(start, size), anchor: .topLeading)
             }
         }
     }
@@ -182,6 +199,7 @@ struct AnnotatedImage: View {
             .overlay {
                 Canvas { context, size in
                     var ctx = context
+                    ctx.clip(to: Path(CGRect(origin: .zero, size: size)))
                     AnnotationRenderer.draw(annotations, in: &ctx, size: size)
                     if let live { AnnotationRenderer.draw([live], in: &ctx, size: size) }
                 }
