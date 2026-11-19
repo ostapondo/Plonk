@@ -1,0 +1,142 @@
+import AppKit
+
+final class QuickShotCanvas: NSView {
+    var onSelect: (() -> Void)?
+    var onCancel: (() -> Void)?
+    var onOutput: ((NSImage, Bool) -> Void)?
+
+    private let bitmap: ShotBitmap
+    private let backdrop: NSImage
+    private let geometry: ShotSelection
+    private let safeArea: CGRect
+    private let controls = QuickShotControls()
+    private var rect: CGRect? { didSet { refresh() } }
+    private var ratio: CGFloat?
+    private var anchor = CGPoint.zero
+    private var original: CGRect?
+    private var handle = CGPoint.zero
+    private var dragging = false
+
+    init(bitmap: ShotBitmap, frame: CGRect, safeArea: CGRect) {
+        self.bitmap = bitmap
+        self.safeArea = safeArea
+        backdrop = NSImage(cgImage: bitmap.image, size: frame.size)
+        geometry = ShotSelection(pixels: bitmap.size, view: frame.size)
+        super.init(frame: frame)
+        addSubview(controls.dimensions)
+        addSubview(controls.toolbar)
+        controls.onResize = { [weak self] value, horizontal in self?.resize(value, horizontal: horizontal) }
+        controls.onLock = { [weak self] locked in
+            self?.ratio = locked ? self?.rect.map { $0.width / $0.height } : nil
+        }
+        controls.onCancel = { [weak self] in self?.onCancel?() }
+        controls.onOutput = { [weak self] save in self?.output(save: save) }
+        controls.onEndEditing = { [weak self] in self?.window?.makeFirstResponder(self) }
+        refresh()
+    }
+
+    required init?(coder: NSCoder) { nil }
+    override var isFlipped: Bool { true }
+    override var acceptsFirstResponder: Bool { true }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    func clearSelection() {
+        ratio = nil
+        dragging = false
+        controls.resetLock()
+        rect = nil
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .crosshair)
+        guard let rect else { return }
+        addCursorRect(geometry.viewRect(rect), cursor: .openHand)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        window?.makeFirstResponder(self)
+        let point = convert(event.locationInWindow, from: nil)
+        anchor = geometry.pixelPoint(point)
+        original = nil
+        handle = .zero
+        if let rect {
+            let viewRect = geometry.viewRect(rect)
+            if viewRect.insetBy(dx: -5, dy: -5).contains(point) {
+                original = rect
+                handle = edge(at: point, of: viewRect)
+            }
+        }
+        if original == nil { clearSelection() }
+        dragging = true
+        onSelect?()
+        refresh()
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard dragging else { return }
+        let point = geometry.pixelPoint(convert(event.locationInWindow, from: nil))
+        let delta = CGPoint(x: point.x - anchor.x, y: point.y - anchor.y)
+        if let original {
+            rect = handle == .zero ? geometry.move(original, by: delta)
+                : geometry.drag(original, handle: handle, delta: delta, ratio: ratio)
+        } else {
+            let selection = CGRect(spanning: anchor, point)
+            rect = selection.isEmpty ? nil : selection
+        }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard dragging else { return }
+        mouseDragged(with: event)
+        dragging = false
+        if let rect, original == nil {
+            let viewRect = geometry.viewRect(rect)
+            if viewRect.width < 3 || viewRect.height < 3 { self.rect = nil }
+        }
+        refresh()
+        window?.invalidateCursorRects(for: self)
+    }
+
+    private func edge(at point: CGPoint, of rect: CGRect) -> CGPoint {
+        func side(_ position: CGFloat, _ start: CGFloat, _ end: CGFloat) -> CGFloat {
+            let distance = min(abs(position - start), abs(position - end))
+            guard distance <= 5 else { return 0 }
+            return position <= (start + end) / 2 ? -1 : 1
+        }
+        return CGPoint(x: side(point.x, rect.minX, rect.maxX), y: side(point.y, rect.minY, rect.maxY))
+    }
+
+    private func resize(_ dimension: Int, horizontal: Bool) {
+        guard let rect else { return }
+        self.rect = geometry.resize(rect, dimension: CGFloat(dimension), horizontal: horizontal, ratio: ratio)
+        window?.invalidateCursorRects(for: self)
+    }
+
+    func output(save: Bool) {
+        guard let rect, let image = bitmap.crop(rect) else { return }
+        onOutput?(image, save)
+    }
+
+    private func refresh() {
+        needsDisplay = true
+        controls.dimensions.isHidden = rect == nil || dragging
+        controls.toolbar.isHidden = controls.dimensions.isHidden
+        guard let rect, !dragging else { return }
+        controls.update(width: Int(rect.width), height: Int(rect.height))
+        controls.place(around: geometry.viewRect(rect), in: safeArea)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        backdrop.draw(in: bounds, from: .zero, operation: .copy, fraction: 1, respectFlipped: true, hints: nil)
+        let shade = NSBezierPath(rect: bounds)
+        if let rect { shade.appendRect(geometry.viewRect(rect)) }
+        shade.windingRule = .evenOdd
+        NSColor.black.withAlphaComponent(0.42).setFill()
+        shade.fill()
+        guard let rect else { return }
+        let outline = NSBezierPath(rect: geometry.viewRect(rect))
+        NSColor.controlAccentColor.setStroke()
+        outline.lineWidth = 1.5
+        outline.stroke()
+    }
+}

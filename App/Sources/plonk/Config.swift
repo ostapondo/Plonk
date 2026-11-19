@@ -118,6 +118,7 @@ struct Config: Codable {
     var awakeSessionEnd: Double?
     var shotFolder = "~/Desktop"
     var shotCopyToClipboard = true
+    var shotAfterCapture: ShotAfterCapture = .quickActions
     // How different two neighbouring pixels have to be, on one channel of 255,
     // before the screen ruler treats the boundary between them as an edge. See
     // EdgeDetector. The key is not the "rulerTolerance" a pre-release build

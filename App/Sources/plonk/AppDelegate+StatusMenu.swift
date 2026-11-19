@@ -13,7 +13,7 @@ extension AppDelegate {
             self?.store.update { $0.setEnabled(feature, on) }
         }
         statusMenu.onOpenWindow = { [weak self] in self?.openMainWindow() }
-        statusMenu.onCaptureRegion = { [weak self] in self?.runCapture(.region, openEditor: true) }
+        statusMenu.onCaptureRegion = { [weak self] in self?.capture(.region) }
         statusMenu.onToggleAwake = { [weak self] in self?.awake.toggle() }
         statusMenu.onLaunchWorkspace = { [weak self] name in self?.launchWorkspace(named: name, onScreen: nil) }
         statusMenu.onReportBug = { [weak self] in self?.reportBug() }

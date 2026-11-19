@@ -64,7 +64,7 @@
 "shot.captureRegion" = "区域截图";
 "shot.captureWindow" = "窗口截图";
 "shot.captureScreen" = "全屏截图";
-"shot.captureHelp" = "截图后会打开编辑器。你可以用画笔、箭头、矩形、椭圆或荧光笔标注，再复制或保存。首次截图时，macOS 会请求屏幕录制权限。";
+"shot.captureHelp" = "框选区域后，可以直接复制或保存截图，也可以选择打开编辑器。首次截图时，macOS 会请求屏幕录制权限。";
 "shot.pinPart" = "置顶屏幕区域";
 "shot.pinPartHelp" = "拖出一块区域，将它置顶显示。实时模式会同步原区域的内容，可以在工作时查看构建日志、图表或通话。静态模式保留选取时的画面，无需持续捕捉，也适用于实时模式无法跟随的窗口。关闭面板即可结束。";
 "shot.language" = "语言";
@@ -74,6 +74,16 @@
 "shot.output" = "输出";
 "shot.copyOnSave" = "保存时复制到剪贴板";
 "shot.saveFolder" = "保存文件夹";
+"shot.afterCapture" = "截图后";
+"shot.afterQuickActions" = "快捷操作";
+"shot.afterEditor" = "打开编辑器";
+"shot.selectionWidth" = "选区宽度";
+"shot.selectionHeight" = "选区高度";
+"shot.selectionPixels" = "px";
+"shot.selectionLock" = "锁定宽高比";
+"shot.selectionInvalid" = "请输入大于零的整数像素值。";
+"shot.captureFailed" = "无法截取屏幕，请检查屏幕录制权限。";
+"shot.copyFailed" = "无法复制截图。";
 
 /* Voice. */
 "voice.pushToTalk" = "按住说话";

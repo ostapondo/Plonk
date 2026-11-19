@@ -62,12 +62,27 @@ extension AppDelegate {
 
     func runCapture(_ mode: CaptureMode, openEditor: Bool,
                             completion: @escaping (NSImage?) -> Void = { _ in }) {
+        quickShot?.close()
         let hidden = hideOwnWindows()
         ScreenshotManager.capture(mode) { [weak self] image in
             self?.showOwnWindows(hidden)
             if let image, openEditor { self?.presenter.showShotEditor(image: image) }
             completion(image)
         }
+    }
+
+    func beginQuickShot() {
+        guard quickShot == nil, captureDepth == 0 else { return }
+        let hidden = hideOwnWindows()
+        let session = QuickShotSession(config: { [weak self] in self?.store.config ?? Config() },
+                                       onFinish: { [weak self] copied, path in
+                                           self?.finishShot(copied: copied, path: path)
+                                       }, onClose: { [weak self] in
+                                           self?.quickShot = nil
+                                           self?.showOwnWindows(hidden)
+                                       })
+        quickShot = session
+        session.begin()
     }
 
     /// Everything Plonk has on screen, ordered out so it cannot end up in a

@@ -37,7 +37,11 @@ extension AppDelegate: AppActions {
     }
 
     func capture(_ mode: CaptureMode) {
-        runCapture(mode, openEditor: true)
+        if mode == .region, store.config.shotAfterCapture == .quickActions {
+            beginQuickShot()
+        } else {
+            runCapture(mode, openEditor: true)
+        }
     }
 
     func flashZones() {

@@ -6,6 +6,12 @@ struct ShotSelectionTests {
     private let selection = ShotSelection(pixels: CGSize(width: 1600, height: 1000),
                                           view: CGSize(width: 800, height: 500))
 
+    @Test func olderConfigurationsDefaultToQuickActions() throws {
+        let config = try Config.decode(Data(#"{"shotFolder":"~/Pictures"}"#.utf8))
+        #expect(config.shotAfterCapture == .quickActions)
+        #expect(config.shotFolder == "~/Pictures")
+    }
+
     @Test func retinaPointsMapToTheDisplayBitmap() {
         let point = selection.pixelPoint(CGPoint(x: 142.5, y: 80))
         #expect(point == CGPoint(x: 285, y: 160))
