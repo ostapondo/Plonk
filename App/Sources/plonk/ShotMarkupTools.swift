@@ -4,6 +4,7 @@ final class ShotMarkupTools: NSObject {
     let stack = NSStackView()
     private let accent: NSColor
     private let kinds: [Annotation.Kind]
+    private let includeSelection: Bool
     private var choiceButtons: [NSButton] = []
     private let undoButton = NSButton()
     private let redoButton = NSButton()
@@ -12,6 +13,7 @@ final class ShotMarkupTools: NSObject {
     init(canvas: ShotMarkupCanvas, kinds: [Annotation.Kind], includeSelection: Bool, accent: NSColor) {
         self.accent = accent
         self.kinds = kinds
+        self.includeSelection = includeSelection
         self.canvas = canvas
         super.init()
         stack.orientation = .horizontal
@@ -66,7 +68,10 @@ final class ShotMarkupTools: NSObject {
         redoButton.isEnabled = !history.redoStack.isEmpty
     }
 
-    @objc private func choose(_ button: NSButton) { select(button.tag == -1 ? nil : kinds[button.tag]) }
+    @objc private func choose(_ button: NSButton) {
+        let kind = button.tag == -1 ? nil : kinds[button.tag]
+        select(includeSelection && kind == canvas?.tool ? nil : kind)
+    }
     @objc private func undo() {
         guard let canvas, canvas.commitText() else { return }
         canvas.undoMark()

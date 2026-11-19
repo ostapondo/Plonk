@@ -20,6 +20,8 @@ final class QuickShotCanvas: ShotMarkupCanvas {
         }
     }
     private var recognitionToken = 0
+    private var recognizing = false
+    private var pointerArea: NSTrackingArea?
     private var ratio: CGFloat?
     private var anchor = CGPoint.zero
     private var original: CGRect?
@@ -57,12 +59,52 @@ final class QuickShotCanvas: ShotMarkupCanvas {
         dragging = false
         controls.resetLock()
         rect = nil
+        tools.select(nil)
     }
 
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: .crosshair)
         guard let rect else { return }
         addCursorRect(geometry.viewRect(rect), cursor: tool == .text ? .iBeam : tool == nil ? .openHand : .crosshair)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let pointerArea { removeTrackingArea(pointerArea) }
+        let area = NSTrackingArea(rect: .zero, options: [.inVisibleRect, .activeInKeyWindow, .mouseMoved],
+                                  owner: self, userInfo: nil)
+        addTrackingArea(area)
+        pointerArea = area
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        let chrome = [controls.dimensions, controls.toolbar, controls.feedback]
+        guard !chrome.contains(where: { !$0.isHidden && $0.frame.contains(point) }),
+              let rect else { return }
+        let selection = geometry.viewRect(rect)
+        if selection.insetBy(dx: -5, dy: -5).contains(point) {
+            let handle = edge(at: point, of: selection)
+            if handle != .zero {
+                resizeCursor(for: handle).set()
+                return
+            }
+        }
+        let cursor: NSCursor = selection.contains(point) ? (tool == .text ? .iBeam : tool == nil ? .openHand : .crosshair)
+            : .crosshair
+        cursor.set()
+    }
+
+    private func resizeCursor(for handle: CGPoint) -> NSCursor {
+        if #available(macOS 15, *) {
+            if handle.x == 0 { return .rowResize(directions: .all) }
+            if handle.y == 0 { return .columnResize(directions: .all) }
+            let position: NSCursor.FrameResizePosition = handle.y < 0
+                ? (handle.x < 0 ? .topLeft : .topRight)
+                : (handle.x < 0 ? .bottomLeft : .bottomRight)
+            return .frameResize(position: position, directions: .all)
+        }
+        return handle.x == 0 ? .resizeUpDown : .resizeLeftRight
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -81,6 +123,7 @@ final class QuickShotCanvas: ShotMarkupCanvas {
         }
         if handle == .zero && beginMark(at: point) { return }
         if original == nil { clearSelection() }
+        if original != nil && handle == .zero { NSCursor.closedHand.set() }
         dragging = true
         onSelect?()
         refresh()
@@ -141,7 +184,9 @@ final class QuickShotCanvas: ShotMarkupCanvas {
         tools.select(kind)
     }
 
-    func beginRecognition() -> Int {
+    func beginRecognition() -> Int? {
+        guard !recognizing else { return nil }
+        recognizing = true
         recognitionToken += 1
         controls.showFeedback(.shotRecognizing)
         refresh()
@@ -150,6 +195,7 @@ final class QuickShotCanvas: ShotMarkupCanvas {
 
     func finishRecognition(_ result: Result<[TextExtractor.Line], Error>, token: Int) {
         guard recognitionToken == token else { return }
+        recognizing = false
         switch result {
         case .success(let lines): controls.showFeedback(TextExtractor.copyRecognizedText(lines))
         case .failure: controls.showFeedback(.shotRecognitionFailed)
@@ -160,6 +206,7 @@ final class QuickShotCanvas: ShotMarkupCanvas {
     @discardableResult
     func dismissRecognition() -> Bool {
         guard !controls.feedback.isHidden else { return false }
+        recognizing = false
         recognitionToken += 1
         controls.showFeedback(nil)
         return true

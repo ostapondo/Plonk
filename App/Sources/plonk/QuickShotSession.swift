@@ -75,7 +75,7 @@ final class QuickShotSession: NSObject {
             close()
             onEditor(image, history)
         case .recognizeText:
-            let token = window.canvas.beginRecognition()
+            guard let token = window.canvas.beginRecognition() else { return }
             TextExtractor.recognize(in: image, languages: config().textLanguages) { [weak self, weak window] result in
                 guard self?.onClose != nil else { return }
                 window?.canvas.finishRecognition(result, token: token)

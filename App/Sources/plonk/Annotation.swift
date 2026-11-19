@@ -23,7 +23,7 @@ struct Annotation: Identifiable, Equatable {
             case .rectangle: return "rectangle"
             case .ellipse: return "circle"
             case .highlight: return "highlighter"
-            case .text: return "textformat"
+            case .text: return "character"
             }
         }
 
