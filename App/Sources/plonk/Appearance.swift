@@ -50,7 +50,7 @@ struct AppearanceSettings: Codable, Equatable {
 
     /// What the picker offers. Nil — the system accent — is offered separately,
     /// because it is a different kind of choice from picking a colour.
-    static let accentChoices = ["#006BF5", "#62756C", "#B16D55", "#A98543", "#70879A",
+    static let accentChoices = ["#0077F6", "#62756C", "#B16D55", "#A98543", "#70879A",
                                 "#818B61", "#9B7370", "#6D7775", "#8B93A6"]
 
     /// Applies to every window at once, including the ones already on screen.

@@ -10,6 +10,7 @@ final class QuickShotCanvas: NSView {
     private let geometry: ShotSelection
     private let safeArea: CGRect
     private let controls = QuickShotControls()
+    private let accent: NSColor
     private var rect: CGRect? { didSet { refresh() } }
     private var ratio: CGFloat?
     private var anchor = CGPoint.zero
@@ -17,9 +18,10 @@ final class QuickShotCanvas: NSView {
     private var handle = CGPoint.zero
     private var dragging = false
 
-    init(bitmap: ShotBitmap, frame: CGRect, safeArea: CGRect) {
+    init(bitmap: ShotBitmap, frame: CGRect, safeArea: CGRect, accent: NSColor) {
         self.bitmap = bitmap
         self.safeArea = safeArea
+        self.accent = accent
         backdrop = NSImage(cgImage: bitmap.image, size: frame.size)
         geometry = ShotSelection(pixels: bitmap.size, view: frame.size)
         super.init(frame: frame)
@@ -119,9 +121,9 @@ final class QuickShotCanvas: NSView {
 
     private func refresh() {
         needsDisplay = true
-        controls.dimensions.isHidden = rect == nil || dragging
-        controls.toolbar.isHidden = controls.dimensions.isHidden
-        guard let rect, !dragging else { return }
+        controls.dimensions.isHidden = rect == nil
+        controls.toolbar.isHidden = rect == nil || dragging
+        guard let rect else { return }
         controls.update(width: Int(rect.width), height: Int(rect.height))
         controls.place(around: geometry.viewRect(rect), in: safeArea)
     }
@@ -134,9 +136,29 @@ final class QuickShotCanvas: NSView {
         NSColor.black.withAlphaComponent(0.42).setFill()
         shade.fill()
         guard let rect else { return }
-        let outline = NSBezierPath(rect: geometry.viewRect(rect))
-        NSColor.controlAccentColor.setStroke()
-        outline.lineWidth = 1.5
+        let selection = geometry.viewRect(rect)
+        let outline = NSBezierPath(rect: selection)
+        accent.setStroke()
+        outline.lineWidth = 1
         outline.stroke()
+        drawHandles(of: selection)
+    }
+
+    private func drawHandles(of rect: CGRect) {
+        let side = min(rect.width / 3, rect.height / 3, 11)
+        guard side >= 2 else { return }
+        let corners = NSBezierPath()
+        for (x, dx) in [(rect.minX, side), (rect.maxX, -side)] {
+            for (y, dy) in [(rect.minY, side), (rect.maxY, -side)] {
+                corners.move(to: CGPoint(x: x + dx, y: y))
+                corners.line(to: CGPoint(x: x, y: y))
+                corners.line(to: CGPoint(x: x, y: y + dy))
+            }
+        }
+        corners.lineWidth = 4
+        corners.lineCapStyle = .round
+        corners.lineJoinStyle = .round
+        accent.setStroke()
+        corners.stroke()
     }
 }

@@ -30,7 +30,7 @@ final class QuickShotSession: NSObject {
             ScreenshotManager.captureRegion(CGSpace.flip(screen.frame)) { [weak self] image in
                 guard let self, onClose != nil else { return }
                 guard let image, let bitmap = ShotBitmap(image) else { return failCapture() }
-                let window = QuickShotWindow(screen: screen, bitmap: bitmap)
+                let window = QuickShotWindow(screen: screen, bitmap: bitmap, accent: config().appearance.accent)
                 window.onCancel = { [weak self] in self?.close() }
                 window.canvas.onSelect = { [weak self, weak window] in
                     self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }

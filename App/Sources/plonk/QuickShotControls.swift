@@ -1,8 +1,8 @@
 import AppKit
 
 final class QuickShotControls: NSObject, NSTextFieldDelegate {
-    let dimensions = NSStackView()
-    let toolbar = NSStackView()
+    let dimensions = QuickShotSurface(radius: 9, insets: NSEdgeInsets(top: 3, left: 7, bottom: 3, right: 9))
+    let toolbar = QuickShotSurface(radius: 16, insets: NSEdgeInsets(top: 4, left: 7, bottom: 4, right: 7))
     var onResize: ((Int, Bool) -> Void)?
     var onLock: ((Bool) -> Void)?
     var onCancel: (() -> Void)?
@@ -17,46 +17,37 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
 
     override init() {
         super.init()
-        for stack in [dimensions, toolbar] {
-            stack.orientation = .horizontal
-            stack.alignment = .centerY
-            stack.spacing = 4
-            stack.edgeInsets = NSEdgeInsets(top: 5, left: 6, bottom: 5, right: 6)
-            stack.wantsLayer = true
-            stack.layer?.cornerRadius = 9
-            stack.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-            stack.layer?.borderColor = NSColor.separatorColor.cgColor
-            stack.layer?.borderWidth = 1
-        }
         setup(widthField, title: .shotSelectionWidth)
         setup(heightField, title: .shotSelectionHeight)
-        dimensions.addArrangedSubview(widthField)
-        dimensions.addArrangedSubview(NSTextField(labelWithString: "×"))
-        dimensions.addArrangedSubview(heightField)
-        dimensions.addArrangedSubview(NSTextField(labelWithString: String(localized: .shotSelectionPixels)))
+        let pixels = NSTextField(labelWithString: String(localized: .shotSelectionPixels))
+        pixels.font = .systemFont(ofSize: 11, weight: .medium)
+        pixels.textColor = .secondaryLabelColor
         Self.configure(lock, symbol: "lock.open", title: .shotSelectionLock, target: self, action: #selector(toggleLock))
         lock.setButtonType(.toggle)
-        dimensions.addArrangedSubview(lock)
+        for view in [widthField, lock, heightField, pixels] { dimensions.stack.addArrangedSubview(view) }
+        addButton(symbol: "xmark", title: .commonCancel, action: #selector(cancel))
         addButton(symbol: "square.and.arrow.down", title: .shotEditorSaveToFolder, action: #selector(save))
         addButton(symbol: "document.on.document", title: .shotEditorCopy, action: #selector(copyImage))
-        addButton(symbol: "xmark", title: .commonCancel, action: #selector(cancel))
     }
 
     private func setup(_ field: NSTextField, title: LocalizedStringResource) {
         field.isEditable = true
         field.isSelectable = true
-        field.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .exterior
+        field.font = .monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
         field.alignment = .center
         field.setAccessibilityLabel(String(localized: title))
         field.toolTip = String(localized: title)
         field.delegate = self
-        field.widthAnchor.constraint(equalToConstant: 56).isActive = true
+        field.widthAnchor.constraint(equalToConstant: 42).isActive = true
     }
 
-    private static func configure(_ button: NSButton, symbol: String, title: LocalizedStringResource,
-                                  target: AnyObject, action: Selector) {
+    static func configure(_ button: NSButton, symbol: String, title: LocalizedStringResource,
+                          target: AnyObject, action: Selector) {
         let label = String(localized: title)
-        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
+        button.image = icon(symbol, label: label)
         button.imagePosition = .imageOnly
         button.bezelStyle = .regularSquare
         button.controlSize = .small
@@ -69,11 +60,16 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
         button.heightAnchor.constraint(equalToConstant: 24).isActive = true
     }
 
+    static func icon(_ symbol: String, label: String) -> NSImage? {
+        NSImage(systemSymbolName: symbol, accessibilityDescription: label)?
+            .withSymbolConfiguration(.init(pointSize: 15, weight: .medium))
+    }
+
     @discardableResult
     func addButton(symbol: String, title: LocalizedStringResource, action: Selector) -> NSButton {
         let button = NSButton()
         Self.configure(button, symbol: symbol, title: title, target: self, action: action)
-        toolbar.addArrangedSubview(button)
+        toolbar.stack.addArrangedSubview(button)
         return button
     }
 
@@ -85,16 +81,21 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
     }
 
     func place(around rect: CGRect, in area: CGRect) {
-        let top = dimensions.fittingSize
-        let bottom = toolbar.fittingSize
-        let gap: CGFloat = 5
+        let top = dimensions.stack.fittingSize
+        let bottom = toolbar.stack.fittingSize
+        let gap: CGFloat = 7
         let topY = max(area.minY + gap, rect.minY - top.height - gap)
         var bottomY = rect.maxY + gap
-        if bottomY + bottom.height > area.maxY - gap { bottomY = rect.maxY - bottom.height - gap }
-        if bottomY < topY + top.height + gap { bottomY = topY + top.height + gap }
+        if bottomY + bottom.height > area.maxY - gap {
+            let above = topY - bottom.height - gap
+            bottomY = above >= area.minY + gap ? above : rect.maxY - bottom.height - gap
+        }
+        if bottomY >= topY - bottom.height && bottomY < topY + top.height + gap {
+            bottomY = topY + top.height + gap
+        }
         dimensions.frame = CGRect(x: horizontalOrigin(rect.minX, width: top.width, in: area),
                                   y: topY, width: top.width, height: top.height)
-        toolbar.frame = CGRect(x: horizontalOrigin(rect.maxX - bottom.width, width: bottom.width, in: area),
+        toolbar.frame = CGRect(x: horizontalOrigin(rect.minX, width: bottom.width, in: area),
                                y: min(bottomY, area.maxY - bottom.height - gap),
                                width: bottom.width, height: bottom.height)
     }
@@ -109,8 +110,8 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
     }
 
     private func updateLock() {
-        lock.image = NSImage(systemSymbolName: lock.state == .on ? "lock" : "lock.open",
-                             accessibilityDescription: String(localized: .shotSelectionLock))
+        lock.image = Self.icon(lock.state == .on ? "lock" : "lock.open",
+                               label: String(localized: .shotSelectionLock))
     }
 
     @objc private func toggleLock() {
