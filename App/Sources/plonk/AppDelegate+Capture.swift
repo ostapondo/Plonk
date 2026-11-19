@@ -48,14 +48,7 @@ extension AppDelegate {
                 case .failure(let error):
                     HUD.shared.show(error.localizedDescription)
                 case .success(let lines):
-                    let text = TextExtractor.joined(lines)
-                    guard !text.isEmpty else {
-                        HUD.shared.show(.hudNoTextFound)
-                        return
-                    }
-                    NSPasteboard.general.replaceContents(with: text)
-                    HUD.shared.show(String(localized: .hudCopied(text.prefix(80)
-                                                  + (text.count > 80 ? "…" : ""))))
+                    HUD.shared.show(TextExtractor.copyRecognizedText(lines))
                 }
             }
         }

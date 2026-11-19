@@ -31,7 +31,7 @@ final class QuickShotWindow: NSWindow {
         if event.type == .keyDown, firstResponder === canvas {
             switch Int(event.keyCode) {
             case kVK_Escape:
-                onCancel?()
+                if !canvas.cancelText() && !canvas.dismissRecognition() { onCancel?() }
                 return
             case kVK_Return, kVK_ANSI_KeypadEnter, kVK_Space:
                 canvas.perform(.copy)

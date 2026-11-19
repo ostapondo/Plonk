@@ -85,6 +85,10 @@
 "shot.selectionInvalid" = "请输入大于零的整数像素值。";
 "shot.captureFailed" = "无法截取屏幕，请检查屏幕录制权限。";
 "shot.copyFailed" = "无法复制截图。";
+"shot.openPreview" = "在预览中打开";
+"shot.previewFailed" = "无法在预览中打开截图。";
+"shot.recognizing" = "正在识别文字…";
+"shot.recognitionFailed" = "无法识别选区内的文字。";
 
 /* Voice. */
 "voice.pushToTalk" = "按住说话";

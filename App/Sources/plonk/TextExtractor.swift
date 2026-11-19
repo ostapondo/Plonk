@@ -130,4 +130,11 @@ enum TextExtractor {
             .map(\.text)
             .joined(separator: "\n")
     }
+
+    static func copyRecognizedText(_ lines: [Line]) -> LocalizedStringResource {
+        let text = joined(lines)
+        guard !text.isEmpty else { return .hudNoTextFound }
+        NSPasteboard.general.replaceContents(with: text)
+        return .hudCopied(text.prefix(80) + (text.count > 80 ? "…" : ""))
+    }
 }

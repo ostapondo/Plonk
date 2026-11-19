@@ -92,6 +92,10 @@
 "shot.selectionInvalid" = "Enter a positive whole number of pixels.";
 "shot.captureFailed" = "Could not capture the screen. Check Screen Recording access.";
 "shot.copyFailed" = "Could not copy the screenshot.";
+"shot.openPreview" = "Open in Preview";
+"shot.previewFailed" = "Could not open the screenshot in Preview.";
+"shot.recognizing" = "Recognizing text…";
+"shot.recognitionFailed" = "Could not recognize text in the selection.";
 
 /* Voice. */
 "voice.pushToTalk" = "Push to Talk";

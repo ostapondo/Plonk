@@ -3,6 +3,7 @@ import AppKit
 final class QuickShotControls: NSObject, NSTextFieldDelegate {
     let dimensions = QuickShotSurface(radius: 9, insets: NSEdgeInsets(top: 3, left: 7, bottom: 3, right: 9))
     let toolbar = QuickShotSurface(radius: 16, insets: NSEdgeInsets(top: 4, left: 7, bottom: 4, right: 7))
+    let feedback = QuickShotSurface(radius: 9, insets: NSEdgeInsets(top: 6, left: 10, bottom: 6, right: 10))
     var onResize: ((Int, Bool) -> Void)?
     var onLock: ((Bool) -> Void)?
     var onCancel: (() -> Void)?
@@ -12,6 +13,7 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
     private let widthField = NSTextField()
     private let heightField = NSTextField()
     private let lock = NSButton()
+    private let message = NSTextField(labelWithString: "")
     private var width = 0
     private var height = 0
 
@@ -25,9 +27,16 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
         Self.configure(lock, symbol: "lock.open", title: .shotSelectionLock, target: self, action: #selector(toggleLock))
         lock.setButtonType(.toggle)
         for view in [widthField, lock, heightField, pixels] { dimensions.stack.addArrangedSubview(view) }
+        feedback.isHidden = true
+        message.lineBreakMode = .byTruncatingTail
+        message.widthAnchor.constraint(lessThanOrEqualToConstant: 320).isActive = true
+        feedback.stack.addArrangedSubview(message)
         addButton(symbol: "xmark", title: .commonCancel, action: #selector(cancel))
+        addButton(symbol: "photo", title: .shotOpenPreview, action: #selector(openPreview))
+        addButton(symbol: "text.viewfinder", title: .shotText, action: #selector(recognizeText))
         addButton(symbol: "macwindow", title: .shotAfterEditor, action: #selector(openEditor))
         addButton(symbol: "square.and.arrow.down", title: .shotEditorSaveToFolder, action: #selector(save))
+        addButton(symbol: "folder", title: .shotEditorSaveAs, action: #selector(saveAs))
         addButton(symbol: "document.on.document", title: .shotEditorCopy, action: #selector(copyImage))
     }
 
@@ -99,6 +108,17 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
         toolbar.frame = CGRect(x: horizontalOrigin(rect.minX, width: bottom.width, in: area),
                                y: min(bottomY, area.maxY - bottom.height - gap),
                                width: bottom.width, height: bottom.height)
+        if !feedback.isHidden {
+            let size = feedback.stack.fittingSize
+            var frame = CGRect(origin: CGPoint(x: area.maxX - size.width - gap, y: area.minY + gap), size: size)
+            if frame.intersects(dimensions.frame) { frame.origin.y = dimensions.frame.maxY + gap }
+            feedback.frame = frame
+        }
+    }
+
+    func showFeedback(_ text: LocalizedStringResource?) {
+        message.stringValue = text.map { String(localized: $0) } ?? ""
+        feedback.isHidden = text == nil
     }
 
     private func horizontalOrigin(_ x: CGFloat, width: CGFloat, in area: CGRect) -> CGFloat {
@@ -121,7 +141,10 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
     }
 
     @objc private func openEditor() { onAction?(.editor) }
-    @objc private func save() { onAction?(.save) }
+    @objc private func openPreview() { onAction?(.preview) }
+    @objc private func recognizeText() { onAction?(.recognizeText) }
+    @objc private func save() { onAction?(.save()) }
+    @objc private func saveAs() { onAction?(.saveAs) }
     @objc private func copyImage() { onAction?(.copy) }
     @objc private func cancel() { onCancel?() }
 

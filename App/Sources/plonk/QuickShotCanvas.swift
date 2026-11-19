@@ -13,7 +13,13 @@ final class QuickShotCanvas: ShotMarkupCanvas {
     private let accent: NSColor
     private lazy var tools = ShotMarkupTools(canvas: self, kinds: [.rectangle, .ellipse, .arrow, .pen, .text],
                                             includeSelection: true, accent: accent)
-    private var rect: CGRect? { didSet { refresh() } }
+    private var rect: CGRect? {
+        didSet {
+            if rect != oldValue { dismissRecognition() }
+            refresh()
+        }
+    }
+    private var recognitionToken = 0
     private var ratio: CGFloat?
     private var anchor = CGPoint.zero
     private var original: CGRect?
@@ -31,6 +37,7 @@ final class QuickShotCanvas: ShotMarkupCanvas {
         controls.toolbar.stack.setCustomSpacing(10, after: tools.stack)
         addSubview(controls.dimensions)
         addSubview(controls.toolbar)
+        addSubview(controls.feedback)
         controls.onResize = { [weak self] value, horizontal in self?.resize(value, horizontal: horizontal) }
         controls.onLock = { [weak self] locked in
             self?.ratio = locked ? self?.rect.map { $0.width / $0.height } : nil
@@ -127,6 +134,30 @@ final class QuickShotCanvas: ShotMarkupCanvas {
         let crop = CGRect(x: rect.minX / bitmap.size.width, y: rect.minY / bitmap.size.height,
                           width: rect.width / bitmap.size.width, height: rect.height / bitmap.size.height)
         onAction?(image, history.rebased(to: crop), action)
+    }
+
+    func beginRecognition() -> Int {
+        recognitionToken += 1
+        controls.showFeedback(.shotRecognizing)
+        refresh()
+        return recognitionToken
+    }
+
+    func finishRecognition(_ result: Result<[TextExtractor.Line], Error>, token: Int) {
+        guard recognitionToken == token else { return }
+        switch result {
+        case .success(let lines): controls.showFeedback(TextExtractor.copyRecognizedText(lines))
+        case .failure: controls.showFeedback(.shotRecognitionFailed)
+        }
+        refresh()
+    }
+
+    @discardableResult
+    func dismissRecognition() -> Bool {
+        guard !controls.feedback.isHidden else { return false }
+        recognitionToken += 1
+        controls.showFeedback(nil)
+        return true
     }
 
     private func refresh() {
