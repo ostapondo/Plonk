@@ -3,13 +3,16 @@ import AppKit
 final class QuickShotSession: NSObject {
     private let config: () -> Config
     private let onFinish: (Bool, String?) -> Void
+    private let onEditor: (NSImage, AnnotationHistory) -> Void
     private var onClose: (() -> Void)?
     private var windows: [QuickShotWindow] = []
 
     init(config: @escaping () -> Config, onFinish: @escaping (Bool, String?) -> Void,
+         onEditor: @escaping (NSImage, AnnotationHistory) -> Void,
          onClose: @escaping () -> Void) {
         self.config = config
         self.onFinish = onFinish
+        self.onEditor = onEditor
         self.onClose = onClose
     }
 
@@ -35,8 +38,8 @@ final class QuickShotSession: NSObject {
                 window.canvas.onSelect = { [weak self, weak window] in
                     self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
                 }
-                window.canvas.onOutput = { [weak self] image, save in
-                    self?.output(image, save: save)
+                window.canvas.onAction = { [weak self] image, history, action in
+                    self?.perform(action, image: image, history: history)
                 }
                 windows.append(window)
                 pending -= 1
@@ -61,7 +64,23 @@ final class QuickShotSession: NSObject {
         HUD.shared.show(.shotCaptureFailed)
     }
 
-    private func output(_ image: NSImage, save: Bool) {
+    private func perform(_ action: QuickShotAction, image: NSImage, history: AnnotationHistory) {
+        if action == .editor {
+            close()
+            onEditor(image, history)
+            return
+        }
+        MainActor.assumeIsolated {
+            let marks = history.annotations
+            guard let output = marks.isEmpty ? image : image.annotated(with: marks) else {
+                HUD.shared.show(.shotEditorRenderFailed)
+                return
+            }
+            finishOutput(output, save: action == .save)
+        }
+    }
+
+    private func finishOutput(_ image: NSImage, save: Bool) {
         if save {
             guard let path = ScreenshotManager.save(image, to: .folder(config().shotFolder)) else {
                 HUD.shared.show(.shotEditorWriteFailed)

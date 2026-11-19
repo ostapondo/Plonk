@@ -6,6 +6,7 @@ import Foundation
 
 extension LocalizedStringResource {
     static let shotEditorWidth = Self.key("shotEditor.width")
+    static func shotEditorColor(_ index: Int) -> LocalizedStringResource { Self.key("shotEditor.color \(index)") }
     static let shotEditorUndo = Self.key("shotEditor.undo")
     static let shotEditorRedo = Self.key("shotEditor.redo")
     static let shotEditorSaveAs = Self.key("shotEditor.saveAs")

@@ -34,7 +34,7 @@ final class QuickShotWindow: NSWindow {
                 onCancel?()
                 return
             case kVK_Return, kVK_ANSI_KeypadEnter, kVK_Space:
-                canvas.output(save: false)
+                canvas.perform(.copy)
                 return
             default: break
             }

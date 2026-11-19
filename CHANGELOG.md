@@ -8,6 +8,7 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 - Region captures open on-screen quick actions by default. Move or resize the selection, enter exact pixel dimensions, lock its aspect ratio, and copy or save the result. The screenshot settings also offer opening the editor directly.
 - Mark up a region in place with rectangles, ellipses, arrows, freehand strokes, and text, with undo and redo.
+- Open a region in the screenshot editor and continue editing or undoing its existing annotations.
 - Blue (`#0077F6`) is available as the first accent colour in Appearance.
 
 ### Changed

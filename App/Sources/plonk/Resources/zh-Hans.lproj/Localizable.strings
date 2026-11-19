@@ -602,6 +602,7 @@
 "tool.ellipse" = "椭圆";
 "tool.highlight" = "荧光笔";
 "tool.text" = "文字";
+"shotEditor.color %lld" = "颜色 %lld";
 
 /* The shortcut guide, read off whatever app is in front. */
 "guide.filter" = "筛选";

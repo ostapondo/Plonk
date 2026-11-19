@@ -3,7 +3,7 @@ import AppKit
 final class QuickShotCanvas: ShotMarkupCanvas {
     var onSelect: (() -> Void)?
     var onCancel: (() -> Void)?
-    var onOutput: ((NSImage, Bool) -> Void)?
+    var onAction: ((NSImage, AnnotationHistory, QuickShotAction) -> Void)?
 
     private let bitmap: ShotBitmap
     private let backdrop: NSImage
@@ -36,7 +36,7 @@ final class QuickShotCanvas: ShotMarkupCanvas {
             self?.ratio = locked ? self?.rect.map { $0.width / $0.height } : nil
         }
         controls.onCancel = { [weak self] in self?.onCancel?() }
-        controls.onOutput = { [weak self] save in self?.output(save: save) }
+        controls.onAction = { [weak self] action in self?.perform(action) }
         controls.onEndEditing = { [weak self] in self?.window?.makeFirstResponder(self) }
         refresh()
     }
@@ -122,16 +122,11 @@ final class QuickShotCanvas: ShotMarkupCanvas {
         window?.invalidateCursorRects(for: self)
     }
 
-    func output(save: Bool) {
+    func perform(_ action: QuickShotAction) {
         guard commitText(), let rect, let image = bitmap.crop(rect) else { return }
         let crop = CGRect(x: rect.minX / bitmap.size.width, y: rect.minY / bitmap.size.height,
                           width: rect.width / bitmap.size.width, height: rect.height / bitmap.size.height)
-        let annotations = history.rebased(to: crop).annotations
-        guard let rendered = annotations.isEmpty ? image : image.annotated(with: annotations) else {
-            HUD.shared.show(.shotEditorRenderFailed)
-            return
-        }
-        onOutput?(rendered, save)
+        onAction?(image, history.rebased(to: crop), action)
     }
 
     private func refresh() {

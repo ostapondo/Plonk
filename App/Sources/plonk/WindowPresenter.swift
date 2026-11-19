@@ -6,12 +6,12 @@ import SwiftUI
 // name and never touches NSWindow itself.
 
 final class WindowPresenter: NSObject {
-    private let model: AppModel
+    let model: AppModel
 
     private var main: NSWindow?
     private var zonePicker: NSWindow?
     private var fullscreenEditor: NSWindow?
-    private var shotEditor: NSWindow?
+    var shotEditor: ShotEditorWindow?
     private var workspaceLaunch: NSPanel?
     private var palette: EditorWindow?
     private var zoneSetPalette: EditorWindow?
@@ -199,33 +199,6 @@ final class WindowPresenter: NSObject {
         workspaceLaunch?.orderOut(nil)
     }
 
-    func showShotEditor(image: NSImage) {
-        shotEditor?.close()
-        let window = NSWindow(
-            contentRect: .zero,
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-            backing: .buffered, defer: false
-        )
-        window.title = String(localized: .windowScreenshot)
-        window.isReleasedWhenClosed = false
-        window.contentViewController = NSHostingController(
-            rootView: ShotEditorView(image: image, defaultFolder: shotFolder()) { [weak self] copied, path in
-                self?.closeShotEditor()
-                self?.onShotFinished?(copied, path)
-            }
-        )
-        window.setContentSize(NSSize(width: image.size.width.clamped(to: 700...1400),
-                                     height: (image.size.height + 110).clamped(to: 520...900)))
-        window.center()
-        shotEditor = window
-        bringForward(window)
-    }
-
-    func closeShotEditor() {
-        shotEditor?.close()
-        shotEditor = nil
-    }
-
     /// `unified` runs the content up under the title bar, so the sidebar and
     /// the page's own bar reach the top edge and the window has one header
     /// instead of a system one sitting on top of ours. The traffic lights stay
@@ -265,7 +238,7 @@ final class WindowPresenter: NSObject {
 
     /// An accessory app is not frontmost when a hotkey fires, so the window
     /// has to bring the app forward with it or it opens behind everything.
-    private func bringForward(_ window: NSWindow) {
+    func bringForward(_ window: NSWindow) {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }
@@ -273,8 +246,9 @@ final class WindowPresenter: NSObject {
 
 extension WindowPresenter: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        guard (notification.object as? NSWindow) === zonePicker else { return }
-        onZonePickerClosed?()
+        let window = notification.object as? NSWindow
+        if window === zonePicker { onZonePickerClosed?() }
+        if window === shotEditor { shotEditor = nil }
     }
 
     func windowDidResignKey(_ notification: Notification) {

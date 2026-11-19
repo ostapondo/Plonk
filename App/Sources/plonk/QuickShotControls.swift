@@ -6,7 +6,7 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
     var onResize: ((Int, Bool) -> Void)?
     var onLock: ((Bool) -> Void)?
     var onCancel: (() -> Void)?
-    var onOutput: ((Bool) -> Void)?
+    var onAction: ((QuickShotAction) -> Void)?
     var onEndEditing: (() -> Void)?
 
     private let widthField = NSTextField()
@@ -26,6 +26,7 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
         lock.setButtonType(.toggle)
         for view in [widthField, lock, heightField, pixels] { dimensions.stack.addArrangedSubview(view) }
         addButton(symbol: "xmark", title: .commonCancel, action: #selector(cancel))
+        addButton(symbol: "macwindow", title: .shotAfterEditor, action: #selector(openEditor))
         addButton(symbol: "square.and.arrow.down", title: .shotEditorSaveToFolder, action: #selector(save))
         addButton(symbol: "document.on.document", title: .shotEditorCopy, action: #selector(copyImage))
     }
@@ -119,8 +120,9 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
         onLock?(lock.state == .on)
     }
 
-    @objc private func save() { onOutput?(true) }
-    @objc private func copyImage() { onOutput?(false) }
+    @objc private func openEditor() { onAction?(.editor) }
+    @objc private func save() { onAction?(.save) }
+    @objc private func copyImage() { onAction?(.copy) }
     @objc private func cancel() { onCancel?() }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {

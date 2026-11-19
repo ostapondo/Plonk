@@ -1,148 +1,142 @@
+import AppKit
 import SwiftUI
 
-// Screenshot annotation editor: pick a shape, colour and width, draw over the
-// capture, then copy or save the flattened result.
+final class ShotEditorView: NSView {
+    let canvas: ShotEditorCanvas
+    private let defaultFolder: () -> String
+    private let onFinish: (Bool, String?) -> Void
+    private let accent: NSColor
+    private lazy var tools = ShotMarkupTools(canvas: canvas, kinds: Annotation.Kind.allCases,
+                                            includeSelection: false, accent: accent)
+    private let status = NSTextField(labelWithString: "")
+    private var colors: [NSButton] = []
 
-struct ShotEditorView: View {
-    let image: NSImage
-    let defaultFolder: String
-    let onFinish: (_ copied: Bool, _ savedPath: String?) -> Void
-
-    @State private var history = AnnotationHistory()
-    @State private var kind: Annotation.Kind = .arrow
-    @State private var colorIndex = 0
-    @State private var strokePoints: Double = 4
-    @State private var status: String?
-
-    var body: some View {
-        VStack(spacing: 0) {
-            toolbar
-            Divider()
-            canvas
-                .padding(12)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black.opacity(0.06))
-            Divider()
-            footer
-        }
-        .frame(minWidth: 700, minHeight: 520)
+    init(image: NSImage, history: AnnotationHistory, accent: NSColor, defaultFolder: @escaping () -> String,
+         onFinish: @escaping (Bool, String?) -> Void) {
+        canvas = ShotEditorCanvas(image: image, history: history)
+        self.defaultFolder = defaultFolder
+        self.onFinish = onFinish
+        self.accent = accent
+        super.init(frame: .zero)
+        let stack = NSStackView(views: [toolbar(), separator(), canvas, separator(), footer()])
+        stack.orientation = .vertical
+        stack.alignment = .width
+        stack.spacing = 0
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stack.topAnchor.constraint(equalTo: topAnchor),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            canvas.heightAnchor.constraint(greaterThanOrEqualToConstant: 200),
+        ])
     }
 
-    private var toolbar: some View {
-        HStack(spacing: 14) {
-            Picker("", selection: $kind) {
-                ForEach(Annotation.Kind.allCases.filter { $0 != .text }) { kind in
-                    Image(systemName: kind.symbol).tag(kind).help(String(localized: kind.title))
-                }
-            }
-            .pickerStyle(.segmented)
-            .fixedSize()
+    required init?(coder: NSCoder) { nil }
 
-            HStack(spacing: 5) {
-                ForEach(Array(Annotation.palette.enumerated()), id: \.offset) { index, color in
-                    Circle()
-                        .fill(color)
-                        .frame(width: 17, height: 17)
-                        .overlay(Circle().strokeBorder(.primary.opacity(colorIndex == index ? 0.9 : 0.2),
-                                                       lineWidth: colorIndex == index ? 2.5 : 1))
-                        .onTapGesture { colorIndex = index }
-                }
-            }
-
-            Slider(value: $strokePoints, in: 1...16) { Text(.shotEditorWidth) }
-                .frame(width: 110)
-
-            Spacer()
-
-            Button {
-                history.undo()
-            } label: {
-                Image(systemName: "arrow.uturn.backward")
-            }
-            .disabled(history.annotations.isEmpty)
-            .help(String(localized: .shotEditorUndo))
-
-            Button {
-                history.redo()
-            } label: {
-                Image(systemName: "arrow.uturn.forward")
-            }
-            .disabled(history.redoStack.isEmpty)
-            .help(String(localized: .shotEditorRedo))
+    private func toolbar() -> NSStackView {
+        let palette = NSStackView()
+        palette.spacing = 3
+        for (index, color) in Annotation.palette.enumerated() {
+            let button = NSButton()
+            QuickShotControls.configure(button, symbol: "circle.fill", title: .shotEditorColor(index + 1),
+                                        target: self, action: #selector(selectColor))
+            button.contentTintColor = NSColor(color)
+            button.tag = index
+            button.wantsLayer = true
+            button.layer?.cornerRadius = 6
+            colors.append(button)
+            palette.addArrangedSubview(button)
         }
-        .padding(10)
+        refreshPalette()
+        let thickness = NSSlider(value: 4, minValue: 1, maxValue: 16, target: self, action: #selector(setWidth))
+        thickness.setAccessibilityLabel(String(localized: .shotEditorWidth))
+        thickness.toolTip = String(localized: .shotEditorWidth)
+        thickness.widthAnchor.constraint(equalToConstant: 90).isActive = true
+        let stack = NSStackView(views: [tools.stack, palette, thickness, NSView()])
+        stack.alignment = .centerY
+        stack.spacing = 12
+        stack.edgeInsets = NSEdgeInsets(top: 9, left: 12, bottom: 9, right: 12)
+        return stack
     }
 
-    private var canvas: some View {
-        GeometryReader { geo in
-            // The image is aspect-fitted inside the pane, so gesture points get
-            // mapped against that rect and not the pane.
-            let fitted = ImageFit.rect(for: image.size, in: geo.size)
-            AnnotatedImage(image: image, annotations: history.annotations, live: history.live)
-                .frame(width: geo.size.width, height: geo.size.height)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 1)
-                        .onChanged { value in
-                            if history.live == nil {
-                                guard fitted.contains(value.startLocation) else { return }
-                                history.begin(kind, at: ImageFit.unitPoint(value.startLocation, in: fitted),
-                                              color: colorIndex, width: strokePoints / max(fitted.width, 1))
-                            }
-                            history.drag(to: ImageFit.unitPoint(value.location, in: fitted))
-                        }
-                        .onEnded { value in
-                            history.drag(to: ImageFit.unitPoint(value.location, in: fitted))
-                            history.end()
-                        }
-                )
+    private func separator() -> NSBox {
+        let line = NSBox()
+        line.boxType = .separator
+        return line
+    }
+
+    private func footer() -> NSStackView {
+        status.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        status.textColor = .secondaryLabelColor
+        let saveAs = NSButton(title: String(localized: .shotEditorSaveAs), target: self, action: #selector(chooseSavePath))
+        let save = NSButton(title: String(localized: .shotEditorSaveToFolder), target: self, action: #selector(saveClicked))
+        let copy = NSButton(title: String(localized: .shotEditorCopy), target: self, action: #selector(copyImage))
+        let stack = NSStackView(views: [status, NSView(), saveAs, save, copy])
+        stack.alignment = .centerY
+        stack.edgeInsets = NSEdgeInsets(top: 9, left: 12, bottom: 9, right: 12)
+        return stack
+    }
+
+    private func refreshPalette() {
+        for button in colors {
+            button.layer?.backgroundColor = button.tag == canvas.colorIndex
+                ? accent.withAlphaComponent(0.18).cgColor : nil
         }
     }
 
-    private var footer: some View {
-        HStack {
-            if let status {
-                Text(status).font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button(String(localized: .shotEditorSaveAs), action: saveAs)
-            Button(String(localized: .shotEditorSaveToFolder)) { save(to: .folder(defaultFolder)) }
-            Button(String(localized: .shotEditorCopy), action: copy)
-                .keyboardShortcut(.defaultAction)
-        }
-        .padding(10)
+    @objc private func selectColor(_ button: NSButton) {
+        guard canvas.commitText() else { return }
+        canvas.colorIndex = button.tag
+        refreshPalette()
     }
 
-    // MARK: - Output
+    @objc private func setWidth(_ slider: NSSlider) {
+        canvas.strokePoints = slider.doubleValue
+    }
 
-    private func copy() {
-        guard let output = image.annotated(with: history.annotations) else {
-            status = String(localized: .shotEditorRenderFailed)
+    private func render() -> NSImage? {
+        guard canvas.commitText() else { return nil }
+        let annotations = canvas.history.annotations
+        guard !annotations.isEmpty else { return canvas.image }
+        guard let image = canvas.image.annotated(with: annotations) else {
+            status.stringValue = String(localized: .shotEditorRenderFailed)
+            return nil
+        }
+        return image
+    }
+
+    @objc func copyImage() {
+        guard let image = render() else { return }
+        guard ScreenshotManager.copyToClipboard(image) else {
+            status.stringValue = String(localized: .shotCopyFailed)
             return
         }
-        ScreenshotManager.copyToClipboard(output)
         onFinish(true, nil)
     }
 
-    private func save(to destination: ScreenshotManager.Destination) {
-        guard let output = image.annotated(with: history.annotations) else {
-            status = String(localized: .shotEditorRenderFailed)
+    func save(to destination: ScreenshotManager.Destination, forceCopy: Bool = false) {
+        guard let image = render() else { return }
+        guard let path = ScreenshotManager.save(image, to: destination) else {
+            status.stringValue = String(localized: .shotEditorWriteFailed)
             return
         }
-        guard let path = ScreenshotManager.save(output, to: destination) else {
-            status = String(localized: .shotEditorWriteFailed)
-            return
-        }
-        onFinish(false, path)
+        let copied = forceCopy && ScreenshotManager.copyToClipboard(image)
+        if forceCopy && !copied { HUD.shared.show(.shotCopyFailed) }
+        onFinish(copied, path)
     }
 
-    private func saveAs() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.png]
-        panel.nameFieldStringValue = ScreenshotManager.fileName(for: Date())
-        panel.directoryURL = URL(fileURLWithPath: (defaultFolder as NSString).expandingTildeInPath)
-        if panel.runModal() == .OK, let url = panel.url {
-            save(to: .path(url.path))
+    @objc private func saveClicked() { saveToFolder(forceCopy: false) }
+
+    func saveToFolder(forceCopy: Bool) {
+        save(to: .folder(defaultFolder()), forceCopy: forceCopy)
+    }
+
+    @objc private func chooseSavePath() {
+        guard canvas.commitText(), let window else { return }
+        window.beginShotSavePanel(in: defaultFolder()) { [weak self] url in
+            if let url { self?.save(to: .path(url.path)) }
         }
     }
 }

@@ -609,6 +609,7 @@
 "tool.ellipse" = "Ellipse";
 "tool.highlight" = "Highlight";
 "tool.text" = "Text";
+"shotEditor.color %lld" = "Color %lld";
 
 /* The shortcut guide, read off whatever app is in front. */
 "guide.filter" = "Filter";

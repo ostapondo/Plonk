@@ -30,6 +30,7 @@ extension AppDelegate {
                           completion: @escaping (Result<NSImage, WindowCapture.Failure>) -> Void) {
         WindowCapture.capture(query) { [weak self] result in
             if case .success(let image) = result, openEditor {
+                self?.quickShot?.close()
                 self?.presenter.showShotEditor(image: image)
             }
             completion(result)
@@ -77,6 +78,8 @@ extension AppDelegate {
         let session = QuickShotSession(config: { [weak self] in self?.store.config ?? Config() },
                                        onFinish: { [weak self] copied, path in
                                            self?.finishShot(copied: copied, path: path)
+                                       }, onEditor: { [weak self] image, history in
+                                           self?.presenter.showShotEditor(image: image, history: history)
                                        }, onClose: { [weak self] in
                                            self?.quickShot = nil
                                            self?.showOwnWindows(hidden)
