@@ -10,6 +10,7 @@ What changed in each release, from a user's side. The commit log has the rest.
 - Mark up a region in place with rectangles, ellipses, arrows, freehand strokes, and text, with undo and redo.
 - Open a region in the screenshot editor and continue editing or undoing its existing annotations.
 - Copy recognized text without closing the selection, open the annotated PNG in Preview, or choose a save location.
+- Screenshot shortcuts follow focus between the canvas, text fields, and save dialogs. Plonk's global shortcuts pause while screenshot editing owns the keyboard.
 - Blue (`#0077F6`) is available as the first accent colour in Appearance.
 
 ### Changed

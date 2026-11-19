@@ -1,5 +1,4 @@
 import AppKit
-import Carbon.HIToolbox
 
 final class ShotEditorWindow: NSWindow {
     let editor: ShotEditorView
@@ -19,18 +18,20 @@ final class ShotEditorWindow: NSWindow {
         autorecalculatesKeyViewLoop = true
     }
 
-    override func sendEvent(_ event: NSEvent) {
-        if event.type == .keyDown, firstResponder === editor.canvas {
-            switch Int(event.keyCode) {
-            case kVK_Return, kVK_ANSI_KeypadEnter, kVK_Space:
-                editor.copyImage()
-                return
-            case kVK_Escape:
-                if !editor.canvas.cancelText() { close() }
-                return
-            default: break
-            }
+    func handleShortcut(_ event: NSEvent) -> Bool {
+        guard let command = ShotKeyCommand(event: event, window: self, canvas: editor.canvas) else { return false }
+        switch command {
+        case .action(.copy): editor.copyImage()
+        case .action(.save(let forceCopy)): editor.saveToFolder(forceCopy: forceCopy)
+        case .action: return false
+        case .cancel:
+            if !editor.canvas.cancelText() { close() }
+        case .select(let kind): editor.selectTool(kind)
+        case .undo: editor.canvas.undoMark()
+        case .redo: editor.canvas.redoMark()
+        case .tab(let backward):
+            if backward { selectPreviousKeyView(editor.canvas) } else { selectNextKeyView(editor.canvas) }
         }
-        super.sendEvent(event)
+        return true
     }
 }

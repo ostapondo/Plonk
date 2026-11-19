@@ -96,6 +96,8 @@ final class ShotEditorView: NSView {
         canvas.strokePoints = slider.doubleValue
     }
 
+    func selectTool(_ kind: Annotation.Kind) { tools.select(kind) }
+
     private func render() -> NSImage? {
         guard canvas.commitText() else { return nil }
         let annotations = canvas.history.annotations

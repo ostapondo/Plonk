@@ -16,6 +16,10 @@ final class ShotTextEntry: NSTextView {
             }
         case #selector(cancelOperation(_:)):
             onCancel?()
+        case #selector(insertTab(_:)):
+            window?.selectNextKeyView(self)
+        case #selector(insertBacktab(_:)):
+            window?.selectPreviousKeyView(self)
         default:
             super.doCommand(by: selector)
         }

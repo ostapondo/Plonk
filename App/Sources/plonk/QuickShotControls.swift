@@ -148,16 +148,32 @@ final class QuickShotControls: NSObject, NSTextFieldDelegate {
     @objc private func copyImage() { onAction?(.copy) }
     @objc private func cancel() { onCancel?() }
 
+    @discardableResult
+    func commitDimensions() -> Bool {
+        for field in [widthField, heightField] {
+            if let editor = field.currentEditor() as? NSTextView {
+                return commit(field, textView: editor)
+            }
+        }
+        return true
+    }
+
+    private func commit(_ control: NSControl, textView: NSTextView) -> Bool {
+        guard !textView.hasMarkedText() else { return false }
+        guard let value = Int(textView.string.trimmingCharacters(in: .whitespaces)), value > 0 else {
+            HUD.shared.show(.shotSelectionInvalid)
+            return false
+        }
+        onEndEditing?()
+        onResize?(value, control === widthField)
+        return true
+    }
+
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
         guard !textView.hasMarkedText() else { return false }
         switch commandSelector {
         case #selector(NSResponder.insertNewline(_:)):
-            guard let value = Int(textView.string.trimmingCharacters(in: .whitespaces)), value > 0 else {
-                HUD.shared.show(.shotSelectionInvalid)
-                return true
-            }
-            onEndEditing?()
-            onResize?(value, control === widthField)
+            _ = commit(control, textView: textView)
             return true
         case #selector(NSResponder.cancelOperation(_:)):
             onEndEditing?()

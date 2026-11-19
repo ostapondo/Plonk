@@ -34,6 +34,7 @@ extension AppDelegate {
     }
 
     func setupPresenter() {
+        shotKeyboard.onResume = { [weak self] in self?.refreshHotkeyModel() }
         presenter.shotFolder = { [weak self] in self?.store.config.shotFolder ?? "~/Desktop" }
         presenter.onShotFinished = { [weak self] copied, path in self?.finishShot(copied: copied, path: path) }
         presenter.onCancelWorkspaceLaunch = { [weak self] in self?.launcher.cancel() }

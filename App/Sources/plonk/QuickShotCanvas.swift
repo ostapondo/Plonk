@@ -130,10 +130,15 @@ final class QuickShotCanvas: ShotMarkupCanvas {
     }
 
     func perform(_ action: QuickShotAction) {
-        guard commitText(), let rect, let image = bitmap.crop(rect) else { return }
+        guard controls.commitDimensions(), commitText(), let rect, let image = bitmap.crop(rect) else { return }
         let crop = CGRect(x: rect.minX / bitmap.size.width, y: rect.minY / bitmap.size.height,
                           width: rect.width / bitmap.size.width, height: rect.height / bitmap.size.height)
         onAction?(image, history.rebased(to: crop), action)
+    }
+
+    func selectTool(_ kind: Annotation.Kind) {
+        guard rect != nil else { return }
+        tools.select(kind)
     }
 
     func beginRecognition() -> Int {

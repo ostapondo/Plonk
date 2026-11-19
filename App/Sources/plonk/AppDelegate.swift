@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let eventBroadcaster = EventBroadcaster()
     let voice = VoiceManager()
     let hotkeys = HotkeyManager()
+    lazy var shotKeyboard = ShotKeyboard(hotkeys: hotkeys)
     let updates = UpdateManager()
     let model = AppModel()
     let snapMemory = SnapMemory()

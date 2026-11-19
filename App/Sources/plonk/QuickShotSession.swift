@@ -4,16 +4,18 @@ final class QuickShotSession: NSObject {
     private let config: () -> Config
     private let onFinish: (Bool, String?) -> Void
     private let onEditor: (NSImage, AnnotationHistory) -> Void
+    private let onPresented: () -> Void
     private var onClose: (() -> Void)?
     private var windows: [QuickShotWindow] = []
 
     init(config: @escaping () -> Config, onFinish: @escaping (Bool, String?) -> Void,
          onEditor: @escaping (NSImage, AnnotationHistory) -> Void,
-         onClose: @escaping () -> Void) {
+         onClose: @escaping () -> Void, onPresented: @escaping () -> Void) {
         self.config = config
         self.onFinish = onFinish
         self.onEditor = onEditor
         self.onClose = onClose
+        self.onPresented = onPresented
     }
 
     func begin() {
@@ -58,6 +60,7 @@ final class QuickShotSession: NSObject {
         let target = windows.first { $0.frame.contains(NSEvent.mouseLocation) } ?? windows.first
         target?.makeKey()
         target?.makeFirstResponder(target?.canvas)
+        onPresented()
     }
 
     private func failCapture() {

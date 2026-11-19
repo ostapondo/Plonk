@@ -12,7 +12,7 @@ prove, and where they stop.
 
 | | |
 | --- | --- |
-| **Accessibility** | Move and resize windows of other apps, and read their titles, frames and menu shortcuts. It is also what lets the optional grab-and-move intercept a modifier-drag, and what the pointer tools use to watch the mouse without touching it. Granted by you, revocable in System Settings > Privacy & Security |
+| **Accessibility** | Move and resize windows of other apps, read their titles, frames and menu shortcuts, intercept modifier-drags for grab-and-move, and watch the mouse for pointer tools. While a screenshot window has focus, Plonk can route keys directly to its own editor. System shortcuts continue to go to macOS. Granted by you, revocable in System Settings > Privacy & Security |
 | **Screen Recording** | Capture a region, a window or a screen, when a capture is asked for. macOS shows its own indicator every time. Reading text off a capture uses the same permission and no other — recognition is Apple's Vision framework, running on this Mac — and so does a pinned live crop, which streams a region to a floating window and writes nothing anywhere |
 | **Microphone / Speech** | Only while a push-to-talk key is held. Transcription happens on this Mac |
 | **Disk** | `~/Library/Application Support/Plonk/`, user-selected screenshot destinations, and temporary storage for captures, Preview, and unpacking updates |

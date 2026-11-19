@@ -10,11 +10,13 @@ final class HotkeyManager {
     private var actions: [UInt32: HotkeyAction] = [:]
     private var handlerInstalled = false
     private var enabled = false
+    private var suspended = false
+    private var nextID: UInt32 = 0
 
     /// Action to key. Assigning re-registers if hotkeys are on.
     var bindings: [HotkeyAction: Hotkey] = [:] {
         didSet {
-            guard enabled, bindings != oldValue else { return }
+            guard enabled, !suspended, bindings != oldValue else { return }
             unregister()
             register()
         }
@@ -39,7 +41,7 @@ final class HotkeyManager {
     func setEnabled(_ on: Bool) {
         guard on != enabled else { return }
         enabled = on
-        if on {
+        if on && !suspended {
             installHandlerIfNeeded()
             register()
         } else {
@@ -47,12 +49,24 @@ final class HotkeyManager {
         }
     }
 
+    func setSuspended(_ on: Bool) {
+        guard on != suspended else { return }
+        suspended = on
+        if on {
+            unregister()
+        } else if enabled {
+            installHandlerIfNeeded()
+            register()
+        }
+    }
+
     private func register() {
         let signature = OSType(0x5348_594B) // 'SHYK'
         var taken: [HotkeyAction] = []
-        for (index, action) in HotkeyAction.allCases.enumerated() {
+        for action in HotkeyAction.allCases {
             guard let hotkey = bindings[action] else { continue }
-            let id = UInt32(index + 1)
+            nextID &+= 1
+            let id = nextID
             var ref: EventHotKeyRef?
             let status = RegisterEventHotKey(hotkey.keyCode, hotkey.carbonModifiers,
                                              EventHotKeyID(signature: signature, id: id),
@@ -92,9 +106,12 @@ final class HotkeyManager {
             GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
                               nil, MemoryLayout<EventHotKeyID>.size, nil, &hkID)
             let manager = Unmanaged<HotkeyManager>.fromOpaque(userData).takeUnretainedValue()
-            guard let action = manager.actions[hkID.id] else { return noErr }
+            let id = hkID.id
+            guard let action = manager.actions[id] else { return noErr }
             let released = GetEventKind(event) == UInt32(kEventHotKeyReleased)
             DispatchQueue.main.async {
+                // A binding queued before a capture cannot fire after it was removed or restored.
+                guard manager.actions[id] == action else { return }
                 (released ? manager.onActionUp : manager.onAction)?(action)
             }
             return noErr

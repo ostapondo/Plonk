@@ -1,5 +1,4 @@
 import AppKit
-import Carbon.HIToolbox
 
 final class QuickShotWindow: NSWindow {
     let canvas: QuickShotCanvas
@@ -27,18 +26,18 @@ final class QuickShotWindow: NSWindow {
 
     override func cancelOperation(_ sender: Any?) { onCancel?() }
 
-    override func sendEvent(_ event: NSEvent) {
-        if event.type == .keyDown, firstResponder === canvas {
-            switch Int(event.keyCode) {
-            case kVK_Escape:
-                if !canvas.cancelText() && !canvas.dismissRecognition() { onCancel?() }
-                return
-            case kVK_Return, kVK_ANSI_KeypadEnter, kVK_Space:
-                canvas.perform(.copy)
-                return
-            default: break
-            }
+    func handleShortcut(_ event: NSEvent) -> Bool {
+        guard let command = ShotKeyCommand(event: event, window: self, canvas: canvas) else { return false }
+        switch command {
+        case .cancel:
+            if !canvas.cancelText() && !canvas.dismissRecognition() { onCancel?() }
+        case .select(let kind): canvas.selectTool(kind)
+        case .action(let action): canvas.perform(action)
+        case .undo: canvas.undoMark()
+        case .redo: canvas.redoMark()
+        case .tab(let backward):
+            if backward { selectPreviousKeyView(canvas) } else { selectNextKeyView(canvas) }
         }
-        super.sendEvent(event)
+        return true
     }
 }

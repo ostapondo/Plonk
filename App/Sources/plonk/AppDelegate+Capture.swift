@@ -67,6 +67,7 @@ extension AppDelegate {
 
     func beginQuickShot() {
         guard quickShot == nil, captureDepth == 0 else { return }
+        shotKeyboard.beginPreparing()
         let hidden = hideOwnWindows()
         let session = QuickShotSession(config: { [weak self] in self?.store.config ?? Config() },
                                        onFinish: { [weak self] copied, path in
@@ -76,6 +77,9 @@ extension AppDelegate {
                                        }, onClose: { [weak self] in
                                            self?.quickShot = nil
                                            self?.showOwnWindows(hidden)
+                                           self?.shotKeyboard.finishedPreparing()
+                                       }, onPresented: { [weak self] in
+                                           self?.shotKeyboard.finishedPreparing()
                                        })
         quickShot = session
         session.begin()
