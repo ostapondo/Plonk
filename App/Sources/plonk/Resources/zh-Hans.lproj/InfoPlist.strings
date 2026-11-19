@@ -1,0 +1,2 @@
+"NSMicrophoneUsageDescription" = "使用按住说话功能时，Plonk 会在你按住快捷键期间使用麦克风。";
+"NSSpeechRecognitionUsageDescription" = "Plonk 在这台 Mac 上将语音指令转为文字，并将需要 Agent 处理的请求发送给 Agent。";

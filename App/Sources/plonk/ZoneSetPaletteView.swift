@@ -29,7 +29,6 @@ struct ZoneSetPaletteView: View {
         let zones: [ZoneRect]
         let custom: Bool
         var id: String { name }
-        var title: String { name.isEmpty ? String(localized: .zoneSetEdgeSnapping) : name }
     }
 
     private var rows: [Row] {
@@ -101,7 +100,8 @@ struct ZoneSetPaletteView: View {
         return HStack(spacing: 11) {
             thumbnail(row)
             VStack(alignment: .leading, spacing: 2) {
-                Text(row.title).font(.system(size: 12.5, weight: selected ? .semibold : .regular))
+                Text(model.displayName(forZoneSet: row.name))
+                    .font(.system(size: 12.5, weight: selected ? .semibold : .regular))
                 if row.name == assigned {
                     Text(.zoneSetOnThisScreenNow).font(.system(size: 10.5)).foregroundStyle(.secondary)
                 }
@@ -178,7 +178,7 @@ struct ZoneSetPaletteView: View {
         let screen = screenIndex
         DispatchQueue.main.async { [model] in
             model.actions?.assignZoneSet(name, toScreen: screen)
-            HUD.shared.show(name.isEmpty ? String(localized: .zoneSetEdgeSnapping) : name)
+            HUD.shared.show(model.displayName(forZoneSet: name))
         }
     }
 

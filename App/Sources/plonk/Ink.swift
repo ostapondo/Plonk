@@ -89,7 +89,8 @@ struct Eyebrow: View {
     }
 
     var body: some View {
-        Text(text.uppercased())
+        let title = Localization.locale.language.languageCode?.identifier == "en" ? text.uppercased() : text
+        Text(verbatim: title)
             .font(.system(size: size, weight: .bold))
             .kerning(kerning)
             .muted()

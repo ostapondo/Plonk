@@ -101,7 +101,7 @@ struct ZonePickerView: View {
             ForEach(names, id: \.self) { name in
                 let isCustom = model.customZoneSetNames.contains(name)
                 ZoneSetCard(
-                    name: name,
+                    name: model.displayName(forZoneSet: name),
                     zones: model.zoneSets[name] ?? [],
                     subtitle: nil,
                     isSelected: assignedName == name,

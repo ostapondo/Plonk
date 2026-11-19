@@ -5,6 +5,10 @@ import Foundation
 
 extension LocalizedStringResource {
     static let zoneSetTemplates = Self.key("zoneSet.templates")
+    static let zoneSetHalves = Self.key("zoneSet.halves")
+    static let zoneSetThirds = Self.key("zoneSet.thirds")
+    static let zoneSetQuarters = Self.key("zoneSet.quarters")
+    static let zoneSetPriority = Self.key("zoneSet.priority")
     static let zoneSetCustom = Self.key("zoneSet.custom")
     static let zoneSetCreateNew = Self.key("zoneSet.createNew")
     static let zoneSetEmptyState = Self.key("zoneSet.emptyState")
@@ -16,6 +20,7 @@ extension LocalizedStringResource {
     static let zoneSetRename = Self.key("zoneSet.rename")
     static let zoneSetEdgeSnapping = Self.key("zoneSet.edgeSnapping")
     static let zoneSetNewSet = Self.key("zoneSet.newSet")
+    static let zoneSetDefaultName = Self.key("zoneSet.defaultName")
     static let zoneSetEdgeHint = Self.key("zoneSet.edgeHint")
     static let zoneSetZoneHint = Self.key("zoneSet.zoneHint")
     static let zoneSetPreview = Self.key("zoneSet.preview")
@@ -33,6 +38,10 @@ extension LocalizedStringResource {
     static let zoneSetHintEdit = Self.key("zoneSet.hintEdit")
     static let zoneSetHintNew = Self.key("zoneSet.hintNew")
     static let zoneSetHintClose = Self.key("zoneSet.hintClose")
+
+    static func zoneSetCopyName(_ name: String) -> LocalizedStringResource {
+        Self.key("zoneSet.copyName \(name)")
+    }
 
     static func zoneSetScreen(_ number: Int) -> LocalizedStringResource {
         Self.key("zoneSet.screen \(number)")
