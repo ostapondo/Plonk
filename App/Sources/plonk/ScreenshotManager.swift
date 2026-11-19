@@ -99,9 +99,12 @@ enum ScreenshotManager {
     }
 
     static func pngData(from image: NSImage) -> Data? {
-        if let rep = image.representations.compactMap({ $0 as? NSBitmapImageRep }).first,
+        if let rep = bitmapRepresentation(of: image),
            let data = rep.representation(using: .png, properties: [:]) {
             return data
+        }
+        if let bitmap = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+            return NSBitmapImageRep(cgImage: bitmap).representation(using: .png, properties: [:])
         }
         guard let tiff = image.tiffRepresentation,
               let rep = NSBitmapImageRep(data: tiff) else { return nil }
@@ -135,9 +138,16 @@ enum ScreenshotManager {
 
     /// Pixels per point, so exports keep the capture's native resolution.
     static func nativeScale(of image: NSImage) -> CGFloat {
-        let widest = image.representations.map(\.pixelsWide).max() ?? 0
+        let widest = bitmapRepresentation(of: image)?.pixelsWide
+            ?? image.cgImage(forProposedRect: nil, context: nil, hints: nil)?.width
+            ?? 0
         guard widest > 0, image.size.width > 0 else { return 1 }
         return CGFloat(widest) / image.size.width
+    }
+
+    private static func bitmapRepresentation(of image: NSImage) -> NSBitmapImageRep? {
+        image.representations.compactMap { $0 as? NSBitmapImageRep }
+            .max { $0.pixelsWide < $1.pixelsWide }
     }
 
     /// A copy no larger than `maxDimension` on its longest side, or nil when

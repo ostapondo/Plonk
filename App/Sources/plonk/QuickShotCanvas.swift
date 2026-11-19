@@ -1,6 +1,6 @@
 import AppKit
 
-final class QuickShotCanvas: NSView {
+final class QuickShotCanvas: ShotMarkupCanvas {
     var onSelect: (() -> Void)?
     var onCancel: (() -> Void)?
     var onOutput: ((NSImage, Bool) -> Void)?
@@ -11,6 +11,8 @@ final class QuickShotCanvas: NSView {
     private let safeArea: CGRect
     private let controls = QuickShotControls()
     private let accent: NSColor
+    private lazy var tools = ShotMarkupTools(canvas: self, kinds: [.rectangle, .ellipse, .arrow, .pen, .text],
+                                            includeSelection: true, accent: accent)
     private var rect: CGRect? { didSet { refresh() } }
     private var ratio: CGFloat?
     private var anchor = CGPoint.zero
@@ -25,6 +27,8 @@ final class QuickShotCanvas: NSView {
         backdrop = NSImage(cgImage: bitmap.image, size: frame.size)
         geometry = ShotSelection(pixels: bitmap.size, view: frame.size)
         super.init(frame: frame)
+        controls.toolbar.stack.insertArrangedSubview(tools.stack, at: 0)
+        controls.toolbar.stack.setCustomSpacing(10, after: tools.stack)
         addSubview(controls.dimensions)
         addSubview(controls.toolbar)
         controls.onResize = { [weak self] value, horizontal in self?.resize(value, horizontal: horizontal) }
@@ -38,8 +42,7 @@ final class QuickShotCanvas: NSView {
     }
 
     required init?(coder: NSCoder) { nil }
-    override var isFlipped: Bool { true }
-    override var acceptsFirstResponder: Bool { true }
+    override var markupClip: CGRect { rect.map(geometry.viewRect) ?? .zero }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     func clearSelection() {
@@ -52,10 +55,11 @@ final class QuickShotCanvas: NSView {
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: .crosshair)
         guard let rect else { return }
-        addCursorRect(geometry.viewRect(rect), cursor: .openHand)
+        addCursorRect(geometry.viewRect(rect), cursor: tool == .text ? .iBeam : tool == nil ? .openHand : .crosshair)
     }
 
     override func mouseDown(with event: NSEvent) {
+        guard commitText() else { return }
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
         anchor = geometry.pixelPoint(point)
@@ -68,6 +72,7 @@ final class QuickShotCanvas: NSView {
                 handle = edge(at: point, of: viewRect)
             }
         }
+        if handle == .zero && beginMark(at: point) { return }
         if original == nil { clearSelection() }
         dragging = true
         onSelect?()
@@ -75,8 +80,10 @@ final class QuickShotCanvas: NSView {
     }
 
     override func mouseDragged(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        if dragMark(to: location) { return }
         guard dragging else { return }
-        let point = geometry.pixelPoint(convert(event.locationInWindow, from: nil))
+        let point = geometry.pixelPoint(location)
         let delta = CGPoint(x: point.x - anchor.x, y: point.y - anchor.y)
         if let original {
             rect = handle == .zero ? geometry.move(original, by: delta)
@@ -88,6 +95,7 @@ final class QuickShotCanvas: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
+        if endMark(at: convert(event.locationInWindow, from: nil)) { return }
         guard dragging else { return }
         mouseDragged(with: event)
         dragging = false
@@ -115,12 +123,20 @@ final class QuickShotCanvas: NSView {
     }
 
     func output(save: Bool) {
-        guard let rect, let image = bitmap.crop(rect) else { return }
-        onOutput?(image, save)
+        guard commitText(), let rect, let image = bitmap.crop(rect) else { return }
+        let crop = CGRect(x: rect.minX / bitmap.size.width, y: rect.minY / bitmap.size.height,
+                          width: rect.width / bitmap.size.width, height: rect.height / bitmap.size.height)
+        let annotations = history.rebased(to: crop).annotations
+        guard let rendered = annotations.isEmpty ? image : image.annotated(with: annotations) else {
+            HUD.shared.show(.shotEditorRenderFailed)
+            return
+        }
+        onOutput?(rendered, save)
     }
 
     private func refresh() {
         needsDisplay = true
+        updateMarkup()
         controls.dimensions.isHidden = rect == nil
         controls.toolbar.isHidden = rect == nil || dragging
         guard let rect else { return }

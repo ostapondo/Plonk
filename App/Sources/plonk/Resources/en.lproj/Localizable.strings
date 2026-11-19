@@ -88,6 +88,7 @@
 "shot.selectionHeight" = "Selection Height";
 "shot.selectionPixels" = "px";
 "shot.selectionLock" = "Lock Aspect Ratio";
+"shot.selectionMove" = "Move or Resize Selection";
 "shot.selectionInvalid" = "Enter a positive whole number of pixels.";
 "shot.captureFailed" = "Could not capture the screen. Check Screen Recording access.";
 "shot.copyFailed" = "Could not copy the screenshot.";

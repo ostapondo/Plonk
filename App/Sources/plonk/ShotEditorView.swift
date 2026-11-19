@@ -32,7 +32,7 @@ struct ShotEditorView: View {
         HStack(spacing: 14) {
             Picker("", selection: $kind) {
                 ForEach(Annotation.Kind.allCases.filter { $0 != .text }) { kind in
-                    Image(systemName: kind.symbol).tag(kind).help(kind.title)
+                    Image(systemName: kind.symbol).tag(kind).help(String(localized: kind.title))
                 }
             }
             .pickerStyle(.segmented)

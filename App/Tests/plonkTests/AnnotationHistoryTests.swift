@@ -29,4 +29,23 @@ struct AnnotationHistoryTests {
         moved.undo()
         #expect(moved.annotations.isEmpty)
     }
+
+    @MainActor
+    @Test func annotatedPNGPreservesExactDimensions() throws {
+        let context = try #require(CGContext(
+            data: nil, width: 800, height: 600, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.setFillColor(NSColor.white.cgColor)
+        context.fill(CGRect(x: 0, y: 0, width: 800, height: 600))
+        let source = NSImage(cgImage: try #require(context.makeImage()), size: CGSize(width: 400, height: 300))
+        let text = Annotation(kind: .text, points: [CGPoint(x: 0.25, y: 0.25)], colorIndex: 0,
+                              width: 0.04, text: "Plonk\n截图")
+        let rendered = try #require(source.annotated(with: [text]))
+        let data = try #require(ScreenshotManager.pngData(from: rendered))
+        let png = try #require(NSBitmapImageRep(data: data))
+        #expect(png.pixelsWide == 800)
+        #expect(png.pixelsHigh == 600)
+        #expect(data != ScreenshotManager.pngData(from: source))
+    }
 }

@@ -81,6 +81,7 @@
 "shot.selectionHeight" = "选区高度";
 "shot.selectionPixels" = "px";
 "shot.selectionLock" = "锁定宽高比";
+"shot.selectionMove" = "移动或调整选区";
 "shot.selectionInvalid" = "请输入大于零的整数像素值。";
 "shot.captureFailed" = "无法截取屏幕，请检查屏幕录制权限。";
 "shot.copyFailed" = "无法复制截图。";

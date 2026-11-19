@@ -27,14 +27,14 @@ struct Annotation: Identifiable, Equatable {
             }
         }
 
-        var title: String {
+        var title: LocalizedStringResource {
             switch self {
-            case .pen: return String(localized: .toolPen)
-            case .arrow: return String(localized: .toolArrow)
-            case .rectangle: return String(localized: .toolRectangle)
-            case .ellipse: return String(localized: .toolEllipse)
-            case .highlight: return String(localized: .toolHighlight)
-            case .text: return String(localized: .toolText)
+            case .pen: return .toolPen
+            case .arrow: return .toolArrow
+            case .rectangle: return .toolRectangle
+            case .ellipse: return .toolEllipse
+            case .highlight: return .toolHighlight
+            case .text: return .toolText
             }
         }
 
@@ -182,7 +182,8 @@ extension NSImage {
                 .frame(width: size.width, height: size.height)
         )
         renderer.scale = ScreenshotManager.nativeScale(of: self)
-        return renderer.nsImage
+        guard let bitmap = renderer.cgImage else { return nil }
+        return NSImage(bitmap: bitmap, logicalSize: size)
     }
 }
 

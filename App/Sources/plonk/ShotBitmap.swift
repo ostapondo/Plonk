@@ -12,9 +12,15 @@ struct ShotBitmap {
 
     func crop(_ rect: CGRect) -> NSImage? {
         guard let crop = image.cropping(to: rect) else { return nil }
-        let representation = NSBitmapImageRep(cgImage: crop)
-        let result = NSImage(size: representation.size)
-        result.addRepresentation(representation)
-        return result
+        return NSImage(bitmap: crop)
+    }
+}
+
+extension NSImage {
+    convenience init(bitmap: CGImage, logicalSize: CGSize? = nil) {
+        let representation = NSBitmapImageRep(cgImage: bitmap)
+        if let logicalSize { representation.size = logicalSize }
+        self.init(size: representation.size)
+        addRepresentation(representation)
     }
 }
