@@ -25,13 +25,13 @@ struct Annotation: Identifiable, Equatable {
             }
         }
 
-        var title: String {
+        var title: LocalizedStringResource {
             switch self {
-            case .pen: return String(localized: .toolPen)
-            case .arrow: return String(localized: .toolArrow)
-            case .rectangle: return String(localized: .toolRectangle)
-            case .ellipse: return String(localized: .toolEllipse)
-            case .highlight: return String(localized: .toolHighlight)
+            case .pen: return .toolPen
+            case .arrow: return .toolArrow
+            case .rectangle: return .toolRectangle
+            case .ellipse: return .toolEllipse
+            case .highlight: return .toolHighlight
             }
         }
 
@@ -44,11 +44,20 @@ struct Annotation: Identifiable, Equatable {
     var points: [CGPoint]
     var colorIndex: Int
     var width: Double
+    var arrowHeadWidth: Double = 0.012
 
     static let palette: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .black, .white]
     static let colorNames = ["red", "orange", "yellow", "green", "blue", "purple", "black", "white"]
 
     var color: Color { Self.palette[colorIndex.clamped(to: 0...(Self.palette.count - 1))] }
+
+    func rebased(to crop: CGRect) -> Self {
+        var mark = self
+        mark.points = points.map { ImageFit.unitPoint($0, in: crop) }
+        mark.width /= crop.width
+        mark.arrowHeadWidth /= crop.width
+        return mark
+    }
 
     func boundingRect(in size: CGSize) -> CGRect {
         guard let first = points.first else { return .zero }
@@ -131,7 +140,7 @@ enum AnnotationRenderer {
             case .arrow:
                 guard let start = annotation.points.first, let end = annotation.points.last else { continue }
                 let path = arrowPath(from: denormalize(start, size), to: denormalize(end, size),
-                                     head: max(width * 4, size.width * 0.012))
+                                     head: max(width * 4, size.width * annotation.arrowHeadWidth))
                 context.stroke(path, with: .color(color),
                                style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
             }
@@ -180,11 +189,7 @@ struct AnnotatedImage: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .overlay {
-                Canvas { context, size in
-                    var ctx = context
-                    AnnotationRenderer.draw(annotations, in: &ctx, size: size)
-                    if let live { AnnotationRenderer.draw([live], in: &ctx, size: size) }
-                }
+                AnnotationLayer(annotations: annotations, live: live)
             }
     }
 }

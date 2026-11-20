@@ -25,6 +25,14 @@ struct ShotPage: View {
                             .buttonStyle(.chip)
                     }
                 }
+                SettingRow(title: .shotAfterCapture) {
+                    Picker("", selection: model.binding(\.shotAfterCapture)) {
+                        Text(.shotAfterQuickActions).tag(ShotAfterCapture.quickActions)
+                        Text(.shotAfterEditor).tag(ShotAfterCapture.editor)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
             }
             SettingsCard(title: .commonShortcuts) {
                 SettingBlock {

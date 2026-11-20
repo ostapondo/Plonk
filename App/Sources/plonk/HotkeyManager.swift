@@ -10,6 +10,9 @@ final class HotkeyManager {
     private var actions: [UInt32: HotkeyAction] = [:]
     private var handlerInstalled = false
     private var enabled = false
+    private var configuredEnabled = false
+    private var suspended = false
+    private var generation = 0
 
     /// Action to key. Assigning re-registers if hotkeys are on.
     var bindings: [HotkeyAction: Hotkey] = [:] {
@@ -26,6 +29,7 @@ final class HotkeyManager {
     var onAction: ((HotkeyAction) -> Void)?
     /// Fires when a bound key is released — what makes push-to-talk possible.
     var onActionUp: ((HotkeyAction) -> Void)?
+    var onSuspend: (() -> Void)?
 
     /// Take the settings as they now stand. Both halves guard on the value
     /// changing, so this is safe after every config write. Bindings first:
@@ -33,10 +37,18 @@ final class HotkeyManager {
     /// the old one for a moment.
     func apply(_ config: Config) {
         bindings = config.activeHotkeys
-        setEnabled(config.hotkeysEnabled)
+        configuredEnabled = config.hotkeysEnabled
+        setEnabled(configuredEnabled && !suspended)
     }
 
-    func setEnabled(_ on: Bool) {
+    func setSuspended(_ value: Bool) {
+        guard suspended != value else { return }
+        suspended = value
+        setEnabled(configuredEnabled && !suspended)
+        if value { onSuspend?() }
+    }
+
+    private func setEnabled(_ on: Bool) {
         guard on != enabled else { return }
         enabled = on
         if on {
@@ -72,6 +84,7 @@ final class HotkeyManager {
     }
 
     private func unregister() {
+        generation += 1
         refs.forEach { UnregisterEventHotKey($0) }
         refs.removeAll()
         actions.removeAll()
@@ -94,7 +107,9 @@ final class HotkeyManager {
             let manager = Unmanaged<HotkeyManager>.fromOpaque(userData).takeUnretainedValue()
             guard let action = manager.actions[hkID.id] else { return noErr }
             let released = GetEventKind(event) == UInt32(kEventHotKeyReleased)
+            let generation = manager.generation
             DispatchQueue.main.async {
+                guard generation == manager.generation else { return }
                 (released ? manager.onActionUp : manager.onAction)?(action)
             }
             return noErr
