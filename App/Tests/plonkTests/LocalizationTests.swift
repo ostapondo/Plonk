@@ -37,6 +37,44 @@ struct LocalizationTests {
         #expect(String(localized: .hudWaitingFor("codex")).contains("codex"))
     }
 
+    @Test func aLocaleThatSpeaksTheCatalogIsKept() {
+        let chinese = Locale(identifier: "zh_CN")
+        #expect(Localization.locale(showing: "zh-Hans", current: chinese) == chinese)
+        let english = Locale(identifier: "en_GB")
+        #expect(Localization.locale(showing: "en", current: english) == english)
+        #expect(Localization.locale(showing: nil, current: english) == english)
+    }
+
+    @Test func aFallbackCatalogBringsItsOwnLanguageAndKeepsTheRegion() {
+        let ukrainian = Localization.locale(showing: "en", current: Locale(identifier: "uk_UA"))
+        #expect(ukrainian.language.languageCode == .english)
+        #expect(ukrainian.region == .ukraine)
+
+        let traditional = Localization.locale(showing: "en", current: Locale(identifier: "zh_TW"))
+        #expect(traditional.language.languageCode == .english)
+
+        let simplified = Localization.locale(showing: "zh-Hans", current: Locale(identifier: "en_US"))
+        #expect(simplified.language.languageCode == .chinese)
+        #expect(simplified.language.script == .hanSimplified)
+        #expect(simplified.region == .unitedStates)
+    }
+
+    @Test(arguments: [1, 4])
+    func countsThroughTheModuleFollowTheShownCatalog(count: Int) throws {
+        let language = try #require(Localization.bundle.preferredLocalizations.first)
+        let resource = LocalizedStringResource.workspacesAppCount(count)
+        let expected = String(localized: resource.defaultValue, bundle: try catalog(language),
+                              locale: Locale(identifier: language))
+
+        #expect(String(localized: resource) == expected)
+    }
+
+    @Test(arguments: ["zoneSet.halves", "zoneSet.thirds", "zoneSet.quarters", "zoneSet.priority"])
+    func builtInZoneSetNamesAreTranslated(key: String) throws {
+        let bundle = try catalog("zh-Hans")
+        #expect(containsHan(bundle.localizedString(forKey: key, value: nil, table: nil)))
+    }
+
     @Test(arguments: [0, 1, 4])
     func simplifiedChineseCountsResolve(count: Int) throws {
         let bundle = try catalog("zh-Hans")

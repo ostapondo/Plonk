@@ -28,9 +28,13 @@ enum Localization {
         bundle === Bundle.main ? .main : .atURL(bundle.bundleURL)
     }()
 
-    static let locale: Locale = {
-        let current = Locale.current
-        guard let language = bundle.preferredLocalizations.first else { return current }
+    /// The locale strings are formatted with: the user's own when it speaks the
+    /// catalog being shown, and otherwise that catalog's language with the
+    /// user's region kept, so dates and numbers stay theirs.
+    static let locale = locale(showing: bundle.preferredLocalizations.first, current: .current)
+
+    static func locale(showing language: String?, current: Locale) -> Locale {
+        guard let language else { return current }
         let preferred = Locale.Language.Components(identifier: language)
         guard preferred.languageCode != current.language.languageCode
                 || preferred.script != nil && preferred.script != current.language.script
@@ -41,7 +45,7 @@ enum Localization {
         components.languageComponents = preferred
         components.region = current.region
         return Locale(components: components)
-    }()
+    }
 
     /// SwiftPM's own resource bundle, which is what a `swift run` or a test run
     /// sees. Found by hand rather than through `Bundle.module`: that traps when

@@ -41,6 +41,7 @@ struct AppModelListsTests {
         let name = BuiltinZoneSets.defaultName
 
         #expect(model.displayName(forZoneSet: name) == String(localized: .zoneSetHalves))
+        #expect(model.displayName(forZoneSet: name) != "zoneSet.halves")
         #expect(model.assignedZoneSet(onScreen: 0) == name)
     }
 
