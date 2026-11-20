@@ -1,5 +1,6 @@
 import AppKit
 
+@MainActor
 final class QuickShotSession: NSObject {
     private let previousApp: NSRunningApplication?
     private let folder: () -> String
@@ -7,6 +8,7 @@ final class QuickShotSession: NSObject {
     private let onFinish: (Bool, String?) -> Void
     private var onClose: (() -> Void)?
     private var windows: [QuickShotWindow] = []
+    private var keyMonitor: Any?
 
     init(previousApp: NSRunningApplication?, folder: @escaping () -> String, onClose: @escaping () -> Void,
          onEditor: @escaping (NSImage, AnnotationHistory) -> Void, onFinish: @escaping (Bool, String?) -> Void) {
@@ -59,6 +61,11 @@ final class QuickShotSession: NSObject {
         NSApp.activate(ignoringOtherApps: true)
         let target = windows.first { $0.frame.contains(NSEvent.mouseLocation) } ?? windows.first
         target?.makeKey()
+        target?.makeFirstResponder(target?.canvas)
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if self?.windows.contains(where: { $0.handleShortcut(event) }) == true { return nil }
+            return event
+        }
     }
 
     private func captureFailed() {
@@ -92,7 +99,7 @@ final class QuickShotSession: NSObject {
     }
 
     private func render(_ crop: ShotCrop) -> NSImage? {
-        let image = MainActor.assumeIsolated { crop.rendered() }
+        let image = crop.rendered()
         if image == nil { HUD.shared.show(.shotEditorRenderFailed) }
         return image
     }
@@ -113,15 +120,18 @@ final class QuickShotSession: NSObject {
 
     private func close(restoreFocus: Bool) {
         guard let onClose else { return }
+        let shouldRestore = restoreFocus && NSApp.isActive
         self.onClose = nil
         NotificationCenter.default.removeObserver(self)
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
         for window in windows {
             if let sheet = window.attachedSheet { window.endSheet(sheet, returnCode: .cancel) }
             window.orderOut(nil)
         }
         windows.removeAll()
         onClose()
-        if restoreFocus, NSApp.isActive, let previousApp,
+        if shouldRestore, let previousApp,
            previousApp.processIdentifier != ProcessInfo.processInfo.processIdentifier {
             previousApp.activate()
         }

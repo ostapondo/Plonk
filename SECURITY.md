@@ -202,6 +202,10 @@ out one app at a time, and an open port handed Plonk's to anything running as
 you. `/state` was the same shape more quietly: it lists the title of every
 open window.
 
+The screenshot picker dispatches shortcuts from key events delivered to its
+focused canvas by AppKit. Plonk temporarily suspends its registered hotkeys
+while the picker is open.
+
 ## The URL scheme
 
 `plonk://execute-action?name=left-half` runs the same actions the hotkeys do,

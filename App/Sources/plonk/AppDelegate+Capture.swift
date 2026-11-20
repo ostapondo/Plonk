@@ -64,14 +64,15 @@ extension AppDelegate {
         guard store.config.shotAfterCapture.usesOverlay(for: mode) else {
             return runCapture(mode, openEditor: true)
         }
+        MainActor.assumeIsolated { beginQuickShot() }
+    }
+
+    @MainActor private func beginQuickShot() {
         guard quickShot == nil, captureDepth == 0 else { return }
 
         let previousWindow = NSApp.keyWindow
         let previousApp = NSWorkspace.shared.frontmostApplication
         hotkeys.setSuspended(true)
-        voice.finishCapture()
-        dragSnap.cancelPick()
-        dragSnap.hidePreviews()
         HUD.shared.dismiss()
         let hidden = hideOwnWindows()
         let session = QuickShotSession(previousApp: previousApp, folder: { [weak self] in

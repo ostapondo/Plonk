@@ -18,6 +18,8 @@ What changed in each release, from a user's side. The commit log has the rest.
 - **Copy or save marked screenshots from Quick Actions.** Save to the
   configured folder or choose a file in Save As. The saved image includes the
   mark portions visible inside the selection.
+- **Use the keyboard in Quick Actions.** Escape cancels, Return copies,
+  Command-S saves, and Command-Z and Shift-Command-Z undo and redo.
 
 ## 0.4.3 — 2026-09-22
 

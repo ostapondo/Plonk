@@ -1,5 +1,4 @@
 import AppKit
-import Carbon.HIToolbox
 
 final class QuickShotCanvas: NSView {
     private enum Gesture {
@@ -132,11 +131,13 @@ final class QuickShotCanvas: NSView {
         mouseMoved(with: event)
     }
 
-    override func keyDown(with event: NSEvent) {
-        if event.keyCode == kVK_Escape {
-            onCancel?()
-        } else {
-            super.keyDown(with: event)
+    func handle(_ command: ShotKeyCommand) {
+        switch command {
+        case .cancel: perform(.cancel)
+        case .copy: perform(.output(.copy))
+        case .save: perform(.output(.save))
+        case .undo: perform(.undo)
+        case .redo: perform(.redo)
         }
     }
 

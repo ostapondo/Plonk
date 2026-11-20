@@ -21,4 +21,13 @@ final class QuickShotWindow: NSWindow {
     }
 
     override var canBecomeKey: Bool { true }
+
+    func handleShortcut(_ event: NSEvent) -> Bool {
+        guard isKeyWindow, (event.window == nil || event.window === self),
+              attachedSheet == nil, firstResponder === canvas,
+              let command = ShotKeyCommand(keyCode: Int(event.keyCode), flags: event.modifierFlags,
+                                           repeating: event.isARepeat) else { return false }
+        canvas.handle(command)
+        return true
+    }
 }
