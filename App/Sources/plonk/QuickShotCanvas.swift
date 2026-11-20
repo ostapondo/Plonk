@@ -135,7 +135,7 @@ final class QuickShotCanvas: NSView {
     private func beginMark(at point: CGPoint) {
         guard let tool else { return }
         history.begin(tool, at: ImageFit.unitPoint(point, in: backdrop.frame),
-                      color: tool == .highlight ? 2 : 0, width: 4 / backdrop.frame.width)
+                      color: tool == .highlight ? 2 : 0, width: 4 / Double(backdrop.frame.width))
         gesture = .mark
     }
 
