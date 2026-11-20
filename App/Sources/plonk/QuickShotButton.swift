@@ -2,11 +2,10 @@ import AppKit
 
 final class QuickShotButton: NSButton {
     private let invoke: () -> Void
-    var isSelectedTool = false {
+    var isSelectedTool: Bool? {
         didSet {
             guard isSelectedTool != oldValue else { return }
-            layer?.backgroundColor = isSelectedTool ? QuickShotBackdrop.accent.withAlphaComponent(0.5).cgColor : nil
-            setAccessibilityValue(isSelectedTool ? 1 : 0)
+            setAccessibilityValue(isSelectedTool.map { NSNumber(value: $0) })
         }
     }
 
@@ -18,8 +17,6 @@ final class QuickShotButton: NSButton {
             .withSymbolConfiguration(.init(pointSize: 17, weight: .medium))
         imagePosition = .imageOnly
         isBordered = false
-        wantsLayer = true
-        layer?.cornerRadius = 8
         contentTintColor = cancel ? NSColor(srgbRed: 1, green: 115 / 255, blue: 123 / 255, alpha: 1)
             : NSColor(srgbRed: 238 / 255, green: 241 / 255, blue: 245 / 255, alpha: 1)
         focusRingType = .exterior
