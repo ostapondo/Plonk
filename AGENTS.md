@@ -147,13 +147,24 @@ Rules the checker enforces, so they are worth knowing before it tells you:
 - Never key anything off displayed text. `HotkeyAction.Group` is a value, and
   `group.title` is what gets drawn; filtering on the words would break the
   moment they were translated.
-- English is a translation like any other. `en.lproj` is where it lives, and
-  adding a language means one new `.lproj` beside it and no Swift at all.
+- English is a translation like any other. `en.lproj` is where it lives,
+  `zh-Hans.lproj` sits beside it, and adding a language means one new `.lproj`
+  there and no Swift at all. A key has to exist in every catalog with the same
+  format specifiers.
+- Strings are formatted with `Localization.locale`, not `Locale.current`: the
+  catalog being shown decides the plural rules, so English text on a system
+  whose language Plonk does not ship still counts the English way.
+- A built-in zone set's name is an id: `Halves` is what config stores and what
+  the API says, in every language. What is drawn comes from
+  `AppModel.displayName(forZoneSet:)`. A set the user made or duplicated is
+  theirs, and its name is stored as they see it.
 - What an agent reads over the API is a different surface: ids, route names,
   `phase` and every other machine-readable field stay English, always. Sentences
   written for a person are translated even when they also reach an agent — the
   update status, the keep-awake status, and why an app in a workspace did not
-  land. Each of those sits beside a structured field that did not change.
+  land. Each of those sits beside a structured field that did not change. A
+  router error or note has no such field and is written for the caller, so it
+  stays English, and the HUD says its own sentence instead of quoting one.
 
 `scripts/check-strings.mjs` fails on a key with no value, a value nothing uses,
 a mismatched number of format specifiers, a translation that has drifted from
