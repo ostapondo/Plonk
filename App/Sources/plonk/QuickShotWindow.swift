@@ -22,6 +22,13 @@ final class QuickShotWindow: NSWindow {
 
     override var canBecomeKey: Bool { true }
 
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .leftMouseDown, attachedSheet == nil, canvas.selectDimension(at: event.locationInWindow) {
+            return
+        }
+        super.sendEvent(event)
+    }
+
     func handleShortcut(_ event: NSEvent) -> Bool {
         guard isKeyWindow, (event.window == nil || event.window === self),
               attachedSheet == nil, firstResponder === canvas,

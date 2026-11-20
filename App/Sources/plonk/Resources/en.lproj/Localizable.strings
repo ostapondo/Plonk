@@ -74,7 +74,11 @@
 "shot.afterEditor" = "Open Editor";
 "shot.captureFailed" = "Could not capture the display. Check Screen Recording permission in System Settings.";
 "shot.copyFailed" = "Could not copy the screenshot.";
-"shot.selectionSize %@ %@" = "%@ × %@ px";
+"shot.selectionWidth" = "Selection width";
+"shot.selectionHeight" = "Selection height";
+"shot.selectionPixels" = "px";
+"shot.selectionLock" = "Lock aspect ratio";
+"shot.selectionInvalid" = "Enter a positive whole number of pixels.";
 "shot.selectionMove" = "Move or Resize";
 "shot.captureWindow" = "Capture Window";
 "shot.captureScreen" = "Capture Whole Screen";
