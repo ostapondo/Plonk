@@ -21,7 +21,7 @@ final class QuickShotCanvas: NSView {
     private let dimensions = QuickShotDimensions()
     var onCancel: (() -> Void)?
     var onSelect: (() -> Void)?
-    var onEditor: ((NSImage, AnnotationHistory) -> Void)?
+    var onOutput: ((QuickShotOutput, ShotCrop) -> Void)?
 
     init(bitmap: ShotBitmap, safeArea: CGRect) {
         self.bitmap = bitmap
@@ -178,9 +178,13 @@ final class QuickShotCanvas: NSView {
         case .cancel:
             onCancel?()
             return
-        case .editor:
-            guard let selection, let image = bitmap.crop(selection) else { return }
-            onEditor?(image, history.rebased(to: geometry.unitRect(selection)))
+        case .output(let action):
+            guard let selection, gesture == nil else { return }
+            guard let crop = ShotCrop(bitmap: bitmap, rect: selection, history: history) else {
+                HUD.shared.show(.shotEditorRenderFailed)
+                return
+            }
+            onOutput?(action, crop)
             return
         }
         refresh()

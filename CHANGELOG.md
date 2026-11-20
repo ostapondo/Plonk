@@ -15,6 +15,9 @@ What changed in each release, from a user's side. The commit log has the rest.
 - **Annotate region screenshots on screen.** Draw rectangles, ellipses,
   arrows, pen strokes, or highlights. Open the editor to keep working with
   editable marks and their undo and redo history.
+- **Copy or save marked screenshots from Quick Actions.** Save to the
+  configured folder or choose a file in Save As. The saved image includes the
+  mark portions visible inside the selection.
 
 ## 0.4.3 — 2026-09-22
 

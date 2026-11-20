@@ -6,7 +6,7 @@ final class QuickShotToolbar: NSView {
         case undo
         case redo
         case cancel
-        case editor
+        case output(QuickShotOutput)
     }
 
     private var tools: [(QuickShotButton, Annotation.Kind?)] = []
@@ -46,7 +46,15 @@ final class QuickShotToolbar: NSView {
         addSubview(redo)
         addDivider()
         addSubview(QuickShotButton(symbol: "xmark", title: .commonCancel, cancel: true) { perform(.cancel) })
-        addSubview(QuickShotButton(symbol: "macwindow", title: .shotAfterEditor) { perform(.editor) })
+        let actions: [(String, LocalizedStringResource, QuickShotOutput)] = [
+            ("macwindow", .shotAfterEditor, .editor),
+            ("folder", .shotEditorSaveToFolder, .save),
+            ("square.and.arrow.down", .shotEditorSaveAs, .saveAs),
+            ("plus.square.on.square", .shotEditorCopy, .copy),
+        ]
+        for (symbol, title, output) in actions {
+            addSubview(QuickShotButton(symbol: symbol, title: title) { perform(.output(output)) })
+        }
     }
 
     required init?(coder: NSCoder) { nil }

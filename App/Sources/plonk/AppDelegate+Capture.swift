@@ -74,7 +74,9 @@ extension AppDelegate {
         dragSnap.hidePreviews()
         HUD.shared.dismiss()
         let hidden = hideOwnWindows()
-        let session = QuickShotSession(previousApp: previousApp, onClose: { [weak self, weak previousWindow] in
+        let session = QuickShotSession(previousApp: previousApp, folder: { [weak self] in
+            self?.store.config.shotFolder ?? Config().shotFolder
+        }, onClose: { [weak self, weak previousWindow] in
             guard let self else { return }
             quickShot = nil
             showOwnWindows(hidden)
@@ -85,6 +87,8 @@ extension AppDelegate {
             refreshHotkeyModel()
         }, onEditor: { [weak self] image, history in
             self?.presenter.showShotEditor(image: image, history: history)
+        }, onFinish: { [weak self] copied, path in
+            self?.finishShot(copied: copied, path: path)
         })
         quickShot = session
         session.begin()

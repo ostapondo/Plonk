@@ -143,12 +143,14 @@ struct ShotEditorView: View {
     }
 
     private func saveAs() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.png]
-        panel.nameFieldStringValue = ScreenshotManager.fileName(for: Date())
-        panel.directoryURL = URL(fileURLWithPath: (defaultFolder as NSString).expandingTildeInPath)
-        if panel.runModal() == .OK, let url = panel.url {
-            save(to: .path(url.path))
+        let panel = ShotSavePanel.make(in: defaultFolder)
+        let completion: (NSApplication.ModalResponse) -> Void = { response in
+            if response == .OK, let url = panel.url { save(to: .path(url.path)) }
+        }
+        if let window = NSApp.keyWindow {
+            panel.beginSheetModal(for: window, completionHandler: completion)
+        } else {
+            panel.begin(completionHandler: completion)
         }
     }
 }
