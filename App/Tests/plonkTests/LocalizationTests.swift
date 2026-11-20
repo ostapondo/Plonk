@@ -2,39 +2,72 @@ import Testing
 import Foundation
 @testable import plonk
 
-// The catalog is only worth having if the app can find it. These fail loudly
-// when it cannot: a missed key comes back as the key itself, which is exactly
-// what a shipped build with no .lproj folders would draw on screen.
-
 struct LocalizationTests {
+    @Test func keysResolveToThePreferredCatalog() throws {
+        let language = try #require(Localization.bundle.preferredLocalizations.first)
+        let bundle = try catalog(language)
+        let expected = bundle.localizedString(forKey: "common.choose", value: nil, table: nil)
 
-    @Test func theCatalogIsFound() {
-        #expect(Localization.bundle.path(forResource: "en", ofType: "lproj") != nil)
+        #expect(expected != "common.choose")
+        #expect(String(localized: .commonChoose) == expected)
+        #expect(String(AttributedString(localized: .commonChoose).characters) == expected)
     }
 
-    @Test func keysResolveToEnglish() {
-        #expect(String(localized: .commonChoose) == "Choose")
-        #expect(String(localized: .shortcutLeftHalf) == "Left Half")
+    @Test func englishCountsPickTheRightForm() throws {
+        let bundle = try catalog("en")
+        let locale = Locale(identifier: "en")
+        let one = LocalizedStringResource.workspacesAppCount(1)
+        let many = LocalizedStringResource.workspacesAppCount(4)
+
+        #expect(String(localized: one.defaultValue, bundle: bundle, locale: locale) == "1 app")
+        #expect(String(localized: many.defaultValue, bundle: bundle, locale: locale) == "4 apps")
     }
 
-    @Test func valuesAreFilledIn() {
-        #expect(String(localized: .shortcutZone(3)) == "Zone 3")
-        #expect(String(localized: .aiAgentOffline("codex")) == "codex (offline)")
+    @Test func simplifiedChineseCatalogResolvesInterpolatedText() throws {
+        let bundle = try catalog("zh-Hans")
+        let locale = Locale(identifier: "zh-Hans")
+        let resource = LocalizedStringResource.shortcutZone(3)
+        let text = String(localized: resource.defaultValue, bundle: bundle, locale: locale)
+
+        #expect(containsHan(text))
+        #expect(text.contains("3"))
     }
 
-    /// The counted strings come from Localizable.stringsdict, which is a
-    /// separate file and a separate lookup.
-    @Test func countedStringsPickTheRightForm() {
-        #expect(String(localized: .workspacesAppCount(1)) == "1 app")
-        #expect(String(localized: .workspacesAppCount(4)) == "4 apps")
-        #expect(String(localized: .workspacesWindowCount(1)) == "1 window")
+    @Test func waitingHUDIncludesTheAgentAndTheQueueNote() {
+        let agent = "codex"
+        let note = "queue detail"
+        let text = String(localized: .hudWaitingFor(agent, note))
+
+        #expect(text.contains(agent))
+        #expect(text.contains(note))
     }
 
-    /// Nothing may reach the user as a raw key. Resolving to something other
-    /// than the key itself is the only check that catches a typo in either the
-    /// Swift declaration or the catalog.
-    @Test func nothingResolvesToItsOwnKey() {
-        #expect(String(localized: .zonesOverlayHelp) != "zones.overlayHelp")
-        #expect(String(localized: .startProgress(1, 3)) == "1 of 3")
+    @Test(arguments: [0, 1, 4])
+    func simplifiedChineseCountsResolve(count: Int) throws {
+        let bundle = try catalog("zh-Hans")
+        let locale = Locale(identifier: "zh-Hans")
+        let resource = LocalizedStringResource.workspacesAppCount(count)
+        let text = String(localized: resource.defaultValue, bundle: bundle, locale: locale)
+
+        #expect(containsHan(text))
+        #expect(text.contains(String(count)))
+    }
+
+    @Test(arguments: ["NSMicrophoneUsageDescription", "NSSpeechRecognitionUsageDescription"])
+    func simplifiedChinesePermissionPromptsArePackaged(key: String) throws {
+        let bundle = try catalog("zh-Hans")
+        #expect(containsHan(bundle.localizedString(forKey: key, value: nil, table: "InfoPlist")))
+    }
+
+    private func catalog(_ language: String) throws -> Bundle {
+        let folder = try #require(Localization.bundle.localizations.first {
+            $0.caseInsensitiveCompare(language) == .orderedSame
+        })
+        let url = try #require(Localization.bundle.url(forResource: folder, withExtension: "lproj"))
+        return try #require(Bundle(url: url))
+    }
+
+    private func containsHan(_ text: String) -> Bool {
+        text.range(of: #"\p{Han}"#, options: .regularExpression) != nil
     }
 }

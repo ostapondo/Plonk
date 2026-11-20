@@ -173,6 +173,12 @@ extension AppModel {
         let custom = customZoneSetNames
         return custom + BuiltinZoneSets.all.keys.sorted().filter { !custom.contains($0) }
     }
+
+    func displayName(forZoneSet name: String) -> String {
+        if name.isEmpty { return String(localized: .zoneSetEdgeSnapping) }
+        return config.zoneSets[name] == nil ? BuiltinZoneSets.displayName(name) : name
+    }
+
     /// Every set that can be drawn, the built-in templates included, which is
     /// more than `config.zoneSets` holds: that is only the ones the user made.
     var zoneSets: [String: [ZoneRect]] {
@@ -248,6 +254,10 @@ extension AppModel {
         return "\(base) \(index)"
     }
 
+    func zoneSetCopyName(_ name: String) -> String {
+        freeZoneSetName(base: String(localized: .zoneSetCopyName(displayName(forZoneSet: name))))
+    }
+
     /// Opens the editor on a set. A built-in template is duplicated first, so
     /// editing one never changes what the app ships with.
     func editZoneSet(named name: String, onScreen index: Int) {
@@ -256,8 +266,7 @@ extension AppModel {
             actions.editZoneSet(name, seed: nil, onScreen: index)
             return
         }
-        actions.editZoneSet(freeZoneSetName(base: name + " copy"),
-                            seed: zoneSets[name] ?? [], onScreen: index)
+        actions.editZoneSet(zoneSetCopyName(name), seed: zoneSets[name] ?? [], onScreen: index)
     }
 
     /// A setting, read straight off the config and written straight back. This

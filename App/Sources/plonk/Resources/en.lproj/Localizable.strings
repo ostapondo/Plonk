@@ -105,6 +105,9 @@
 "ai.activeAgent" = "Active agent";
 "ai.anyAgent" = "Any agent";
 "ai.agentOffline %@" = "%@ (offline)";
+"ai.adaptersUnavailable" = "adapters are not available";
+"ai.noAgentSpecified" = "no agent named and none selected — pass \"agent\" or pick an active agent in Plonk";
+"ai.sessionNotConnected %@" = "no session named \"%@\" has connected yet; the task waits in its inbox";
 "ai.exclusive" = "Only the active agent controls";
 "ai.exclusiveHelp" = "Other agents can still read state and take screenshots";
 "ai.localApi" = "Local API";
@@ -529,6 +532,10 @@
 /* Zone sets: the picker, the canvas at the top of the Zones page, and the
    palette that drops onto the screen itself. */
 "zoneSet.templates" = "Templates";
+"zoneSet.halves" = "Halves";
+"zoneSet.thirds" = "Thirds";
+"zoneSet.quarters" = "Quarters";
+"zoneSet.priority" = "Priority";
 "zoneSet.custom" = "Custom";
 "zoneSet.createNew" = "Create New Layout";
 "zoneSet.emptyState" = "Create a layout or duplicate a template to get started";
@@ -540,6 +547,8 @@
 "zoneSet.rename" = "Rename…";
 "zoneSet.edgeSnapping" = "Edge snapping";
 "zoneSet.newSet" = "New set";
+"zoneSet.defaultName" = "Set";
+"zoneSet.copyName %@" = "%@ copy";
 "zoneSet.screen %lld" = "Screen %lld";
 "zoneSet.screenWithSize %lld %@" = "Screen %1$lld — %2$@";
 "zoneSet.summary %lld %@ %@ %lld" = "Screen %1$lld · %2$@ · %3$@ · gap %4$lld px";

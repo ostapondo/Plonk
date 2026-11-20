@@ -33,6 +33,15 @@ struct AppModelListsTests {
         #expect(model.zoneSetNames.filter { $0 == name }.count == 1)
         #expect(model.zoneSets[name]?.map(\.w) == mine.map(\.w))
         #expect(model.zoneSets.count == BuiltinZoneSets.all.count)
+        #expect(model.displayName(forZoneSet: name) == name)
+    }
+
+    @Test func aBuiltInNameHasALocalizedDisplayName() {
+        let model = AppModel()
+        let name = BuiltinZoneSets.defaultName
+
+        #expect(model.displayName(forZoneSet: name) == String(localized: .zoneSetHalves))
+        #expect(model.assignedZoneSet(onScreen: 0) == name)
     }
 
     /// The name offered for a copy is one nobody has, built-ins included.
