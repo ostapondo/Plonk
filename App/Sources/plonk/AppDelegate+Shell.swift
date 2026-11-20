@@ -116,10 +116,10 @@ extension AppDelegate {
             HUD.shared.show(store.config.selectedAgent == nil
                             ? String(localized: .hudNoActiveAgent)
                             : (response.json["error"] as? String ?? String(localized: .hudWentNowhere)))
-        } else if let note = response.json["note"] as? String {
+        } else if response.json["note"] != nil {
             // Queued for a session that has never connected. Saying "→ agent"
             // here would be the silent success this was meant to stop.
-            HUD.shared.show(.hudWaitingFor(agent, note))
+            HUD.shared.show(.hudWaitingFor(agent))
         } else {
             HUD.shared.show(.hudSentTo(agent, text))
         }

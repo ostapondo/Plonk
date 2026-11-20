@@ -33,13 +33,8 @@ struct LocalizationTests {
         #expect(text.contains("3"))
     }
 
-    @Test func waitingHUDIncludesTheAgentAndTheQueueNote() {
-        let agent = "codex"
-        let note = "queue detail"
-        let text = String(localized: .hudWaitingFor(agent, note))
-
-        #expect(text.contains(agent))
-        #expect(text.contains(note))
+    @Test func waitingHUDNamesTheAgent() {
+        #expect(String(localized: .hudWaitingFor("codex")).contains("codex"))
     }
 
     @Test(arguments: [0, 1, 4])
