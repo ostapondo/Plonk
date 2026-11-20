@@ -18,6 +18,10 @@ extension LocalizedStringResource {
     static let shotOutput = Self.key("shot.output")
     static let shotCopyOnSave = Self.key("shot.copyOnSave")
     static let shotSaveFolder = Self.key("shot.saveFolder")
+    static let shotAfterCapture = Self.key("shot.afterCapture")
+    static let shotAfterQuickActions = Self.key("shot.afterQuickActions")
+    static let shotAfterEditor = Self.key("shot.afterEditor")
+    static let shotCaptureFailed = Self.key("shot.captureFailed")
 
     static let mousePointerHelp = Self.key("mouse.pointerHelp")
     static let mouseClicks = Self.key("mouse.clicks")

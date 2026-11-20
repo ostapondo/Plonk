@@ -4,6 +4,12 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ## Unreleased
 
+### Added
+
+- **Region screenshots keep the selection on screen.** Choose Open Editor to
+  continue editing, or change After capture in Screenshot settings to open
+  the editor immediately.
+
 ## 0.4.3 — 2026-09-22
 
 ### Changed

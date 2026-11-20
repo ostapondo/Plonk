@@ -47,7 +47,7 @@ extension AppDelegate {
             beginZonePick()
             dragSnap.endPick()
         case .captureRegion:
-            runCapture(.region, openEditor: true)
+            captureManually(.region)
         case .captureText:
             captureText()
         case .voice:

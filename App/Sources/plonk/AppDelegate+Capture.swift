@@ -60,8 +60,39 @@ extension AppDelegate {
         }
     }
 
+    func captureManually(_ mode: CaptureMode) {
+        guard store.config.shotAfterCapture.usesOverlay(for: mode) else {
+            return runCapture(mode, openEditor: true)
+        }
+        guard quickShot == nil, captureDepth == 0 else { return }
+
+        let previousWindow = NSApp.keyWindow
+        let previousApp = NSWorkspace.shared.frontmostApplication
+        hotkeys.setSuspended(true)
+        voice.finishCapture()
+        dragSnap.cancelPick()
+        dragSnap.hidePreviews()
+        HUD.shared.dismiss()
+        let hidden = hideOwnWindows()
+        let session = QuickShotSession(previousApp: previousApp, onClose: { [weak self, weak previousWindow] in
+            guard let self else { return }
+            quickShot = nil
+            showOwnWindows(hidden)
+            if NSApp.isActive, let previousWindow, previousWindow.isVisible {
+                previousWindow.makeKey()
+            }
+            hotkeys.setSuspended(false)
+            refreshHotkeyModel()
+        }, onEditor: { [weak self] image in
+            self?.presenter.showShotEditor(image: image)
+        })
+        quickShot = session
+        session.begin()
+    }
+
     func runCapture(_ mode: CaptureMode, openEditor: Bool,
                             completion: @escaping (NSImage?) -> Void = { _ in }) {
+        guard quickShot == nil else { return completion(nil) }
         let hidden = hideOwnWindows()
         ScreenshotManager.capture(mode) { [weak self] image in
             self?.showOwnWindows(hidden)
