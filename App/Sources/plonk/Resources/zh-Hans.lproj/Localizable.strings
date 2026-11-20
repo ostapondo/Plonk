@@ -93,8 +93,8 @@
 
 /* Agents and MCP. */
 "ai.agents" = "Agent";
-"ai.agentsHelp" = "已连接的 MCP 客户端会显示在这里。语音和其他发出的请求会交给当前 Agent。";
-"ai.noAgents" = "尚未连接 Agent。MCP 客户端调用 Plonk 工具后会出现在此处。";
+"ai.agentsHelp" = "已连接的 MCP 会显示在这里。语音和其他发出的请求会交给当前 Agent。";
+"ai.noAgents" = "尚未连接任何 Agent。通过 MCP 客户端调用 Plonk 工具后会显示在此处。";
 "ai.activeAgent" = "当前 Agent";
 "ai.anyAgent" = "任意 Agent";
 "ai.agentOffline %@" = "%@（离线）";
@@ -107,8 +107,8 @@
 "ai.anyMcpClient" = "Cursor、Zed 或其他 MCP 客户端";
 "ai.connect" = "连接 Agent";
 "ai.connectHelp" = "在客户端运行下方的一条命令即可。Plonk 支持多个 MCP 客户端同时连接。可在客户端的 MCP 配置中设置 PLONK_AGENT_NAME，为会话命名。";
-"ai.trySaying" = "试试这样说";
-"ai.clickToCopy" = "点击示例即可复制。";
+"ai.trySaying" = "可以试着这样说";
+"ai.clickToCopy" = "点击复制示例。";
 "ai.copied" = "已复制到剪贴板。";
 "ai.example1" = "浏览器放在左侧 60% 的区域，终端放右上角，备忘录放右下角。";
 "ai.example2" = "把 VS Code 放到中间的分屏。";
@@ -119,15 +119,15 @@
 "ai.example7" = "截取当前屏幕，并圈出看起来有问题的地方。";
 
 /* Pointer and clicks. */
-"mouse.pointerHelp" = "这些功能只读取鼠标输入，既不拦截鼠标点击，也不监听键盘。未单独设置的颜色会跟随分屏页面中的分屏颜色。";
-"mouse.clicks" = "点击提示";
+"mouse.pointerHelp" = "下列功能只读取鼠标输入，既不拦截鼠标点击，也不监听键盘，颜色默认会跟随分屏颜色配置。";
+"mouse.clicks" = "鼠标点击提示";
 "mouse.ringClicks" = "显示每次点击";
 "mouse.ringClicksHelp" = "录屏时，让观众看见鼠标点击的位置。";
-"mouse.colour" = "颜色";
+"mouse.colour" = "左键颜色";
 "mouse.colourFollowsZones" = "跟随分屏颜色";
-"mouse.colourCustom" = "自定颜色";
+"mouse.colourCustom" = "自定义颜色";
 "mouse.useTheZoneColour" = "使用分屏颜色";
-"mouse.rightColour" = "右键点击";
+"mouse.rightColour" = "右键颜色";
 "mouse.rightColourFollows" = "与左键点击相同";
 "mouse.matchLeftClicks" = "与左键点击相同";
 "mouse.shape" = "形状";
@@ -144,16 +144,16 @@
 "mouse.crosshairs" = "在鼠标位置显示十字线";
 "mouse.crosshairsHelp" = "横跨屏幕的水平和垂直线，方便对齐。";
 "mouse.opacity" = "不透明度";
-"mouse.finding" = "定位鼠标";
+"mouse.finding" = "聚焦鼠标位置";
 "mouse.findingHelp" = "使用下方的快捷键时，屏幕会变暗约一秒，仅保留鼠标周围的圆形亮区。";
 "mouse.circle" = "亮区大小";
 "mouse.circleHelp" = "鼠标周围保持明亮的范围。";
 "mouse.dimming" = "调暗程度";
 "mouse.dimmingHelp" = "亮区以外的屏幕变暗的程度。";
-"mouse.shortcutsHelp" = "定位鼠标时，屏幕会短暂变暗，只保留鼠标周围的亮区。切换显示器的快捷键会将鼠标移到下一台显示器中央，并提示鼠标位置。";
+"mouse.shortcutsHelp" = "聚焦鼠标位置时，屏幕会短暂变暗，只保留鼠标周围的亮区。切换显示器的快捷键会将鼠标移到下一台显示器中央，并提示鼠标位置。";
 
 /* The points field the settings forms are built from. */
-"points.notWhole %@" = "%@ 必须为整数点。";
+"points.notWhole %@" = "%@ 必须为整数。";
 "points.outOfRange %@ %lld %lld" = "%1$@ 必须介于 %2$lld 和 %3$lld 之间。";
 
 /* Shortcuts: what each bindable action is called, and the headings they are
@@ -168,7 +168,7 @@
 "shortcut.bottomRight" = "右下角";
 "shortcut.maximize" = "最大化";
 "shortcut.center" = "居中";
-"shortcut.flashZones" = "显示分屏，按住时可点击分屏";
+"shortcut.flashZones" = "显示工作区，按住时可点击分屏";
 "shortcut.captureRegion" = "区域截图";
 "shortcut.captureText" = "复制区域内的文字";
 "shortcut.pushToTalk" = "按住说话";
@@ -179,7 +179,7 @@
 "shortcut.focusRight" = "聚焦右侧窗口";
 "shortcut.focusUp" = "聚焦上方窗口";
 "shortcut.focusDown" = "聚焦下方窗口";
-"shortcut.findPointer" = "定位鼠标";
+"shortcut.findPointer" = "聚焦鼠标";
 "shortcut.jumpPointer" = "将鼠标移到下一台显示器";
 "shortcut.cropLive" = "实时置顶屏幕区域";
 "shortcut.cropStill" = "静态置顶屏幕区域";
@@ -238,11 +238,11 @@
 
 /* Home. */
 "home.ready" = "一切就绪";
-"home.headline" = "多个窗口，\n一键排布。";
-"home.tagline" = "通过快捷键、菜单栏或连接本地 API 的 Agent 贴靠窗口、保存布局和恢复布局。";
+"home.headline" = "多个窗口，一键排布。";
+"home.tagline" = "通过快捷键、菜单栏或连接本地 API 的 Agent 移动窗口、保存布局和恢复布局。";
 "home.showZones" = "显示分屏";
-"home.editZonesButton" = "编辑分屏…";
-"home.quickActions" = "快捷操作";
+"home.editZonesButton" = "编辑分屏";
+"home.quickActions" = "快捷功能";
 "home.captureRegion" = "区域截图";
 "home.editZones" = "编辑分屏";
 "home.awakeOn" = "正在保持唤醒";
@@ -259,8 +259,8 @@
 "home.launchAtLoginDetail" = "登录 Mac 时自动启动 Plonk。";
 "home.privacy" = "所有功能都在本机运行，无需账号或云服务，也不收集遥测数据。";
 "home.edgeSnapping" = "边缘贴靠";
-"home.rectangleTitle" = "此 Mac 已配置 Rectangle";
-"home.rectangleDetail" = "可以直接导入半屏、四角、最大化、居中、还原位置的快捷键和窗口间距。三等分及其他固定网格在 Plonk 中由分屏布局实现，不会导入。";
+"home.rectangleTitle" = "此 Mac 已安装 Rectangle";
+"home.rectangleDetail" = "可以直接导入半屏、四角、最大化、居中、还原位置的快捷键和窗口间距。不会导入等分及其他固定网格在 Plonk 中由分屏布局实现。";
 "home.rectangleTake" = "导入快捷键";
 "home.rectangleNotNow" = "暂不导入";
 "home.rectangleMore" = "查看可导入的设置";
@@ -353,7 +353,7 @@
 "home.idle" = "空闲";
 "home.onlySelectedDrives" = "仅选定的 Agent 可以控制";
 "home.listening" = "监听中";
-"home.token" = "令牌";
+"home.token" = "Token";
 "home.tokenStored" = "只有所有者有权访问";
 "home.reveal" = "显示";
 "home.loopbackOnly" = "本地 API 仅在回环地址上接受连接，拒绝来自浏览器的请求。API 通信仅限本机。";
@@ -457,7 +457,7 @@
 "menu.captureRegion" = "区域截图";
 "menu.keepAwake" = "保持屏幕唤醒";
 "menu.updateAvailable" = "有可用更新";
-"menu.updateTo %@" = "更新至 %@…";
+"menu.updateTo %@" = "更新至 %@";
 "menu.reportBug" = "报告问题";
 "menu.quit" = "退出";
 "menu.tools" = "工具";
@@ -476,13 +476,13 @@
 "update.automatically" = "自动检查更新";
 "update.automaticallyDetail" = "启动时检查，此后每天检查一次，网络恢复时也会检查。";
 "update.privacy" = "检查更新是 Plonk 唯一的出站网络请求。Plonk 向 api.github.com 查询最新版本，只发送包含应用名称和版本的 User-Agent，不发送标识符、账号或遥测数据。关闭自动检查后，Plonk 拒绝 Agent 发起的检查，只有上方按钮可以触发检查。";
-"update.checking" = "正在检查更新…";
+"update.checking" = "正在检查更新";
 "update.upToDate %@" = "Plonk %@ 已是最新版本。";
 "update.isAvailable %@" = "Plonk %@ 已发布。";
 "update.checkRunning" = "正在检查更新，请稍后再试。";
-"update.downloading %@" = "正在下载 Plonk %@…";
-"update.verifying" = "正在验证下载内容…";
-"update.installing" = "正在安装…";
+"update.downloading %@" = "正在下载 Plonk %@";
+"update.verifying" = "正在验证下载内容";
+"update.installing" = "正在安装";
 
 /* Why an update stopped. Every one of these ends up on the Updates page. */
 "updateError.malformedFeed %@" = "无法读取更新信息：%@。";
@@ -507,7 +507,7 @@
 
 /* The apps Plonk keeps its hands off. */
 "excluded.none" = "尚未排除任何应用，Plonk 可以移动所有窗口。";
-"excluded.chooseApp" = "选取应用…";
+"excluded.chooseApp" = "选取应用";
 "excluded.addRunning" = "添加正在运行的应用";
 "excluded.unnamed" = "?";
 "excluded.orType" = "或输入名称";
@@ -537,7 +537,7 @@
 "zoneSet.nameField" = "名称";
 "zoneSet.showOnScreen" = "在选定的屏幕上显示";
 "zoneSet.emptyCard" = "尚无分屏，请在编辑器中绘制。";
-"zoneSet.rename" = "重命名…";
+"zoneSet.rename" = "重命名";
 "zoneSet.edgeSnapping" = "边缘贴靠";
 "zoneSet.newSet" = "新建布局";
 "zoneSet.defaultName" = "布局";
@@ -550,8 +550,8 @@
 "zoneSet.preview" = "预览";
 "zoneSet.previewHelp" = "在每台显示器上短暂显示其分屏布局。";
 "zoneSet.duplicate" = "创建副本";
-"zoneSet.edit" = "编辑…";
-"zoneSet.manage" = "管理…";
+"zoneSet.edit" = "编辑";
+"zoneSet.manage" = "管理";
 "zoneSet.manageHelp" = "重命名、删除和比较各个布局。";
 "zoneSet.title" = "分屏布局";
 "zoneSet.onThisScreenNow" = "此显示器正在使用";
@@ -612,8 +612,8 @@
 "palette.ask %@ %@" = "向 %1$@ 发送请求：%2$@";
 "palette.launchWorkspace %@" = "启动工作区 %@";
 "palette.useZoneSet %@" = "在主显示器上使用分屏布局 %@";
-"palette.pickZoneSet" = "为此显示器选取分屏布局…";
-"palette.editZoneSets" = "编辑分屏布局…";
+"palette.pickZoneSet" = "为此显示器选取分屏布局";
+"palette.editZoneSets" = "编辑分屏布局";
 "palette.stopAwake" = "关闭保持唤醒";
 "palette.keepAwake" = "让 Mac 保持唤醒";
 "palette.checkUpdates" = "检查更新";
@@ -712,7 +712,7 @@
 
 /* What is wrong, when something is. Both of these sit in the top bar until it
    is fixed. */
-"warning.noToken %@" = "%@ 处没有可用的令牌，本地 API 只接受 /ping 请求，Agent 和 plonk 命令无法使用。令牌必须是由你拥有且仅你可读取的普通文件。删除该文件并重新启动 Plonk 即可创建新令牌。";
+"warning.noToken %@" = "%@ 处没有可用的 token，本地 API 只接受 /ping 请求，Agent 和 plonk 命令无法使用。token 必须是由你拥有且仅你可读取的普通文件。删除该文件并重新启动 Plonk 即可创建新token。";
 "warning.portTaken %lld" = "端口 %lld 已被占用，MCP 工具无法连接。可能已有另一个 Plonk 实例正在运行。";
 "warning.apiDidNotStart" = "本地 API 未能启动，MCP 工具无法连接。";
 "warning.settingsReset %@" = "无法读取设置，已恢复默认设置。原设置文件位于 %@。";
