@@ -37,7 +37,7 @@ extension AppDelegate: AppActions {
     }
 
     func capture(_ mode: CaptureMode) {
-        runCapture(mode, openEditor: true)
+        captureManually(mode)
     }
 
     func flashZones() {
