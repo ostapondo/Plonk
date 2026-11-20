@@ -25,9 +25,12 @@ struct LocalizationTests {
     /// The counted strings come from Localizable.stringsdict, which is a
     /// separate file and a separate lookup.
     @Test func countedStringsPickTheRightForm() {
-        #expect(String(localized: .workspacesAppCount(1)) == "1 app")
-        #expect(String(localized: .workspacesAppCount(4)) == "4 apps")
-        #expect(String(localized: .workspacesWindowCount(1)) == "1 window")
+        func english(_ resource: LocalizedStringResource) -> String {
+            String(localized: resource.defaultValue, bundle: Localization.bundle, locale: Locale(identifier: "en_US"))
+        }
+        #expect(english(.workspacesAppCount(1)) == "1 app")
+        #expect(english(.workspacesAppCount(4)) == "4 apps")
+        #expect(english(.workspacesWindowCount(1)) == "1 window")
     }
 
     /// Nothing may reach the user as a raw key. Resolving to something other
