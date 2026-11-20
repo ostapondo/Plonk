@@ -60,8 +60,8 @@ extension LocalizedStringResource {
         Self.key("hud.urlZoneSet \(name)")
     }
 
-    static func hudWaitingFor(_ agent: String, _ note: String) -> LocalizedStringResource {
-        Self.key("hud.waitingFor \(agent) \(note)")
+    static func hudWaitingFor(_ agent: String) -> LocalizedStringResource {
+        Self.key("hud.waitingFor \(agent)")
     }
 
     static func hudSentTo(_ agent: String, _ text: String) -> LocalizedStringResource {

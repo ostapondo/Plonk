@@ -8,8 +8,6 @@ extension LocalizedStringResource {
     static let aiAgentsHelp = Self.key("ai.agentsHelp")
     static let aiNoAgents = Self.key("ai.noAgents")
     static let aiActiveAgent = Self.key("ai.activeAgent")
-    static let aiNoAgentSpecified = Self.key("ai.noAgentSpecified")
-    static let aiAdaptersUnavailable = Self.key("ai.adaptersUnavailable")
     static let aiAnyAgent = Self.key("ai.anyAgent")
     static let aiExclusive = Self.key("ai.exclusive")
     static let aiExclusiveHelp = Self.key("ai.exclusiveHelp")
@@ -23,10 +21,6 @@ extension LocalizedStringResource {
 
     static func aiAgentOffline(_ name: String) -> LocalizedStringResource {
         Self.key("ai.agentOffline \(name)")
-    }
-
-    static func aiSessionNotConnected(_ name: String) -> LocalizedStringResource {
-        Self.key("ai.sessionNotConnected \(name)")
     }
 
     /// What to try saying to an agent. Copied to the clipboard on click, so

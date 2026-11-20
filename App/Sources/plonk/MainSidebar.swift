@@ -101,7 +101,9 @@ struct MainSidebar: View {
     /// there is a fact worth carrying — an empty badge is not drawn.
     private func badge(_ page: SettingsPage) -> String? {
         switch page.id {
-        case "zones": return model.screenAssignments[0]
+        case "zones":
+            let name = model.screenAssignments[0]
+            return name.map { $0.isEmpty ? $0 : model.displayName(forZoneSet: $0) }
         case "workspaces": return model.workspaceNames.isEmpty ? nil
                                                                : String(model.workspaceNames.count)
         case "ai": return "MCP"

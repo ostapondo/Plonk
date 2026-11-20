@@ -105,9 +105,6 @@
 "ai.activeAgent" = "Active agent";
 "ai.anyAgent" = "Any agent";
 "ai.agentOffline %@" = "%@ (offline)";
-"ai.adaptersUnavailable" = "adapters are not available";
-"ai.noAgentSpecified" = "no agent named and none selected — pass \"agent\" or pick an active agent in Plonk";
-"ai.sessionNotConnected %@" = "no session named \"%@\" has connected yet; the task waits in its inbox";
 "ai.exclusive" = "Only the active agent controls";
 "ai.exclusiveHelp" = "Other agents can still read state and take screenshots";
 "ai.localApi" = "Local API";
@@ -665,7 +662,7 @@
 "hud.urlUnreadable" = "That URL named no action";
 "hud.urlUnknown %@" = "Nothing here is called %@";
 "hud.urlZoneSet %@" = "%@ is a zone set here. Use zone-1 to zone-9";
-"hud.waitingFor %@ %@" = "Waiting for %1$@ to connect: %2$@";
+"hud.waitingFor %@" = "Waiting for %@ to connect. The request is queued.";
 "hud.sentTo %@ %@" = "→ %1$@: %2$@";
 "hud.working %@ %@ %lld" = "%1$@ is working %2$@  %3$llds";
 "hud.finished %@ %lld" = "✓ %1$@ finished in %2$llds";
