@@ -1,7 +1,6 @@
 # Agent rules
 
-Rules for AI agents working in this repo. `CLAUDE.md` imports this file and
-adds nothing of its own, so a rule goes here and nowhere else.
+Rules for AI agents working in this repo.
 
 ## Layout
 
