@@ -25,4 +25,37 @@ struct ShotSelectionTests {
         #expect(geometry.viewRect(CGRect(x: 3, y: 5, width: 101, height: 81))
                 == CGRect(x: 1.5, y: 2.5, width: 50.5, height: 40.5))
     }
+
+    @Test func movingClampsWithoutChangingSize() {
+        let rect = CGRect(x: 160, y: 100, width: 200, height: 160)
+        #expect(geometry.move(rect, by: CGPoint(x: -200, y: 200))
+                == CGRect(x: 0, y: 240, width: 200, height: 160))
+    }
+
+    @Test func resizingFromACornerKeepsTheOppositeCornerFixed() {
+        let rect = CGRect(x: 60, y: 80, width: 200, height: 100)
+        #expect(geometry.resize(rect, handle: CGPoint(x: -1, y: -1), by: CGPoint(x: -90, y: 150))
+                == CGRect(x: 0, y: 179, width: 260, height: 1))
+    }
+
+    @Test func resizingFromAnEdgeOnlyChangesOneDimension() {
+        let rect = CGRect(x: 60, y: 80, width: 200, height: 100)
+        #expect(geometry.resize(rect, handle: CGPoint(x: 1, y: 0), by: CGPoint(x: 500, y: 150))
+                == CGRect(x: 60, y: 80, width: 540, height: 100))
+    }
+
+    @Test func visibleCornerHandleHasPriorityOverTheEdge() {
+        let rect = CGRect(x: 80, y: 80, width: 320, height: 180)
+        #expect(geometry.handle(at: CGPoint(x: 55, y: 42), of: rect) == CGPoint(x: -1, y: -1))
+    }
+
+    @Test func centerOfEdgeProvidesOneAxisOfResize() {
+        let rect = CGRect(x: 80, y: 80, width: 320, height: 180)
+        #expect(geometry.handle(at: CGPoint(x: 120, y: 38), of: rect) == CGPoint(x: 0, y: -1))
+    }
+
+    @Test func pointsInTheInteriorAreAvailableForMoveOrMarkup() {
+        let rect = CGRect(x: 80, y: 80, width: 320, height: 180)
+        #expect(geometry.handle(at: CGPoint(x: 120, y: 85), of: rect) == .zero)
+    }
 }

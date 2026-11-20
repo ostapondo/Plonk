@@ -9,6 +9,9 @@ What changed in each release, from a user's side. The commit log has the rest.
 - **Region screenshots keep the selection on screen.** Choose Open Editor to
   continue editing, or change After capture in Screenshot settings to open
   the editor immediately.
+- **Adjust the region before opening the editor.** Drag inside the blue
+  outline to move it, or drag an edge or corner to resize. The size badge
+  shows the crop's pixel dimensions.
 
 ## 0.4.3 — 2026-09-22
 
