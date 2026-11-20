@@ -54,6 +54,10 @@ final class QuickShotCanvas: NSView {
             aspectRatio = aspectRatio == nil ? selection.width / selection.height : nil
             refresh()
         }
+        dimensions.onSizeChange = { [weak self] in
+            guard let self, let selection else { return }
+            positionControls(for: geometry.viewRect(selection), toolbarSize: toolbar.frame.size)
+        }
         refresh()
     }
 
@@ -220,7 +224,11 @@ final class QuickShotCanvas: NSView {
         guard let selection, let frame else { return }
         dimensions.update(size: selection.size, locked: aspectRatio != nil)
         let barSize = toolbar.fittedSize(availableWidth: safeArea.width - 10)
-        let position = QuickShotLayout.place(dimensions: dimensions.frame.size, toolbar: barSize,
+        positionControls(for: frame, toolbarSize: barSize)
+    }
+
+    private func positionControls(for frame: CGRect, toolbarSize: CGSize) {
+        let position = QuickShotLayout.place(dimensions: dimensions.frame.size, toolbar: toolbarSize,
                                             selection: frame, area: safeArea)
         dimensions.frame = position.dimensions
         toolbar.frame = position.toolbar

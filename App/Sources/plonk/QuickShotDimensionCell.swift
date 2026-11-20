@@ -2,7 +2,7 @@ import AppKit
 
 final class QuickShotDimensionCell: NSTextFieldCell {
     // AppKit's single-line cell leaves the digits above the center of the badge.
-    private static let verticalTextInset: CGFloat = 3
+    static let verticalTextInset: CGFloat = 3
 
     override func drawingRect(forBounds rect: NSRect) -> NSRect {
         super.drawingRect(forBounds: rect).offsetBy(dx: 0, dy: Self.verticalTextInset)
