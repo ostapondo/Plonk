@@ -82,7 +82,7 @@
 "shot.selectionMove" = "Move or Resize";
 "shot.captureWindow" = "Capture Window";
 "shot.captureScreen" = "Capture Whole Screen";
-"shot.captureHelp" = "Capture a region to adjust it, mark it up, copy it or save it on screen. Open the editor to keep working. Screenshots require Screen Recording access.";
+"shot.captureHelp" = "Use Quick Actions to adjust a region or mark up, copy, and save a screenshot. Open the editor to keep working. Screenshots require Screen Recording access.";
 "shot.pinPart" = "Pin Part of the Screen";
 "shot.pinPartHelp" = "Drag out a region and it floats above everything else. Live mirrors what is underneath — a build log, a chart, a call — so it can be watched while you work on top of it. Still freezes it, which costs nothing and works on windows a stream will not follow. Close the panel to stop it.";
 "shot.language" = "Language";

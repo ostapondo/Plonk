@@ -68,25 +68,55 @@ enum ScreenshotManager {
         run(["-o", "-l", String(id)], completion: completion)
     }
 
+    static func captureDisplay(_ screen: NSScreen, completion: @escaping (NSImage?) -> Void) {
+        captureRegion(CGSpace.flip(screen.frame), completion: completion)
+    }
+
+    enum CaptureOutcome {
+        case captured(NSImage)
+        case noImage
+        case failed
+
+        var image: NSImage? {
+            if case .captured(let image) = self { return image }
+            return nil
+        }
+    }
+
+    static func pickWindow(completion: @escaping (CaptureOutcome) -> Void) -> Process? {
+        launch(CaptureMode.window.arguments, completion: completion)
+    }
+
     private static func run(_ arguments: [String], completion: @escaping (NSImage?) -> Void) {
+        launch(arguments) { completion($0.image) }
+    }
+
+    @discardableResult
+    private static func launch(_ arguments: [String], completion: @escaping (CaptureOutcome) -> Void) -> Process? {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("plonk-capture-\(UUID().uuidString).png")
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         task.arguments = ["-x"] + arguments + [url.path]
         task.terminationHandler = { finished in
-            var image: NSImage?
-            // A minimized window exits 0 and writes nothing, so the file is
-            // what says whether this worked, not the status.
-            if finished.terminationStatus == 0 { image = NSImage(contentsOf: url) }
+            let result: CaptureOutcome
+            if finished.terminationStatus != 0 {
+                result = .failed
+            } else if let image = NSImage(contentsOf: url) {
+                result = .captured(image)
+            } else {
+                result = .noImage
+            }
             try? FileManager.default.removeItem(at: url)
-            DispatchQueue.main.async { completion(image) }
+            DispatchQueue.main.async { completion(result) }
         }
         do {
             try task.run()
+            return task
         } catch {
             NSLog("Plonk: screencapture failed to launch: \(error)")
-            DispatchQueue.main.async { completion(nil) }
+            DispatchQueue.main.async { completion(.failed) }
+            return nil
         }
     }
 

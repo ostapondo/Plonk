@@ -11,7 +11,7 @@ struct QuickShotRegionTests {
             space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
         let bitmap = ShotBitmap(image: try #require(context.makeImage()), displaySize: CGSize(width: 800, height: 500))
         let frame = CGRect(origin: .zero, size: bitmap.displaySize)
-        let canvas = QuickShotCanvas(bitmap: bitmap, safeArea: frame)
+        let canvas = QuickShotCanvas(bitmap: bitmap, size: frame.size, safeArea: frame, fixed: false)
         let window = NSWindow(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
         window.contentView = canvas
         let start = try mouse(.leftMouseDown, at: CGPoint(x: 100, y: 100), in: canvas, window: window)
