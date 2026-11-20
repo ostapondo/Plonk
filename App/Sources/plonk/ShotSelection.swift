@@ -23,6 +23,11 @@ struct ShotSelection {
                width: rect.width / pixels.width * view.width, height: rect.height / pixels.height * view.height)
     }
 
+    func unitRect(_ rect: CGRect) -> CGRect {
+        CGRect(x: rect.minX / pixels.width, y: rect.minY / pixels.height,
+               width: rect.width / pixels.width, height: rect.height / pixels.height)
+    }
+
     func move(_ rect: CGRect, by delta: CGPoint) -> CGRect {
         CGRect(x: (rect.minX + delta.x).clamped(to: 0...(pixels.width - rect.width)),
                y: (rect.minY + delta.y).clamped(to: 0...(pixels.height - rect.height)),

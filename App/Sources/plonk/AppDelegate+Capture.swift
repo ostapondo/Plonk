@@ -83,8 +83,8 @@ extension AppDelegate {
             }
             hotkeys.setSuspended(false)
             refreshHotkeyModel()
-        }, onEditor: { [weak self] image in
-            self?.presenter.showShotEditor(image: image)
+        }, onEditor: { [weak self] image, history in
+            self?.presenter.showShotEditor(image: image, history: history)
         })
         quickShot = session
         session.begin()

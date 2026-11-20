@@ -2,12 +2,12 @@ import AppKit
 
 final class QuickShotSession: NSObject {
     private let previousApp: NSRunningApplication?
-    private let onEditor: (NSImage) -> Void
+    private let onEditor: (NSImage, AnnotationHistory) -> Void
     private var onClose: (() -> Void)?
     private var windows: [QuickShotWindow] = []
 
     init(previousApp: NSRunningApplication?, onClose: @escaping () -> Void,
-         onEditor: @escaping (NSImage) -> Void) {
+         onEditor: @escaping (NSImage, AnnotationHistory) -> Void) {
         self.previousApp = previousApp
         self.onClose = onClose
         self.onEditor = onEditor
@@ -40,10 +40,10 @@ final class QuickShotSession: NSObject {
         window.canvas.onSelect = { [weak self, weak window] in
             self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
         }
-        window.canvas.onEditor = { [weak self] image in
+        window.canvas.onEditor = { [weak self] image, history in
             guard let self, onClose != nil else { return }
             close(restoreFocus: false)
-            onEditor(image)
+            onEditor(image, history)
         }
         windows.append(window)
     }

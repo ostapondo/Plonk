@@ -8,13 +8,19 @@ struct ShotEditorView: View {
     let defaultFolder: String
     let onFinish: (_ copied: Bool, _ savedPath: String?) -> Void
 
-    @State private var annotations: [Annotation] = []
-    @State private var redoStack: [Annotation] = []
-    @State private var live: Annotation?
+    @State private var history: AnnotationHistory
     @State private var kind: Annotation.Kind = .arrow
     @State private var colorIndex = 0
     @State private var strokePoints: Double = 4
     @State private var status: String?
+
+    init(image: NSImage, history: AnnotationHistory, defaultFolder: String,
+         onFinish: @escaping (Bool, String?) -> Void) {
+        self.image = image
+        self.defaultFolder = defaultFolder
+        self.onFinish = onFinish
+        _history = State(initialValue: history)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -34,7 +40,7 @@ struct ShotEditorView: View {
         HStack(spacing: 14) {
             Picker("", selection: $kind) {
                 ForEach(Annotation.Kind.allCases) { kind in
-                    Image(systemName: kind.symbol).tag(kind).help(kind.title)
+                    Image(systemName: kind.symbol).tag(kind).help(String(localized: kind.title))
                 }
             }
             .pickerStyle(.segmented)
@@ -57,19 +63,19 @@ struct ShotEditorView: View {
             Spacer()
 
             Button {
-                if let last = annotations.popLast() { redoStack.append(last) }
+                history.undo()
             } label: {
                 Image(systemName: "arrow.uturn.backward")
             }
-            .disabled(annotations.isEmpty)
+            .disabled(!history.canUndo)
             .help(String(localized: .shotEditorUndo))
 
             Button {
-                if let last = redoStack.popLast() { annotations.append(last) }
+                history.redo()
             } label: {
                 Image(systemName: "arrow.uturn.forward")
             }
-            .disabled(redoStack.isEmpty)
+            .disabled(!history.canRedo)
             .help(String(localized: .shotEditorRedo))
         }
         .padding(10)
@@ -80,35 +86,23 @@ struct ShotEditorView: View {
             // The image is aspect-fitted inside the pane, so gesture points get
             // mapped against that rect and not the pane.
             let fitted = ImageFit.rect(for: image.size, in: geo.size)
-            AnnotatedImage(image: image, annotations: annotations, live: live)
+            AnnotatedImage(image: image, annotations: history.annotations, live: history.live)
                 .frame(width: geo.size.width, height: geo.size.height)
                 .contentShape(Rectangle())
                 .gesture(
                     DragGesture(minimumDistance: 1)
                         .onChanged { value in
-                            live = extend(live, to: value, in: fitted)
+                            if history.live == nil {
+                                history.begin(kind, at: ImageFit.unitPoint(value.startLocation, in: fitted),
+                                              color: colorIndex, width: strokePoints / max(fitted.width, 1))
+                            }
+                            history.drag(to: ImageFit.unitPoint(value.location, in: fitted))
                         }
-                        .onEnded { _ in
-                            if let live { annotations.append(live); redoStack.removeAll() }
-                            live = nil
+                        .onEnded { value in
+                            history.end(at: ImageFit.unitPoint(value.location, in: fitted))
                         }
                 )
         }
-    }
-
-    private func extend(_ current: Annotation?, to value: DragGesture.Value, in fitted: CGRect) -> Annotation {
-        let start = ImageFit.unitPoint(value.startLocation, in: fitted)
-        let point = ImageFit.unitPoint(value.location, in: fitted)
-        guard var annotation = current else {
-            return Annotation(kind: kind, points: [start], colorIndex: colorIndex,
-                              width: strokePoints / max(fitted.width, 1))
-        }
-        if kind.tracksEveryPoint {
-            annotation.points.append(point)
-        } else {
-            annotation.points = [start, point]
-        }
-        return annotation
     }
 
     private var footer: some View {
@@ -128,7 +122,7 @@ struct ShotEditorView: View {
     // MARK: - Output
 
     private func copy() {
-        guard let output = image.annotated(with: annotations) else {
+        guard let output = image.annotated(with: history.annotations) else {
             status = String(localized: .shotEditorRenderFailed)
             return
         }
@@ -137,7 +131,7 @@ struct ShotEditorView: View {
     }
 
     private func save(to destination: ScreenshotManager.Destination) {
-        guard let output = image.annotated(with: annotations) else {
+        guard let output = image.annotated(with: history.annotations) else {
             status = String(localized: .shotEditorRenderFailed)
             return
         }

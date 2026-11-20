@@ -5,33 +5,33 @@ final class QuickShotCanvas: NSView {
     private enum Gesture {
         case create(from: CGPoint)
         case adjust(from: CGPoint, original: CGRect, handle: CGPoint)
+        case mark
     }
 
     private let bitmap: ShotBitmap
     private let safeArea: CGRect
     private let backdrop: QuickShotBackdrop
+    private let markup: QuickShotMarkupView
+    private var history = AnnotationHistory()
+    private var tool: Annotation.Kind?
     private var selection: CGRect?
     private var gesture: Gesture?
     private var pointerArea: NSTrackingArea?
-    private let toolbar = QuickShotToolbar()
+    private lazy var toolbar = QuickShotToolbar { [weak self] in self?.perform($0) }
     private let dimensions = QuickShotDimensions()
     var onCancel: (() -> Void)?
     var onSelect: (() -> Void)?
-    var onEditor: ((NSImage) -> Void)?
+    var onEditor: ((NSImage, AnnotationHistory) -> Void)?
 
     init(bitmap: ShotBitmap, safeArea: CGRect) {
         self.bitmap = bitmap
         self.safeArea = safeArea
         let frame = CGRect(origin: .zero, size: bitmap.displaySize)
         backdrop = QuickShotBackdrop(image: bitmap.image, frame: frame)
+        markup = QuickShotMarkupView(frame: frame)
         super.init(frame: frame)
-        toolbar.addSubview(QuickShotButton(symbol: "xmark", title: .commonCancel, cancel: true) { [weak self] in
-            self?.onCancel?()
-        })
-        toolbar.addSubview(QuickShotButton(symbol: "macwindow", title: .shotAfterEditor) { [weak self] in
-            self?.openEditor()
-        })
         addSubview(backdrop)
+        addSubview(markup)
         addSubview(dimensions)
         addSubview(toolbar)
         refresh()
@@ -63,7 +63,8 @@ final class QuickShotCanvas: NSView {
         if handle != .zero {
             resizeCursor(for: handle).set()
         } else {
-            (geometry.viewRect(selection).contains(point) ? NSCursor.openHand : .crosshair).set()
+            let moving = tool == nil && geometry.viewRect(selection).contains(point)
+            (moving ? NSCursor.openHand : .crosshair).set()
         }
     }
 
@@ -86,6 +87,12 @@ final class QuickShotCanvas: NSView {
         if let selection {
             let handle = geometry.handle(at: point, of: selection)
             if handle != .zero || geometry.viewRect(selection).contains(point) {
+                if handle == .zero, let tool {
+                    history.begin(tool, at: ImageFit.unitPoint(point, in: bounds),
+                                  color: tool == .highlight ? 2 : 0, width: 4 / bounds.width)
+                    gesture = .mark
+                    return
+                }
                 gesture = .adjust(from: geometry.pixelPoint(point), original: selection, handle: handle)
                 if handle == .zero { NSCursor.closedHand.set() }
                 return
@@ -106,6 +113,8 @@ final class QuickShotCanvas: NSView {
             let delta = CGPoint(x: current.x - start.x, y: current.y - start.y)
             selection = handle == .zero ? geometry.move(original, by: delta)
                 : geometry.resize(original, handle: handle, by: delta)
+        case .mark:
+            history.drag(to: ImageFit.unitPoint(point, in: bounds))
         case nil:
             return
         }
@@ -113,7 +122,11 @@ final class QuickShotCanvas: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
-        mouseDragged(with: event)
+        if case .mark = gesture {
+            history.end(at: ImageFit.unitPoint(convert(event.locationInWindow, from: nil), in: bounds))
+        } else {
+            mouseDragged(with: event)
+        }
         gesture = nil
         refresh()
         mouseMoved(with: event)
@@ -130,6 +143,8 @@ final class QuickShotCanvas: NSView {
     func clearSelection() {
         gesture = nil
         selection = nil
+        history = AnnotationHistory()
+        tool = nil
         refresh()
     }
 
@@ -138,21 +153,36 @@ final class QuickShotCanvas: NSView {
     }
 
     private func refresh() {
-        backdrop.selection = selection.map(geometry.viewRect)
+        let frame = selection.map(geometry.viewRect)
+        backdrop.selection = frame
+        markup.show(history, clippedTo: frame)
+        toolbar.update(tool: tool, history: history)
         toolbar.isHidden = selection == nil
         if case .create = gesture { toolbar.isHidden = true }
         dimensions.isHidden = selection == nil
-        guard let selection else { return }
+        guard let selection, let frame else { return }
         let size = dimensions.fittedSize(for: selection)
         let barSize = toolbar.fittedSize(availableWidth: safeArea.width - 10)
         let position = QuickShotLayout.place(dimensions: size, toolbar: barSize,
-                                            selection: geometry.viewRect(selection), area: safeArea)
+                                            selection: frame, area: safeArea)
         dimensions.frame = position.dimensions
         toolbar.frame = position.toolbar
     }
 
-    private func openEditor() {
-        guard let selection, let image = bitmap.crop(selection) else { return }
-        onEditor?(image)
+    private func perform(_ action: QuickShotToolbar.Action) {
+        window?.makeFirstResponder(self)
+        switch action {
+        case .tool(let choice): tool = tool == choice ? nil : choice
+        case .undo: history.undo()
+        case .redo: history.redo()
+        case .cancel:
+            onCancel?()
+            return
+        case .editor:
+            guard let selection, let image = bitmap.crop(selection) else { return }
+            onEditor?(image, history.rebased(to: geometry.unitRect(selection)))
+            return
+        }
+        refresh()
     }
 }

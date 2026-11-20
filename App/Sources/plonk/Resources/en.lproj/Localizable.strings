@@ -74,6 +74,7 @@
 "shot.afterEditor" = "Open Editor";
 "shot.captureFailed" = "Could not capture the display. Check Screen Recording permission in System Settings.";
 "shot.selectionSize %lld %lld" = "%lld × %lld px";
+"shot.selectionMove" = "Move or Resize";
 "shot.captureWindow" = "Capture Window";
 "shot.captureScreen" = "Capture Whole Screen";
 "shot.captureHelp" = "The editor opens on the capture: draw with pen, arrow, rectangle, ellipse or highlighter, then copy or save. Needs Screen Recording access, which macOS asks for on the first capture.";

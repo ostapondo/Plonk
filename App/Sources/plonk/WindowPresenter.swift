@@ -199,7 +199,7 @@ final class WindowPresenter: NSObject {
         workspaceLaunch?.orderOut(nil)
     }
 
-    func showShotEditor(image: NSImage) {
+    func showShotEditor(image: NSImage, history: AnnotationHistory = .init()) {
         shotEditor?.close()
         let window = NSWindow(
             contentRect: .zero,
@@ -209,7 +209,7 @@ final class WindowPresenter: NSObject {
         window.title = String(localized: .windowScreenshot)
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(
-            rootView: ShotEditorView(image: image, defaultFolder: shotFolder()) { [weak self] copied, path in
+            rootView: ShotEditorView(image: image, history: history, defaultFolder: shotFolder()) { [weak self] copied, path in
                 self?.closeShotEditor()
                 self?.onShotFinished?(copied, path)
             }
