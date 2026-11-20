@@ -21,10 +21,6 @@ final class QuickShotAspectLock: NSButton {
             cell.highlightsBy = []
             cell.showsStateBy = []
         }
-        wantsLayer = true
-        layer?.cornerRadius = 4
-        addTrackingArea(NSTrackingArea(rect: .zero, options: [.activeInKeyWindow, .inVisibleRect, .mouseEnteredAndExited],
-                                       owner: self, userInfo: nil))
         toolTip = label
         setAccessibilityLabel(label)
         setAccessibilityValue(NSNumber(value: false))
@@ -33,14 +29,6 @@ final class QuickShotAspectLock: NSButton {
     }
 
     required init?(coder: NSCoder) { nil }
-
-    override func mouseEntered(with event: NSEvent) {
-        layer?.backgroundColor = NSColor.white.withAlphaComponent(48 / 255).cgColor
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        layer?.backgroundColor = nil
-    }
 
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: .pointingHand)

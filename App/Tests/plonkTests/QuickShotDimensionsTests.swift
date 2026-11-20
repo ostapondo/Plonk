@@ -50,7 +50,7 @@ struct QuickShotDimensionsTests {
         window.makeFirstResponder(nil)
     }
 
-    @Test(arguments: ["", "0", "-1", "1.5", "9999999999999999999999", "abc"])
+    @Test(arguments: ["", "0", "-1", "1.5", "abc"])
     func invalidReturnKeepsTheFieldEditor(_ input: String) throws {
         let (window, dimensions) = makeControls()
         let editor = try editWidth(in: window, dimensions: dimensions)
@@ -63,6 +63,33 @@ struct QuickShotDimensionsTests {
         #expect(editor.string == input)
         window.makeFirstResponder(nil)
         HUD.shared.dismiss()
+    }
+
+    @Test(arguments: ["9999", "99999"])
+    func numericInputKeepsAtMostFourDigits(_ input: String) throws {
+        let (window, dimensions) = makeControls()
+        defer { window.makeFirstResponder(nil) }
+        let editor = try editWidth(in: window, dimensions: dimensions)
+
+        editor.insertText(input, replacementRange: editor.selectedRange())
+
+        #expect(editor.string == "9999")
+    }
+
+    @Test func fieldEditorGrowsAndShrinksWithTheValue() throws {
+        let (window, dimensions) = makeControls()
+        defer { window.makeFirstResponder(nil) }
+        let field = try #require(dimensions.subviews.first as? QuickShotDimensionField)
+        let editor = try editWidth(in: window, dimensions: dimensions)
+        let fourDigitWidth = field.frame.width
+
+        editor.insertText("7", replacementRange: editor.selectedRange())
+        #expect(field.frame.width < fourDigitWidth)
+        #expect(editor.frame.width == field.frame.width)
+
+        editor.insertText("3141", replacementRange: NSRange(location: 0, length: 1))
+        #expect(field.frame.width == fourDigitWidth)
+        #expect(editor.frame.width == field.frame.width)
     }
 
     @Test(arguments: [false, true])

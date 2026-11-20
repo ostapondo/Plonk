@@ -1,6 +1,10 @@
 import AppKit
 
 final class QuickShotDimensionField: NSTextField {
+    var textBaselineFromTop: CGFloat {
+        firstBaselineOffsetFromTop + QuickShotDimensionCell.verticalTextInset
+    }
+
     init(title: LocalizedStringResource) {
         super.init(frame: .zero)
         let dimensionCell = QuickShotDimensionCell(textCell: "")
@@ -20,4 +24,12 @@ final class QuickShotDimensionField: NSTextField {
     }
 
     required init?(coder: NSCoder) { nil }
+
+    func fittedWidth(maximumLength: Int) -> CGFloat {
+        let text = currentEditor()?.string ?? stringValue
+        let length = min(maximumLength, max(1, text.count))
+        let attributes: [NSAttributedString.Key: Any] = [.font: font ?? NSFont.systemFont(ofSize: 14)]
+        let digitWidth = ("0" as NSString).size(withAttributes: attributes).width
+        return (digitWidth * CGFloat(length)).rounded(.up) + 8
+    }
 }

@@ -1,12 +1,17 @@
 import AppKit
 
 final class QuickShotDimensions: NSView, NSTextFieldDelegate {
+    private static let maximumInput = 9_999
+    private static let maximumInputLength = String(maximumInput).utf16.count
+
     var onResize: ((Int, Bool) -> Void)?
     var onToggleLock: (() -> Void)?
+    var onSizeChange: (() -> Void)?
     weak var canvas: NSView?
 
     private let widthField = QuickShotDimensionField(title: .shotSelectionWidth)
     private let heightField = QuickShotDimensionField(title: .shotSelectionHeight)
+    private let pixels = NSTextField(labelWithString: String(localized: .shotSelectionPixels))
     private lazy var lock = QuickShotAspectLock { [weak self] in
         guard let self else { return }
         window?.makeFirstResponder(canvas)
@@ -20,20 +25,36 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
         wantsLayer = true
         layer?.backgroundColor = QuickShotBackdrop.accent.cgColor
         layer?.cornerRadius = 5
-        let pixels = NSTextField(labelWithString: String(localized: .shotSelectionPixels))
-        pixels.font = .systemFont(ofSize: 12)
+        pixels.font = .systemFont(ofSize: 16)
         pixels.textColor = NSColor.white.withAlphaComponent(0.9)
         widthField.delegate = self
         heightField.delegate = self
         for view in [widthField, lock, heightField, pixels] { addSubview(view) }
-        widthField.frame = CGRect(x: 6, y: 3, width: 42, height: 23)
-        lock.frame = CGRect(x: 51, y: 3, width: 22, height: 23)
-        heightField.frame = CGRect(x: 76, y: 3, width: 42, height: 23)
+        layoutFields()
+    }
+
+    private func layoutFields() {
+        // Measure gaps from the visible glyphs inside each control's hit area.
+        let gap: CGFloat = 12
+        let digitInset: CGFloat = 5
+        let lockLeadingInset: CGFloat = 7
+        let lockTrailingInset: CGFloat = 6
+        let unitInset: CGFloat = 3
+        widthField.frame = CGRect(x: gap - digitInset, y: 3,
+                                  width: widthField.fittedWidth(maximumLength: Self.maximumInputLength), height: 23)
+        lock.frame = CGRect(x: widthField.frame.maxX + gap - digitInset - lockLeadingInset, y: 3, width: 22, height: 23)
+        heightField.frame = CGRect(x: lock.frame.maxX + gap - lockTrailingInset - digitInset, y: 3,
+                                   width: heightField.fittedWidth(maximumLength: Self.maximumInputLength), height: 23)
         let label = pixels.intrinsicContentSize
+        let baseline = widthField.frame.minY + widthField.textBaselineFromTop
         // The label's intrinsic width leaves no room for the cell's horizontal text inset.
-        pixels.frame = CGRect(x: 121, y: (29 - label.height) / 2 - 2,
+        pixels.frame = CGRect(x: heightField.frame.maxX + gap / 2 - digitInset - unitInset,
+                              y: baseline - pixels.firstBaselineOffsetFromTop,
                               width: label.width.rounded(.up) + 4, height: label.height)
-        setFrameSize(CGSize(width: pixels.frame.maxX + 9, height: 29))
+        let size = CGSize(width: pixels.frame.maxX + gap - unitInset, height: 29)
+        guard size != frame.size else { return }
+        setFrameSize(size)
+        onSizeChange?()
     }
 
     required init?(coder: NSCoder) { nil }
@@ -45,6 +66,7 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
             restore(field)
         }
         lock.isLocked = locked
+        layoutFields()
     }
 
     func selectField(at windowPoint: CGPoint) -> Bool {
@@ -56,8 +78,9 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
         return true
     }
 
-    private func value(_ text: String) -> Int? {
-        guard let value = Int(text.trimmingCharacters(in: .whitespaces)), value > 0 else { return nil }
+    private func value(_ text: String, for field: NSTextField) -> Int? {
+        guard let value = Int(text.trimmingCharacters(in: .whitespaces)), value > 0,
+              value <= Self.maximumInput || value == committedValue(for: field) else { return nil }
         return value
     }
 
@@ -72,6 +95,22 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
 
     private func restore(_ field: NSTextField) {
         field.stringValue = String(committedValue(for: field))
+    }
+
+    func controlTextDidChange(_ notification: Notification) {
+        guard let field = notification.object as? NSTextField,
+              let editor = field.currentEditor() as? NSTextView else { return }
+        defer { layoutFields() }
+        let text = editor.string
+        let limit = Self.maximumInputLength
+        guard !editor.hasMarkedText(), text.utf16.count > limit,
+              text.allSatisfy({ $0.isASCII && $0.isNumber }) else { return }
+
+        let selection = editor.selectedRange()
+        editor.textStorage?.deleteCharacters(in: NSRange(location: limit, length: text.utf16.count - limit))
+        let start = min(selection.location, limit)
+        let end = min(NSMaxRange(selection), limit)
+        editor.setSelectedRange(NSRange(location: start, length: end - start))
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
@@ -93,7 +132,7 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
 
     @discardableResult
     private func submit(_ field: NSTextField, text: String) -> Bool {
-        guard let value = value(text) else {
+        guard let value = value(text, for: field) else {
             HUD.shared.show(.shotSelectionInvalid)
             return false
         }
@@ -107,11 +146,13 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
         window?.makeFirstResponder(canvas)
         endingExplicitly = false
         restore(field)
+        layoutFields()
     }
 
     func controlTextDidEndEditing(_ notification: Notification) {
         guard !endingExplicitly, let field = notification.object as? NSTextField else { return }
-        if let value = value(field.stringValue) { apply(value, to: field) }
+        if let value = value(field.stringValue, for: field) { apply(value, to: field) }
         restore(field)
+        layoutFields()
     }
 }
