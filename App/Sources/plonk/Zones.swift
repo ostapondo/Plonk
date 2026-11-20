@@ -19,7 +19,7 @@ enum BuiltinZoneSets {
 
     static func displayName(_ name: String) -> String {
         switch name {
-        case defaultName: String(localized: .zoneSetHalves)
+        case "Halves": String(localized: .zoneSetHalves)
         case "Thirds": String(localized: .zoneSetThirds)
         case "Quarters": String(localized: .zoneSetQuarters)
         case "Priority": String(localized: .zoneSetPriority)
