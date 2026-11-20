@@ -14,6 +14,16 @@ struct QuickShotDimensionsTests {
         #expect(editor.selectedRange() == NSRange(location: 0, length: 4))
     }
 
+    @Test func fourDigitsFitInsideTheFieldEditor() throws {
+        let (window, dimensions) = makeControls()
+        defer { window.makeFirstResponder(nil) }
+        let editor = try editWidth(in: window, dimensions: dimensions)
+        let container = try #require(editor.textContainer)
+        let font = try #require(editor.font)
+        let digits = (editor.string as NSString).size(withAttributes: [.font: font]).width
+        #expect(digits + 2 * container.lineFragmentPadding + 1 <= editor.visibleRect.width)
+    }
+
     @Test func returnCommitsAndFocusesCanvas() throws {
         let (window, dimensions) = makeControls()
         let editor = try editWidth(in: window, dimensions: dimensions)
