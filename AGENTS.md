@@ -11,7 +11,10 @@ Rules for AI agents working in this repo.
 Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
 
 - `Router` owns the route table and nothing else: every case is one line to the
-  module that handles it, in a `Router+*` file of its own.
+  module that handles it, in a `Router+*` file of its own. A module whose
+  routes answer after the request has been left behind — a capture, a
+  measurement — keeps them in a `<Module>Routes` class instead, which `Router`
+  holds: `ShotRoutes` and `RulerRoutes`.
 - `AppDelegate.swift` is the list of what the app is made of and the order it
   comes up in, and nothing else. Every module's wiring lives in an
   `AppDelegate+<Module>.swift` beside it, which is why none of those stored
@@ -53,7 +56,8 @@ is a module. A new module touches five places, nothing else:
    belongs under as its `parent` (that is what the sidebar draws), plus any
    status-menu items in `StatusMenuController`.
 3. A `Router+<Module>.swift` holding its route handlers, and one line per route
-   in `Router.handle` under its own path prefix (e.g. `/shot/*`).
+   in `Router.handle` under its own path prefix (e.g. `/zones/*`). Routes that
+   cannot answer at once go in a `<Module>Routes` class, as `/shot/*` does.
 4. An MCP tool file `mcp/src/tools/<module>.ts` with a `register(server)`
    function, called from `createPlonkServer` in `mcp/src/factory.ts`.
    `server.ts` only chooses a transport.
@@ -112,7 +116,10 @@ a release; never edit a version inside the plist heredoc.
 
 Pure logic lives in `ZoneGeometry`, `Config`, `ImageFit`, `Router` and
 `ControlServer.parseIfComplete` so it stays testable without a desktop session.
-Put new logic there and cover it in `App/Tests/plonkTests/`.
+Put new logic there and cover it in `App/Tests/plonkTests/`. Not every one of
+those has a file of its own name: `ZoneGeometry` is in `Zones.swift`,
+`ImageFit` in `Annotation.swift`, and `SettingsPages` in
+`SettingsPageList.swift`.
 
 ## Code style
 
@@ -147,13 +154,24 @@ Rules the checker enforces, so they are worth knowing before it tells you:
 - Never key anything off displayed text. `HotkeyAction.Group` is a value, and
   `group.title` is what gets drawn; filtering on the words would break the
   moment they were translated.
-- English is a translation like any other. `en.lproj` is where it lives, and
-  adding a language means one new `.lproj` beside it and no Swift at all.
+- English is a translation like any other. `en.lproj` is where it lives,
+  `zh-Hans.lproj` sits beside it, and adding a language means one new `.lproj`
+  there and no Swift at all. A key has to exist in every catalog with the same
+  format specifiers.
+- Strings are formatted with `Localization.locale`, not `Locale.current`: the
+  catalog being shown decides the plural rules, so English text on a system
+  whose language Plonk does not ship still counts the English way.
+- A built-in zone set's name is an id: `Halves` is what config stores and what
+  the API says, in every language. What is drawn comes from
+  `AppModel.displayName(forZoneSet:)`. A set the user made or duplicated is
+  theirs, and its name is stored as they see it.
 - What an agent reads over the API is a different surface: ids, route names,
   `phase` and every other machine-readable field stay English, always. Sentences
   written for a person are translated even when they also reach an agent — the
   update status, the keep-awake status, and why an app in a workspace did not
-  land. Each of those sits beside a structured field that did not change.
+  land. Each of those sits beside a structured field that did not change. A
+  router error or note has no such field and is written for the caller, so it
+  stays English, and the HUD says its own sentence instead of quoting one.
 
 `scripts/check-strings.mjs` fails on a key with no value, a value nothing uses,
 a mismatched number of format specifiers, a translation that has drifted from

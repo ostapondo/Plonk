@@ -21,6 +21,15 @@ What changed in each release, from a user's side. The commit log has the rest.
   mark portions visible inside the selection.
 - **Use the keyboard in Quick Actions.** Escape cancels, Return copies,
   Command-S saves, and Command-Z and Shift-Command-Z undo and redo.
+- Simplified Chinese for the app interface, built-in zone layouts, and macOS
+  microphone and speech recognition permission prompts. A new or duplicated
+  zone set is named in the app's language; what an agent reads over the API
+  stays English.
+
+### Changed
+
+- A prompt queued for an agent that has not connected yet says so in one line,
+  and a spoken prompt now reports it the same way a typed one does.
 
 ## 0.4.3 — 2026-09-22
 

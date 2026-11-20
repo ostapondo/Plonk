@@ -109,17 +109,17 @@ extension AppDelegate {
         let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         let response = router.dispatch(prompt: text)
-        let agent = (response.json["agent"] as? String) ?? "agent"
+        let agent = (response.json["agent"] as? String) ?? String(localized: .paletteTheAgent)
         if response.json["error"] != nil {
             // Router answers an API caller, and tells it to pass an "agent"
             // field. There is no field here — there is a menu.
             HUD.shared.show(store.config.selectedAgent == nil
                             ? String(localized: .hudNoActiveAgent)
                             : (response.json["error"] as? String ?? String(localized: .hudWentNowhere)))
-        } else if let note = response.json["note"] as? String {
+        } else if response.json["note"] != nil {
             // Queued for a session that has never connected. Saying "→ agent"
             // here would be the silent success this was meant to stop.
-            HUD.shared.show(.hudWaitingFor(agent, note))
+            HUD.shared.show(.hudWaitingFor(agent))
         } else {
             HUD.shared.show(.hudSentTo(agent, text))
         }
@@ -167,8 +167,9 @@ extension AppDelegate {
         for name in model.zoneSetNames where store.config.isEnabled(.zones) {
             // The main screen, said out loud: the palette has no cursor to read
             // a screen from the way the shortcut does.
+            let title = model.displayName(forZoneSet: name)
             result.append(PlonkCommand(id: "zoneset.\(name)",
-                                       title: String(localized: .paletteUseZoneSet(name)),
+                                       title: String(localized: .paletteUseZoneSet(title)),
                                        group: String(localized: .paletteGroupZoneSets)) { [weak self] in
                 self?.assignZoneSet(name, toScreen: 0)
             })

@@ -85,13 +85,7 @@ extension AppDelegate {
                 HUD.shared.show(.hudRan(String(localized: command.announcement)))
                 return
             }
-            let response = router.dispatch(prompt: text)
-            if let error = response.json["error"] as? String {
-                HUD.shared.show(error)
-            } else {
-                let agent = (response.json["agent"] as? String) ?? "agent"
-                HUD.shared.show(.hudSentTo(agent, text))
-            }
+            askAgent(text)
         }
     }
 

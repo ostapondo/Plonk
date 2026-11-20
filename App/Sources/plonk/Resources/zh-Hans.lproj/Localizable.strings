@@ -1,0 +1,767 @@
+/* Simplified Chinese text. Keep the keys in sync with en.lproj.
+   Local voice command examples show the phrases the parser accepts. */
+
+/* Words that belong to no one module. */
+"common.shortcuts" = "快捷键";
+"common.choose" = "选取";
+"common.cancel" = "取消";
+"common.save" = "保存";
+"common.delete" = "删除";
+"common.done" = "完成";
+"common.points" = "pt";
+"common.percent" = "%";
+"common.milliseconds" = "毫秒";
+"common.separator" = " · ";
+
+/* Pulse: keep the Mac awake, and optionally keep you shown as available. */
+"awake.subtitle" = "在一段时间内让 Mac 保持活跃状态，或者让聊天应用保持在线状态。";
+"awake.keepNow" = "保持唤醒";
+"awake.available" = "保持在线状态";
+"awake.availableHelp" = "聊天应用会根据键盘空闲时间更新状态。Plonk 每两分钟发送一次 Shift 按键，让 Slack 和 Teams 不再显示你已离线。";
+"awake.turnOffAfter" = "结束唤醒时间";
+"awake.never" = "永不";
+"awake.after15Minutes" = "15 分钟";
+"awake.after30Minutes" = "30 分钟";
+"awake.after1Hour" = "1 小时";
+"awake.after2Hours" = "2 小时";
+"awake.after4Hours" = "4 小时";
+"awake.after8Hours" = "8 小时";
+
+"awake.starts" = "自动开启唤醒";
+"awake.startsHelp" = "满足任一条件时开启，所有条件都不满足时结束。手动开关优先，直到条件再次变化。";
+"awake.onASchedule" = "在指定时段内";
+"awake.onAScheduleHelp" = "在设定的时段内自动开启，结束后自动关闭。";
+"awake.from" = "开始";
+"awake.to" = "结束";
+"awake.days" = "星期";
+"awake.sameTimeHelp" = "请设置不同的开始和结束时间。";
+
+"awake.whileAppOpen" = "指定应用打开时";
+"awake.apps" = "应用列表";
+"awake.appsHelp" = "只要下列应用中有一个在运行，就保持唤醒。最后一个应用退出后关闭。";
+"awake.noApps" = "尚未添加任何应用";
+"awake.chooseApp" = "添加应用";
+"awake.addRunning" = "添加正在运行的应用";
+"awake.unnamed" = "未命名";
+"awake.prompt" = "监视";
+"awake.remove" = "停止监视此应用";
+
+"awake.power" = "电源";
+"awake.keepDisplayOn" = "保持显示器开启";
+"awake.keepDisplayOnHelp" = "关闭后，系统仍保持唤醒，显示器可以休眠。";
+"awake.allowOnBattery" = "使用电池时允许";
+"awake.allowOnBatteryHelp" = "关闭后，拔掉电源时暂停，重新接通电源后继续。";
+"awake.autoWhileCharging" = "接通电源时";
+"awake.autoWhileChargingHelp" = "Mac 接通电源时开启，拔掉电源时关闭。";
+"awake.lidClosed" = "合盖后继续运行";
+"awake.lidClosedHelp" = "启用后 Mac 不会进入睡眠，系统会要求输入一次密码。关闭此选项或退出 Plonk 后，Mac 恢复正常睡眠。";
+
+"awake.needsAccessibility" = "Plonk 需要辅助功能权限才能发送按键。未授权时，Mac 仍会保持唤醒，聊天应用会继续将你显示为离开状态。";
+"awake.openSettings" = "打开辅助功能";
+
+/* Screenshots. */
+"shot.capture" = "截图";
+"shot.captureRegion" = "区域截图";
+"shot.afterCapture" = "截图后";
+"shot.afterQuickActions" = "快捷操作";
+"shot.afterEditor" = "打开编辑器";
+"shot.captureFailed" = "无法截取屏幕。请在系统设置中检查屏幕录制权限。";
+"shot.copyFailed" = "无法复制截图。";
+"shot.selectionSize %@ %@" = "%@ × %@ 像素";
+"shot.selectionMove" = "移动或调整大小";
+"shot.captureWindow" = "窗口截图";
+"shot.captureScreen" = "全屏截图";
+"shot.captureHelp" = "截取区域后，可以直接在屏幕上调整选区、标注、复制或保存。需要继续编辑时，可以打开编辑器。截图需要屏幕录制权限。";
+"shot.pinPart" = "置顶屏幕区域";
+"shot.pinPartHelp" = "划取一块区域将它置顶显示。实时模式会同步原区域的内容，可以在工作时查看构建日志、图表或通话。静态模式保留选取时的画面，无需持续捕捉，也适用于实时模式无法跟随的窗口。关闭面板即视为结束。";
+"shot.language" = "语言";
+"shot.languageAutomatic" = "系统语言";
+"shot.text" = "文字识别";
+"shot.textHelp" = "按 ⌃⌥T 选择区域，即可复制截图、视频和其他图像里的文字。识别均在本机完成不会进行上传。自动模式跟随系统语言。";
+"shot.output" = "输出";
+"shot.copyOnSave" = "复制到剪贴板";
+"shot.saveFolder" = "保存位置";
+
+/* Voice. */
+"voice.pushToTalk" = "按住说话";
+"voice.pushToTalkHelp" = "按住快捷键说话，松开后可在本机执行常用英文指令，或将识别出的文字发给当前 Agent。你可以在 Agent 与 MCP 页面选择当前 Agent。语音在本机识别，音频不会被保存，只有最终识别的文字会发给 Agent。首次使用时，macOS 会请求麦克风和语音识别权限。";
+"voice.runCommonHere" = "在本机执行常用指令";
+"voice.runCommonHereHelp" = "支持离线执行，无需连接 Agent。";
+"voice.straightToPlonk" = "由 Plonk 直接执行";
+"voice.straightToPlonkHelp" = "下方是本机支持的英文指令示例。Plonk 可将窗口放到半屏、四分之一屏或指定编号的分屏，也可还原窗口、切换焦点、切换分屏内的窗口、显示分屏、保持唤醒、截图或按名称启动工作区。涉及多个操作、百分比、指定应用或等待构建完成等请求会交给 Agent。";
+"voice.example1" = "snap this left";
+"voice.example2" = "zone three";
+"voice.example3" = "put it back";
+"voice.example4" = "next window";
+"voice.example5" = "keep awake for an hour";
+"voice.example6" = "launch my review workspace";
+"voice.toTheAgent" = "可以对 Agent 说什么";
+"voice.toTheAgentHelp" = "可以直接对 Agent 说出你要做的事。例如，把浏览器放左边、终端放右边，把当前布局保存为 review 工作区，或截取当前屏幕并圈出看起来有问题的地方。";
+
+/* Agents and MCP. */
+"ai.agents" = "Agent";
+"ai.agentsHelp" = "已连接的 MCP 会显示在这里。语音和其他发出的请求会交给当前 Agent。";
+"ai.noAgents" = "尚未连接任何 Agent。通过 MCP 客户端调用 Plonk 工具后会显示在此处。";
+"ai.activeAgent" = "当前 Agent";
+"ai.anyAgent" = "任意 Agent";
+"ai.agentOffline %@" = "%@（离线）";
+"ai.exclusive" = "只允许当前 Agent 控制";
+"ai.exclusiveHelp" = "其他 Agent 仍可读取状态和截图。";
+"ai.localApi" = "本地 API";
+"ai.anyMcpClient" = "Cursor、Zed 或其他 MCP 客户端";
+"ai.connect" = "连接 Agent";
+"ai.connectHelp" = "在客户端运行下方的一条命令即可。Plonk 支持多个 MCP 客户端同时连接。可在客户端的 MCP 配置中设置 PLONK_AGENT_NAME，为会话命名。";
+"ai.trySaying" = "可以试着这样说";
+"ai.clickToCopy" = "点击复制示例。";
+"ai.copied" = "已复制到剪贴板。";
+"ai.example1" = "浏览器放在左侧 60% 的区域，终端放右上角，备忘录放右下角。";
+"ai.example2" = "把 VS Code 放到中间的分屏。";
+"ai.example3" = "把当前布局保存为名为 review 的工作区。";
+"ai.example4" = "启动我的 work 工作区。";
+"ai.example5" = "为主显示器创建一个三列分屏布局。";
+"ai.example6" = "接下来一小时内保持屏幕唤醒。";
+"ai.example7" = "截取当前屏幕，并圈出看起来有问题的地方。";
+
+/* Pointer and clicks. */
+"mouse.pointerHelp" = "下列功能只读取鼠标输入，既不拦截鼠标点击，也不监听键盘，颜色默认会跟随分屏颜色配置。";
+"mouse.clicks" = "鼠标点击提示";
+"mouse.ringClicks" = "显示每次点击";
+"mouse.ringClicksHelp" = "录屏时，让观众看见鼠标点击的位置。";
+"mouse.colour" = "左键颜色";
+"mouse.colourFollowsZones" = "跟随分屏颜色";
+"mouse.colourCustom" = "自定义颜色";
+"mouse.useTheZoneColour" = "使用分屏颜色";
+"mouse.rightColour" = "右键颜色";
+"mouse.rightColourFollows" = "与左键点击相同";
+"mouse.matchLeftClicks" = "与左键点击相同";
+"mouse.shape" = "形状";
+"mouse.shapeRing" = "圆环";
+"mouse.shapeDot" = "圆点";
+"mouse.shapeBoth" = "圆环和圆点";
+"mouse.size" = "大小";
+"mouse.sizeHelp" = "点击提示刚出现时的大小，之后会放大并淡出。";
+"mouse.thickness" = "线宽";
+"mouse.thicknessHelp" = "提示线条的粗细。";
+"mouse.fade" = "淡出时长";
+"mouse.fadeHelp" = "点击提示在屏幕上停留的时间。";
+"mouse.crosshairsCard" = "十字线";
+"mouse.crosshairs" = "在鼠标位置显示十字线";
+"mouse.crosshairsHelp" = "横跨屏幕的水平和垂直线，方便对齐。";
+"mouse.opacity" = "不透明度";
+"mouse.finding" = "聚焦鼠标位置";
+"mouse.findingHelp" = "使用下方的快捷键时，屏幕会变暗约一秒，仅保留鼠标周围的圆形亮区。";
+"mouse.circle" = "亮区大小";
+"mouse.circleHelp" = "鼠标周围保持明亮的范围。";
+"mouse.dimming" = "调暗程度";
+"mouse.dimmingHelp" = "亮区以外的屏幕变暗的程度。";
+"mouse.shortcutsHelp" = "聚焦鼠标位置时，屏幕会短暂变暗，只保留鼠标周围的亮区。切换显示器的快捷键会将鼠标移到下一台显示器中央，并提示鼠标位置。";
+
+/* The points field the settings forms are built from. */
+"points.notWhole %@" = "%@ 必须为整数。";
+"points.outOfRange %@ %lld %lld" = "%1$@ 必须介于 %2$lld 和 %3$lld 之间。";
+
+/* Shortcuts: what each bindable action is called, and the headings they are
+   filed under. The group headings double as palette sections. */
+"shortcut.leftHalf" = "左半屏";
+"shortcut.rightHalf" = "右半屏";
+"shortcut.topHalf" = "上半屏";
+"shortcut.bottomHalf" = "下半屏";
+"shortcut.topLeft" = "左上角";
+"shortcut.topRight" = "右上角";
+"shortcut.bottomLeft" = "左下角";
+"shortcut.bottomRight" = "右下角";
+"shortcut.maximize" = "最大化";
+"shortcut.center" = "居中";
+"shortcut.flashZones" = "显示工作区，按住时可点击分屏";
+"shortcut.captureRegion" = "区域截图";
+"shortcut.captureText" = "复制区域内的文字";
+"shortcut.pushToTalk" = "按住说话";
+"shortcut.putItBack" = "还原窗口位置";
+"shortcut.nextInZone" = "此分屏内的下一个窗口";
+"shortcut.previousInZone" = "此分屏内的上一个窗口";
+"shortcut.focusLeft" = "聚焦左侧窗口";
+"shortcut.focusRight" = "聚焦右侧窗口";
+"shortcut.focusUp" = "聚焦上方窗口";
+"shortcut.focusDown" = "聚焦下方窗口";
+"shortcut.findPointer" = "聚焦鼠标";
+"shortcut.jumpPointer" = "将鼠标移到下一台显示器";
+"shortcut.cropLive" = "实时置顶屏幕区域";
+"shortcut.cropStill" = "静态置顶屏幕区域";
+"shortcut.ruler" = "测量屏幕";
+"shortcut.guide" = "显示当前应用的快捷键";
+"shortcut.commandPalette" = "打开命令面板";
+"shortcut.zoneSetPalette" = "为此显示器选取分屏布局";
+"shortcut.nextDisplay" = "移到下一台显示器";
+"shortcut.previousDisplay" = "移到上一台显示器";
+"shortcut.larger" = "放大";
+"shortcut.smaller" = "缩小";
+"shortcut.zone %lld" = "分屏 %lld";
+"shortcut.zoneNamed %lld %@" = "分屏 %1$lld · %2$@";
+"shortcut.zoneSet %lld" = "分屏布局 %lld";
+"shortcut.group.halves" = "半屏";
+"shortcut.group.quarters" = "四分之一屏";
+"shortcut.group.wholeScreen" = "整个屏幕";
+"shortcut.group.numberedZones" = "编号分屏";
+"shortcut.group.zoneSets" = "分屏布局";
+"shortcut.group.displays" = "显示器";
+"shortcut.group.size" = "大小";
+"shortcut.group.focus" = "焦点";
+"shortcut.group.pointer" = "鼠标";
+"shortcut.group.guide" = "快捷键指南";
+"shortcut.group.crop" = "区域置顶";
+"shortcut.group.ruler" = "屏幕标尺";
+"shortcut.group.other" = "其他";
+"shortcut.unbound" = "无";
+"shortcut.pressKeys" = "按下快捷键";
+"shortcut.alreadyTaken" = "此组合键已被其他应用占用";
+
+/* What the HUD says after a spoken command runs, so a command handled here can
+   be told from a sentence that went to the agent. */
+"voice.announce.zone %lld" = "分屏 %lld";
+"voice.announce.zoneNamed %lld %@" = "分屏 %1$lld · %2$@";
+"voice.announce.putBack" = "已还原窗口位置";
+"voice.announce.focus %@" = "聚焦%@窗口";
+"voice.announce.nextInZone" = "分屏内的下一个窗口";
+"voice.announce.zones" = "显示分屏";
+"voice.announce.keepAwake" = "保持唤醒";
+"voice.announce.awakeHours %lld" = "保持唤醒 %lld 小时";
+"voice.announce.awakeMinutes %lld" = "保持唤醒 %lld 分钟";
+"voice.announce.awakeOff" = "已关闭保持唤醒";
+"voice.announce.screenshot %@" = "截图（%@）";
+"voice.announce.launch %@" = "启动 %@";
+
+/* Directions and capture modes, as they are read out rather than as the API
+   spells them. */
+"direction.left" = "左侧";
+"direction.right" = "右侧";
+"direction.up" = "上方";
+"direction.down" = "下方";
+"capture.region" = "区域";
+"capture.window" = "窗口";
+"capture.screen" = "屏幕";
+
+/* Home. */
+"home.ready" = "一切就绪";
+"home.headline" = "多个窗口，一键排布。";
+"home.tagline" = "通过快捷键、菜单栏或连接本地 API 的 Agent 移动窗口、保存布局和恢复布局。";
+"home.showZones" = "显示分屏";
+"home.editZonesButton" = "编辑分屏";
+"home.quickActions" = "快捷功能";
+"home.captureRegion" = "区域截图";
+"home.editZones" = "编辑分屏";
+"home.awakeOn" = "正在保持唤醒";
+"home.keepAwake" = "保持唤醒";
+"home.whatIsOn" = "当前设置";
+"home.hotkeys" = "快捷键";
+"home.hotkeysDetail" = "⌃⌥ 加方向键、字母键或 Return";
+"home.hotkeysTaken %@" = "被其他应用占用的快捷键：%@";
+"home.dragToSnap" = "拖动贴靠";
+"home.dragToSnapDetail" = "将窗口拖到分屏或屏幕边缘即可贴靠。";
+"home.keepAwakeDetail" = "阻止系统进入睡眠。";
+"home.keepAwakePaused" = "已暂停（使用电池）";
+"home.launchAtLogin" = "登录时启动";
+"home.launchAtLoginDetail" = "登录 Mac 时自动启动 Plonk。";
+"home.privacy" = "所有功能都在本机运行，无需账号或云服务，也不收集遥测数据。";
+"home.edgeSnapping" = "边缘贴靠";
+"home.rectangleTitle" = "此 Mac 已安装 Rectangle";
+"home.rectangleDetail" = "可以直接导入半屏、四角、最大化、居中、还原位置的快捷键和窗口间距。不会导入等分及其他固定网格在 Plonk 中由分屏布局实现。";
+"home.rectangleTake" = "导入快捷键";
+"home.rectangleNotNow" = "暂不导入";
+"home.rectangleMore" = "查看可导入的设置";
+
+/* Zones: the page, and the tuning below it. */
+"zones.dragging" = "拖动";
+"zones.draggingHelp" = "拖动时按住修饰键，可在两种拖动模式之间临时切换。同时按住 ⌘，可让窗口横跨拖动起点和鼠标所在的两个分屏。";
+"zones.dragToSnap" = "拖动贴靠";
+"zones.dragToSnapDetail" = "将窗口拖到分屏或屏幕边缘即可贴靠。";
+"zones.showZones" = "显示分屏";
+"zones.whileDragging" = "拖动时";
+"zones.withTheModifier" = "按住修饰键时";
+"zones.modifier" = "修饰键";
+"zones.modifierShift" = "⇧ Shift";
+"zones.modifierOption" = "⌥ Option";
+"zones.modifierCommand" = "⌘ Command";
+"zones.modifierControl" = "⌃ Control";
+"zones.shakeToSnap" = "摇晃窗口以显示分屏";
+"zones.shakeToSnapDetail" = "拖动时左右晃动窗口，无需按住修饰键即可显示分屏。";
+"zones.presets" = "半屏、四分之一屏等";
+"zones.displaysAndSize" = "跨显示器移动与调整大小";
+"zones.displaysAndSizeHelp" = "移到另一台显示器时，目标布局中有相同编号的分屏就沿用该分屏，否则保留窗口在屏幕上所占的比例。放大和缩小以窗口中心为基准，将宽和高各调整 30 点。已贴在屏幕边缘的一侧会保持原位。";
+"zones.keys" = "快捷键";
+"zones.cycleHalves" = "重复按半屏快捷键可循环调整尺寸";
+"zones.cycleHalvesDetail" = "再按 ⌃⌥←，窗口会依次占据左侧三分之二、左侧三分之一，再回到左半屏。其他三个方向也可这样切换。";
+"zones.numbered" = "编号分屏";
+"zones.numberedHelp" = "分屏编号显示在最前方窗口所在的屏幕上。按住第一个快捷键可保持显示分屏，此时点击分屏或按下其数字键，即可移动最前方窗口。⌃⌥0 将窗口恢复到首次被 Plonk 移动前的位置和大小。点击快捷键字段后可录入组合键，按 Esc 取消，按 Delete 解除绑定。";
+"zones.switching" = "切换分屏布局";
+"zones.switchingHelp" = "将列表中对应位置的分屏布局应用到鼠标所在的屏幕。已在编号分屏中的窗口会移到新布局中相同编号的位置。最后一个快捷键会打开布局列表，可在其中选取布局或打开编辑器。";
+"zones.focus" = "在窗口之间切换";
+"zones.focusHelp" = "焦点按窗口的实际位置切换。你可以切换到左侧的窗口，也可以在同一分屏内的多个窗口之间循环切换。";
+"zones.desktopChanges" = "显示器变化时";
+"zones.restoreOnDisplayChange" = "显示器变化后恢复窗口位置";
+"zones.restoreOnDisplayChangeDetail" = "接入或拔掉显示器后，Plonk 排布过的窗口会回到原显示器上的原位置。";
+"zones.restoreEveryWindow" = "恢复所有窗口的位置";
+"zones.restoreEveryWindowDetail" = "按显示器组合记录屏幕上每个窗口移动后的位置。当相同的显示器组合再次出现时恢复这些位置。排除列表中的应用不受影响。";
+"zones.placeNewWindows" = "新窗口沿用同一应用上次的分屏";
+"zones.placeNewWindowsDetail" = "应用窗口被放入分屏后，该应用接下来打开的普通窗口也会进入同一分屏。对话框和面板保持原位。退出 Plonk 后清除这项记录。";
+"zones.autoFill" = "用新窗口填充空分屏";
+"zones.autoFillDetail" = "如果新窗口所在的显示器有空分屏，就将窗口放入第一个空分屏。应用规则和上次使用的分屏优先。对话框和面板保持原位。";
+"zones.pageHelp" = "绘制你需要的分屏，再通过拖动、快捷键或语音把窗口放进去。";
+"zones.shortcutsHelp" = "点击快捷键可修改，按 Delete 解除绑定。";
+"zones.overlay" = "分屏遮罩";
+"zones.overlayHelp" = "贴靠后的窗口四周会留出指定间距。鼠标靠近两个分屏的分界线时，可以直接让窗口横跨两个分屏，无需按键。设为 0 可关闭跨分屏贴靠。";
+"zones.gap" = "默认间距";
+"zones.gapHelp" = "窗口贴靠后四周保留的空间。可在编辑器中为单个布局另设间距。";
+"zones.opacity" = "不透明度";
+"zones.colour" = "颜色";
+"zones.colourFollowsAccent" = "跟随应用的强调色";
+"zones.colourCustom" = "自定义颜色";
+"zones.useTheAccent" = "使用强调色";
+"zones.numberTheZones" = "显示分屏编号";
+"zones.everyMonitor" = "拖动时显示所有显示器的分屏";
+"zones.edgeSpanning" = "跨分屏贴靠";
+"zones.edgeSpanningHelp" = "鼠标距分界线多近时可贴靠两个分屏。设为 0 可关闭。";
+"zones.grabMove" = "从窗口任意位置拖动";
+"zones.grabMoveHelp" = "此功能默认关闭，因为许多 Mac 应用已将 Option 拖动用于复制图层或文件等操作。排除列表中的应用不受影响。拖动时按住分屏修饰键，仍可正常显示分屏。";
+"zones.grabAnywhere" = "从窗口任意位置移动";
+"zones.grabAnywhereDetail" = "按住指定键，即可从窗口内任意位置拖动，无需抓住标题栏。";
+"zones.hold" = "按住";
+"zones.rightDragResizes" = "用右键拖动调整大小";
+"zones.rightDragResizesDetail" = "拖动离起点最近的窗口边缘或角。";
+"zones.showSizeWhileDragging" = "拖动时显示大小";
+"zones.exclusions" = "排除的应用";
+"zones.exclusionsHelp" = "拖动和快捷键会跳过这些应用，例如游戏、远程桌面或自行管理窗口尺寸和位置的应用。你仍可让 Agent 明确指定并排布它们的窗口。";
+"zones.rules" = "应用窗口放置规则";
+"zones.rulesHelp" = "列表中的应用会将新窗口放入指定分屏。如果规则指定了显示器，也会将窗口移到该显示器。规则可匹配应用名称或包标识符中的任意部分，完全匹配应用名称的规则优先。放置时依次采用应用规则、上次使用的分屏和空分屏。排除列表中的应用、对话框和面板不受规则影响。";
+
+/* Appearance. */
+"appearance.pageHelp" = "主题决定所有面板的外观，强调色也会应用到分屏遮罩和浮层提示。";
+"appearance.theme" = "主题";
+"appearance.themeNote" = "应用于窗口、浮层提示和分屏遮罩。";
+"appearance.accent" = "强调色";
+"appearance.accentNote" = "分屏遮罩和鼠标工具会跟随强调色。如需区分遮罩和应用界面，可在分屏页面为遮罩单独设置颜色。";
+"appearance.matchSystemAccent" = "跟随系统强调色";
+"appearance.followSystemAccent" = "使用系统设置中选取的颜色。";
+"appearance.themeSystem" = "跟随系统";
+"appearance.themeLight" = "浅色";
+"appearance.themeDark" = "深色";
+"appearance.themeSystemNote" = "使用 macOS 的外观设置";
+"appearance.themeLightNote" = "始终使用浅色外观";
+"appearance.themeDarkNote" = "始终使用深色外观";
+"appearance.themeHelp %@ %@" = "%1$@ · %2$@";
+
+/* Home: the two cards that answer "can an agent reach this?" */
+"home.connectedAgents" = "已连接的 Agent";
+"home.noAgentYet" = "尚未连接 Agent";
+"home.setOneUp" = "连接 Agent";
+"home.driving" = "当前控制中";
+"home.idle" = "空闲";
+"home.onlySelectedDrives" = "仅选定的 Agent 可以控制";
+"home.listening" = "监听中";
+"home.token" = "Token";
+"home.tokenStored" = "只有所有者有权访问";
+"home.reveal" = "显示";
+"home.loopbackOnly" = "本地 API 仅在回环地址上接受连接，拒绝来自浏览器的请求。API 通信仅限本机。";
+
+/* The first three steps, shown on Home until they are done. */
+"start.title" = "快速上手";
+"start.progress %lld %lld" = "%1$lld / %2$lld";
+"start.hide" = "隐藏";
+"start.hideHelp" = "隐藏，直到更新到下个版本。";
+"start.grant" = "授予辅助功能权限";
+"start.grantDetail" = "授权后，Plonk 才能移动其他应用的窗口。";
+"start.record" = "授予屏幕录制权限";
+"start.recordDetail" = "截图、屏幕文字识别和屏幕标尺需要读取屏幕内容。首次使用这些功能时会请求权限。";
+"start.neverAsked" = "Plonk 不会请求完全磁盘访问权限、自动化权限，也不会请求访问钥匙串、通讯录或网络。这里的操作仅在本机处理。";
+"start.snap" = "贴靠窗口";
+"start.snapDetail" = "将任一窗口置于最前方后，按 ⌃⌥←，也可将窗口拖到屏幕边缘。";
+"start.agent" = "让 Agent 控制 Plonk";
+"start.agentDetail" = "运行一行命令后，就可以请 Agent 把浏览器放左边、终端放右边。";
+"start.grantButton" = "授权";
+"start.showZones" = "显示分屏";
+"start.copied" = "已复制";
+"start.copyCommand" = "复制命令";
+"start.how" = "查看方法";
+
+/* Workspaces. */
+"workspaces.grantAccessibility" = "请前往系统设置 → 隐私与安全性 → 辅助功能授予权限，然后重新启动 Plonk。";
+"workspaces.name" = "工作区名称";
+"workspaces.saveWhatIsOnScreen" = "保存当前窗口布局";
+"workspaces.saveHelp" = "输入名称并点按保存。Plonk 将记录每个已打开窗口的位置、所属应用和所在显示器。";
+"workspaces.none" = "尚无工作区。打开并排布所需的应用窗口，然后在上方保存。启动工作区时会打开缺少的应用，并恢复各窗口的位置。";
+"workspaces.listHelp" = "应用窗口会先打开，随后移到指定位置。";
+"workspaces.hideWindows" = "隐藏窗口";
+"workspaces.showWindows" = "显示窗口";
+"workspaces.launch" = "启动";
+"workspaces.launchOnMonitor" = "在指定显示器上启动";
+"workspaces.rename" = "重命名";
+"workspaces.recapture" = "用当前布局覆盖";
+"workspaces.moveExisting" = "移动已打开的窗口";
+"workspaces.mainDisplay %@" = "主显示器（%@）";
+"workspaces.display %lld %@" = "显示器 %1$lld（%2$@）";
+"workspaces.openWith" = "此应用要打开的内容";
+"workspaces.remove" = "从此工作区移除";
+"workspaces.openWithField" = "用此应用打开";
+"workspaces.openWithHint" = "每行填写一个文件、文件夹或 URL。仅在需要启动应用时使用。";
+"workspaces.arguments" = "启动参数";
+"workspaces.argumentsHint" = "每行一个参数。应用不读取参数时，此设置不会生效。";
+"workspaces.placement %lld %lld %lld %lld" = "%1$lld%% × %2$lld%%，位置（%3$lld, %4$lld）";
+"workspaces.onScreen %lld %@" = "显示器 %1$lld · %2$@";
+
+/* The window itself: sidebar, top bar, and the names of the pages. */
+"app.name" = "Plonk";
+"app.version %@" = "版本 %@";
+"app.nameVersion %@" = "Plonk %@";
+"app.runACommand" = "运行命令";
+"app.workspaces" = "工作区";
+"app.openWorkspace %@" = "在工作区中打开 %@";
+"app.reportBug" = "报告问题";
+"app.allPermissionsGranted" = "已授予所有权限";
+"app.accessibility" = "辅助功能";
+"app.screenRecording" = "屏幕录制";
+
+"group.home" = "首页";
+"group.layout" = "布局";
+"group.capture" = "截取";
+"group.automation" = "自动化";
+"group.settings" = "设置";
+"page.home" = "首页";
+"page.zones" = "分屏";
+"page.workspaces" = "工作区";
+"page.shot" = "截图";
+"page.mouse" = "鼠标与点击";
+"page.ruler" = "屏幕标尺";
+"page.ai" = "Agent 与 MCP";
+"page.voice" = "语音";
+"page.appearance" = "外观";
+"page.shortcuts" = "键盘";
+"page.awake" = "保持唤醒";
+"page.update" = "更新";
+"page.features" = "工具";
+
+/* The Tools page and the menu bar menu of the same name: one switch per
+   module. The detail lines say what goes quiet when a switch is off. */
+"features.help" = "关闭不需要的工具。关闭后，工具会从边栏和菜单栏中隐藏，快捷键也会停用。Agent 调用时会收到停用提示。再次开启时可继续使用原来的设置。";
+"features.switches" = "工具";
+"feature.zonesDetail" = "拖动贴靠、窗口排布快捷键和分屏布局，也可以由 Agent 排布窗口。";
+"feature.workspacesDetail" = "保存并启动一组应用和窗口。";
+"feature.shotDetail" = "截图、标注、文字识别和区域置顶。";
+"feature.mouseDetail" = "点击提示、十字线和鼠标定位。";
+"feature.rulerDetail" = "悬停或拖动以测量屏幕上的内容。";
+"feature.voiceDetail" = "按住快捷键说话，以执行指令或向 Agent 发送请求。";
+"feature.awakeDetail" = "让 Mac 保持唤醒，并可让聊天状态保持在线。可手动、按时段、按应用或按进程开启。";
+
+/* The menu bar item. */
+"menu.openPlonk" = "打开 Plonk";
+"menu.launchWorkspace" = "启动工作区";
+"menu.noWorkspaces" = "尚未保存工作区";
+"menu.activeAgent" = "当前 Agent";
+"menu.noAgents" = "尚未连接 Agent";
+"menu.anyAgent" = "任意 Agent";
+"menu.onlySelectedAgent" = "只允许选定的 Agent 控制";
+"menu.captureRegion" = "区域截图";
+"menu.keepAwake" = "保持屏幕唤醒";
+"menu.updateAvailable" = "有可用更新";
+"menu.updateTo %@" = "更新至 %@";
+"menu.reportBug" = "报告问题";
+"menu.quit" = "退出";
+"menu.tools" = "工具";
+
+/* Updates. The status line is shown on the page and also handed to an agent
+   asking about /update/state; the machine-readable half of that answer is the
+   phase, which is never translated. */
+"update.installed" = "已安装";
+"update.unbundled" = "未打包";
+"update.available" = "可用版本";
+"update.installAndRelaunch" = "安装并重新启动";
+"update.checkNow" = "立即检查";
+"update.releaseNotes" = "发布说明";
+"update.installHelp" = "安装更新时，Plonk 会从 GitHub 下载新版本，验证签名证书与当前版本一致后再替换，以保留已授予的权限。验证失败时会丢弃下载的版本。";
+"update.whatsNew %@" = "%@ 版的新功能";
+"update.automatically" = "自动检查更新";
+"update.automaticallyDetail" = "启动时检查，此后每天检查一次，网络恢复时也会检查。";
+"update.privacy" = "检查更新是 Plonk 唯一的出站网络请求。Plonk 向 api.github.com 查询最新版本，只发送包含应用名称和版本的 User-Agent，不发送标识符、账号或遥测数据。关闭自动检查后，Plonk 拒绝 Agent 发起的检查，只有上方按钮可以触发检查。";
+"update.checking" = "正在检查更新";
+"update.upToDate %@" = "Plonk %@ 已是最新版本。";
+"update.isAvailable %@" = "Plonk %@ 已发布。";
+"update.checkRunning" = "正在检查更新，请稍后再试。";
+"update.downloading %@" = "正在下载 Plonk %@";
+"update.verifying" = "正在验证下载内容";
+"update.installing" = "正在安装";
+
+/* Why an update stopped. Every one of these ends up on the Updates page. */
+"updateError.malformedFeed %@" = "无法读取更新信息：%@。";
+"updateError.network %@" = "检查更新失败：%@。";
+"updateError.unpackFailed %@" = "无法解压下载内容：%@。";
+"updateError.signatureRejected %@" = "下载内容未通过验证：%@。未安装更新。";
+"updateError.digestMismatch" = "下载内容与公布的校验和不符，未安装更新。";
+"updateError.adHocCopy" = "当前副本使用临时签名，无法据此验证下载的版本。请先从发布页面手动更新一次，之后即可自动安装更新。";
+"updateError.notInstalled" = "更新仅适用于 Plonk.app。当前运行的是未打包的版本。";
+"updateError.notWritable %@" = "Plonk 无法写入 %@。请将 Plonk.app 移到你有写入权限的位置，再试一次。";
+"updateError.wrongPayload %@" = "下载内容缺少预期的应用：%@。";
+
+/* Ruler. */
+"ruler.title" = "屏幕标尺";
+"ruler.measure" = "测量屏幕";
+"ruler.help" = "移动鼠标，Plonk 会测量从鼠标位置到边缘的水平和垂直距离，例如一行的宽度、工具栏的高度或两个元素之间的间距。两个数值分别标在对应的测量线上。拖动可测量直线距离。点击可复制结果，按空格键重新截取屏幕，按 Esc 结束。与截图一样，此功能需要屏幕录制权限。";
+"ruler.shortcut" = "快捷键";
+"ruler.detection" = "边缘检测";
+"ruler.sensitivity" = "边缘灵敏度";
+"ruler.sensitivityHelp" = "值越小，越容易识别较淡的边界和较小的元素。值越大，只有差异明显的边界才会被识别。";
+"ruler.detectionHelp" = "此值决定相邻像素要相差多少才会被识别为边缘，最大值为 255。大多数界面可设为 10，渐变和阴影的差异通常更小，边框的差异则更大。照片或有噪点的视频每个像素都可能略有差异，可适当调高此值。";
+
+/* The apps Plonk keeps its hands off. */
+"excluded.none" = "尚未排除任何应用，Plonk 可以移动所有窗口。";
+"excluded.chooseApp" = "选取应用";
+"excluded.addRunning" = "添加正在运行的应用";
+"excluded.unnamed" = "?";
+"excluded.orType" = "或输入名称";
+"excluded.add" = "添加";
+"excluded.matchedAnywhere" = "匹配应用名称或包标识符中的任意部分";
+"excluded.stopExcluding" = "从排除列表移除";
+"excluded.prompt" = "排除";
+
+/* Where apps open: the rules list on the Zones page. */
+"rules.none" = "尚未添加应用窗口放置规则。";
+"rules.thisScreen" = "应用打开时所在的屏幕";
+"rules.screenAway" = "尚未连接的显示器";
+"rules.remove" = "移除此规则";
+
+/* Zone sets: the picker, the canvas at the top of the Zones page, and the
+   palette that drops onto the screen itself. */
+"zoneSet.templates" = "模板";
+"zoneSet.halves" = "左右等分";
+"zoneSet.thirds" = "三列等分";
+"zoneSet.quarters" = "四宫格";
+"zoneSet.priority" = "主次分屏";
+"zoneSet.custom" = "自定";
+"zoneSet.createNew" = "新建布局";
+"zoneSet.emptyState" = "新建布局或复制模板即可开始。";
+"zoneSet.edgeSnappingCard" = "边缘贴靠";
+"zoneSet.edgeSnappingSubtitle" = "在屏幕边缘贴靠到半屏、四分之一屏或最大化。";
+"zoneSet.nameField" = "名称";
+"zoneSet.showOnScreen" = "在选定的屏幕上显示";
+"zoneSet.emptyCard" = "尚无分屏，请在编辑器中绘制。";
+"zoneSet.rename" = "重命名";
+"zoneSet.edgeSnapping" = "边缘贴靠";
+"zoneSet.newSet" = "新建布局";
+"zoneSet.defaultName" = "布局";
+"zoneSet.copyName %@" = "%@ 副本";
+"zoneSet.screen %lld" = "显示器 %lld";
+"zoneSet.screenWithSize %lld %@" = "显示器 %1$lld · %2$@";
+"zoneSet.summary %lld %@ %@ %lld" = "显示器 %1$lld · %2$@ · %3$@ · 间距 %4$lld px";
+"zoneSet.edgeHint" = "将窗口拖放到靠近屏幕边缘的位置，即可填满对应的半屏。";
+"zoneSet.zoneHint" = "将窗口拖入分屏，或按 ⌃⌥ 和分屏对应的数字键。";
+"zoneSet.preview" = "预览";
+"zoneSet.previewHelp" = "在每台显示器上短暂显示其分屏布局。";
+"zoneSet.duplicate" = "创建副本";
+"zoneSet.edit" = "编辑";
+"zoneSet.manage" = "管理";
+"zoneSet.manageHelp" = "重命名、删除和比较各个布局。";
+"zoneSet.title" = "分屏布局";
+"zoneSet.onThisScreenNow" = "此显示器正在使用";
+"zoneSet.editThis" = "编辑此布局";
+"zoneSet.editCopy" = "编辑此模板的副本";
+"zoneSet.hintPick" = "选取";
+"zoneSet.hintUse" = "或双击使用";
+"zoneSet.hintEdit" = "编辑";
+"zoneSet.hintNew" = "新建";
+"zoneSet.hintClose" = "关闭";
+
+/* The fullscreen zone editor. */
+"zoneEditor.name" = "布局名称";
+"zoneEditor.split" = "拆分分屏：点按分成上下两部分，右键点按或按住 ⇧ 点按分成左右两部分。";
+"zoneEditor.resize" = "调整大小：拖动边框或控制点，相邻分屏会随之调整。分隔线靠近二等分、三等分或四等分的位置时会自动对齐，其余情况下停在松手的位置。";
+"zoneEditor.delete" = "删除分屏：点击 ✕，相邻分屏会填补空出的位置。";
+"zoneEditor.keyboard" = "键盘操作：⇥ 选取，方向键移动，⇧ 加方向键调整大小，S 拆分，⇧S 垂直拆分，⌫ 删除。";
+"zoneEditor.saveAndApply" = "保存并应用";
+"zoneEditor.gap" = "间距";
+"zoneEditor.gapDefault %lld" = "默认（%lld pt）";
+"zoneEditor.gapOwn" = "自定";
+"zoneEditor.names" = "分屏名称";
+"zoneEditor.namesHelp" = "可选。为分屏命名后，可以在英文语音指令中使用该名称，例如 put this in chat，也可以让 Agent 按名称放置窗口。分屏编号仍可使用，因此名称不能是数字。";
+"zoneEditor.nameTaken %@" = "已有名为 %@ 的布局。";
+"zoneEditor.nameUsedTwice %@" = "有两个分屏都叫 %@。请更改其中一个的名称。";
+"zoneEditor.nameIsANumber %@" = "不能使用 %@ 作为名称，数字已用于表示分屏编号。";
+
+/* The screenshot editor. */
+"shotEditor.width" = "线宽";
+"shotEditor.undo" = "撤销";
+"shotEditor.redo" = "重做";
+"shotEditor.saveAs" = "另存为";
+"shotEditor.saveToFolder" = "保存到文件夹";
+"shotEditor.copy" = "复制";
+"shotEditor.renderFailed" = "无法渲染标注";
+"shotEditor.writeFailed" = "无法写入文件";
+"tool.pen" = "画笔";
+"tool.arrow" = "箭头";
+"tool.rectangle" = "矩形";
+"tool.ellipse" = "椭圆";
+"tool.highlight" = "荧光笔";
+
+/* The shortcut guide, read off whatever app is in front. */
+"guide.filter" = "筛选";
+"guide.noShortcuts" = "此应用没有提供菜单快捷键。";
+"guide.readFromMenus" = "直接从当前应用的菜单读取快捷键。按 Esc 关闭。";
+"guide.windowTitle %@" = "快捷键 · %@";
+
+/* The command palette. */
+"palette.prompt" = "输入命令，或描述要做的事";
+"palette.noMatch %@" = "没有与 %@ 匹配的结果";
+"palette.groupAgent" = "Agent";
+"palette.groupWorkspaces" = "工作区";
+"palette.groupZoneSets" = "分屏布局";
+"palette.groupGadgets" = "工具";
+"palette.groupSettings" = "设置";
+"palette.theAgent" = "Agent";
+"palette.ask %@ %@" = "向 %1$@ 发送请求：%2$@";
+"palette.launchWorkspace %@" = "启动工作区 %@";
+"palette.useZoneSet %@" = "在主显示器上使用分屏布局 %@";
+"palette.pickZoneSet" = "为此显示器选取分屏布局";
+"palette.editZoneSets" = "编辑分屏布局";
+"palette.stopAwake" = "关闭保持唤醒";
+"palette.keepAwake" = "让 Mac 保持唤醒";
+"palette.checkUpdates" = "检查更新";
+"palette.openPage %@" = "打开 %@";
+
+/* Window titles, and the panels a crop opens in. */
+"window.zones" = "分屏";
+"window.screenshot" = "截图";
+"window.cropLive" = "实时";
+"window.cropStill" = "静态";
+"window.cropTitle %@" = "Plonk · %@";
+
+/* The Edit menu, which exists so the standard editing keys work in the app's
+   own text fields. */
+"edit.menu" = "编辑";
+"edit.undo" = "撤销";
+"edit.redo" = "重做";
+"edit.cut" = "剪切";
+"edit.copy" = "复制";
+"edit.paste" = "粘贴";
+"edit.selectAll" = "全选";
+
+/* What the HUD says. */
+"hud.savedTo %@" = "已保存到 %@";
+"hud.noTextFound" = "未找到文字";
+"hud.copied %@" = "已复制：%@";
+"hud.oneScreenOnly" = "只有一台显示器，无法切换";
+"hud.listening" = "正在听…";
+"hud.guideNeedsAccessibility" = "快捷键指南需要辅助功能权限";
+"hud.hotkeyTaken %@ %@" = "%1$@ 已从 %2$@ 重新分配";
+"hud.noActiveAgent" = "尚未选定 Agent。请先在菜单栏中选取一个。";
+"hud.wentNowhere" = "请求未能发送";
+"hud.rectangleImported" = "已导入 Rectangle 快捷键";
+"hud.rectangleNothing" = "在此 Mac 上找不到 Rectangle 设置";
+"hud.rectangleGridOnly" = "Rectangle 中的这些快捷键只用于三等分、四等分等固定网格。在 Plonk 中可用 ⌃⌥1 到 ⌃⌥9 切换分屏布局。";
+"hud.urlHeldDown %@" = "%@ 需要按住快捷键执行，无法通过 URL 调用";
+"hud.rectangleTook %@" = "已导入 Rectangle 快捷键，并重新分配了原用于 %@ 的按键";
+"hud.rectangleLeftBehind %@" = "已导入 Rectangle 快捷键，以下项目未导入：%@";
+"hud.rectangleTookAndLeft %@ %@" = "已导入 Rectangle 快捷键。已重新分配原用于 %1$@ 的按键。未导入：%2$@";
+"hud.rectangleUrlsOff" = "键盘页面中的 rectangle:// URL 响应已关闭";
+"hud.rectangleNoneMatched %@" = "以下 Rectangle 设置在 Plonk 中没有对应项：%@";
+"hud.urlUnreadable" = "此 URL 未指定操作";
+"hud.urlUnknown %@" = "找不到名为 %@ 的操作";
+"hud.urlZoneSet %@" = "%@ 是分屏布局。请使用 zone-1 到 zone-9";
+"hud.waitingFor %@" = "正在等待 %@ 连接，请求已加入队列。";
+"hud.sentTo %@ %@" = "→ %1$@：%2$@";
+"hud.working %@ %@ %lld" = "%1$@ 正在处理 %2$@ · %3$lld 秒";
+"hud.finished %@ %lld" = "✓ %1$@ 已完成，用时 %2$lld 秒";
+"hud.failed %@ %lld" = "✗ %1$@ 执行失败（%2$lld）";
+"hud.wouldNotStart %@ %@" = "无法启动 %1$@：%2$@";
+"hud.ran %@" = "✓ %@";
+
+/* Voice. */
+"voiceError.permissions" = "语音功能需要麦克风和语音识别权限。请前往系统设置 → 隐私与安全性授权。";
+"voiceError.noLanguage" = "此语言无法在本机识别";
+"voiceError.noMicrophone" = "没有可用的麦克风";
+"voiceError.microphoneFailed %@" = "无法打开麦克风：%@";
+"voiceError.heardNothing" = "未听到语音";
+
+/* The ruler, when it cannot measure. */
+"rulerError.noScreenRecording" = "Plonk 需要屏幕录制权限才能读取屏幕像素并测量。请前往系统设置 → 隐私与安全性 → 屏幕录制授权。";
+"rulerError.captureFailed" = "无法截取屏幕";
+"rulerError.noScreen" = "该位置不在任何显示器上";
+"rulerError.cancelled" = "未测量";
+
+/* Small pieces shared across the window. */
+"app.grant" = "授权";
+
+/* The Keyboard page, which lists every binding in one place. */
+"keys.hotkeys" = "快捷键";
+"keys.hotkeysDetail" = "点击快捷键可打开对应的设置页面。";
+"keys.guide" = "快捷键指南";
+"keys.guideHelp" = "从最前方应用的菜单读取快捷键，即使该应用没有帮助文档也可以使用。再次按下可关闭。";
+"keys.palette" = "命令面板";
+"keys.paletteHelp" = "输入名称即可运行 Plonk 命令。其他请求可按 ⌘Return 发送给当前 Agent。再次按下快捷键可关闭面板。";
+"keys.restoreDefaults" = "恢复默认设置";
+"keys.fromRectangle" = "来自 Rectangle";
+"keys.importRectangle" = "从 Rectangle 导入";
+"keys.importRectangleButton" = "导入";
+"keys.importRectangleHelp" = "可从已安装的 Rectangle 或导出的设置中导入半屏、四角、最大化、居中和还原位置的快捷键。三等分等固定比例在 Plonk 中通过分屏布局实现，不会导入。";
+"keys.rectangleURLs" = "同时处理 rectangle:// URL";
+"keys.rectangleURLsHelp" = "一个 URL 方案一次只能由一个应用处理。开启后，Plonk 会接管 rectangle://，原有 URL 将不再由 Rectangle 处理。关闭时，仍可通过 plonk://execute-action 使用相同的操作名称。";
+"keys.setOnPage %@" = "在 %@ 页面中设置";
+"palette.askTheAgent" = "询问 Agent";
+"palette.hintNavigate" = "导航";
+"palette.hintRun" = "运行";
+"palette.hintClose" = "关闭";
+
+/* The panel shown while a workspace comes up. */
+"launch.launching %@" = "正在启动 %@";
+"launch.launched" = "工作区已启动";
+"launch.close" = "关闭";
+"launch.pending" = "等待中";
+"launch.opening" = "正在打开";
+"launch.waitingForWindow" = "正在等待窗口";
+
+/* What is wrong, when something is. Both of these sit in the top bar until it
+   is fixed. */
+"warning.noToken %@" = "%@ 处没有可用的 token，本地 API 只接受 /ping 请求，Agent 和 plonk 命令无法使用。token 必须是由你拥有且仅你可读取的普通文件。删除该文件并重新启动 Plonk 即可创建新token。";
+"warning.portTaken %lld" = "端口 %lld 已被占用，MCP 工具无法连接。可能已有另一个 Plonk 实例正在运行。";
+"warning.apiDidNotStart" = "本地 API 未能启动，MCP 工具无法连接。";
+"warning.settingsReset %@" = "无法读取设置，已恢复默认设置。原设置文件位于 %@。";
+
+/* Why one app in a workspace did not end up where it was meant to. Shown in
+   the launch panel, and handed to an agent as the reason beside "ok": false. */
+"launch.alreadyOpen" = "已打开";
+"launch.notInstalled %@" = "未安装 %@";
+"launch.cancelled" = "已取消";
+"launch.noWindow %lld" = "%lld 秒内未出现窗口";
+
+/* The ruler, while it is running. */
+"ruler.hint" = "悬停测量，拖动测距，点击复制，按空格键重新截图，按 Esc 结束。";
+"ruler.rephotographFailed" = "无法重新截取屏幕";
+"ruler.rephotographed" = "正在测量当前屏幕";
+"ruler.copied %@" = "已复制 %@";
+"ruler.points %lld" = "%lld pt";
+"ruler.pixels %lld" = "%lld px";
+"ruler.pointsAndPixels %lld %lld" = "%1$lld pt（%2$lld px）";
+"ruler.delta %lld %lld" = "dx %1$lld · dy %2$lld";
+"ruler.acrossAndDown %@ %@" = "横向 %1$@ · 纵向 %2$@";
+
+/* What the HUD says after a shortcut that could not do what was asked. */
+"hud.edgeSnappingScreen" = "此显示器使用边缘贴靠，没有编号分屏";
+"hud.zoneRange %lld" = "此显示器有分屏 1–%lld";
+"hud.neverMoved" = "Plonk 尚未移动过此窗口";
+"hud.nothingElseInZone" = "此分屏内没有其他窗口";
+"hud.noZoneSets" = "没有可切换的分屏布局";
+"hud.zoneSetCount %lld" = "共有 %lld 个分屏布局";
+"hud.copiedToClipboard" = "已复制到剪贴板";
+"hud.saved" = "已保存";
+
+/* Pulse, in one phrase, for the menu bar tooltip and for an agent asking. */
+"awake.statusOn" = "已开启";
+"awake.statusOff" = "已关闭";
+"awake.statusAvailable" = "已开启，聊天状态显示为在线";
+"awake.statusAutoCharging" = "已自动开启（已接通电源）";
+"awake.statusSchedule" = "已按设定时段开启";
+"awake.statusApp" = "已开启，直到受监视的应用全部退出";
+"awake.statusUntil %@" = "保持唤醒至 %@";
+"awake.statusUntilProcess %lld" = "保持唤醒，直到进程 %lld 退出";
+"awake.statusPausedOnBattery" = "已暂停（使用电池）";
+"awake.statusNoAccessibility" = "已保持唤醒。获得辅助功能权限后才能保持在线状态";
+"awake.statusLidClosed" = "已开启，合盖后继续运行";
+"menu.tooltip %@" = "Plonk · 保持唤醒：%@";
+
+/* Stand-in for an app that will not say what it is called. */
+"guide.thisApp" = "此应用";

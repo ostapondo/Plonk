@@ -536,6 +536,10 @@
 /* Zone sets: the picker, the canvas at the top of the Zones page, and the
    palette that drops onto the screen itself. */
 "zoneSet.templates" = "Templates";
+"zoneSet.halves" = "Halves";
+"zoneSet.thirds" = "Thirds";
+"zoneSet.quarters" = "Quarters";
+"zoneSet.priority" = "Priority";
 "zoneSet.custom" = "Custom";
 "zoneSet.createNew" = "Create New Layout";
 "zoneSet.emptyState" = "Create a layout or duplicate a template to get started";
@@ -547,6 +551,8 @@
 "zoneSet.rename" = "Rename…";
 "zoneSet.edgeSnapping" = "Edge snapping";
 "zoneSet.newSet" = "New set";
+"zoneSet.defaultName" = "Set";
+"zoneSet.copyName %@" = "%@ copy";
 "zoneSet.screen %lld" = "Screen %lld";
 "zoneSet.screenWithSize %lld %@" = "Screen %1$lld — %2$@";
 "zoneSet.summary %lld %@ %@ %lld" = "Screen %1$lld · %2$@ · %3$@ · gap %4$lld px";
@@ -663,7 +669,7 @@
 "hud.urlUnreadable" = "That URL named no action";
 "hud.urlUnknown %@" = "Nothing here is called %@";
 "hud.urlZoneSet %@" = "%@ is a zone set here. Use zone-1 to zone-9";
-"hud.waitingFor %@ %@" = "Waiting for %1$@ to connect: %2$@";
+"hud.waitingFor %@" = "Waiting for %@ to connect. The request is queued.";
 "hud.sentTo %@ %@" = "→ %1$@: %2$@";
 "hud.working %@ %@ %lld" = "%1$@ is working %2$@  %3$llds";
 "hud.finished %@ %lld" = "✓ %1$@ finished in %2$llds";

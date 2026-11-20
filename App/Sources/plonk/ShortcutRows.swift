@@ -123,7 +123,7 @@ struct ShortcutRows: View {
         let names = model.zoneSetNames
         guard names.indices.contains(number - 1) else { return nil }
         let name = names[number - 1]
-        return (name, model.zoneSets[name] ?? [])
+        return (model.displayName(forZoneSet: name), model.zoneSets[name] ?? [])
     }
 
     /// The name a numbered zone has, so the row can say "Zone 3 · chat"
