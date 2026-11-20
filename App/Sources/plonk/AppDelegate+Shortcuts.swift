@@ -89,7 +89,8 @@ extension AppDelegate {
                 // was the pick.
                 dragSnap.cancelPick()
             } else if let number = action.layoutNumber {
-                commands.applyZoneSet(number: number, named: model.zoneSetNames) { [weak self] name, screen in
+                commands.applyZoneSet(number: number, named: model.zoneSetNames,
+                                      displayName: model.displayName(forZoneSet:)) { [weak self] name, screen in
                     self?.assignZoneSet(name, toScreen: screen)
                 }
             } else if let direction = action.focusDirection {

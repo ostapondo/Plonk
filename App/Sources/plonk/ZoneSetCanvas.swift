@@ -61,7 +61,7 @@ struct ZoneSetCanvas: View {
 
     private var titles: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(assigned ?? String(localized: .zoneSetEdgeSnapping))
+            Text(model.displayName(forZoneSet: assigned ?? ""))
                 .font(.system(size: 26, weight: .heavy))
                 .kerning(-0.7)
                 .lineLimit(1)
@@ -97,7 +97,7 @@ struct ZoneSetCanvas: View {
             .help(String(localized: .zoneSetPreviewHelp))
             if let assigned {
                 Button(String(localized: .zoneSetDuplicate)) {
-                    model.actions?.editZoneSet(model.freeZoneSetName(base: assigned + " copy"),
+                    model.actions?.editZoneSet(model.zoneSetCopyName(assigned),
                                                seed: zones, onScreen: screen)
                 }
             }
@@ -120,7 +120,7 @@ struct ZoneSetCanvas: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 5) {
                     ForEach(model.zoneSetNames, id: \.self) { name in
-                        tab(name, selected: assigned == name) {
+                        tab(model.displayName(forZoneSet: name), selected: assigned == name) {
                             model.actions?.assignZoneSet(name, toScreen: screen)
                         }
                     }
@@ -128,8 +128,8 @@ struct ZoneSetCanvas: View {
                         model.actions?.assignZoneSet("", toScreen: screen)
                     }
                     tab(String(localized: .zoneSetNewSet), selected: false, plus: true) {
-                        model.actions?.editZoneSet(model.freeZoneSetName(base: "Set"),
-                                                   seed: [ZoneRect(0, 0, 1, 1)], onScreen: screen)
+                        let name = model.freeZoneSetName(base: String(localized: .zoneSetDefaultName))
+                        model.actions?.editZoneSet(name, seed: [ZoneRect(0, 0, 1, 1)], onScreen: screen)
                     }
                 }
                 .padding(.vertical, 1)

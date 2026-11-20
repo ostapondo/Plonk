@@ -54,10 +54,10 @@ extension Router {
     /// /agents/inbox. Voice and hotkeys land here too, via AppDelegate.
     func dispatch(prompt: String, to requested: String? = nil) -> HTTPResponse {
         guard let target = requested ?? store.config.selectedAgent else {
-            return .badRequest("no agent named and none selected — pass \"agent\" or pick an active agent in Plonk")
+            return .badRequest(String(localized: .aiNoAgentSpecified))
         }
         if let adapter = store.config.agentAdapters.first(where: { $0.name == target }) {
-            guard let runAdapter else { return .failed("adapters are not available") }
+            guard let runAdapter else { return .failed(String(localized: .aiAdaptersUnavailable)) }
             runAdapter(adapter, prompt)
             return .ok(["ok": true, "agent": target, "launched": true])
         }
@@ -65,7 +65,7 @@ extension Router {
         let task = agents.enqueue(prompt, for: target)
         var result: [String: Any] = ["ok": true, "agent": target, "queued": true, "id": task.id]
         if !known {
-            result["note"] = "no session named \"\(target)\" has connected yet; the task waits in its inbox"
+            result["note"] = String(localized: .aiSessionNotConnected(target))
         }
         return .ok(result)
     }

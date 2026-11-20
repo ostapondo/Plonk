@@ -28,6 +28,21 @@ enum Localization {
         bundle === Bundle.main ? .main : .atURL(bundle.bundleURL)
     }()
 
+    static let locale: Locale = {
+        let current = Locale.current
+        guard let language = bundle.preferredLocalizations.first else { return current }
+        let preferred = Locale.Language.Components(identifier: language)
+        guard preferred.languageCode != current.language.languageCode
+                || preferred.script != nil && preferred.script != current.language.script
+        else { return current }
+
+        // A fallback catalog still needs its own language's plural rules.
+        var components = Locale.Components(locale: current)
+        components.languageComponents = preferred
+        components.region = current.region
+        return Locale(components: components)
+    }()
+
     /// SwiftPM's own resource bundle, which is what a `swift run` or a test run
     /// sees. Found by hand rather than through `Bundle.module`: that traps when
     /// the bundle is missing, and a build that lost its `.lproj` folders should
@@ -61,7 +76,7 @@ extension LocalizedStringResource {
     /// interpolation does, so a key declared with one interpolated value is
     /// looked up as `zones.count %lld` and the catalog spells it that way.
     static func key(_ key: String.LocalizationValue) -> LocalizedStringResource {
-        LocalizedStringResource(key, bundle: Localization.description)
+        LocalizedStringResource(key, locale: Localization.locale, bundle: Localization.description)
     }
 }
 
@@ -76,6 +91,6 @@ extension String {
     /// same way. This overload lives in the module, so it shadows Foundation's
     /// for every caller here; `Text(_ resource:)` was never affected.
     init(localized resource: LocalizedStringResource) {
-        self.init(localized: resource.defaultValue, bundle: Localization.bundle)
+        self.init(localized: resource.defaultValue, bundle: Localization.bundle, locale: resource.locale)
     }
 }

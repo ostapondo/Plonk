@@ -217,14 +217,16 @@ final class WindowCommands {
     /// in the list the settings show. PowerToys binds a hotkey per layout in
     /// its editor; here the list is the binding, so a set can be swapped
     /// without opening anything.
-    func applyZoneSet(number: Int, named names: [String], assign: (String, Int) -> Void) {
+    func applyZoneSet(number: Int, named names: [String], displayName: (String) -> String,
+                      assign: (String, Int) -> Void) {
         guard names.indices.contains(number - 1) else {
             announce?(String(localized: names.isEmpty ? LocalizedStringResource.hudNoZoneSets
                                                   : .hudZoneSetCount(names.count)))
             return
         }
-        assign(names[number - 1], ScreenIdentity.indexUnderCursor)
-        announce?(names[number - 1])
+        let name = names[number - 1]
+        assign(name, ScreenIdentity.indexUnderCursor)
+        announce?(displayName(name))
     }
 
     /// The exclusion list applies to every move Plonk makes on its own, not

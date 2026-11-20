@@ -4,6 +4,11 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ## Unreleased
 
+### Added
+
+- Simplified Chinese for the app interface, built-in zone layouts, and macOS
+  microphone and speech recognition permission prompts.
+
 ## 0.4.3 — 2026-09-22
 
 ### Changed
