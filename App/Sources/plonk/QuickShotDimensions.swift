@@ -7,7 +7,7 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
 
     private let widthField = QuickShotDimensionField(title: .shotSelectionWidth)
     private let heightField = QuickShotDimensionField(title: .shotSelectionHeight)
-    private lazy var lock = QuickShotButton(symbol: "lock.open", title: .shotSelectionLock) { [weak self] in
+    private lazy var lock = QuickShotAspectLock { [weak self] in
         guard let self else { return }
         window?.makeFirstResponder(canvas)
         onToggleLock?()
@@ -22,15 +22,17 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
         layer?.cornerRadius = 5
         let pixels = NSTextField(labelWithString: String(localized: .shotSelectionPixels))
         pixels.font = .systemFont(ofSize: 12)
-        pixels.textColor = .white
+        pixels.textColor = NSColor.white.withAlphaComponent(0.9)
         widthField.delegate = self
         heightField.delegate = self
-        for view in [widthField, heightField, lock, pixels] { addSubview(view) }
+        for view in [widthField, lock, heightField, pixels] { addSubview(view) }
         widthField.frame = CGRect(x: 6, y: 3, width: 42, height: 23)
         lock.frame = CGRect(x: 51, y: 3, width: 22, height: 23)
         heightField.frame = CGRect(x: 76, y: 3, width: 42, height: 23)
         let label = pixels.intrinsicContentSize
-        pixels.frame = CGRect(x: 121, y: (29 - label.height) / 2, width: label.width.rounded(.up), height: label.height)
+        // The label's intrinsic width leaves no room for the cell's horizontal text inset.
+        pixels.frame = CGRect(x: 121, y: (29 - label.height) / 2 - 2,
+                              width: label.width.rounded(.up) + 4, height: label.height)
         setFrameSize(CGSize(width: pixels.frame.maxX + 9, height: 29))
     }
 
@@ -42,10 +44,7 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
         for field in [widthField, heightField] where field.currentEditor() == nil {
             restore(field)
         }
-        if lock.isSelectedTool != locked {
-            lock.isSelectedTool = locked
-            lock.setSymbol(locked ? "lock" : "lock.open")
-        }
+        lock.isLocked = locked
     }
 
     func selectField(at windowPoint: CGPoint) -> Bool {
