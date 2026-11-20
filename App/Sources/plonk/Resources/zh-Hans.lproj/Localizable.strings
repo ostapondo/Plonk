@@ -67,7 +67,11 @@
 "shot.afterEditor" = "打开编辑器";
 "shot.captureFailed" = "无法截取屏幕。请在系统设置中检查屏幕录制权限。";
 "shot.copyFailed" = "无法复制截图。";
-"shot.selectionSize %@ %@" = "%@ × %@ 像素";
+"shot.selectionWidth" = "选区宽度";
+"shot.selectionHeight" = "选区高度";
+"shot.selectionPixels" = "px";
+"shot.selectionLock" = "锁定宽高比";
+"shot.selectionInvalid" = "请输入大于零的整数像素值。";
 "shot.selectionMove" = "移动或调整大小";
 "shot.captureWindow" = "窗口截图";
 "shot.captureScreen" = "全屏截图";

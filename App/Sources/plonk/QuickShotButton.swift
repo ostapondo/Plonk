@@ -13,8 +13,6 @@ final class QuickShotButton: NSButton {
         self.invoke = invoke
         super.init(frame: .zero)
         let label = String(localized: title)
-        image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)?
-            .withSymbolConfiguration(.init(pointSize: 17, weight: .medium))
         imagePosition = .imageOnly
         isBordered = false
         contentTintColor = cancel ? NSColor(srgbRed: 1, green: 115 / 255, blue: 123 / 255, alpha: 1)
@@ -22,11 +20,17 @@ final class QuickShotButton: NSButton {
         focusRingType = .exterior
         toolTip = label
         setAccessibilityLabel(label)
+        setSymbol(symbol)
         target = self
         action = #selector(activate)
     }
 
     required init?(coder: NSCoder) { nil }
+
+    func setSymbol(_ symbol: String) {
+        image = NSImage(systemSymbolName: symbol, accessibilityDescription: accessibilityLabel())?
+            .withSymbolConfiguration(.init(pointSize: 17, weight: .medium))
+    }
 
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: isEnabled ? .pointingHand : .arrow)
