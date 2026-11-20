@@ -50,7 +50,7 @@ final class QuickShotToolbar: NSView {
             ("macwindow", .shotAfterEditor, .editor),
             ("folder", .shotEditorSaveToFolder, .save),
             ("square.and.arrow.down", .shotEditorSaveAs, .saveAs),
-            ("plus.square.on.square", .shotEditorCopy, .copy),
+            ("doc.on.doc", .shotEditorCopy, .copy),
         ]
         for (symbol, title, output) in actions {
             addSubview(QuickShotButton(symbol: symbol, title: title) { perform(.output(output)) })
