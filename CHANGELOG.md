@@ -11,7 +11,7 @@ What changed in each release, from a user's side. The commit log has the rest.
   the editor immediately.
 - **Adjust the region before opening the editor.** Drag inside the blue
   outline to move it, or drag an edge or corner to resize. The size badge
-  shows the crop's pixel dimensions.
+  shows the crop's pixel dimensions as plain integers.
 - **Annotate region screenshots on screen.** Draw rectangles, ellipses,
   arrows, pen strokes, or highlights. Open the editor to keep working with
   editable marks and their undo and redo history. Tool buttons keep a uniform
