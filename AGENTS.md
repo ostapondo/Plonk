@@ -1,6 +1,7 @@
 # Agent rules
 
-Rules for AI agents working in this repo.
+Rules for AI agents working in this repo. `CLAUDE.md` imports this file and
+adds nothing of its own, so a rule goes here and nowhere else.
 
 ## Layout
 
@@ -11,7 +12,10 @@ Rules for AI agents working in this repo.
 Inside `App/Sources/plonk/`, the pieces that are easy to get lost in:
 
 - `Router` owns the route table and nothing else: every case is one line to the
-  module that handles it, in a `Router+*` file of its own.
+  module that handles it, in a `Router+*` file of its own. A module whose
+  routes answer after the request has been left behind — a capture, a
+  measurement — keeps them in a `<Module>Routes` class instead, which `Router`
+  holds: `ShotRoutes` and `RulerRoutes`.
 - `AppDelegate.swift` is the list of what the app is made of and the order it
   comes up in, and nothing else. Every module's wiring lives in an
   `AppDelegate+<Module>.swift` beside it, which is why none of those stored
@@ -53,7 +57,8 @@ is a module. A new module touches five places, nothing else:
    belongs under as its `parent` (that is what the sidebar draws), plus any
    status-menu items in `StatusMenuController`.
 3. A `Router+<Module>.swift` holding its route handlers, and one line per route
-   in `Router.handle` under its own path prefix (e.g. `/shot/*`).
+   in `Router.handle` under its own path prefix (e.g. `/zones/*`). Routes that
+   cannot answer at once go in a `<Module>Routes` class, as `/shot/*` does.
 4. An MCP tool file `mcp/src/tools/<module>.ts` with a `register(server)`
    function, called from `createPlonkServer` in `mcp/src/factory.ts`.
    `server.ts` only chooses a transport.
@@ -112,7 +117,10 @@ a release; never edit a version inside the plist heredoc.
 
 Pure logic lives in `ZoneGeometry`, `Config`, `ImageFit`, `Router` and
 `ControlServer.parseIfComplete` so it stays testable without a desktop session.
-Put new logic there and cover it in `App/Tests/plonkTests/`.
+Put new logic there and cover it in `App/Tests/plonkTests/`. Not every one of
+those has a file of its own name: `ZoneGeometry` is in `Zones.swift`,
+`ImageFit` in `Annotation.swift`, and `SettingsPages` in
+`SettingsPageList.swift`.
 
 ## Code style
 
