@@ -10,10 +10,20 @@ struct AnnotationStyle: Codable, Equatable {
         return Int((CGFloat(start) + steps).clamped(to: CGFloat(range.lowerBound)...CGFloat(range.upperBound)))
     }
 
+    static func normalizeWidthDraft(_ draft: String) -> String {
+        let input = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard input.utf8.count > 4, containsOnlyDigits(input) else { return input }
+        return String(input.prefix(4))
+    }
+
     static func parseWidth(_ draft: String) -> Int? {
-        let input = draft.trimmingCharacters(in: .whitespaces)
-        guard !input.isEmpty, input.utf8.allSatisfy({ (48...57).contains($0) }) else { return nil }
+        let input = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard containsOnlyDigits(input) else { return nil }
         return Int(input)
+    }
+
+    private static func containsOnlyDigits(_ input: String) -> Bool {
+        input.utf8.allSatisfy { (48...57).contains($0) }
     }
 }
 

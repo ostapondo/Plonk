@@ -74,6 +74,19 @@ struct AnnotationStyleTests {
         #expect(AnnotationStyle.draggedWidth(from: 9998, horizontal: 8, vertical: 0, in: kind.widthRange) == 9999)
     }
 
+    @Test func widthDraftStripsWhitespaceBeforeCountingDigits() {
+        #expect(AnnotationStyle.normalizeWidthDraft(" 1000\t") == "1000")
+    }
+
+    @Test func widthDraftKeepsAnOverlongIntegerWithinFourDigits() {
+        #expect(AnnotationStyle.normalizeWidthDraft("99999") == "9999")
+    }
+
+    @Test(arguments: ["1234.5", "1234x", "1234 5"])
+    func invalidWidthDraftNeverBecomesAValidInteger(_ draft: String) {
+        #expect(AnnotationStyle.parseWidth(AnnotationStyle.normalizeWidthDraft(draft)) == nil)
+    }
+
     @Test(arguments: Annotation.Kind.styleOrder)
     func redoKeepsEachMarksOriginalWidthAndColor(_ kind: Annotation.Kind) {
         var history = AnnotationHistory()

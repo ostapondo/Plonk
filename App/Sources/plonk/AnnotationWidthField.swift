@@ -35,7 +35,7 @@ struct AnnotationWidthField: NSViewRepresentable {
 
         func controlTextDidChange(_ notification: Notification) {
             guard let field = notification.object as? NSTextField, let editor = field.currentEditor() else { return }
-            let draft = String(editor.string.prefix(4))
+            let draft = AnnotationStyle.normalizeWidthDraft(editor.string)
             if editor.string != draft {
                 editor.string = draft
                 editor.selectedRange = NSRange(location: draft.utf16.count, length: 0)
