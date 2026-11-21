@@ -117,6 +117,8 @@ struct Config: Codable {
     var awakeRequested = false
     var awakeSessionEnd: Double?
     var shotFolder = "~/Desktop"
+    var shotAfterCapture: ShotAfterCapture = .quickActions
+    var shotAnnotationStyles = AnnotationStyles()
     var shotCopyToClipboard = true
     // How different two neighbouring pixels have to be, on one channel of 255,
     // before the screen ruler treats the boundary between them as an edge. See

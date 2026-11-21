@@ -6,6 +6,31 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Added
 
+- **Set a default width and color for each screenshot annotation tool.** Use
+  the Quick Actions dial or the editor slider to adjust width for the current
+  screenshot. Opening the editor from Quick Actions keeps the selected tool
+  and each tool's temporary width and color. New captures use Screenshot settings.
+
+- **Quick Actions for window and full-screen screenshots.** Annotate, copy, or
+  save the whole capture at its original pixel size. Full-screen capture uses
+  the display under the pointer.
+
+- **Region screenshots keep the selection on screen.** Choose Open Editor to
+  continue editing, or change After capture in Screenshot settings to open
+  the editor immediately.
+- **Adjust the region before opening the editor.** Drag inside the blue
+  outline to move it, drag an edge or corner, or enter exact pixel dimensions.
+  The width and height fields fit four digits while editing. Click the padlock
+  between them to lock the aspect ratio and resize both dimensions together.
+- **Annotate region screenshots on screen.** Draw rectangles, ellipses,
+  arrows, pen strokes, or highlights. Open the editor to keep working with
+  editable marks and their undo and redo history. Tool buttons keep a uniform
+  background while you switch tools.
+- **Copy or save marked screenshots from Quick Actions.** Save to the
+  configured folder or choose a file in Save As. The saved image includes the
+  mark portions visible inside the selection.
+- **Use the keyboard in Quick Actions.** Escape cancels, Return copies,
+  Command-S saves, and Command-Z and Shift-Command-Z undo and redo.
 - Simplified Chinese for the app interface, built-in zone layouts, and macOS
   microphone and speech recognition permission prompts. A new or duplicated
   zone set is named in the app's language; what an agent reads over the API

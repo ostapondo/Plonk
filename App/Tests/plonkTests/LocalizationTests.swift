@@ -18,9 +18,11 @@ struct LocalizationTests {
         let locale = Locale(identifier: "en")
         let one = LocalizedStringResource.workspacesAppCount(1)
         let many = LocalizedStringResource.workspacesAppCount(4)
+        let window = LocalizedStringResource.workspacesWindowCount(1)
 
         #expect(String(localized: one.defaultValue, bundle: bundle, locale: locale) == "1 app")
         #expect(String(localized: many.defaultValue, bundle: bundle, locale: locale) == "4 apps")
+        #expect(String(localized: window.defaultValue, bundle: bundle, locale: locale) == "1 window")
     }
 
     @Test func simplifiedChineseCatalogResolvesInterpolatedText() throws {

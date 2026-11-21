@@ -60,13 +60,58 @@ extension AppDelegate {
         }
     }
 
-    func runCapture(_ mode: CaptureMode, openEditor: Bool,
-                            completion: @escaping (NSImage?) -> Void = { _ in }) {
+    func captureManually(_ mode: CaptureMode) {
+        guard quickShot == nil, captureDepth == 0 else { return }
+        let screen = mode == .screen ? ScreenIdentity.screen(at: NSEvent.mouseLocation) : nil
+        if mode == .screen, screen == nil { return HUD.shared.show(.shotCaptureFailed) }
+        if store.config.shotAfterCapture == .editor {
+            runCapture(mode, openEditor: true, screen: screen) { image in
+                if image == nil, mode == .screen { HUD.shared.show(.shotCaptureFailed) }
+            }
+        } else {
+            MainActor.assumeIsolated { beginQuickShot(mode, screen: screen) }
+        }
+    }
+
+    @MainActor private func beginQuickShot(_ mode: CaptureMode, screen: NSScreen?) {
+        let previousWindow = NSApp.keyWindow
+        let previousApp = NSWorkspace.shared.frontmostApplication
+        hotkeys.setSuspended(true)
+        HUD.shared.dismiss()
         let hidden = hideOwnWindows()
-        ScreenshotManager.capture(mode) { [weak self] image in
+        let session = QuickShotSession(previousApp: previousApp, model: model, folder: { [weak self] in
+            self?.store.config.shotFolder ?? Config().shotFolder
+        }, onClose: { [weak self, weak previousWindow] in
+            guard let self else { return }
+            quickShot = nil
+            showOwnWindows(hidden)
+            if NSApp.isActive, let previousWindow, previousWindow.isVisible {
+                previousWindow.makeKey()
+            }
+            hotkeys.setSuspended(false)
+            refreshHotkeyModel()
+        }, onEditor: { [weak self] image, history, annotation in
+            self?.presenter.showShotEditor(image: image, history: history, annotation: annotation)
+        }, onFinish: { [weak self] copied, path in
+            self?.finishShot(copied: copied, path: path)
+        })
+        quickShot = session
+        session.begin(mode, screen: screen)
+    }
+
+    func runCapture(_ mode: CaptureMode, openEditor: Bool, screen: NSScreen? = nil,
+                    completion: @escaping (NSImage?) -> Void = { _ in }) {
+        guard quickShot == nil else { return completion(nil) }
+        let hidden = hideOwnWindows()
+        let finish: (NSImage?) -> Void = { [weak self] image in
             self?.showOwnWindows(hidden)
             if let image, openEditor { self?.presenter.showShotEditor(image: image) }
             completion(image)
+        }
+        if let screen {
+            ScreenshotManager.captureDisplay(screen, completion: finish)
+        } else {
+            ScreenshotManager.capture(mode, completion: finish)
         }
     }
 

@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var guideLoading = false
     /// How many captures are in flight; see hideOwnWindows.
     var captureDepth = 0
+    var quickShot: QuickShotSession?
     var router: Router!
     var server: ControlServer?
     var previewToken = 0

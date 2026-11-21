@@ -13,7 +13,7 @@ prove, and where they stop.
 | | |
 | --- | --- |
 | **Accessibility** | Move and resize windows of other apps, and read their titles, frames and menu shortcuts. It is also what lets the optional grab-and-move intercept a modifier-drag, and what the pointer tools use to watch the mouse without touching it. Granted by you, revocable in System Settings > Privacy & Security |
-| **Screen Recording** | Capture a region, a window or a screen, when a capture is asked for. macOS shows its own indicator every time. Reading text off a capture uses the same permission and no other — recognition is Apple's Vision framework, running on this Mac — and so does a pinned live crop, which streams a region to a floating window and writes nothing anywhere |
+| **Screen Recording** | Capture a region, a window or a screen, when a capture is asked for. Region Quick Actions take a snapshot of each display to show the interactive picker. macOS shows its own indicator every time. Reading text off a capture uses the same permission and no other — recognition is Apple's Vision framework, running on this Mac — and so does a pinned live crop, which streams a region to a floating window and writes nothing anywhere |
 | **Microphone / Speech** | Only while a push-to-talk key is held. Transcription happens on this Mac |
 | **Disk** | One directory: `~/Library/Application Support/Plonk/`, plus wherever you save a screenshot, plus a temporary folder while an update is being unpacked |
 | **Login item** | Registered on first launch, through `SMAppService` — see below |
@@ -201,6 +201,10 @@ which no full-screen capture would have reached. macOS hands that permission
 out one app at a time, and an open port handed Plonk's to anything running as
 you. `/state` was the same shape more quietly: it lists the title of every
 open window.
+
+The screenshot picker dispatches shortcuts from key events delivered to its
+focused canvas by AppKit. Plonk temporarily suspends its registered hotkeys
+while the picker is open.
 
 ## The URL scheme
 

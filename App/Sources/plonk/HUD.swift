@@ -95,6 +95,12 @@ final class HUD {
         compactWindow?.orderOut(nil)
     }
 
+    func dismiss() {
+        token += 1
+        window?.orderOut(nil)
+        hide()
+    }
+
     private func makeWindow() -> NSWindow {
         let panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
                             backing: .buffered, defer: false)
