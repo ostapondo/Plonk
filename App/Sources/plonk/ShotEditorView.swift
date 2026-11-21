@@ -10,17 +10,19 @@ struct ShotEditorView: View {
     let onFinish: (_ copied: Bool, _ savedPath: String?) -> Void
     private let pixelWidth: CGFloat
 
+    @ObservedObject private var annotation: ShotAnnotationState
     @State private var history: AnnotationHistory
-    @State private var kind: Annotation.Kind = .arrow
-    @State private var widthHovered = false
     @State private var status: String?
 
-    init(model: AppModel, image: NSImage, history: AnnotationHistory, defaultFolder: String,
-         onFinish: @escaping (Bool, String?) -> Void) {
+    init(model: AppModel, image: NSImage, history: AnnotationHistory, annotation: ShotAnnotationState?,
+         defaultFolder: String, onFinish: @escaping (Bool, String?) -> Void) {
         self.model = model
         self.image = image
         self.defaultFolder = defaultFolder
         self.onFinish = onFinish
+        let annotation = annotation ?? ShotAnnotationState(defaults: model.config.shotAnnotationStyles)
+        annotation.enterEditor()
+        self.annotation = annotation
         pixelWidth = image.size.width * ScreenshotManager.nativeScale(of: image)
         _history = State(initialValue: history)
     }
@@ -44,14 +46,11 @@ struct ShotEditorView: View {
         HStack(spacing: 14) {
             HStack(spacing: 0) {
                 ForEach(Annotation.Kind.allCases) { choice in
-                    let active = choice == kind
+                    let active = choice == annotation.tool
                     Button {
-                        if !active {
-                            kind = choice
-                            widthHovered = false
-                        }
+                        if !active { annotation.tool = choice }
                     } label: {
-                        Image(systemName: choice.symbol)
+                        Image(systemName: choice.editorSymbol)
                             .foregroundStyle(active ? Color(nsColor: model.config.appearance.accent) : .primary)
                             .frame(width: 30, height: 24)
                             .contentShape(Rectangle())
@@ -65,17 +64,11 @@ struct ShotEditorView: View {
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
             .fixedSize()
 
-            AnnotationStyleControls(kind: kind, width: model.binding(kind.widthPath),
-                                    color: model.binding(kind.colorPath), widthHovered: $widthHovered)
-                .id(kind)
-                .overlay(alignment: .bottom) {
-                    if widthHovered {
-                        AnnotationStyleControls.widthHelp
-                            .frame(width: AnnotationStyleControls.helpWidth)
-                            .fixedSize()
-                            .alignmentGuide(.bottom) { $0[.top] - 5 }
-                    }
-                }
+            if let kind = annotation.tool {
+                let style = $annotation.styles[dynamicMember: AnnotationStyles.path(for: kind)]
+                AnnotationPalette(selection: style.color)
+                AnnotationWidthSlider(width: style.width, range: kind.widthRange)
+            }
 
             Spacer()
 
@@ -110,8 +103,9 @@ struct ShotEditorView: View {
                     DragGesture(minimumDistance: 1)
                         .onChanged { value in
                             if history.live == nil {
-                                history.begin(kind, at: ImageFit.unitPoint(value.startLocation, in: fitted),
-                                              style: model.config[keyPath: kind.stylePath], pixelWidth: pixelWidth)
+                                annotation.beginMark(in: &history,
+                                                     at: ImageFit.unitPoint(value.startLocation, in: fitted),
+                                                     pixelWidth: pixelWidth)
                             }
                             history.drag(to: ImageFit.unitPoint(value.location, in: fitted))
                         }

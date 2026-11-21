@@ -2,6 +2,7 @@ import CoreGraphics
 import Testing
 @testable import plonk
 
+@MainActor
 struct QuickShotLayoutTests {
     private let area = CGRect(x: 14, y: 24, width: 700, height: 500)
     private let dimensions = CGSize(width: 107, height: 29)
@@ -76,7 +77,9 @@ struct QuickShotLayoutTests {
     }
 
     private func stylePanel(anchor: CGRect, toolbar: CGRect) -> QuickShotLayout.StylePlacement {
-        QuickShotLayout.stylePanel(size: CGSize(width: 150, height: 46), help: CGSize(width: 260, height: 38),
+        QuickShotLayout.stylePanel(size: QuickShotStyleControls.size,
+                                  help: CGSize(width: QuickShotStyleControls.helpWidth,
+                                               height: QuickShotStyleControls.helpHeight),
                                   anchor: anchor, toolbar: toolbar, avoiding: nil, area: area)
     }
 }

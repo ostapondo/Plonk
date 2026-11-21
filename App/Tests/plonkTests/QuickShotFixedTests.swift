@@ -51,14 +51,36 @@ struct QuickShotFixedTests {
         #expect(png.pixelsHigh == 804)
     }
 
-    private func makeCanvas() throws -> QuickShotCanvas {
+    @Test func canvasDrawsWithTheCaptureStyle() throws {
+        let annotation = ShotAnnotationState(defaults: .init())
+        annotation.styles.rectangle = .init(width: 5, color: .green)
+        let canvas = try makeCanvas(annotation: annotation)
+        let toolbar = try #require(canvas.subviews.compactMap { $0 as? QuickShotToolbar }.first)
+        let rectangle = try #require(toolbar.subviews.compactMap { $0 as? QuickShotButton }.first {
+            $0.accessibilityLabel() == String(localized: Annotation.Kind.rectangle.title)
+        })
+        let backdrop = try #require(canvas.subviews.compactMap { $0 as? QuickShotBackdrop }.first)
+        rectangle.performClick(nil)
+        try drawMark(in: canvas, imageFrame: backdrop.frame)
+        var output: ShotCrop?
+        canvas.onOutput = { _, crop in output = crop }
+
+        canvas.handle(.save)
+
+        let mark = try #require(output?.history.annotations.first)
+        #expect(mark.kind == .rectangle)
+        #expect(mark.colorIndex == AnnotationColor.green.index)
+        #expect(abs(mark.width * 1204 - 5) < 0.0001)
+    }
+
+    private func makeCanvas(annotation: ShotAnnotationState? = nil) throws -> QuickShotCanvas {
         _ = NSApplication.shared
         let context = try #require(CGContext(
             data: nil, width: 1204, height: 804, bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
         let bitmap = ShotBitmap(image: try #require(context.makeImage()), displaySize: CGSize(width: 602, height: 402))
         let frame = CGRect(x: 0, y: 0, width: 400, height: 300)
-        return QuickShotCanvas(bitmap: bitmap, size: frame.size, safeArea: frame, fixed: true)
+        return QuickShotCanvas(bitmap: bitmap, size: frame.size, safeArea: frame, fixed: true, annotation: annotation)
     }
 
     private func drawMark(in canvas: QuickShotCanvas, imageFrame: CGRect) throws {

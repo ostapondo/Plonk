@@ -6,17 +6,17 @@ final class QuickShotStylePanel: NSView {
 
     override var isFlipped: Bool { true }
 
-    func show(_ kind: Annotation.Kind, model: AppModel, anchor: CGRect, toolbar: CGRect,
+    func show(_ kind: Annotation.Kind, annotation: ShotAnnotationState, anchor: CGRect, toolbar: CGRect,
               avoiding obstacle: CGRect?, area: CGRect) {
         let position = QuickShotLayout.stylePanel(
-            size: AnnotationStyleControls.size,
-            help: CGSize(width: AnnotationStyleControls.helpWidth, height: AnnotationStyleControls.helpHeight),
+            size: QuickShotStyleControls.size,
+            help: CGSize(width: QuickShotStyleControls.helpWidth, height: QuickShotStyleControls.helpHeight),
             anchor: anchor, toolbar: toolbar, avoiding: obstacle, area: area
         )
         guard position != placement || host?.rootView.kind != kind else { return }
         placement = position
         frame = position.panel.union(position.help).insetBy(dx: -8, dy: -8)
-        let content = Content(kind: kind, model: model, position: position, frame: frame)
+        let content = Content(kind: kind, annotation: annotation, position: position, frame: frame)
         if let host {
             host.rootView = content
             host.frame = bounds
@@ -58,12 +58,12 @@ final class QuickShotStylePanel: NSView {
 
     private struct Content: View {
         let kind: Annotation.Kind
-        @ObservedObject var model: AppModel
+        @ObservedObject var annotation: ShotAnnotationState
         let position: QuickShotLayout.StylePlacement
         let frame: CGRect
 
         var body: some View {
-            Controls(kind: kind, width: model.binding(kind.widthPath), color: model.binding(kind.colorPath),
+            Controls(kind: kind, style: $annotation.styles[dynamicMember: AnnotationStyles.path(for: kind)],
                      position: position, origin: frame.origin)
                 .id(kind)
                 .frame(width: frame.width, height: frame.height)
@@ -72,19 +72,18 @@ final class QuickShotStylePanel: NSView {
 
     private struct Controls: View {
         let kind: Annotation.Kind
-        @Binding var width: Int
-        @Binding var color: AnnotationColor
+        @Binding var style: AnnotationStyle
         let position: QuickShotLayout.StylePlacement
         let origin: CGPoint
         @State private var widthHovered = false
 
         var body: some View {
             ZStack {
-                AnnotationStyleControls(kind: kind, width: $width, color: $color, widthHovered: $widthHovered)
+                QuickShotStyleControls(kind: kind, style: $style, widthHovered: $widthHovered)
                     .position(x: position.panel.midX - origin.x, y: position.panel.midY - origin.y)
                 pointer
                 if widthHovered {
-                    AnnotationStyleControls.widthHelp
+                    QuickShotStyleControls.widthHelp
                         .frame(maxWidth: position.help.width)
                         .position(x: position.help.midX - origin.x, y: position.help.midY - origin.y)
                 }
@@ -100,7 +99,7 @@ final class QuickShotStylePanel: NSView {
                 path.addLine(to: CGPoint(x: x, y: tip))
                 path.addLine(to: CGPoint(x: x + 5, y: y))
             }
-            .fill(AnnotationStyleControls.surface)
+            .fill(QuickShotStyleControls.surface)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }

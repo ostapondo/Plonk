@@ -35,7 +35,7 @@ struct AnnotationStyleTests {
         var expected = defaults
 
         for width in [21, 22] {
-            store.update { $0[keyPath: kind.widthPath] = width }
+            store.update { $0[keyPath: kind.stylePath].width = width }
             expected[keyPath: stylePath(kind)].width = width
 
             let reopened = ConfigStore(directory: dir.url)
@@ -48,7 +48,7 @@ struct AnnotationStyleTests {
     func colorWritesPreserveWidthsAndOtherTools(_ kind: Annotation.Kind) {
         let dir = TempDir()
         let store = ConfigStore(directory: dir.url)
-        store.update { $0[keyPath: kind.colorPath] = .purple }
+        store.update { $0[keyPath: kind.stylePath].color = .purple }
         var expected = defaults
         expected[keyPath: stylePath(kind)].color = .purple
 

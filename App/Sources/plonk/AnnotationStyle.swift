@@ -19,18 +19,12 @@ struct AnnotationStyle: Codable, Equatable {
 
 extension Annotation.Kind {
     static let styleOrder: [Self] = [.rectangle, .ellipse, .arrow, .highlight, .pen]
+    static let quickShotOrder: [Self] = [.rectangle, .ellipse, .arrow, .pen, .highlight]
 
     var widthRange: ClosedRange<Int> { (self == .highlight ? 5 : 1)...9999 }
     var widthPath: WritableKeyPath<Config, Int> { stylePath.appending(path: \.width) }
-    var colorPath: WritableKeyPath<Config, AnnotationColor> { stylePath.appending(path: \.color) }
 
     var stylePath: WritableKeyPath<Config, AnnotationStyle> {
-        switch self {
-        case .rectangle: return \.shotAnnotationStyles.rectangle
-        case .ellipse: return \.shotAnnotationStyles.ellipse
-        case .arrow: return \.shotAnnotationStyles.arrow
-        case .highlight: return \.shotAnnotationStyles.highlight
-        case .pen: return \.shotAnnotationStyles.pen
-        }
+        (\Config.shotAnnotationStyles).appending(path: AnnotationStyles.path(for: self))
     }
 }

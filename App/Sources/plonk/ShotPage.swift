@@ -36,8 +36,7 @@ struct ShotPage: View {
             }
             SettingsCard(title: .annotationDefaultStyles) {
                 ForEach(Annotation.Kind.styleOrder) { kind in
-                    AnnotationStyleSettingRow(kind: kind, width: model.binding(kind.widthPath),
-                                              color: model.binding(kind.colorPath))
+                    AnnotationStyleSettingRow(kind: kind, style: model.binding(kind.stylePath))
                 }
             }
             SettingsCard(title: .commonShortcuts) {

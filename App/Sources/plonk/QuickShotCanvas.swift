@@ -9,13 +9,12 @@ final class QuickShotCanvas: NSView {
     }
 
     private let bitmap: ShotBitmap
-    private let model: AppModel
+    private let annotation: ShotAnnotationState
     private let safeArea: CGRect
     private let fixed: Bool
     private let backdrop: QuickShotBackdrop
     private let markup: QuickShotMarkupView
     private var history = AnnotationHistory()
-    private var tool: Annotation.Kind?
     private var selection: CGRect?
     private var aspectRatio: CGFloat?
     private var gesture: Gesture?
@@ -28,9 +27,10 @@ final class QuickShotCanvas: NSView {
     var onSelect: (() -> Void)?
     var onOutput: ((QuickShotOutput, ShotCrop) -> Void)?
 
-    init(bitmap: ShotBitmap, size: CGSize, safeArea: CGRect, fixed: Bool, model: AppModel = AppModel()) {
+    init(bitmap: ShotBitmap, size: CGSize, safeArea: CGRect, fixed: Bool, model: AppModel = AppModel(),
+         annotation: ShotAnnotationState? = nil) {
         self.bitmap = bitmap
-        self.model = model
+        self.annotation = annotation ?? ShotAnnotationState(defaults: model.config.shotAnnotationStyles)
         self.safeArea = safeArea
         self.fixed = fixed
         let frame = CGRect(origin: .zero, size: size)
@@ -91,7 +91,7 @@ final class QuickShotCanvas: NSView {
         let point = convert(event.locationInWindow, from: nil)
         guard !controlsContain(point) else { return }
         if fixed {
-            (tool != nil && backdrop.frame.contains(point) ? NSCursor.crosshair : .arrow).set()
+            (annotation.tool != nil && backdrop.frame.contains(point) ? NSCursor.crosshair : .arrow).set()
             return
         }
         guard let selection else { return NSCursor.crosshair.set() }
@@ -99,7 +99,7 @@ final class QuickShotCanvas: NSView {
         if handle != .zero {
             resizeCursor(for: handle).set()
         } else {
-            let moving = tool == nil && geometry.viewRect(selection).contains(point)
+            let moving = annotation.tool == nil && geometry.viewRect(selection).contains(point)
             (moving ? NSCursor.openHand : .crosshair).set()
         }
     }
@@ -127,7 +127,7 @@ final class QuickShotCanvas: NSView {
         if let selection {
             let handle = geometry.handle(at: point, of: selection)
             if handle != .zero || geometry.viewRect(selection).contains(point) {
-                if handle == .zero, tool != nil {
+                if handle == .zero, annotation.tool != nil {
                     beginMark(at: point)
                     return
                 }
@@ -142,9 +142,8 @@ final class QuickShotCanvas: NSView {
     }
 
     private func beginMark(at point: CGPoint) {
-        guard let tool else { return }
-        history.begin(tool, at: ImageFit.unitPoint(point, in: backdrop.frame),
-                      style: model.config[keyPath: tool.stylePath], pixelWidth: bitmap.size.width)
+        let start = ImageFit.unitPoint(point, in: backdrop.frame)
+        guard annotation.beginMark(in: &history, at: start, pixelWidth: bitmap.size.width) else { return }
         gesture = .mark
     }
 
@@ -193,7 +192,7 @@ final class QuickShotCanvas: NSView {
         selection = nil
         aspectRatio = nil
         history = AnnotationHistory()
-        tool = nil
+        annotation.tool = nil
         refresh()
     }
 
@@ -211,7 +210,7 @@ final class QuickShotCanvas: NSView {
     }
 
     private func refresh() {
-        toolbar.update(tool: tool, history: history)
+        toolbar.update(tool: annotation.tool, history: history)
         if fixed {
             dimensions.isHidden = true
             let barSize = toolbar.fittedSize(availableWidth: safeArea.width - 20)
@@ -245,17 +244,17 @@ final class QuickShotCanvas: NSView {
     }
 
     private func positionStylePanel() {
-        guard !toolbar.isHidden, let tool, let anchor = toolbar.anchor(for: tool) else {
+        guard !toolbar.isHidden, let tool = annotation.tool, let anchor = toolbar.anchor(for: tool) else {
             return stylePanel.dismiss()
         }
-        stylePanel.show(tool, model: model, anchor: anchor, toolbar: toolbar.frame,
+        stylePanel.show(tool, annotation: annotation, anchor: anchor, toolbar: toolbar.frame,
                         avoiding: dimensions.isHidden ? nil : dimensions.frame, area: safeArea)
     }
 
     private func perform(_ action: QuickShotToolbar.Action) {
         window?.makeFirstResponder(self)
         switch action {
-        case .tool(let choice): tool = tool == choice ? nil : choice
+        case .tool(let choice): annotation.tool = annotation.tool == choice ? nil : choice
         case .undo: history.undo()
         case .redo: history.redo()
         case .cancel:

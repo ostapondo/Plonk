@@ -4,12 +4,13 @@ final class QuickShotWindow: NSWindow {
     let canvas: QuickShotCanvas
     private var interactingWithStyle = false
 
-    init(screen: NSScreen, bitmap: ShotBitmap, fixed: Bool, model: AppModel) {
+    init(screen: NSScreen, bitmap: ShotBitmap, fixed: Bool, model: AppModel, annotation: ShotAnnotationState) {
         let frame = screen.frame
         let visible = screen.visibleFrame
         let safeArea = CGRect(x: visible.minX - frame.minX, y: frame.maxY - visible.maxY,
                               width: visible.width, height: visible.height)
-        canvas = QuickShotCanvas(bitmap: bitmap, size: frame.size, safeArea: safeArea, fixed: fixed, model: model)
+        canvas = QuickShotCanvas(bitmap: bitmap, size: frame.size, safeArea: safeArea, fixed: fixed,
+                                 model: model, annotation: annotation)
         super.init(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
         setFrame(frame, display: false)
         isReleasedWhenClosed = false
