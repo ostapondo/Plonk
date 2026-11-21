@@ -21,25 +21,10 @@ struct AnnotationPalette: View {
         HStack(spacing: compact ? 4 : 3) {
             ForEach(colors, id: \.self) { color in
                 let selected = color == selection
-                let size: CGFloat = compact ? 16 : 20
-                let ring = compact ? Color(white: 0.8) : color.paint
                 Button {
                     if !selected { selection = color }
                 } label: {
-                    Circle()
-                        .fill(color.paint)
-                        .overlay(Circle().strokeBorder((compact ? Color.white : .primary).opacity(0.24),
-                                                       lineWidth: 0.5))
-                        .padding(compact ? 2 : (selected ? 2.5 : 0))
-                        .overlay {
-                            if selected {
-                                Circle().strokeBorder(ring, lineWidth: 1.5)
-                                    .overlay(Circle().strokeBorder(.primary.opacity(compact ? 0 : 0.25),
-                                                                   lineWidth: 0.5))
-                            }
-                        }
-                        .frame(width: size, height: size)
-                        .contentShape(Circle())
+                    swatch(color, selected: selected)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text(color.title))
@@ -48,5 +33,20 @@ struct AnnotationPalette: View {
             }
         }
         .fixedSize()
+    }
+
+    private func swatch(_ color: AnnotationColor, selected: Bool) -> some View {
+        let size: CGFloat = compact ? 16 : 20
+        let inset: CGFloat = compact ? 2 : (selected ? 2.5 : 0)
+        let rim = (compact ? Color.white : .primary).opacity(0.24)
+        var strokes = [AnnotationCircle.Stroke(color: rim, width: 0.5, inset: inset)]
+        if selected {
+            let ring = compact ? Color(white: 0.8) : color.paint
+            strokes.append(.init(color: ring, width: 1.5))
+            if !compact { strokes.append(.init(color: .primary.opacity(0.25), width: 0.5)) }
+        }
+        return AnnotationCircle(fill: color.paint, fillInset: inset, strokes: strokes)
+            .frame(width: size, height: size)
+            .contentShape(Circle())
     }
 }

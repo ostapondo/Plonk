@@ -45,15 +45,27 @@ struct AnnotationWidthField: NSViewRepresentable {
 
         func controlTextDidEndEditing(_ notification: Notification) {
             guard let field = notification.object as? NSTextField else { return }
-            let value = commit(field.stringValue, field: field) ?? input.width
-            field.stringValue = String(value)
+            if let value = validWidth(field.stringValue) {
+                field.stringValue = String(value)
+                save(value)
+            } else {
+                field.stringValue = String(input.width)
+                HUD.shared.show(input.rangeMessage)
+            }
+            input.invalid = false
         }
 
         func control(_ control: NSControl, textView: NSTextView, doCommandBy command: Selector) -> Bool {
             guard let field = control as? NSTextField else { return false }
             switch command {
             case #selector(NSResponder.insertNewline(_:)):
-                commit(textView.string, field: field)
+                if let value = validWidth(textView.string) {
+                    commit(value, field: field)
+                } else {
+                    replaceDraft(with: input.width, in: field)
+                    textView.selectAll(nil)
+                    input.invalid = true
+                }
             case #selector(NSResponder.cancelOperation(_:)):
                 replaceDraft(with: input.width, in: field)
                 input.invalid = false
@@ -71,19 +83,24 @@ struct AnnotationWidthField: NSViewRepresentable {
             let current = AnnotationStyle.parseWidth(text) ?? input.width
             let amount = NSApp.currentEvent?.modifierFlags.contains(.shift) == true ? 10 : 1
             let next = (current + direction * amount).clamped(to: input.kind.widthRange)
-            commit(String(next), field: field)
+            commit(next, field: field)
         }
 
-        @discardableResult
-        private func commit(_ text: String, field: NSTextField) -> Int? {
-            guard let next = AnnotationStyle.parseWidth(text), input.kind.widthRange.contains(next) else {
-                input.invalid = true
+        private func validWidth(_ text: String) -> Int? {
+            guard let value = AnnotationStyle.parseWidth(text), input.kind.widthRange.contains(value) else {
                 return nil
             }
-            if next != input.width { input.width = next }
-            replaceDraft(with: next, in: field)
+            return value
+        }
+
+        private func save(_ value: Int) {
+            if value != input.width { input.width = value }
+        }
+
+        private func commit(_ value: Int, field: NSTextField) {
+            replaceDraft(with: value, in: field)
             input.invalid = false
-            return next
+            save(value)
         }
 
         private func replaceDraft(with value: Int, in field: NSTextField) {

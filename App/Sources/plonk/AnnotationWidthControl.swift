@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AnnotationWidthControl: View {
+    static let size = CGSize(width: 37, height: 33)
+
     @Binding var width: Int
     let range: ClosedRange<Int>
     @Binding var hovering: Bool
@@ -14,50 +16,55 @@ struct AnnotationWidthControl: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            let pixel = 1 / displayScale
-            let fill = min((6 + 0.65 * CGFloat(width - 1)).rounded(), diameter - 2 * (rim + pixel))
-            ZStack {
-                Circle().fill(surface)
-                Circle().strokeBorder(ink.opacity(0.68), lineWidth: rim)
-                Circle().fill(ink)
-                    .frame(width: fill, height: fill)
-                    .padding(pixel)
-                    .background(surface, in: Circle())
-            }
-            .frame(width: diameter, height: diameter)
-            .contentShape(Circle())
-            .onContinuousHover { phase in
-                guard dragWidths == nil else { return }
-                switch phase {
-                case .active(let location): updateHover(at: location)
-                case .ended: hovering = false
+            dial
+                .frame(width: diameter, height: diameter)
+                .contentShape(Circle())
+                .onContinuousHover { phase in
+                    guard dragWidths == nil else { return }
+                    switch phase {
+                    case .active(let location): updateHover(at: location)
+                    case .ended: hovering = false
+                    }
                 }
-            }
-            .gesture(drag)
-            .accessibilityLabel(Text(.shotEditorWidth))
-            .accessibilityValue(Text(.annotationWidthValue(width)))
-            .accessibilityHint(Text(.annotationWidthDragHelp))
-            .accessibilityAdjustableAction { direction in
-                switch direction {
-                case .increment: width = min(width + 1, range.upperBound)
-                case .decrement: width = max(width - 1, range.lowerBound)
-                @unknown default: break
+                .gesture(drag)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(.shotEditorWidth))
+                .accessibilityValue(Text(.annotationWidthValue(width)))
+                .accessibilityHint(Text(.annotationWidthDragHelp))
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment: width = min(width + 1, range.upperBound)
+                    case .decrement: width = max(width - 1, range.lowerBound)
+                    @unknown default: break
+                    }
                 }
-            }
-            .offset(x: 6, y: 4)
+                .offset(x: 6, y: 4)
 
             if hovering {
                 directions
+            }
+        }
+        .frame(width: Self.size.width, height: Self.size.height, alignment: .topLeading)
+        .overlay(alignment: .topLeading) {
+            if hovering {
                 Text(.annotationWidthValue(width))
                     .font(.system(size: 9, weight: .semibold).monospacedDigit())
                     .foregroundStyle(ink)
                     .fixedSize()
-                    .offset(x: 32, y: 24)
+                    .frame(width: 53, alignment: .trailing)
+                    .offset(y: 27)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
         }
-        .frame(width: 70, height: 34, alignment: .topLeading)
+    }
+
+    private var dial: some View {
+        let pixel = 1 / displayScale
+        let fill = (6 + 0.65 * CGFloat(width - 1)).rounded()
+        let dotInset = max((diameter - fill) / 2, rim + pixel)
+        return AnnotationCircle(fill: ink, fillInset: dotInset, background: surface,
+                                strokes: [.init(color: ink.opacity(0.68), width: rim)])
     }
 
     private var directions: some View {
