@@ -1,25 +1,33 @@
 import SwiftUI
 
-struct AnnotationStyleControls: View {
+struct QuickShotStyleControls: View {
     let kind: Annotation.Kind
-    @Binding var width: Int
-    @Binding var color: AnnotationColor
+    @Binding var style: AnnotationStyle
     @Binding var widthHovered: Bool
 
-    static let size = CGSize(width: 150, height: 46)
+    private static let paletteLayout = AnnotationPalette.Layout.doubleRow
+    private static let gap: CGFloat = 9
+    private static let leading: CGFloat = 5
+    private static let trailing: CGFloat = 13
+    private static let dividerWidth: CGFloat = 1
+
+    static let size = CGSize(
+        width: leading + AnnotationWidthControl.size.width + gap + dividerWidth + gap + paletteLayout.size.width + trailing,
+        height: max(AnnotationWidthControl.size.height, paletteLayout.size.height) + 9
+    )
     static let helpHeight: CGFloat = 38
     static let helpWidth: CGFloat = 260
     static let surface = Color(red: 48 / 255, green: 51 / 255, blue: 54 / 255)
     static let edge = Color.white.opacity(0.18)
 
     var body: some View {
-        HStack(spacing: 9) {
-            AnnotationWidthControl(width: $width, range: kind.widthRange, hovering: $widthHovered)
-            Rectangle().fill(Self.edge).frame(width: 1, height: 18)
-            AnnotationPalette(selection: $color, compact: true)
+        HStack(spacing: Self.gap) {
+            AnnotationWidthControl(width: $style.width, range: kind.widthRange, hovering: $widthHovered)
+            Rectangle().fill(Self.edge).frame(width: Self.dividerWidth, height: 18)
+            AnnotationPalette(selection: $style.color, layout: Self.paletteLayout)
         }
-        .padding(.leading, 5)
-        .padding(.trailing, 13)
+        .padding(.leading, Self.leading)
+        .padding(.trailing, Self.trailing)
         .frame(width: Self.size.width, height: Self.size.height)
         .background(Self.surface, in: Capsule())
         .overlay(Capsule().strokeBorder(Self.edge, lineWidth: 1))

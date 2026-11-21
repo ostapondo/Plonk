@@ -93,8 +93,8 @@ extension AppDelegate {
             }
             hotkeys.setSuspended(false)
             refreshHotkeyModel()
-        }, onEditor: { [weak self] image, history in
-            self?.presenter.showShotEditor(image: image, history: history)
+        }, onEditor: { [weak self] image, history, annotation in
+            self?.presenter.showShotEditor(image: image, history: history, annotation: annotation)
         }, onFinish: { [weak self] copied, path in
             self?.finishShot(copied: copied, path: path)
         })

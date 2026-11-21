@@ -6,9 +6,10 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Added
 
-- **Set a width and color for each screenshot annotation tool.** Drag the
-  width control or choose a color in Quick Actions and the editor, or set the
-  values in Screenshot settings. Each tool remembers its style across captures.
+- **Set a default width and color for each screenshot annotation tool.** Use
+  the Quick Actions dial or the editor slider to adjust width for the current
+  screenshot. Opening the editor from Quick Actions keeps the selected tool
+  and each tool's temporary width and color. New captures use Screenshot settings.
 
 - **Quick Actions for window and full-screen screenshots.** Annotate, copy, or
   save the whole capture at its original pixel size. Full-screen capture uses

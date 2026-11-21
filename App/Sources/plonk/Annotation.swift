@@ -17,13 +17,15 @@ struct Annotation: Identifiable, Equatable {
 
         var symbol: String {
             switch self {
-            case .pen: return "scribble"
+            case .pen: return "pencil.tip"
             case .arrow: return "arrow.up.right"
             case .rectangle: return "rectangle"
             case .ellipse: return "circle"
             case .highlight: return "highlighter"
             }
         }
+
+        var editorSymbol: String { self == .pen ? "scribble" : symbol }
 
         var title: LocalizedStringResource {
             switch self {

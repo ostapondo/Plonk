@@ -33,18 +33,14 @@ final class QuickShotToolbar: NSView {
         setAccessibilityRole(.group)
         setAccessibilityLabel(String(localized: .shotAfterQuickActions))
 
-        let choices: [(Annotation.Kind, String)] = [
-            (.rectangle, "rectangle"), (.ellipse, "circle"), (.arrow, "arrow.up.right"),
-            (.pen, "pencil.tip"), (.highlight, "highlighter"),
-        ]
         if !fixed {
             let move = QuickShotButton(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: .shotSelectionMove) {
                 perform(.tool(nil))
             }
             tools.append((move, nil))
         }
-        tools += choices.map { kind, symbol in
-            (QuickShotButton(symbol: symbol, title: kind.title) { perform(.tool(kind)) }, kind)
+        tools += Annotation.Kind.quickShotOrder.map { kind in
+            (QuickShotButton(symbol: kind.symbol, title: kind.title) { perform(.tool(kind)) }, kind)
         }
         tools.forEach { addSubview($0.0) }
         addDivider()
