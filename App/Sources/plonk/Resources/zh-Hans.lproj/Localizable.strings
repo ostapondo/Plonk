@@ -66,6 +66,7 @@
 "shot.afterQuickActions" = "快捷操作";
 "shot.afterEditor" = "打开编辑器";
 "shot.captureFailed" = "无法截取屏幕。请在系统设置中检查屏幕录制权限。";
+"shot.selectDisplayHint" = "按 F 选择全屏";
 "shot.copyFailed" = "无法复制截图。";
 "shot.selectionWidth" = "选区宽度";
 "shot.selectionHeight" = "选区高度";
@@ -379,7 +380,7 @@
 "start.grant" = "授予辅助功能权限";
 "start.grantDetail" = "授权后，Plonk 才能移动其他应用的窗口。";
 "start.record" = "授予屏幕录制权限";
-"start.recordDetail" = "截图、屏幕文字识别和屏幕标尺需要读取屏幕内容。首次使用这些功能时会请求权限。";
+"start.recordDetail" = "请在系统设置中授权，让截图、屏幕文字识别和屏幕标尺可以读取屏幕内容。";
 "start.neverAsked" = "Plonk 不会请求完全磁盘访问权限、自动化权限，也不会请求访问钥匙串、通讯录或网络。这里的操作仅在本机处理。";
 "start.snap" = "贴靠窗口";
 "start.snapDetail" = "将任一窗口置于最前方后，按 ⌃⌥←，也可将窗口拖到屏幕边缘。";

@@ -1,6 +1,6 @@
 import AppKit
 
-// One reader of the window server's list, for the two things that ask it:
+// One reader of the window server's list for the modules that ask it:
 // which windows can be photographed, and which are on screen right now. The
 // list is what the window server draws, so it knows what Accessibility does
 // not: whether a window is on the current Space and not hidden. Asking it is
@@ -22,18 +22,20 @@ enum WindowServer {
     /// scratch surface, never something a person would call a window.
     static let minimumSide: CGFloat = 40
 
-    /// The ordinary windows, front to back: layer 0, big enough to be a
-    /// window, drawn at all, and not Plonk's own. `onScreenOnly` asks for
+    /// Windows front to back, defaulting to ordinary layer-0 windows large
+    /// enough to place in a zone and excluding Plonk. `onScreenOnly` asks for
     /// what is on the current Space and not hidden, which is cheaper than the
     /// whole list and is what "empty" means when a zone is being filled.
     static func windows(onScreenOnly: Bool,
-                        excluding own: pid_t = ProcessInfo.processInfo.processIdentifier) -> [Window] {
+                        excluding own: pid_t = ProcessInfo.processInfo.processIdentifier,
+                        levels: Set<Int> = [NSWindow.Level.normal.rawValue],
+                        minimumSide: CGFloat = WindowServer.minimumSide) -> [Window] {
         let options: CGWindowListOption = onScreenOnly ? [.optionOnScreenOnly, .excludeDesktopElements] : .optionAll
         let info = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
         return info.compactMap { entry in
             guard let id = entry[kCGWindowNumber as String] as? CGWindowID,
                   let pid = entry[kCGWindowOwnerPID as String] as? pid_t, pid != own,
-                  (entry[kCGWindowLayer as String] as? Int) == 0,
+                  let level = entry[kCGWindowLayer as String] as? Int, levels.contains(level),
                   (entry[kCGWindowAlpha as String] as? Double ?? 1) > 0,
                   let boundsDict = entry[kCGWindowBounds as String] as? [String: Any],
                   let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
@@ -44,6 +46,12 @@ enum WindowServer {
                           ownerName: entry[kCGWindowOwnerName as String] as? String ?? "?",
                           title: entry[kCGWindowName as String] as? String ?? "")
         }
+    }
+
+    static func screenshotWindowBounds() -> [CGRect] {
+        let levels = [NSWindow.Level.normal.rawValue, NSWindow.Level.floating.rawValue,
+                      NSWindow.Level.modalPanel.rawValue, Int(CGWindowLevelForKey(.utilityWindow))]
+        return windows(onScreenOnly: true, levels: Set(levels), minimumSide: 1).map(\.bounds)
     }
 
     /// The same window seen through the window server and through

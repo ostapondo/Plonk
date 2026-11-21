@@ -72,6 +72,9 @@ extension AppDelegate {
                 if image == nil, mode == .screen { HUD.shared.show(.shotCaptureFailed) }
             }
         } else {
+            guard mode == .window || CGPreflightScreenCaptureAccess() else {
+                return HUD.shared.show(.shotCaptureFailed)
+            }
             MainActor.assumeIsolated { beginQuickShot(mode, screen: screen) }
         }
     }
@@ -79,7 +82,9 @@ extension AppDelegate {
     @MainActor private func beginQuickShot(_ mode: CaptureMode, screen: NSScreen?) {
         let previousWindow = NSApp.keyWindow
         let previousApp = NSWorkspace.shared.frontmostApplication
-        hotkeys.setSuspended(true)
+        hotkeys.setSuspended(true) { action, shortcut in
+            action == .captureRegion && ShotKeyCommand(hotkey: shortcut) == nil
+        }
         HUD.shared.dismiss()
         let hidden = hideOwnWindows()
         let session = QuickShotSession(previousApp: previousApp, model: model, folder: { [weak self] in

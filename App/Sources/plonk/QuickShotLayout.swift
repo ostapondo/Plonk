@@ -1,6 +1,8 @@
 import CoreGraphics
 
 enum QuickShotLayout {
+    static let regionControlInset: CGFloat = 8
+
     struct StylePlacement: Equatable {
         let panel: CGRect
         let help: CGRect
@@ -101,7 +103,7 @@ enum QuickShotLayout {
 
     static func place(dimensions: CGSize, toolbar: CGSize, selection: CGRect, area: CGRect)
         -> (dimensions: CGRect, toolbar: CGRect) {
-        let area = area.insetBy(dx: 5, dy: 5)
+        let area = area.insetBy(dx: regionControlInset, dy: regionControlInset)
         func frame(for size: CGSize, y: CGFloat) -> CGRect {
             CGRect(x: selection.minX.clamped(to: area.minX...max(area.minX, area.maxX - size.width)),
                    y: y.clamped(to: area.minY...max(area.minY, area.maxY - size.height)),
