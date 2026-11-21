@@ -1,6 +1,8 @@
 import AppKit
 
 final class QuickShotButton: NSButton {
+    static let toolInk = NSColor(srgbRed: 238 / 255, green: 241 / 255, blue: 245 / 255, alpha: 1)
+
     private let invoke: () -> Void
     var isSelectedTool: Bool? {
         didSet {
@@ -16,7 +18,7 @@ final class QuickShotButton: NSButton {
         imagePosition = .imageOnly
         isBordered = false
         contentTintColor = cancel ? NSColor(srgbRed: 1, green: 115 / 255, blue: 123 / 255, alpha: 1)
-            : NSColor(srgbRed: 238 / 255, green: 241 / 255, blue: 245 / 255, alpha: 1)
+            : Self.toolInk
         focusRingType = .exterior
         toolTip = label
         setAccessibilityLabel(label)

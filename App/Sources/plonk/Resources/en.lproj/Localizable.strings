@@ -601,6 +601,20 @@
 
 /* The screenshot editor. */
 "shotEditor.width" = "Width";
+"annotation.defaultStyles" = "Default Styles";
+"annotation.colors" = "Annotation Colors";
+"annotation.pixelUnit" = "px";
+"annotation.widthValue %lld" = "%lld px";
+"annotation.widthRange %lld %lld" = "Enter a whole number from %lld to %lld px.";
+"annotation.widthDragHelp" = "Drag right or down to increase, left or up to decrease.";
+"annotation.red" = "Red";
+"annotation.orange" = "Orange";
+"annotation.yellow" = "Yellow";
+"annotation.green" = "Green";
+"annotation.blue" = "Blue";
+"annotation.purple" = "Purple";
+"annotation.black" = "Black";
+"annotation.white" = "White";
 "shotEditor.undo" = "Undo";
 "shotEditor.redo" = "Redo";
 "shotEditor.saveAs" = "Save As";

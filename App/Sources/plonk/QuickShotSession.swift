@@ -3,6 +3,7 @@ import AppKit
 @MainActor
 final class QuickShotSession: NSObject {
     private let previousApp: NSRunningApplication?
+    private let model: AppModel
     private let folder: () -> String
     private let onEditor: (NSImage, AnnotationHistory) -> Void
     private let onFinish: (Bool, String?) -> Void
@@ -13,9 +14,11 @@ final class QuickShotSession: NSObject {
     private var picker: Process?
     private var pickLocation: CGPoint?
 
-    init(previousApp: NSRunningApplication?, folder: @escaping () -> String, onClose: @escaping () -> Void,
+    init(previousApp: NSRunningApplication?, model: AppModel, folder: @escaping () -> String,
+         onClose: @escaping () -> Void,
          onEditor: @escaping (NSImage, AnnotationHistory) -> Void, onFinish: @escaping (Bool, String?) -> Void) {
         self.previousApp = previousApp
+        self.model = model
         self.folder = folder
         self.onClose = onClose
         self.onEditor = onEditor
@@ -90,7 +93,7 @@ final class QuickShotSession: NSObject {
     }
 
     private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) {
-        let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed)
+        let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed, model: model)
         window.canvas.onCancel = { [weak self] in self?.cancel() }
         window.canvas.onSelect = { [weak self, weak window] in
             self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }

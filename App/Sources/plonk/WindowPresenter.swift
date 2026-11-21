@@ -209,7 +209,8 @@ final class WindowPresenter: NSObject {
         window.title = String(localized: .windowScreenshot)
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(
-            rootView: ShotEditorView(image: image, history: history, defaultFolder: shotFolder()) { [weak self] copied, path in
+            rootView: ShotEditorView(model: model, image: image, history: history,
+                                     defaultFolder: shotFolder()) { [weak self] copied, path in
                 self?.closeShotEditor()
                 self?.onShotFinished?(copied, path)
             }
