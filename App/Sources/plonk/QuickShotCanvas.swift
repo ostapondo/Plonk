@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 final class QuickShotCanvas: NSView {
     private enum Gesture {
@@ -8,6 +9,7 @@ final class QuickShotCanvas: NSView {
     }
 
     private let bitmap: ShotBitmap
+    private let model: AppModel
     private let safeArea: CGRect
     private let fixed: Bool
     private let backdrop: QuickShotBackdrop
@@ -20,12 +22,15 @@ final class QuickShotCanvas: NSView {
     private var pointerArea: NSTrackingArea?
     private lazy var toolbar = QuickShotToolbar(fixed: fixed) { [weak self] in self?.perform($0) }
     private let dimensions = QuickShotDimensions()
+    private let stylePanel = QuickShotStylePanel()
+    private var accentObservation: AnyCancellable?
     var onCancel: (() -> Void)?
     var onSelect: (() -> Void)?
     var onOutput: ((QuickShotOutput, ShotCrop) -> Void)?
 
-    init(bitmap: ShotBitmap, size: CGSize, safeArea: CGRect, fixed: Bool) {
+    init(bitmap: ShotBitmap, size: CGSize, safeArea: CGRect, fixed: Bool, model: AppModel = AppModel()) {
         self.bitmap = bitmap
+        self.model = model
         self.safeArea = safeArea
         self.fixed = fixed
         let frame = CGRect(origin: .zero, size: size)
@@ -41,6 +46,10 @@ final class QuickShotCanvas: NSView {
         addSubview(markup)
         addSubview(dimensions)
         addSubview(toolbar)
+        addSubview(stylePanel)
+        accentObservation = model.$config.map(\.appearance).removeDuplicates().sink { [weak self] appearance in
+            self?.toolbar.accent = appearance.accent
+        }
         dimensions.canvas = self
         dimensions.onResize = { [weak self] value, horizontal in
             guard let self, let selection else { return }
@@ -135,7 +144,7 @@ final class QuickShotCanvas: NSView {
     private func beginMark(at point: CGPoint) {
         guard let tool else { return }
         history.begin(tool, at: ImageFit.unitPoint(point, in: backdrop.frame),
-                      color: tool == .highlight ? 2 : 0, width: 4 / Double(backdrop.frame.width))
+                      style: model.config[keyPath: tool.stylePath], pixelWidth: bitmap.size.width)
         gesture = .mark
     }
 
@@ -192,9 +201,13 @@ final class QuickShotCanvas: NSView {
         dimensions.selectField(at: point)
     }
 
+    func handlesStyleClick(at windowPoint: CGPoint) -> Bool {
+        stylePanel.contains(convert(windowPoint, from: nil))
+    }
+
     private func controlsContain(_ point: CGPoint) -> Bool {
         (!toolbar.isHidden && toolbar.frame.contains(point)) ||
-            (!dimensions.isHidden && dimensions.frame.contains(point))
+            (!dimensions.isHidden && dimensions.frame.contains(point)) || stylePanel.contains(point)
     }
 
     private func refresh() {
@@ -207,6 +220,7 @@ final class QuickShotCanvas: NSView {
             markup.frame = layout.image
             markup.show(history, clippedTo: markup.bounds)
             toolbar.frame = layout.toolbar
+            positionStylePanel()
             return
         }
 
@@ -216,7 +230,7 @@ final class QuickShotCanvas: NSView {
         toolbar.isHidden = selection == nil
         if case .create = gesture { toolbar.isHidden = true }
         dimensions.isHidden = selection == nil
-        guard let selection, let frame else { return }
+        guard let selection, let frame else { return stylePanel.dismiss() }
         dimensions.update(size: selection.size, locked: aspectRatio != nil)
         let barSize = toolbar.fittedSize(availableWidth: safeArea.width - 10)
         positionControls(for: frame, toolbarSize: barSize)
@@ -227,6 +241,15 @@ final class QuickShotCanvas: NSView {
                                             selection: frame, area: safeArea)
         dimensions.frame = position.dimensions
         toolbar.frame = position.toolbar
+        positionStylePanel()
+    }
+
+    private func positionStylePanel() {
+        guard !toolbar.isHidden, let tool, let anchor = toolbar.anchor(for: tool) else {
+            return stylePanel.dismiss()
+        }
+        stylePanel.show(tool, model: model, anchor: anchor, toolbar: toolbar.frame,
+                        avoiding: dimensions.isHidden ? nil : dimensions.frame, area: safeArea)
     }
 
     private func perform(_ action: QuickShotToolbar.Action) {

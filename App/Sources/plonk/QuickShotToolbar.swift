@@ -12,6 +12,9 @@ final class QuickShotToolbar: NSView {
     private var tools: [(QuickShotButton, Annotation.Kind?)] = []
     private let undo: QuickShotButton
     private let redo: QuickShotButton
+    var accent = NSColor.controlAccentColor {
+        didSet { tintTools() }
+    }
 
     init(fixed: Bool, perform: @escaping (Action) -> Void) {
         undo = QuickShotButton(symbol: "arrow.uturn.backward", title: .shotEditorUndo) { perform(.undo) }
@@ -74,8 +77,20 @@ final class QuickShotToolbar: NSView {
 
     func update(tool: Annotation.Kind?, history: AnnotationHistory) {
         for (button, kind) in tools { button.isSelectedTool = kind == tool }
+        tintTools()
         undo.isEnabled = history.canUndo
         redo.isEnabled = history.canRedo
+    }
+
+    func anchor(for tool: Annotation.Kind) -> CGRect? {
+        guard let button = tools.first(where: { $0.1 == tool })?.0 else { return nil }
+        return convert(button.frame, to: superview)
+    }
+
+    private func tintTools() {
+        for (button, kind) in tools where kind != nil {
+            button.contentTintColor = button.isSelectedTool == true ? accent : QuickShotButton.toolInk
+        }
     }
 
     func fittedSize(availableWidth: CGFloat) -> CGSize {

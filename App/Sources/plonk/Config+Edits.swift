@@ -64,6 +64,10 @@ extension Config {
         spotlightDim = spotlightDim.clamped(to: Self.dimRange)
         rulerEdgeTolerance = rulerEdgeTolerance.clamped(to: EdgeDetector.toleranceRange)
         awakeTimeoutMinutes = max(0, awakeTimeoutMinutes)
+        for kind in Annotation.Kind.styleOrder {
+            let path = kind.widthPath
+            self[keyPath: path] = self[keyPath: path].clamped(to: kind.widthRange)
+        }
         // A rule with nothing to match, a zone below one, or the same app
         // twice is a line a hand-edited file can produce and nothing can act
         // on: one rule per app, the first one kept, trimmed. There is no

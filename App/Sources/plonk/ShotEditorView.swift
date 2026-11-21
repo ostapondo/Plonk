@@ -4,27 +4,31 @@ import SwiftUI
 // capture, then copy or save the flattened result.
 
 struct ShotEditorView: View {
+    @ObservedObject var model: AppModel
     let image: NSImage
     let defaultFolder: String
     let onFinish: (_ copied: Bool, _ savedPath: String?) -> Void
+    private let pixelWidth: CGFloat
 
     @State private var history: AnnotationHistory
     @State private var kind: Annotation.Kind = .arrow
-    @State private var colorIndex = 0
-    @State private var strokePoints: Double = 4
+    @State private var widthHovered = false
     @State private var status: String?
 
-    init(image: NSImage, history: AnnotationHistory, defaultFolder: String,
+    init(model: AppModel, image: NSImage, history: AnnotationHistory, defaultFolder: String,
          onFinish: @escaping (Bool, String?) -> Void) {
+        self.model = model
         self.image = image
         self.defaultFolder = defaultFolder
         self.onFinish = onFinish
+        pixelWidth = image.size.width * ScreenshotManager.nativeScale(of: image)
         _history = State(initialValue: history)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             toolbar
+                .zIndex(1)
             Divider()
             canvas
                 .padding(12)
@@ -38,27 +42,40 @@ struct ShotEditorView: View {
 
     private var toolbar: some View {
         HStack(spacing: 14) {
-            Picker("", selection: $kind) {
-                ForEach(Annotation.Kind.allCases) { kind in
-                    Image(systemName: kind.symbol).tag(kind).help(String(localized: kind.title))
+            HStack(spacing: 0) {
+                ForEach(Annotation.Kind.allCases) { choice in
+                    let active = choice == kind
+                    Button {
+                        if !active {
+                            kind = choice
+                            widthHovered = false
+                        }
+                    } label: {
+                        Image(systemName: choice.symbol)
+                            .foregroundStyle(active ? Color(nsColor: model.config.appearance.accent) : .primary)
+                            .frame(width: 30, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text(choice.title))
+                    .accessibilityAddTraits(active ? .isSelected : [])
+                    .help(String(localized: choice.title))
                 }
             }
-            .pickerStyle(.segmented)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
             .fixedSize()
 
-            HStack(spacing: 5) {
-                ForEach(Array(Annotation.palette.enumerated()), id: \.offset) { index, color in
-                    Circle()
-                        .fill(color)
-                        .frame(width: 17, height: 17)
-                        .overlay(Circle().strokeBorder(.primary.opacity(colorIndex == index ? 0.9 : 0.2),
-                                                       lineWidth: colorIndex == index ? 2.5 : 1))
-                        .onTapGesture { colorIndex = index }
+            AnnotationStyleControls(kind: kind, width: model.binding(kind.widthPath),
+                                    color: model.binding(kind.colorPath), widthHovered: $widthHovered)
+                .id(kind)
+                .overlay(alignment: .bottom) {
+                    if widthHovered {
+                        AnnotationStyleControls.widthHelp
+                            .frame(width: AnnotationStyleControls.helpWidth)
+                            .fixedSize()
+                            .alignmentGuide(.bottom) { $0[.top] - 5 }
+                    }
                 }
-            }
-
-            Slider(value: $strokePoints, in: 1...16) { Text(.shotEditorWidth) }
-                .frame(width: 110)
 
             Spacer()
 
@@ -94,7 +111,7 @@ struct ShotEditorView: View {
                         .onChanged { value in
                             if history.live == nil {
                                 history.begin(kind, at: ImageFit.unitPoint(value.startLocation, in: fitted),
-                                              color: colorIndex, width: strokePoints / max(fitted.width, 1))
+                                              style: model.config[keyPath: kind.stylePath], pixelWidth: pixelWidth)
                             }
                             history.drag(to: ImageFit.unitPoint(value.location, in: fitted))
                         }
