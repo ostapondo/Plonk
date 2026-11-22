@@ -99,12 +99,15 @@ enum ScreenshotManager {
         task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         task.arguments = ["-x"] + arguments + [url.path]
         task.terminationHandler = { finished in
+            // No file is not a failure by itself: interactive modes exit with no image when
+            // the user backs out, and callers tell that from a refusal by the permission.
             let result: CaptureOutcome
-            if finished.terminationStatus != 0 {
-                result = .failed
-            } else if let image = NSImage(contentsOf: url) {
+            if let image = NSImage(contentsOf: url) {
                 result = .captured(image)
             } else {
+                if finished.terminationStatus != 0 {
+                    NSLog("Plonk: screencapture exited \(finished.terminationStatus) with no image")
+                }
                 result = .noImage
             }
             try? FileManager.default.removeItem(at: url)
