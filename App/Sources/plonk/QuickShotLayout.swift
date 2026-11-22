@@ -45,14 +45,24 @@ enum QuickShotLayout {
                    width: size.width, height: size.height)
         }
         let below = selection.maxY + 16
-        var label = frame(for: dimensions, y: selection.minY - 10 - dimensions.height)
+        let labelAbove = selection.minY - 10 - dimensions.height
+        var label = frame(for: dimensions, y: labelAbove)
         let above = label.minY - 8 - toolbar.height
         let toolbarY = below + toolbar.height > area.maxY && above >= area.minY ? above : below
         let bar = frame(for: toolbar, y: toolbarY)
-        if label.intersects(bar) {
-            let afterBar = bar.maxY + 8
+        let afterBar = bar.maxY + 8
+        let fitsAfterBar = afterBar + dimensions.height <= area.maxY
+        if labelAbove < area.minY {
+            // Clamped down it would sit on the top edge and swallow its handles. The badge
+            // is interactive, so it goes after the toolbar, or inside past the corner handles.
+            label = fitsAfterBar ? frame(for: dimensions, y: afterBar) : CGRect(
+                x: (selection.minX + ShotSelection.handleLength)
+                    .clamped(to: area.minX...max(area.minX, area.maxX - dimensions.width)),
+                y: max(selection.minY, area.minY) + ShotSelection.handleLength,
+                width: dimensions.width, height: dimensions.height)
+        } else if label.intersects(bar) {
             let beforeBar = bar.minY - 8 - dimensions.height
-            label = frame(for: dimensions, y: afterBar + dimensions.height <= area.maxY ? afterBar : beforeBar)
+            label = frame(for: dimensions, y: fitsAfterBar ? afterBar : beforeBar)
         }
         return (label, bar)
     }
