@@ -82,6 +82,22 @@ struct ShotSelectionTests {
                 == CGRect(x: 60, y: 80, width: 300, height: 150))
     }
 
+    @Test func lockedEdgeNearTheBorderKeepsItsAnchoredEdges() {
+        let rect = CGRect(x: 60, y: 300, width: 200, height: 100)
+        let right = geometry.resize(rect, handle: CGPoint(x: 1, y: 0), by: CGPoint(x: 200, y: 0), ratio: 2)
+        #expect(right.minX == 60 && right.minY == 300 && right.maxY <= 400)
+        #expect(right.width == right.height * 2)
+        let bottom = geometry.resize(CGRect(x: 500, y: 60, width: 80, height: 40),
+                                     handle: CGPoint(x: 0, y: 1), by: CGPoint(x: 0, y: 100), ratio: 2)
+        #expect(bottom == CGRect(x: 500, y: 60, width: 100, height: 50))
+    }
+
+    @Test func lockedCornerNearTheBorderKeepsTheRatioAndTheOppositeCorner() {
+        let rect = CGRect(x: 400, y: 200, width: 100, height: 50)
+        let resized = geometry.resize(rect, handle: CGPoint(x: 1, y: 1), by: CGPoint(x: 300, y: 10), ratio: 2)
+        #expect(resized == CGRect(x: 400, y: 200, width: 200, height: 100))
+    }
+
     @Test func visibleCornerHandleHasPriorityOverTheEdge() {
         let rect = CGRect(x: 80, y: 80, width: 320, height: 180)
         #expect(geometry.handle(at: CGPoint(x: 55, y: 42), of: rect) == CGPoint(x: -1, y: -1))

@@ -44,8 +44,10 @@ struct ShotSelection {
     func resize(_ rect: CGRect, handle: CGPoint, by delta: CGPoint, ratio: CGFloat? = nil) -> CGRect {
         let fixedX = handle.x < 0 ? rect.maxX : rect.minX
         let fixedY = handle.y < 0 ? rect.maxY : rect.minY
-        let limit = CGSize(width: handle.x < 0 ? fixedX : handle.x > 0 ? pixels.width - fixedX : pixels.width,
-                           height: handle.y < 0 ? fixedY : handle.y > 0 ? pixels.height - fixedY : pixels.height)
+        // An edge handle keeps its opposite edge and its off-axis origin in place, so the
+        // off-axis room is what lies past that origin, not the whole bitmap.
+        let limit = CGSize(width: handle.x < 0 ? fixedX : pixels.width - fixedX,
+                           height: handle.y < 0 ? fixedY : pixels.height - fixedY)
         var size = CGSize(width: (rect.width + delta.x * handle.x).clamped(to: 1...limit.width),
                           height: (rect.height + delta.y * handle.y).clamped(to: 1...limit.height))
         if let ratio {
