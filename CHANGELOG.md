@@ -26,9 +26,15 @@ What changed in each release, from a user's side. The commit log has the rest.
   microphone and speech recognition permission prompts. A new or duplicated
   zone set is named in the app's language; what an agent reads over the API
   stays English.
+- **A Liquid Glass switch under Appearance.** Off draws the window with solid
+  surfaces, as on systems older than macOS 26.
 
 ### Changed
 
+- **The settings window is Liquid Glass on macOS 26.** The ground is the
+  desktop, blurred; the sidebar and the cards are glass over it, the selected
+  page is a glass pill that slides between rows, and buttons, shortcut keys
+  and the command palette are glass too.
 - A prompt queued for an agent that has not connected yet says so in one line,
   and a spoken prompt now reports it the same way a typed one does.
 
