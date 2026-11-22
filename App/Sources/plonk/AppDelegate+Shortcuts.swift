@@ -21,6 +21,11 @@ extension AppDelegate {
             default: break
             }
         }
+        hotkeys.onSuspend = { [weak self] in
+            self?.voice.finishCapture()
+            self?.dragSnap.cancelPick()
+            self?.dragSnap.hidePreviews()
+        }
         hotkeys.apply(store.config)
         noticeRectangle()
     }
@@ -47,7 +52,7 @@ extension AppDelegate {
             beginZonePick()
             dragSnap.endPick()
         case .captureRegion:
-            runCapture(.region, openEditor: true)
+            captureManually(.region)
         case .captureText:
             captureText()
         case .voice:

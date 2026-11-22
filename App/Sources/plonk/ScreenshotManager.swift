@@ -113,8 +113,7 @@ enum ScreenshotManager {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         if let data = pngData(from: image) {
-            pasteboard.setData(data, forType: .png)
-            return true
+            return pasteboard.setData(data, forType: .png)
         }
         return pasteboard.writeObjects([image])
     }

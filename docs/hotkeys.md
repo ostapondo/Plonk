@@ -27,6 +27,20 @@
 | `⌃⌥V` | Hold to talk |
 | `⌃⌥A` | Command palette — run anything by name, or type a sentence for the agent |
 
+## Region screenshot Quick Actions
+
+With the screenshot canvas focused:
+
+| Keys | What happens |
+| --- | --- |
+| `Esc` | Cancel |
+| `Return` | Copy the selection |
+| `⌘S` | Save to the screenshot folder |
+| `⌘Z` · `⌘⇧Z` | Undo · redo a mark |
+
+These use the physical S and Z positions of a US keyboard. Save As uses the
+standard macOS save panel shortcuts while that panel has focus.
+
 ## Without a key
 
 Every one of these has a name, and a URL that runs it. Useful where a keyboard

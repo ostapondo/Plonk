@@ -6,6 +6,21 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Added
 
+- **Region screenshots keep the selection on screen.** Choose Open Editor to
+  continue editing, or change After capture in Screenshot settings to open
+  the editor immediately.
+- **Adjust the region before opening the editor.** Drag inside the blue
+  outline to move it, or drag an edge or corner to resize. The size badge
+  shows the crop's pixel dimensions as plain integers.
+- **Annotate region screenshots on screen.** Draw rectangles, ellipses,
+  arrows, pen strokes, or highlights. Open the editor to keep working with
+  editable marks and their undo and redo history. Tool buttons keep a uniform
+  background while you switch tools.
+- **Copy or save marked screenshots from Quick Actions.** Save to the
+  configured folder or choose a file in Save As. The saved image includes the
+  mark portions visible inside the selection.
+- **Use the keyboard in Quick Actions.** Escape cancels, Return copies,
+  Command-S saves, and Command-Z and Shift-Command-Z undo and redo.
 - Simplified Chinese for the app interface, built-in zone layouts, and macOS
   microphone and speech recognition permission prompts. A new or duplicated
   zone set is named in the app's language; what an agent reads over the API
