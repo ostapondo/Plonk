@@ -45,8 +45,11 @@ cp App/Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # of its own; macOS looks for an app's languages in Contents/Resources, and only
 # what it finds there is offered to the language picker in System Settings. A
 # bundle without them draws its own keys on screen, so this is checked rather
-# than assumed.
-cp -R App/.build/release/plonk_plonk.bundle/*.lproj "$APP/Contents/Resources/"
+# than assumed. Newer swiftpm builds that bundle as a proper one, with the
+# catalogs under Contents/Resources; older ones left them at its top level.
+RES=App/.build/release/plonk_plonk.bundle
+[ -d "$RES/Contents/Resources" ] && RES="$RES/Contents/Resources"
+cp -R "$RES"/*.lproj "$APP/Contents/Resources/"
 if [ ! -f "$APP/Contents/Resources/en.lproj/Localizable.strings" ]; then
 	echo "error: the string catalog did not make it into the bundle" >&2
 	exit 1

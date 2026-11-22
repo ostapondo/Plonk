@@ -14,7 +14,7 @@ struct RulerPage: View {
             SettingsCard(title: .rulerTitle) {
                 SettingBlock {
                     Button(String(localized: .rulerMeasure)) { model.actions?.startRuler() }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.chipProminent)
                 }
             }
             SettingsCard(title: .rulerShortcut) {

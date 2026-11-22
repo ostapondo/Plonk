@@ -13,7 +13,6 @@ struct CommandPaletteView: View {
     var agent: String?
     let onAsk: (String) -> Void
     let onClose: () -> Void
-    @Environment(\.colorScheme) private var scheme
 
     @State private var query = ""
     @State private var selection = 0
@@ -33,9 +32,7 @@ struct CommandPaletteView: View {
             footer
         }
         .frame(width: 560)
-        .background(VisualEffect(material: .popover))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.capStroke))
+        .floatingPanel()
         .onAppear { focused = true; startMonitor() }
         .onDisappear(perform: stopMonitor)
     }
@@ -119,14 +116,10 @@ struct CommandPaletteView: View {
             Spacer(minLength: 12)
             KeyCaps(parts: command.keys)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 10)
         .padding(.vertical, 7)
-        .background(selected ? Ink.raised(scheme) : .clear)
-        .overlay(alignment: .leading) {
-            Rectangle()
-                .fill(selected ? Color.accentColor : .clear)
-                .frame(width: 2.5)
-        }
+        .rowHighlight(selected)
+        .padding(.horizontal, 6)
         .contentShape(Rectangle())
         .onTapGesture { selection = index; runSelected() }
         .id(command.id)

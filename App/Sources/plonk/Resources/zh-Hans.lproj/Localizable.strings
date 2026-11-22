@@ -340,6 +340,10 @@
 "appearance.accent" = "强调色";
 "appearance.accentNote" = "分屏遮罩和鼠标工具会跟随强调色。如需区分遮罩和应用界面，可在分屏页面为遮罩单独设置颜色。";
 "appearance.matchSystemAccent" = "跟随系统强调色";
+"appearance.material" = "材质";
+"appearance.liquidGlass" = "液态玻璃";
+"appearance.liquidGlassDetail" = "侧边栏、卡片和按钮以玻璃呈现，可透出桌面。关闭后以实色表面绘制。";
+"appearance.liquidGlassUnavailable" = "需要 macOS 26。此 Mac 使用实色表面。";
 "appearance.followSystemAccent" = "使用系统设置中选取的颜色。";
 "appearance.themeSystem" = "跟随系统";
 "appearance.themeLight" = "浅色";

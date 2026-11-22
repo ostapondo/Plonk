@@ -78,13 +78,11 @@ struct GettingStartedCard: View {
                     row(step)
                 }
             }
-            .background(RoundedRectangle(cornerRadius: 9).fill(Color.primary.opacity(0.04)))
-            .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Color.primary.opacity(0.08)))
+            .insetSurface()
             neverAsked
         }
         .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.08)))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.accentColor.opacity(0.28)))
+        .modifier(GuideSurface())
     }
 
     private var header: some View {
@@ -135,7 +133,7 @@ struct GettingStartedCard: View {
                 }
             }
             Spacer(minLength: 8)
-            if !step.done { action(for: step) }
+            if !step.done { action(for: step).buttonStyle(.chip) }
         }
         .padding(.horizontal, 11)
         .padding(.vertical, 9)
@@ -166,6 +164,22 @@ struct GettingStartedCard: View {
                     .buttonStyle(.link)
                     .font(.caption)
             }
+        }
+    }
+}
+
+/// The guide is the one card tinted with the accent, so it reads as something
+/// to finish rather than one more setting.
+private struct GuideSurface: ViewModifier {
+    @Environment(\.glassOn) private var glassOn
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if glassOn {
+            content.glassSurface(radius: Ink.radius, style: GlassStyle(tint: Color.accentColor.opacity(0.14)))
+        } else {
+            content
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.accentColor.opacity(0.08)))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.accentColor.opacity(0.28)))
         }
     }
 }

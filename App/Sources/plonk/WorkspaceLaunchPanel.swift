@@ -11,7 +11,11 @@ struct WorkspaceLaunchPanel: View {
 
     private var finished: Bool { model.launchingWorkspace == nil }
 
-    var body: some View {
+    // Lives across openings, so it reads the glass setting itself rather than
+    // keeping whatever it was first drawn with.
+    var body: some View { content.glass(from: model) }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Text(String(localized: model.launchingWorkspace.map { .launchLaunching($0) }
@@ -20,7 +24,7 @@ struct WorkspaceLaunchPanel: View {
                 Spacer(minLength: 20)
                 Button(String(localized: finished ? LocalizedStringResource.launchClose : .commonCancel),
                        action: finished ? onClose : onCancel)
-                    .controlSize(.small)
+                    .buttonStyle(.chip)
             }
             VStack(spacing: 0) {
                 ForEach(Array(model.launchStatuses.enumerated()), id: \.element.id) { index, status in
@@ -28,12 +32,11 @@ struct WorkspaceLaunchPanel: View {
                     row(status)
                 }
             }
-            .background(RoundedRectangle(cornerRadius: 9).fill(Color.gray.opacity(0.10)))
-            .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Color.gray.opacity(0.20)))
+            .insetSurface()
         }
         .padding(18)
         .frame(width: 340)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .modifier(LaunchPanelSurface())
     }
 
     private func row(_ status: LaunchStatus) -> some View {
@@ -95,5 +98,17 @@ struct AppIcon: View {
             }
         }
         .frame(width: size, height: size)
+    }
+}
+
+private struct LaunchPanelSurface: ViewModifier {
+    @Environment(\.glassOn) private var glassOn
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if glassOn {
+            content.glassSurface(radius: Ink.floatRadius)
+        } else {
+            content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        }
     }
 }

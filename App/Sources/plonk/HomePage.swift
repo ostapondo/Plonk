@@ -24,8 +24,10 @@ struct HomePage: View {
                     .textSelection(.enabled)
                     .padding(11)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.orange.opacity(0.10)))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.orange.opacity(0.35)))
+                    .background(RoundedRectangle(cornerRadius: Ink.insetRadius, style: .continuous)
+                        .fill(Color.orange.opacity(0.10)))
+                    .overlay(RoundedRectangle(cornerRadius: Ink.insetRadius, style: .continuous)
+                        .strokeBorder(Color.orange.opacity(0.35)))
             }
             if model.rectangleFound {
                 RectangleOffer(model: model)
@@ -89,13 +91,14 @@ struct HomePage: View {
                         }
                         .fixedSize()
                         .foregroundStyle(.primary)
-                        .padding(.horizontal, 13)
-                        .frame(height: 32)
-                        .glassSurface(radius: 12)
+                        .padding(.horizontal, 14)
+                        .frame(height: 30)
+                        .glassCapsule(.control)
+                        .contentShape(Capsule(style: .continuous))
                     }
                     .buttonStyle(.plain)
                     Button(String(localized: .homeEditZonesButton)) { model.actions?.openZonePicker() }
-                        .controlSize(.large)
+                        .buttonStyle(.chip)
                         .fixedSize()
                 }
                 .padding(.top, 15)
@@ -157,8 +160,8 @@ struct HomePage: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 11)
-            .card()
-            .contentShape(Rectangle())
+            .cardControl()
+            .contentShape(RoundedRectangle(cornerRadius: Ink.radius, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -246,9 +249,10 @@ struct ZonePreview: View {
             }
             .padding(6)
         }
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Ink.raised(scheme).opacity(0.5)))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Ink.stroke(scheme)))
+        .background(RoundedRectangle(cornerRadius: Ink.insetRadius, style: .continuous)
+            .fill(Ink.raised(scheme).opacity(0.5)))
+        .clipShape(RoundedRectangle(cornerRadius: Ink.insetRadius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Ink.insetRadius, style: .continuous).strokeBorder(Ink.stroke(scheme)))
     }
 
     /// Zone two is drawn as the drop target, so the picture shows what the

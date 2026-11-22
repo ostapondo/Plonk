@@ -19,7 +19,6 @@ struct ZoneSetPaletteView: View {
     let screenIndex: Int
     let onClose: () -> Void
 
-    @Environment(\.colorScheme) private var scheme
     @State private var selection = 0
     @State private var monitor: Any?
 
@@ -49,9 +48,7 @@ struct ZoneSetPaletteView: View {
             footer
         }
         .frame(width: 460)
-        .background(VisualEffect(material: .popover))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Ink.capStroke))
+        .floatingPanel()
         .onAppear {
             selection = rows.firstIndex { $0.name == assigned } ?? 0
             startMonitor()
@@ -115,12 +112,10 @@ struct ZoneSetPaletteView: View {
                     .help(String(localized: row.custom ? .zoneSetEditThis : .zoneSetEditCopy))
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(selected ? Ink.raised(scheme) : .clear)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(selected ? Color.accentColor : .clear).frame(width: 2.5)
-        }
+        .rowHighlight(selected)
+        .padding(.horizontal, 6)
         .contentShape(Rectangle())
         // A single click only moves the highlight, the same as an arrow key: a
         // relayout moves every window on the screen, and one stray click should

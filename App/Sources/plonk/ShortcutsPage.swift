@@ -7,7 +7,6 @@ import SwiftUI
 
 struct ShortcutsPage: View {
     @ObservedObject var model: AppModel
-    @Environment(\.colorScheme) private var scheme
 
     private var groups: [(name: LocalizedStringResource, actions: [HotkeyAction])] {
         // The Guide has its own editable section above; listing it again here
@@ -104,10 +103,9 @@ struct ShortcutsPage: View {
                     .font(.caption.weight(.semibold))
                     .muted()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Ink.raised(scheme)))
+            .insetSurface()
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
