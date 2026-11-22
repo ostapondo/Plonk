@@ -18,6 +18,16 @@ struct AppearancePage: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            SettingsCard(title: .appearanceMaterial) {
+                // Shown off where it cannot be on, so the switch and the line
+                // under it say the same thing.
+                ToggleRow(title: .appearanceLiquidGlass,
+                          detail: GlassSupport.systemSupports ? .appearanceLiquidGlassDetail
+                                                              : .appearanceLiquidGlassUnavailable,
+                          isOn: GlassSupport.systemSupports ? model.binding(\.appearance.liquidGlass)
+                                                            : .constant(false))
+                    .disabled(!GlassSupport.systemSupports)
+            }
         }
     }
 
@@ -53,8 +63,8 @@ struct AppearancePage: View {
             }
             .padding(10)
             .frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: Ink.radius, style: .continuous).fill(Ink.card(scheme)))
-            .overlay(RoundedRectangle(cornerRadius: Ink.radius, style: .continuous)
+            .insetSurface(radius: Ink.insetRadius + 2)
+            .overlay(RoundedRectangle(cornerRadius: Ink.insetRadius + 2, style: .continuous)
                 .strokeBorder(selected ? Ink.controlTint(scheme) : Ink.stroke(scheme),
                               lineWidth: selected ? 1.5 : 1))
             .contentShape(Rectangle())

@@ -10,7 +10,6 @@ struct ShortcutRows: View {
     @ObservedObject var model: AppModel
     let actions: [HotkeyAction]
     @State private var recording: HotkeyAction?
-    @Environment(\.colorScheme) private var scheme
 
     /// A shortcut is 300 points of content, so rows flow into as many columns
     /// as the card is wide: one on a narrow window, two or three on a desk.
@@ -68,14 +67,15 @@ struct ShortcutRows: View {
                     model.actions?.clearHotkey(action)
                 }
             )
+            .nativeGlassCapsule(recording == action ? .prominent(Color.accentColor.opacity(0.35)) : .control)
         }
         // On a surface of its own, because the grid's cells have no other
         // edge: a key right-aligned in an invisible cell sat nearer the next
         // shortcut's name than its own.
-        .padding(.horizontal, 10)
+        .padding(.leading, 12)
+        .padding(.trailing, 6)
         .padding(.vertical, 6)
-        .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-            .fill(Ink.raised(scheme)))
+        .insetSurface()
         .disabled(!model.config.hotkeysEnabled)
     }
 
@@ -172,7 +172,7 @@ private struct ShortcutField: NSViewRepresentable {
         view.onStart = onStart
         view.onFinish = onFinish
         view.onClear = onClear
-        view.apply(display: display, recording: isRecording)
+        view.apply(display: display, recording: isRecording, glass: context.environment.glassOn)
     }
 
     /// Answers with the field's own size whatever the row proposes, so the row
@@ -194,7 +194,7 @@ final class RecorderView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
-        layer?.cornerRadius = 5
+        layer?.cornerRadius = 11
         label.alignment = .center
         label.font = .systemFont(ofSize: 12, weight: .medium)
         addSubview(label)
@@ -223,7 +223,7 @@ final class RecorderView: NSView {
 
     override var intrinsicContentSize: NSSize { fittingWidth }
 
-    func apply(display: String, recording: Bool) {
+    func apply(display: String, recording: Bool, glass: Bool) {
         self.recording = recording
         let text = recording ? String(localized: .shortcutPressKeys) : display
         if text != measuredText {
@@ -233,6 +233,13 @@ final class RecorderView: NSView {
             invalidateIntrinsicContentSize()
         }
         label.textColor = recording ? .controlAccentColor : .labelColor
+        // On Liquid Glass the capsule round this view is the field; a fill or
+        // border of its own would sit as a flat pill on top of it.
+        guard !glass else {
+            layer?.backgroundColor = nil
+            layer?.borderWidth = 0
+            return
+        }
         layer?.backgroundColor = (recording ? NSColor.controlAccentColor.withAlphaComponent(0.18)
                                             : NSColor.quaternaryLabelColor).cgColor
         // Bordered whether it is recording or not: a flat pill in a column of

@@ -62,7 +62,7 @@ struct WorkspacesPage: View {
                 .frame(width: 190)
                 .onSubmit(save)
             Button(String(localized: .commonSave), action: save)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.chipProminent)
                 .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
         }
         .controlSize(.small)
@@ -118,7 +118,7 @@ struct WorkspacesPage: View {
             Button(String(localized: .workspacesLaunch)) {
                 model.actions?.launchWorkspace(named: name, onScreen: nil)
             }
-            .controlSize(.small)
+            .buttonStyle(.chip)
             menu(name)
         }
     }

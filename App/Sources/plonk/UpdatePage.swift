@@ -43,12 +43,14 @@ struct UpdatePage: View {
                             Button(String(localized: .updateInstallAndRelaunch)) {
                                 model.actions?.installUpdate()
                             }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.chipProminent)
                             .disabled(isBusy)
                         }
                         Button(String(localized: .updateCheckNow)) { model.actions?.checkForUpdates() }
+                            .buttonStyle(.chip)
                             .disabled(isBusy)
                         Button(String(localized: .updateReleaseNotes)) { model.actions?.openReleasePage() }
+                            .buttonStyle(.chip)
                     }
                     .controlSize(.small)
                 }
