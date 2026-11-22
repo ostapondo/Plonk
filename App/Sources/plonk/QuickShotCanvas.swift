@@ -20,6 +20,7 @@ final class QuickShotCanvas: NSView {
     private let dimensions = QuickShotDimensions()
     var onCancel: (() -> Void)?
     var onSelect: (() -> Void)?
+    var marksAnywhere: (() -> Bool)?
     var onOutput: ((QuickShotOutput, ShotCrop) -> Void)?
 
     init(bitmap: ShotBitmap, safeArea: CGRect) {
@@ -40,6 +41,8 @@ final class QuickShotCanvas: NSView {
     override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    var hasMarks: Bool { history.canUndo || history.canRedo }
 
     private var geometry: ShotSelection { ShotSelection(pixels: bitmap.size, view: bounds.size) }
 
@@ -83,23 +86,26 @@ final class QuickShotCanvas: NSView {
         let point = convert(event.locationInWindow, from: nil)
         guard !toolbarContains(point) else { return }
         window?.makeFirstResponder(self)
-        if let selection {
-            let handle = geometry.handle(at: point, of: selection)
-            if handle != .zero || geometry.viewRect(selection).contains(point) {
-                if handle == .zero, let tool {
-                    history.begin(tool, at: ImageFit.unitPoint(point, in: bounds),
-                                  color: tool == .highlight ? 2 : 0, width: 4 / bounds.width)
-                    gesture = .mark
-                    return
-                }
-                gesture = .adjust(from: geometry.pixelPoint(point), original: selection, handle: handle)
-                if handle == .zero { NSCursor.closedHand.set() }
-                return
-            }
+        let handle = selection.map { geometry.handle(at: point, of: $0) } ?? .zero
+        let inside = selection.map { geometry.viewRect($0).contains(point) } ?? false
+        let marksExist = marksAnywhere?() ?? hasMarks
+        switch QuickShotPress(handle: handle, insideSelection: inside, drawing: tool != nil, marksExist: marksExist) {
+        case .mark:
+            guard let tool else { return }
+            history.begin(tool, at: ImageFit.unitPoint(point, in: bounds),
+                          color: tool == .highlight ? 2 : 0, width: 4 / bounds.width)
+            gesture = .mark
+        case .adjust(let handle):
+            guard let selection else { return }
+            gesture = .adjust(from: geometry.pixelPoint(point), original: selection, handle: handle)
+            if handle == .zero { NSCursor.closedHand.set() }
+        case .select:
+            onSelect?()
+            clearSelection()
+            gesture = .create(from: point)
+        case .ignore:
+            return
         }
-        onSelect?()
-        clearSelection()
-        gesture = .create(from: point)
     }
 
     override func mouseDragged(with event: NSEvent) {
