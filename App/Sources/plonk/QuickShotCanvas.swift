@@ -20,7 +20,7 @@ final class QuickShotCanvas: NSView {
     private let dimensions = QuickShotDimensions()
     var onCancel: (() -> Void)?
     var onSelect: (() -> Void)?
-    var canStartSelection: (() -> Bool)?
+    var marksAnywhere: (() -> Bool)?
     var onOutput: ((QuickShotOutput, ShotCrop) -> Void)?
 
     init(bitmap: ShotBitmap, safeArea: CGRect) {
@@ -88,7 +88,7 @@ final class QuickShotCanvas: NSView {
         window?.makeFirstResponder(self)
         let handle = selection.map { geometry.handle(at: point, of: $0) } ?? .zero
         let inside = selection.map { geometry.viewRect($0).contains(point) } ?? false
-        let marksExist = !(canStartSelection?() ?? !hasMarks)
+        let marksExist = marksAnywhere?() ?? hasMarks
         switch QuickShotPress(handle: handle, insideSelection: inside, drawing: tool != nil, marksExist: marksExist) {
         case .mark:
             guard let tool else { return }

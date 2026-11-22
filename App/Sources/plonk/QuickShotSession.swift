@@ -46,8 +46,8 @@ final class QuickShotSession: NSObject {
         window.canvas.onSelect = { [weak self, weak window] in
             self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
         }
-        window.canvas.canStartSelection = { [weak self] in
-            !(self?.windows.contains { $0.canvas.hasMarks } ?? false)
+        window.canvas.marksAnywhere = { [weak self] in
+            self?.windows.contains { $0.canvas.hasMarks } ?? false
         }
         window.canvas.onOutput = { [weak self, weak window] action, crop in
             guard let self, let window, onClose != nil else { return }
