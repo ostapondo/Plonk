@@ -28,8 +28,7 @@ struct QuickShotControls {
     }
 
     func place(over selection: CGRect, annotation: ShotAnnotationState) {
-        let size = toolbar.fittedSize(availableWidth: safeArea.width - 2 * QuickShotLayout.regionControlInset)
-        let position = QuickShotLayout.place(dimensions: dimensions.frame.size, toolbar: size,
+        let position = QuickShotLayout.place(dimensions: dimensions.frame.size, toolbar: fittedToolbarSize(),
                                             selection: selection, area: safeArea)
         dimensions.frame = position.dimensions
         toolbar.frame = position.toolbar
@@ -37,19 +36,22 @@ struct QuickShotControls {
     }
 
     func placeFixed(imageSize: CGSize, annotation: ShotAnnotationState) -> CGRect {
-        let size = toolbar.fittedSize(availableWidth: safeArea.width - 20)
-        let position = QuickShotLayout.fixed(image: imageSize, toolbar: size,
+        let position = QuickShotLayout.fixed(image: imageSize, toolbar: fittedToolbarSize(),
                                              reserve: QuickShotStyleControls.size.height, area: safeArea)
         toolbar.frame = position.toolbar
         placeStylePanel(annotation, avoiding: position.image)
         return position.image
     }
 
-    private func placeStylePanel(_ annotation: ShotAnnotationState, avoiding image: CGRect) {
+    private func fittedToolbarSize() -> CGSize {
+        toolbar.fittedSize(availableWidth: safeArea.width - 2 * QuickShotLayout.controlInset)
+    }
+
+    private func placeStylePanel(_ annotation: ShotAnnotationState, avoiding content: CGRect) {
         guard !toolbar.isHidden, let tool = annotation.tool, let anchor = toolbar.anchor(for: tool) else {
             return stylePanel.dismiss()
         }
-        var obstacles = [image]
+        var obstacles = [content]
         if !dimensions.isHidden { obstacles.append(dimensions.frame) }
         stylePanel.show(tool, annotation: annotation, anchor: anchor, toolbar: toolbar.frame,
                         avoiding: obstacles, area: safeArea)

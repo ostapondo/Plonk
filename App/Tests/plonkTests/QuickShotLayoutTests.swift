@@ -8,21 +8,33 @@ struct QuickShotLayoutTests {
     private let dimensions = CGSize(width: 107, height: 29)
     private let toolbar = CGSize(width: 460, height: 42)
 
-    @Test func controlsFollowTheSelection() {
-        let selection = CGRect(x: 55, y: 85, width: 260, height: 110)
+    @Test func controlsFollowTheSelectionWhenThereIsRoomBelow() {
+        let selection = CGRect(x: 224, y: 85, width: 260, height: 110)
         let placement = QuickShotLayout.place(dimensions: dimensions, toolbar: toolbar,
                                               selection: selection, area: area)
         #expect(placement.dimensions.minX == selection.minX)
         #expect(placement.dimensions.maxY == selection.minY - 10)
-        #expect(placement.toolbar.minX == selection.minX)
-        #expect(placement.toolbar.minY == selection.maxY + 16)
+        #expect(placement.toolbar.midX == selection.midX)
+        #expect(placement.toolbar.minY - selection.maxY == QuickShotLayout.selectionToolbarGap)
     }
 
-    @Test func toolbarMovesAboveTheSelectionAtTheBottomOfTheScreen() {
-        let selection = CGRect(x: 480, y: 410, width: 240, height: 120)
+    @Test(arguments: [false, true])
+    func toolbarFitsAtTheBottomOfTheOpenSide(_ openOnRight: Bool) {
+        let selection = CGRect(x: openOnRight ? area.minX : area.maxX - 200, y: area.minY,
+                               width: 200, height: area.height)
         let placement = QuickShotLayout.place(dimensions: dimensions, toolbar: toolbar,
                                               selection: selection, area: area)
-        #expect(placement.toolbar.maxY < placement.dimensions.minY)
+        #expect(area.contains(placement.toolbar))
+        let gap = openOnRight ? placement.toolbar.minX - selection.maxX : selection.minX - placement.toolbar.maxX
+        #expect(gap == QuickShotLayout.selectionToolbarGap)
+        #expect(placement.toolbar.maxY == area.maxY - QuickShotLayout.controlInset)
+    }
+
+    @Test func dimensionsMoveAboveTheToolbarWhenTheyOverlap() {
+        let selection = CGRect(x: 270, y: 510, width: 200, height: 12)
+        let placement = QuickShotLayout.place(dimensions: dimensions, toolbar: toolbar,
+                                              selection: selection, area: area)
+        #expect(placement.dimensions.maxY < placement.toolbar.minY)
         #expect(area.contains(placement.toolbar))
         #expect(area.contains(placement.dimensions))
     }
@@ -42,6 +54,8 @@ struct QuickShotLayoutTests {
         #expect(area.contains(placement.dimensions))
         #expect(area.contains(placement.toolbar))
         #expect(!placement.dimensions.intersects(placement.toolbar))
+        #expect(placement.toolbar.midX == area.midX)
+        #expect(placement.toolbar.maxY == area.maxY - QuickShotLayout.controlInset)
     }
 
     @Test func badgeStaysOffTheTopEdgeOfASelectionAtTheTopOfTheScreen() {

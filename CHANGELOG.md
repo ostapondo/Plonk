@@ -20,9 +20,13 @@ What changed in each release, from a user's side. The commit log has the rest.
 - **Region screenshots keep the selection on screen.** Choose Open Editor to
   continue editing, or change After capture in Screenshot settings to open
   the editor immediately.
+- **Quick Actions stay outside the selection when there is space.** The
+  toolbar follows the region at a fixed distance below it or along an open
+  side. For a full display, it appears at the bottom center.
 - **Select a full display from the region picker.** Click the exposed desktop
-  or press F to create an adjustable selection on that display. Drag to draw a
-  region and keep the other displays available for a replacement selection.
+  or press F to create an adjustable selection on that display. A shortcut
+  hint appears at the lower left while you choose. Drag to draw a region and
+  keep the other displays available for a replacement selection.
 - **Adjust the region before opening the editor.** Drag inside the blue
   outline to move it, drag an edge or corner, or enter exact pixel dimensions.
   The width and height fields fit four digits while editing. Click the padlock

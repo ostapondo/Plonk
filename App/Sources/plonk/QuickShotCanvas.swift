@@ -38,7 +38,7 @@ final class QuickShotCanvas: NSView {
         self.fixed = fixed
         let frame = CGRect(origin: .zero, size: size)
         backdrop = QuickShotBackdrop(image: bitmap.image, frame: frame, fixed: fixed)
-        hint = QuickShotHint(at: CGPoint(x: safeArea.minX + 12, y: safeArea.minY + 12))
+        hint = QuickShotHint(in: safeArea)
         markup = QuickShotMarkupView(frame: frame)
         super.init(frame: frame)
         if fixed {
