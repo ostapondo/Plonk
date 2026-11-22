@@ -79,6 +79,7 @@
 "shot.selectionPixels" = "px";
 "shot.selectionLock" = "Lock aspect ratio";
 "shot.selectionInvalid" = "Enter a positive whole number of pixels.";
+"shot.selectionFitted %@ %@" = "Fitted to the screenshot: %@ × %@ px";
 "shot.selectionMove" = "Move or Resize";
 "shot.captureWindow" = "Capture Window";
 "shot.captureScreen" = "Capture Whole Screen";

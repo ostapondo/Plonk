@@ -45,9 +45,13 @@ final class QuickShotCanvas: NSView {
         dimensions.canvas = self
         dimensions.onResize = { [weak self] value, horizontal in
             guard let self, let selection else { return }
-            self.selection = geometry.resize(selection, dimension: CGFloat(value), horizontal: horizontal,
-                                             ratio: aspectRatio)
+            let resized = geometry.resize(selection, dimension: CGFloat(value), horizontal: horizontal,
+                                          ratio: aspectRatio)
+            self.selection = resized
             refresh()
+            if Int(horizontal ? resized.width : resized.height) != value {
+                HUD.shared.show(.shotSelectionFitted(Int(resized.width), Int(resized.height)))
+            }
         }
         dimensions.onToggleLock = { [weak self] in
             guard let self, let selection else { return }
