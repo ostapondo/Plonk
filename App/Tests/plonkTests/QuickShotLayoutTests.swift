@@ -43,6 +43,24 @@ struct QuickShotLayoutTests {
         #expect(!placement.dimensions.intersects(placement.toolbar))
     }
 
+    @Test func badgeStaysOffTheTopEdgeOfASelectionAtTheTopOfTheScreen() {
+        let selection = CGRect(x: 55, y: 30, width: 260, height: 110)
+        let placement = QuickShotLayout.place(dimensions: dimensions, toolbar: toolbar,
+                                              selection: selection, area: area)
+        #expect(!placement.dimensions.intersects(selection))
+        #expect(!placement.dimensions.intersects(placement.toolbar))
+        #expect(area.contains(placement.dimensions))
+    }
+
+    @Test func badgeClearsTheCornerHandlesWhenNothingOutsideHasRoom() {
+        let selection = area.insetBy(dx: -20, dy: -25)
+        let placement = QuickShotLayout.place(dimensions: dimensions, toolbar: toolbar,
+                                              selection: selection, area: area)
+        let topBand = CGRect(x: selection.minX, y: area.minY, width: selection.width,
+                             height: ShotSelection.handleLength)
+        #expect(!placement.dimensions.intersects(topBand))
+    }
+
     @Test func narrowToolbarWrapsAllItemsInsideItsFrame() {
         let layout = QuickShotLayout.toolbar(dividers: [false, false, true, false, false, false], availableWidth: 98)
         #expect(layout.frames.count == 6)

@@ -61,10 +61,13 @@ extension AppDelegate {
     }
 
     func captureManually(_ mode: CaptureMode) {
-        guard quickShot == nil, captureDepth == 0 else { return }
+        // The overlay cannot open over another capture; the editor path may overlap one,
+        // as it always could.
+        let opensEditor = store.config.shotAfterCapture.opensEditor
+        guard quickShot == nil, opensEditor || captureDepth == 0 else { return }
         let screen = mode == .screen ? ScreenIdentity.screen(at: NSEvent.mouseLocation) : nil
         if mode == .screen, screen == nil { return HUD.shared.show(.shotCaptureFailed) }
-        if store.config.shotAfterCapture == .editor {
+        if opensEditor {
             runCapture(mode, openEditor: true, screen: screen) { image in
                 if image == nil, mode == .screen { HUD.shared.show(.shotCaptureFailed) }
             }

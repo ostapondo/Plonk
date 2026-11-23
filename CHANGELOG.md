@@ -9,7 +9,6 @@ What changed in each release, from a user's side. The commit log has the rest.
 - **Quick Actions for window and full-screen screenshots.** Annotate, copy, or
   save the whole capture at its original pixel size. Full-screen capture uses
   the display under the pointer.
-
 - **Region screenshots keep the selection on screen.** Choose Open Editor to
   continue editing, or change After capture in Screenshot settings to open
   the editor immediately.

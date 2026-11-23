@@ -106,11 +106,14 @@ final class QuickShotDimensions: NSView, NSTextFieldDelegate {
         guard !editor.hasMarkedText(), text.utf16.count > limit,
               text.allSatisfy({ $0.isASCII && $0.isNumber }) else { return }
 
-        let selection = editor.selectedRange()
-        editor.textStorage?.deleteCharacters(in: NSRange(location: limit, length: text.utf16.count - limit))
-        let start = min(selection.location, limit)
-        let end = min(NSMaxRange(selection), limit)
-        editor.setSelectedRange(NSRange(location: start, length: end - start))
+        // Drop the overflow just before the end of what was just typed, pasted or dropped
+        // (a drop leaves it selected), so input into a full field is refused instead of
+        // pushing a digit off the end.
+        let overflow = text.utf16.count - limit
+        let caret = NSMaxRange(editor.selectedRange())
+        let start = max(0, caret - overflow)
+        editor.textStorage?.deleteCharacters(in: NSRange(location: start, length: overflow))
+        editor.setSelectedRange(NSRange(location: start, length: 0))
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {

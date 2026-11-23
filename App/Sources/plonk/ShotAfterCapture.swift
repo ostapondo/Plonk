@@ -6,4 +6,6 @@ enum ShotAfterCapture: String, Codable {
         let value = try decoder.singleValueContainer().decode(String.self)
         self = Self(rawValue: value) ?? .quickActions
     }
+
+    var opensEditor: Bool { self == .editor }
 }

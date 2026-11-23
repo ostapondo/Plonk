@@ -20,4 +20,9 @@ struct ShotAfterCaptureTests {
         let decoded = try Config.decode(JSONEncoder().encode(config))
         #expect(decoded.shotAfterCapture == .editor)
     }
+
+    @Test func onlyTheEditorSettingSkipsQuickActions() {
+        #expect(ShotAfterCapture.editor.opensEditor)
+        #expect(!ShotAfterCapture.quickActions.opensEditor)
+    }
 }

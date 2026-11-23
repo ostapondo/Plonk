@@ -76,6 +76,18 @@ struct QuickShotDimensionsTests {
         #expect(editor.string == "9999")
     }
 
+    @Test func typingIntoAFullFieldIsRefused() throws {
+        let (window, dimensions) = makeControls()
+        defer { window.makeFirstResponder(nil) }
+        let editor = try editWidth(in: window, dimensions: dimensions)
+
+        editor.setSelectedRange(NSRange(location: 1, length: 0))
+        editor.insertText("5", replacementRange: editor.selectedRange())
+
+        #expect(editor.string == "1234")
+        #expect(editor.selectedRange() == NSRange(location: 1, length: 0))
+    }
+
     @Test func fieldEditorGrowsAndShrinksWithTheValue() throws {
         let (window, dimensions) = makeControls()
         defer { window.makeFirstResponder(nil) }

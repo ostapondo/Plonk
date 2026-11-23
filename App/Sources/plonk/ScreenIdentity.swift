@@ -33,12 +33,18 @@ enum ScreenIdentity {
     /// with no window to read a screen from acts on the one being looked at.
     static var indexUnderCursor: Int {
         let point = NSEvent.mouseLocation
-        return NSScreen.screens.firstIndex { $0.frame.contains(point) } ?? 0
+        return NSScreen.screens.firstIndex { contains($0, point) } ?? 0
     }
 
     static func screen(at point: CGPoint) -> NSScreen? {
         let screens = NSScreen.screens
-        return screens.first { $0.frame.contains(point) } ?? screens.first
+        return screens.first { contains($0, point) } ?? screens.first
+    }
+
+    /// The pointer on a screen's top row reports y == frame.maxY, which `CGRect.contains`
+    /// excludes; NSMouseInRect counts that row and leaves out the bottom one instead.
+    private static func contains(_ screen: NSScreen, _ point: CGPoint) -> Bool {
+        NSMouseInRect(point, screen.frame, false)
     }
 
     /// Every display attached now, by UUID: what a desk is keyed by.
