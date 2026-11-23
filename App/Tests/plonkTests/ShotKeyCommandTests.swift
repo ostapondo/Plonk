@@ -44,6 +44,13 @@ struct ShotKeyCommandTests {
         #expect(command(kVK_ANSI_S, "o", .command) == nil)
     }
 
+    @Test func selectDisplayFollowsTheLetterF() {
+        #expect(command(kVK_ANSI_Y, "f", []) == .selectDisplay)
+        #expect(command(kVK_ANSI_F, "u", []) == nil)
+        #expect(command(kVK_ANSI_F, nil, []) == .selectDisplay)
+        #expect(command(kVK_ANSI_Y, "f", .shift) == nil)
+    }
+
     @Test func nonLatinLayoutFallsBackToTheKeyPosition() {
         #expect(command(kVK_ANSI_Z, "я", .command) == .undo)
         #expect(command(kVK_ANSI_Z, "Я", [.command, .shift]) == .redo)

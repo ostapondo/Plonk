@@ -10,6 +10,7 @@ final class QuickShotSession: NSObject {
     private let onFinish: (Bool, String?) -> Void
     private var onClose: (() -> Void)?
     private var windows: [QuickShotWindow] = []
+    private var displayCaptures: [Process] = []
     private var keyMonitor: Any?
     private var pickerMonitor: Any?
     private var picker: Process?
@@ -34,6 +35,12 @@ final class QuickShotSession: NSObject {
         NotificationCenter.default.addObserver(
             self, selector: #selector(cancel), name: NSApplication.didChangeScreenParametersNotification, object: NSApp
         )
+        if mode != .window {
+            NSWorkspace.shared.notificationCenter.addObserver(
+                self, selector: #selector(frontmostAppChanged), name: NSWorkspace.didActivateApplicationNotification,
+                object: nil
+            )
+        }
         // Give the window server a turn after ordering Plonk's windows out.
         DispatchQueue.main.async { [weak self] in
             guard let self, onClose != nil else { return }
@@ -42,23 +49,32 @@ final class QuickShotSession: NSObject {
             case .window: pickWindow()
             case .screen:
                 guard let screen else { return captureFailed() }
-                ScreenshotManager.captureDisplay(screen) { [weak self] image in
-                    self?.presentFixed(image, on: screen)
-                }
+                captureRegions([screen], selectingEntireDisplay: true)
             }
         }
     }
 
-    private func captureRegions(_ screens: [NSScreen]) {
+    private func captureRegions(_ screens: [NSScreen], selectingEntireDisplay: Bool = false) {
+        let windowBounds = selectingEntireDisplay ? [] : WindowServer.screenshotWindowBounds()
         for screen in screens {
-            ScreenshotManager.captureDisplay(screen) { [weak self] image in
+            let process = ScreenshotManager.captureDisplay(screen) { [weak self] image in
                 guard let self, onClose != nil else { return }
                 guard let bitmap = ShotBitmap(capture: image, displaySize: screen.frame.size) else {
                     return captureFailed()
                 }
-                addWindow(for: screen, bitmap: bitmap, fixed: false)
-                if windows.count == screens.count { present() }
+                let window = addWindow(for: screen, bitmap: bitmap, fixed: false)
+                let origin = CGSpace.flip(screen.frame).origin
+                window.canvas.startsOnWindow = { point in
+                    let location = CGPoint(x: origin.x + point.x, y: origin.y + point.y)
+                    return windowBounds.contains { $0.contains(location) }
+                }
+                guard windows.count == screens.count else { return }
+                displayCaptures.removeAll()
+                guard !hasSwitchedApps else { return cancelOnAppSwitch() }
+                if selectingEntireDisplay { selectEntireDisplay(in: window) }
+                present()
             }
+            if let process { displayCaptures.append(process) }
         }
     }
 
@@ -72,7 +88,7 @@ final class QuickShotSession: NSObject {
             switch result {
             case .captured(let image):
                 let screen = ScreenIdentity.screen(at: pickLocation ?? NSEvent.mouseLocation)
-                presentFixed(image, on: screen)
+                presentWindowCapture(image, on: screen)
             case .noImage where CGPreflightScreenCaptureAccess():
                 cancel()
             default:
@@ -88,19 +104,27 @@ final class QuickShotSession: NSObject {
         picker = nil
     }
 
-    private func presentFixed(_ image: NSImage?, on screen: NSScreen?) {
+    private func presentWindowCapture(_ image: NSImage?, on screen: NSScreen?) {
         guard onClose != nil else { return }
         guard let screen, let bitmap = ShotBitmap(capture: image) else { return captureFailed() }
         addWindow(for: screen, bitmap: bitmap, fixed: true)
         present()
     }
 
-    private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) {
+    @discardableResult
+    private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) -> QuickShotWindow {
         let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed, model: model,
                                      annotation: annotation)
         window.canvas.onCancel = { [weak self] in self?.cancel() }
         window.canvas.onSelect = { [weak self, weak window] in
-            self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
+            guard let self else { return }
+            windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
+            updateSelectionHints()
+        }
+        window.canvas.onDragStateChange = { [weak self] in self?.updateSelectionHints() }
+        window.canvas.onSelectDisplay = { [weak self, weak window] in
+            guard let window else { return }
+            self?.selectEntireDisplay(in: window)
         }
         window.canvas.marksAnywhere = { [weak self] in
             self?.windows.contains { $0.canvas.hasMarks } ?? false
@@ -110,21 +134,64 @@ final class QuickShotSession: NSObject {
             perform(action, crop: crop, in: window)
         }
         windows.append(window)
+        return window
+    }
+
+    private var isWaitingForSelection: Bool { windows.allSatisfy { $0.canvas.isWaitingForSelection } }
+
+    private func updateSelectionHints() {
+        let visible = isWaitingForSelection
+        windows.forEach { $0.canvas.showHint(visible) }
+    }
+
+    private func selectEntireDisplay(in window: QuickShotWindow) {
+        guard isWaitingForSelection, windows.contains(where: { $0 === window }) else { return }
+        window.canvas.selectEntireDisplay()
+        if window.isVisible { focus(window) }
+        windows.filter { $0 !== window }.forEach { $0.orderOut(nil) }
+        windows = [window]
     }
 
     private func present() {
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
         NotificationCenter.default.addObserver(
-            self, selector: #selector(cancel), name: NSApplication.didResignActiveNotification, object: NSApp
+            self, selector: #selector(cancelOnAppSwitch), name: NSApplication.didResignActiveNotification,
+            object: NSApp
         )
+        updateSelectionHints()
         windows.forEach { $0.orderFrontRegardless() }
         NSApp.activate(ignoringOtherApps: true)
-        let target = windows.first { $0.frame.contains(NSEvent.mouseLocation) } ?? windows.first
-        target?.makeKey()
-        target?.makeFirstResponder(target?.canvas)
+        if let target = windowUnderPointer ?? windows.first { focus(target) }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.windows.contains(where: { $0.handleShortcut(event) }) == true { return nil }
-            return event
+            self?.handleShortcut(event) == true ? nil : event
         }
+    }
+
+    private var windowUnderPointer: QuickShotWindow? {
+        let pointer = NSEvent.mouseLocation
+        return windows.first { $0.frame.contains(pointer) }
+    }
+
+    private func focus(_ window: QuickShotWindow) {
+        window.makeKey()
+        window.makeFirstResponder(window.canvas)
+    }
+
+    private func handleShortcut(_ event: NSEvent) -> Bool {
+        guard let window = windows.first(where: \.isKeyWindow), let command = window.shortcut(for: event) else {
+            return false
+        }
+        if command == .selectDisplay {
+            if NSEvent.pressedMouseButtons & 1 == 0, let target = windowUnderPointer {
+                selectEntireDisplay(in: target)
+            }
+        } else if command == .cancel {
+            window.canvas.handle(command)
+        } else if !window.canvas.isTrackingPointer {
+            let target = windows.first { $0.canvas.hasSelection } ?? window
+            target.canvas.handle(command)
+        }
+        return true
     }
 
     private func captureFailed() {
@@ -177,12 +244,28 @@ final class QuickShotSession: NSObject {
         close(restoreFocus: true)
     }
 
+    private var hasSwitchedApps: Bool {
+        guard let frontmost = NSWorkspace.shared.frontmostApplication, let previousApp else { return false }
+        return frontmost.processIdentifier != previousApp.processIdentifier
+    }
+
+    @objc private func frontmostAppChanged() {
+        if hasSwitchedApps { cancelOnAppSwitch() }
+    }
+
+    @objc private func cancelOnAppSwitch() {
+        close(restoreFocus: false)
+    }
+
     private func close(restoreFocus: Bool) {
         guard let onClose else { return }
         let shouldRestore = restoreFocus && NSApp.isActive
         self.onClose = nil
         stopPicker()
+        displayCaptures.filter(\.isRunning).forEach { $0.terminate() }
+        displayCaptures.removeAll()
         NotificationCenter.default.removeObserver(self)
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
         for window in windows {

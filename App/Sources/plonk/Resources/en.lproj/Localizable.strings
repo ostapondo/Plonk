@@ -73,6 +73,7 @@
 "shot.afterQuickActions" = "Quick Actions";
 "shot.afterEditor" = "Open Editor";
 "shot.captureFailed" = "Could not capture the display. Check Screen Recording permission in System Settings.";
+"shot.selectDisplayHint" = "Press F to select the full screen";
 "shot.copyFailed" = "Could not copy the screenshot.";
 "shot.selectionWidth" = "Selection width";
 "shot.selectionHeight" = "Selection height";
@@ -386,7 +387,7 @@
 "start.grant" = "Grant Accessibility";
 "start.grantDetail" = "So Plonk can move another app's windows. macOS allows that no other way.";
 "start.record" = "Grant Screen Recording";
-"start.recordDetail" = "So a screenshot, the text off the screen and the ruler have something to read. Asked for the first time you use one.";
+"start.recordDetail" = "Grant access in System Settings so screenshots, text recognition and the ruler can read the screen.";
 "start.neverAsked" = "Never asked for: Full Disk Access, Automation, your Keychain, your contacts, your network. Nothing you do here leaves the Mac.";
 "start.snap" = "Snap a window";
 "start.snapDetail" = "Press ⌃⌥← with any window in front, or drag one to the side of the screen";

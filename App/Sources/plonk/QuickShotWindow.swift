@@ -35,14 +35,10 @@ final class QuickShotWindow: NSWindow {
         }
     }
 
-    func handleShortcut(_ event: NSEvent) -> Bool {
+    func shortcut(for event: NSEvent) -> ShotKeyCommand? {
         guard isKeyWindow, (event.window == nil || event.window === self),
-              attachedSheet == nil, firstResponder === canvas,
-              let command = ShotKeyCommand(keyCode: Int(event.keyCode),
-                                           characters: event.charactersIgnoringModifiers,
-                                           flags: event.modifierFlags,
-                                           repeating: event.isARepeat) else { return false }
-        canvas.handle(command)
-        return true
+              attachedSheet == nil, firstResponder === canvas else { return nil }
+        return ShotKeyCommand(keyCode: Int(event.keyCode), characters: event.charactersIgnoringModifiers,
+                              flags: event.modifierFlags, repeating: event.isARepeat)
     }
 }

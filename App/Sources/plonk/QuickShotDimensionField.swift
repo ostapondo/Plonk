@@ -26,8 +26,7 @@ final class QuickShotDimensionField: NSTextField {
     required init?(coder: NSCoder) { nil }
 
     func fittedWidth(maximumLength: Int) -> CGFloat {
-        let text = currentEditor()?.string ?? stringValue
-        let length = min(maximumLength, max(1, text.count))
+        let length = max(1, currentEditor().map { min(maximumLength, $0.string.count) } ?? stringValue.count)
         let attributes: [NSAttributedString.Key: Any] = [.font: font ?? NSFont.systemFont(ofSize: 14)]
         let digitWidth = ("0" as NSString).size(withAttributes: attributes).width
         return (digitWidth * CGFloat(length)).rounded(.up) + 8

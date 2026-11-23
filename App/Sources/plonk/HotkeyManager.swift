@@ -10,8 +10,8 @@ final class HotkeyManager {
     private var actions: [UInt32: HotkeyAction] = [:]
     private var handlerInstalled = false
     private var enabled = false
-    private var configuredEnabled = false
     private var suspended = false
+    private var allowedWhileSuspended: ((HotkeyAction, Hotkey) -> Bool)?
     private var generation = 0
 
     /// Action to key. Assigning re-registers if hotkeys are on.
@@ -37,14 +37,17 @@ final class HotkeyManager {
     /// the old one for a moment.
     func apply(_ config: Config) {
         bindings = config.activeHotkeys
-        configuredEnabled = config.hotkeysEnabled
-        setEnabled(configuredEnabled && !suspended)
+        setEnabled(config.hotkeysEnabled)
     }
 
-    func setSuspended(_ value: Bool) {
+    func setSuspended(_ value: Bool, allowing allow: ((HotkeyAction, Hotkey) -> Bool)? = nil) {
         guard suspended != value else { return }
         suspended = value
-        setEnabled(configuredEnabled && !suspended)
+        allowedWhileSuspended = value ? allow : nil
+        if enabled {
+            unregister()
+            register()
+        }
         if value { onSuspend?() }
     }
 
@@ -63,7 +66,8 @@ final class HotkeyManager {
         let signature = OSType(0x5348_594B) // 'SHYK'
         var taken: [HotkeyAction] = []
         for (index, action) in HotkeyAction.allCases.enumerated() {
-            guard let hotkey = bindings[action] else { continue }
+            guard let hotkey = bindings[action],
+                  !suspended || allowedWhileSuspended?(action, hotkey) == true else { continue }
             let id = UInt32(index + 1)
             var ref: EventHotKeyRef?
             let status = RegisterEventHotKey(hotkey.keyCode, hotkey.carbonModifiers,

@@ -12,12 +12,21 @@ What changed in each release, from a user's side. The commit log has the rest.
   and each tool's temporary width and color. New captures use Screenshot settings.
   Widths are in screen points, so a stroke looks the same on Retina and
   standard displays.
-- **Quick Actions for window and full-screen screenshots.** Annotate, copy, or
-  save the whole capture at its original pixel size. Full-screen capture uses
-  the display under the pointer.
+
+- **Quick Actions for window and full-screen screenshots.** Pick a window in
+  the macOS picker or start with the entire display under the pointer as an
+  adjustable selection. Annotate, copy or save the result at its original pixel size.
+
 - **Region screenshots keep the selection on screen.** Choose Open Editor to
   continue editing, or change After capture in Screenshot settings to open
   the editor immediately.
+- **Quick Actions stay outside the selection when there is space.** The
+  toolbar follows the region at a fixed distance below it or along an open
+  side. For a full display, it appears at the bottom center.
+- **Select a full display from the region picker.** Click the exposed desktop
+  or press F to create an adjustable selection on that display. A shortcut
+  hint appears at the lower left while you choose. Drag to draw a region and
+  keep the other displays available for a replacement selection.
 - **Adjust the region before opening the editor.** Drag inside the blue
   outline to move it, drag an edge or corner, or enter exact pixel dimensions.
   The width and height fields fit four digits while editing. Click the padlock

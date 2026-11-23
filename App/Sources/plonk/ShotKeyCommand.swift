@@ -7,6 +7,16 @@ enum ShotKeyCommand: Equatable {
     case save
     case undo
     case redo
+    case selectDisplay
+
+    init?(hotkey: Hotkey) {
+        var flags: NSEvent.ModifierFlags = []
+        if hotkey.command { flags.insert(.command) }
+        if hotkey.shift { flags.insert(.shift) }
+        if hotkey.option { flags.insert(.option) }
+        if hotkey.control { flags.insert(.control) }
+        self.init(keyCode: Int(hotkey.keyCode), characters: nil, flags: flags, repeating: false)
+    }
 
     /// `characters` is the event's `charactersIgnoringModifiers`. On a Latin layout the
     /// typed letter decides, as macOS menus do; on any other layout ⌘ with that letter
@@ -19,6 +29,7 @@ enum ShotKeyCommand: Equatable {
         case (kVK_Return, []), (kVK_ANSI_KeypadEnter, []): self = .copy
         default:
             switch (Self.letter(keyCode: keyCode, characters: characters), modifiers) {
+            case ("f", []): self = .selectDisplay
             case ("s", .command): self = .save
             case ("z", .command): self = .undo
             case ("z", [.command, .shift]): self = .redo
@@ -33,6 +44,7 @@ enum ShotKeyCommand: Equatable {
             return char
         }
         switch keyCode {
+        case kVK_ANSI_F: return "f"
         case kVK_ANSI_S: return "s"
         case kVK_ANSI_Z: return "z"
         default: return nil
