@@ -351,6 +351,10 @@
 "appearance.accent" = "Accent";
 "appearance.accentNote" = "The zone overlay and the pointer tools follow the accent. Give the overlay a colour of its own on the Zones page when it needs to stand out from the app.";
 "appearance.matchSystemAccent" = "Match the system accent";
+"appearance.material" = "Material";
+"appearance.liquidGlass" = "Liquid Glass";
+"appearance.liquidGlassDetail" = "The sidebar, cards and buttons are glass that the desktop shows through. Off draws them as solid surfaces.";
+"appearance.liquidGlassUnavailable" = "Needs macOS 26. This Mac draws solid surfaces.";
 "appearance.followSystemAccent" = "Follow the colour chosen in System Settings";
 "appearance.themeSystem" = "System";
 "appearance.themeLight" = "Light";

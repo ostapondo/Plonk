@@ -14,7 +14,11 @@ struct ZonePickerView: View {
         model.zoneSetNames.filter { !model.customZoneSetNames.contains($0) }
     }
 
-    var body: some View {
+    // Lives across openings, so it reads the glass setting itself rather than
+    // keeping whatever it was first drawn with.
+    var body: some View { content.glass(from: model) }
+
+    private var content: some View {
         VStack(spacing: 0) {
             monitorBar
                 .frame(maxWidth: .infinity)
@@ -40,6 +44,7 @@ struct ZonePickerView: View {
                 Button(action: createNewLayout) {
                     Label(String(localized: .zoneSetCreateNew), systemImage: "plus")
                 }
+                .buttonStyle(.chipProminent)
                 .keyboardShortcut(.defaultAction)
             }
             .padding(12)
@@ -70,9 +75,9 @@ struct ZonePickerView: View {
                             .foregroundStyle(.secondary)
                     }
                     .frame(width: 110, height: 62)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.08)))
+                    .insetSurface()
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: Ink.insetRadius, style: .continuous)
                             .strokeBorder(selectedScreen == screen ? Color.accentColor : Color.gray.opacity(0.3),
                                           lineWidth: selectedScreen == screen ? 2 : 1)
                     )
@@ -188,9 +193,9 @@ private struct ZoneSetCard: View {
             .aspectRatio(16.0 / 10.0, contentMode: .fit)
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.06)))
+        .insetSurface(radius: Ink.insetRadius + 2)
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: Ink.insetRadius + 2, style: .continuous)
                 .strokeBorder(isSelected ? Color.accentColor : Color.gray.opacity(0.25),
                               lineWidth: isSelected ? 2 : 1)
         )

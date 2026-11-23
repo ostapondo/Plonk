@@ -24,6 +24,7 @@ extension AppDelegate {
 
     func applyAppearance() {
         store.config.appearance.apply(to: NSApp)
+        GlassSupport.userEnabled = store.config.appearance.liquidGlass
     }
 
     /// A spoken command, run through the same calls the hotkeys use — so a

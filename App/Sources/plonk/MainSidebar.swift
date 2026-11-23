@@ -8,14 +8,16 @@ import SwiftUI
 // a click that told you nothing — a heading is not a control, and drawing it as
 // one only hid the list it was labelling. Headings now label; rows navigate.
 //
-// The selected row lifts subtly from the glass panel. Navigation glyphs stay
-// neutral so the zone colours only identify actual zones.
+// The selected row sits on a pill of glass that slides between rows. Navigation
+// glyphs stay neutral so the zone colours only identify actual zones.
 
 struct MainSidebar: View {
     @ObservedObject var model: AppModel
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.glassOn) private var glassOn
     /// Icons only. The window collapses to this on its own when it gets narrow.
     let rail: Bool
+    @State private var hovered: String?
 
     /// Clears the traffic lights: the window runs its content under the title
     /// bar, so the first thing in the sidebar would sit behind them.
@@ -49,6 +51,10 @@ struct MainSidebar: View {
                     }
                     if !rail, model.isEnabled(.workspaces), !model.workspaceNames.isEmpty { workspaces }
                 }
+                .backgroundPreferenceValue(SidebarSelectionKey.self) {
+                    SidebarSelectionPill(anchor: $0)
+                }
+                .animation(.spring(response: 0.38, dampingFraction: 0.82), value: model.currentPage?.id)
                 .padding(.horizontal, 8)
                 .padding(.bottom, 10)
             }
@@ -75,9 +81,8 @@ struct MainSidebar: View {
             .padding(.horizontal, 10)
             .frame(height: 34)
             .frame(maxWidth: .infinity, alignment: rail ? .center : .leading)
-            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color.primary.opacity(0.08)))
-            .contentShape(Rectangle())
+            .modifier(SearchField())
+            .contentShape(Capsule(style: .continuous))
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 10)
@@ -137,13 +142,12 @@ struct MainSidebar: View {
             .padding(.trailing, 10)
             .frame(height: 34)
             .frame(maxWidth: .infinity, alignment: rail ? .center : .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(selected ? Ink.selection(scheme) : Color.clear)
-            )
+            .sidebarHover(!selected && hovered == page.id)
+            .sidebarSelection(selected)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { hovered = $0 ? page.id : (hovered == page.id ? nil : hovered) }
         .help(String(localized: page.title))
     }
 
@@ -175,9 +179,14 @@ struct MainSidebar: View {
                     .padding(.leading, 12)
                     .padding(.trailing, 10)
                     .frame(height: 30)
+                    .sidebarHover(hovered == "workspace.\(index)")
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .onHover { inside in
+                    let id = "workspace.\(index)"
+                    hovered = inside ? id : (hovered == id ? nil : hovered)
+                }
                 .help(String(localized: .appOpenWorkspace(name)))
             }
         }
@@ -258,6 +267,27 @@ struct MainSidebar: View {
         .padding(.horizontal, 12)
         .padding(.top, 8)
         .padding(.bottom, 10)
-        .overlay(alignment: .top) { Rectangle().fill(Ink.hairline).frame(height: 1) }
+        .overlay(alignment: .top) {
+            // On glass a full-strength rule cuts the panel in two; a faint one
+            // inset from the edges only marks where the list ends.
+            Rectangle()
+                .fill(glassOn ? Color.primary.opacity(0.05) : Ink.hairline)
+                .frame(height: 1)
+                .padding(.horizontal, glassOn ? 12 : 0)
+        }
+    }
+}
+
+/// The search button's ground: a capsule of glass, or the old quiet fill.
+private struct SearchField: ViewModifier {
+    @Environment(\.glassOn) private var glassOn
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if glassOn {
+            content.glassCapsule(.control)
+        } else {
+            content.background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Color.primary.opacity(0.08)))
+        }
     }
 }

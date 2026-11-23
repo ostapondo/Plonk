@@ -48,6 +48,7 @@ struct MainWindowView: View {
         .ignoresSafeArea(.container, edges: .top)
         .frame(minWidth: 620, minHeight: 520)
         .tint(Ink.controlTint(scheme))
+        .glass(from: model)
         .accentColor(Ink.controlTint(scheme))
         // Window-scoped rather than a global hotkey: ⌘K belongs to whichever
         // app is in front, and taking it from all of them would be rude.
@@ -61,12 +62,15 @@ struct MainWindowView: View {
         .onAppear { if model.selectedPage == nil { model.selectedPage = model.settingsPages.first?.id } }
     }
 
-    /// A neutral wash over the desktop blur keeps the glass legible in both
-    /// appearances without casting the selected accent across every page.
+    /// The desktop, blurred, is the ground in both modes. With glass on the
+    /// wash is thin, so the panels have colour and depth to refract; off, it
+    /// is near-solid, as it always was.
     private var page: some View {
-        ZStack {
-            VisualEffect(material: .underWindowBackground, state: .followsWindowActiveState)
-            Ink.page(scheme).opacity(scheme == .dark ? 0.87 : 0.82)
+        let glass = GlassSupport.systemSupports && model.config.appearance.liquidGlass
+        return ZStack {
+            VisualEffect(material: glass ? .hudWindow : .underWindowBackground,
+                         state: .followsWindowActiveState)
+            Ink.page(scheme).opacity(Ink.groundWash(scheme, glass: glass))
         }
         .ignoresSafeArea()
     }

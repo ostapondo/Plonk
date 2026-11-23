@@ -20,7 +20,8 @@ What changed in each release, from a user's side. The commit log has the rest.
 - **Annotate region screenshots on screen.** Draw rectangles, ellipses,
   arrows, pen strokes, or highlights. Open the editor to keep working with
   editable marks and their undo and redo history. Tool buttons keep a uniform
-  background while you switch tools.
+  background while you switch tools. A click outside the selection keeps your
+  marks instead of starting a new selection.
 - **Copy or save marked screenshots from Quick Actions.** Save to the
   configured folder or choose a file in Save As. The saved image includes the
   mark portions visible inside the selection.
@@ -30,9 +31,15 @@ What changed in each release, from a user's side. The commit log has the rest.
   microphone and speech recognition permission prompts. A new or duplicated
   zone set is named in the app's language; what an agent reads over the API
   stays English.
+- **A Liquid Glass switch under Appearance.** Off draws the window with solid
+  surfaces, as on systems older than macOS 26.
 
 ### Changed
 
+- **The settings window is Liquid Glass on macOS 26.** The ground is the
+  desktop, blurred; the sidebar and the cards are glass over it, the selected
+  page is a glass pill that slides between rows, and buttons, shortcut keys
+  and the command palette are glass too.
 - A prompt queued for an agent that has not connected yet says so in one line,
   and a spoken prompt now reports it the same way a typed one does.
 

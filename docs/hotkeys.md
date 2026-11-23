@@ -38,8 +38,10 @@ With the screenshot canvas focused:
 | `⌘S` | Save to the screenshot folder |
 | `⌘Z` · `⌘⇧Z` | Undo · redo a mark |
 
-These use the physical S and Z positions of a US keyboard. Save As uses the
-standard macOS save panel shortcuts while that panel has focus.
+These follow the letter a key types, so on AZERTY or Dvorak `⌘Z` is the key
+labelled Z. On a non-Latin layout they fall back to where S and Z sit on a US
+keyboard. Save As uses the standard macOS save panel shortcuts while that panel
+has focus.
 
 ## Without a key
 

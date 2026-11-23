@@ -35,6 +35,19 @@ enum Ink {
         Color.primary.opacity(scheme == .dark ? 0.13 : 0.09)
     }
 
+    /// The same pill as glass: the control tint barely there, so the row reads
+    /// as picked out without the accent shouting across the sidebar.
+    static func selectionTint(_ scheme: ColorScheme) -> Color {
+        controlTint(scheme).opacity(scheme == .dark ? 0.30 : 0.22)
+    }
+
+    /// How much of the ground is laid over the desktop blur. Liquid Glass needs
+    /// something behind it to bend, so on 26 the wash only steadies the text.
+    static func groundWash(_ scheme: ColorScheme, glass: Bool) -> Double {
+        if glass { return scheme == .dark ? 0.35 : 0.25 }
+        return scheme == .dark ? 0.87 : 0.82
+    }
+
     static func stroke(_ scheme: ColorScheme) -> Color {
         Color.primary.opacity(scheme == .dark ? 0.11 : 0.09)
     }
@@ -120,18 +133,24 @@ private struct MutedText: ViewModifier {
 
 private struct CardSurface: ViewModifier {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.glassOn) private var glassOn
 
-    func body(content: Content) -> some View {
+    @ViewBuilder func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: Ink.radius, style: .continuous)
-        // The shadow sits on the fill, not on the card: a shadow on the content
-        // makes SwiftUI rasterize the whole subtree offscreen on every layout
-        // pass, and a page of rows in cards turns into a page of bitmaps being
-        // redrawn on each resize and scroll.
-        return content
-            .background(shape.fill(.regularMaterial)
-                .overlay(shape.fill(Ink.card(scheme).opacity(scheme == .dark ? 0.40 : 0.55)))
-                .shadow(color: Ink.shadow(scheme), radius: 14, y: 5))
-            .overlay(shape.strokeBorder(Ink.glassEdge(scheme)))
+        if glassOn {
+            // A card is a pane of glass over the desktop blur: no fill of its
+            // own, so the page reads through it the way the sidebar does.
+            content.glassSurface(radius: Ink.radius)
+        } else {
+            // The shadow sits on the fill, not on the card: a shadow on the
+            // content makes SwiftUI rasterize the whole subtree offscreen on
+            // every layout pass.
+            content
+                .background(shape.fill(.regularMaterial)
+                    .overlay(shape.fill(Ink.card(scheme).opacity(scheme == .dark ? 0.40 : 0.55)))
+                    .shadow(color: Ink.shadow(scheme), radius: 14, y: 5))
+                .overlay(shape.strokeBorder(Ink.glassEdge(scheme)))
+        }
     }
 }
 
@@ -173,8 +192,8 @@ struct KeyCaps: View {
                     .frame(minWidth: 13)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 2)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(Ink.capFill))
-                    .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Ink.capStroke))
+                    .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Ink.capFill))
+                    .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Ink.capStroke))
             }
         }
     }
@@ -207,27 +226,36 @@ struct StatusPill: View {
     }
 }
 
-/// A button drawn as a chip: the label in the text colour on a lift off the
-/// card, or in white on the accent when it is the one thing to press. The
-/// system bordered button paints its label in the accent on a barely-there
-/// fill, which reads as a link on the dark card and gets lost next to a title.
+/// A button drawn as a chip: a capsule of glass, or the accent-tinted glass
+/// when it is the one thing to press. On systems without Liquid Glass it falls
+/// back to a lift off the card, or white on the accent.
 struct ChipButtonStyle: ButtonStyle {
     var prominent = false
     @Environment(\.colorScheme) private var scheme
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.glassOn) private var glassOn
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let label = configuration.label
             .font(.system(size: 12.5, weight: .semibold))
             .lineLimit(1)
             .foregroundStyle(prominent ? Color.white : Color.primary)
-            .padding(.horizontal, 12)
-            .frame(height: 27)
-            .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(prominent ? AnyShapeStyle(Color.accentColor)
-                                : AnyShapeStyle(Color.primary.opacity(scheme == .dark ? 0.10 : 0.07))))
-            .opacity(configuration.isPressed ? 0.7 : enabled ? 1 : 0.4)
-            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .padding(.horizontal, 14)
+            .frame(height: 28)
+        return Group {
+            if glassOn {
+                label.glassCapsule(prominent ? .prominent(Color.accentColor) : .control)
+            } else {
+                label.background(Capsule(style: .continuous)
+                    .fill(prominent ? AnyShapeStyle(Color.accentColor)
+                                    : AnyShapeStyle(Color.primary.opacity(scheme == .dark ? 0.10 : 0.07))))
+            }
+        }
+        // Interactive glass answers a press itself; only the fallback dims.
+        .opacity(configuration.isPressed && !glassOn ? 0.75 : enabled ? 1 : 0.4)
+        .scaleEffect(configuration.isPressed && !glassOn ? 0.97 : 1)
+        .animation(.spring(duration: 0.25), value: configuration.isPressed)
+        .contentShape(Capsule(style: .continuous))
     }
 }
 

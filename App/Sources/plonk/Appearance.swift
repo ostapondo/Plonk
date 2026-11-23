@@ -9,6 +9,8 @@ struct AppearanceSettings: Codable, Equatable {
     var theme = Theme.system.rawValue
     /// "#RRGGBB", or nil to follow the system accent colour.
     var accentHex: String?
+    /// Liquid Glass on macOS 26; off draws the solid surfaces older systems get.
+    var liquidGlass = true
 
     enum Theme: String, CaseIterable, Identifiable {
         case system, light, dark
