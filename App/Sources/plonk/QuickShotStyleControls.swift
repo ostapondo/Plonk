@@ -17,8 +17,8 @@ struct QuickShotStyleControls: View {
     )
     static let helpHeight: CGFloat = 38
     static let helpWidth: CGFloat = 260
-    static let surface = Color(red: 48 / 255, green: 51 / 255, blue: 54 / 255)
-    static let edge = Color.white.opacity(0.18)
+    static let surface = Color(nsColor: QuickShotToolbar.surface)
+    static let edge = Color(nsColor: QuickShotToolbar.edge)
 
     var body: some View {
         HStack(spacing: Self.gap) {

@@ -594,20 +594,6 @@
 
 /* The screenshot editor. */
 "shotEditor.width" = "线宽";
-"annotation.defaultStyles" = "默认样式";
-"annotation.colors" = "标注颜色";
-"annotation.pixelUnit" = "px";
-"annotation.widthValue %lld" = "%lld px";
-"annotation.widthRange %lld %lld" = "请输入 %lld 到 %lld px 之间的整数。";
-"annotation.widthDragHelp" = "向右或向下拖动可调大，向左或向上拖动可调小";
-"annotation.red" = "红色";
-"annotation.orange" = "橙色";
-"annotation.yellow" = "黄色";
-"annotation.green" = "绿色";
-"annotation.blue" = "蓝色";
-"annotation.purple" = "紫色";
-"annotation.black" = "黑色";
-"annotation.white" = "白色";
 "shotEditor.undo" = "撤销";
 "shotEditor.redo" = "重做";
 "shotEditor.saveAs" = "另存为";
@@ -620,6 +606,22 @@
 "tool.rectangle" = "矩形";
 "tool.ellipse" = "椭圆";
 "tool.highlight" = "荧光笔";
+
+/* Annotation styles: each tool's default colour and width. */
+"annotation.defaultStyles" = "默认样式";
+"annotation.colors" = "标注颜色";
+"annotation.widthUnit" = "pt";
+"annotation.widthValue %lld" = "%lld pt";
+"annotation.widthRange %lld %lld" = "请输入 %lld 到 %lld pt 之间的整数。";
+"annotation.widthDragHelp" = "向右或向下拖动可调大，向左或向上拖动可调小";
+"annotation.red" = "红色";
+"annotation.orange" = "橙色";
+"annotation.yellow" = "黄色";
+"annotation.green" = "绿色";
+"annotation.blue" = "蓝色";
+"annotation.purple" = "紫色";
+"annotation.black" = "黑色";
+"annotation.white" = "白色";
 
 /* The shortcut guide, read off whatever app is in front. */
 "guide.filter" = "筛选";

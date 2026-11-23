@@ -8,8 +8,10 @@ struct AnnotationHistory {
     var canUndo: Bool { !annotations.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
 
-    mutating func begin(_ kind: Annotation.Kind, at point: CGPoint, style: AnnotationStyle, pixelWidth: CGFloat) {
-        begin(kind, at: point, color: style.color.index, width: Double(style.width) / Double(max(pixelWidth, 1)))
+    /// `viewWidth` is how wide the image is drawn on screen, in points: a width is what the
+    /// stroke looks like while drawing, so 4 reads the same on a Retina and a standard display.
+    mutating func begin(_ kind: Annotation.Kind, at point: CGPoint, style: AnnotationStyle, viewWidth: CGFloat) {
+        begin(kind, at: point, color: style.color.index, width: Double(style.width) / Double(max(viewWidth, 1)))
     }
 
     mutating func begin(_ kind: Annotation.Kind, at point: CGPoint, color: Int, width: Double) {

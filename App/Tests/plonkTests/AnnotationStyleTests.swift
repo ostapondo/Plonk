@@ -78,13 +78,24 @@ struct AnnotationStyleTests {
         #expect(AnnotationStyle.normalizeWidthDraft(" 1000\t") == "1000")
     }
 
-    @Test func widthDraftKeepsAnOverlongIntegerWithinFourDigits() {
-        #expect(AnnotationStyle.normalizeWidthDraft("99999") == "9999")
+    @Test(arguments: ["99999", "19999", "10000"])
+    func widthDraftNeedingAFifthDigitIsRefused(_ draft: String) {
+        #expect(AnnotationStyle.normalizeWidthDraft(draft) == nil)
+    }
+
+    @Test func widthDraftDropsLeadingZerosBeforeCountingDigits() {
+        #expect(AnnotationStyle.normalizeWidthDraft("00012") == "12")
+        #expect(AnnotationStyle.normalizeWidthDraft("0000") == "0")
+    }
+
+    @Test func fullWidthDigitsFromAnInputMethodAreDigits() {
+        #expect(AnnotationStyle.normalizeWidthDraft("\u{FF11}\u{FF12}") == "12")
+        #expect(AnnotationStyle.parseWidth("\u{FF18}") == 8)
     }
 
     @Test(arguments: ["1234.5", "1234x", "1234 5"])
     func invalidWidthDraftNeverBecomesAValidInteger(_ draft: String) {
-        #expect(AnnotationStyle.parseWidth(AnnotationStyle.normalizeWidthDraft(draft)) == nil)
+        #expect(AnnotationStyle.parseWidth(AnnotationStyle.normalizeWidthDraft(draft) ?? "") == nil)
     }
 
     @Test(arguments: Annotation.Kind.styleOrder)
@@ -94,7 +105,7 @@ struct AnnotationStyleTests {
                                AnnotationStyle(width: 16, color: .red),
                                AnnotationStyle(width: 16, color: .green)].enumerated() {
             let y = CGFloat(index + 1) / 8
-            history.begin(kind, at: CGPoint(x: 0.125, y: y), style: style, pixelWidth: 1024)
+            history.begin(kind, at: CGPoint(x: 0.125, y: y), style: style, viewWidth: 1024)
             history.end(at: CGPoint(x: 0.5, y: y + 0.0625))
         }
 
@@ -152,7 +163,7 @@ struct AnnotationStyleTests {
                       into history: inout AnnotationHistory, shapeHeight: CGFloat) {
         let bottom = kind == .rectangle || kind == .ellipse ? y + shapeHeight : y
         history.begin(kind, at: ImageFit.unitPoint(CGPoint(x: 240, y: y), in: sourceImage),
-                      style: style, pixelWidth: sourceImage.width)
+                      style: style, viewWidth: sourceImage.width)
         history.end(at: ImageFit.unitPoint(CGPoint(x: 1060, y: bottom), in: sourceImage))
     }
 

@@ -10,7 +10,8 @@ What changed in each release, from a user's side. The commit log has the rest.
   the Quick Actions dial or the editor slider to adjust width for the current
   screenshot. Opening the editor from Quick Actions keeps the selected tool
   and each tool's temporary width and color. New captures use Screenshot settings.
-
+  Widths are in screen points, so a stroke looks the same on Retina and
+  standard displays.
 - **Quick Actions for window and full-screen screenshots.** Annotate, copy, or
   save the whole capture at its original pixel size. Full-screen capture uses
   the display under the pointer.

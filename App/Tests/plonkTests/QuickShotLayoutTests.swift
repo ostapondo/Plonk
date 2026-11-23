@@ -94,10 +94,56 @@ struct QuickShotLayoutTests {
         #expect(placement.help.maxY < placement.panel.minY)
     }
 
-    private func stylePanel(anchor: CGRect, toolbar: CGRect) -> QuickShotLayout.StylePlacement {
+    @Test func stylePanelStaysOffTheSelectionWhenNeitherAboveNorBelowFits() {
+        let selection = CGRect(x: area.minX + 40, y: area.minY + 200, width: 300, height: 200)
+        let bar = CGRect(x: selection.minX, y: selection.maxY + 16, width: 300, height: toolbar.height)
+        let anchor = CGRect(x: bar.minX, y: bar.minY, width: 34, height: bar.height)
+        let placement = stylePanel(anchor: anchor, toolbar: bar, avoiding: [selection])
+        #expect(!placement.panel.intersects(selection))
+        #expect(area.contains(placement.panel))
+        #expect(placement.beside)
+        #expect(placement.panel.minX > bar.maxX)
+    }
+
+    @Test func stylePanelGoesAboveAToolbarThatSitsOverTheSelection() {
+        let selection = CGRect(x: area.minX + 40, y: area.minY + 150, width: 300, height: 300)
+        let bar = CGRect(x: selection.minX, y: selection.minY - 16 - toolbar.height,
+                         width: toolbar.width, height: toolbar.height)
+        let anchor = CGRect(x: bar.minX, y: bar.minY, width: 34, height: bar.height)
+        let placement = stylePanel(anchor: anchor, toolbar: bar, avoiding: [selection])
+        #expect(placement.above)
+        #expect(!placement.panel.intersects(selection))
+    }
+
+    @Test func stylePanelPicksTheLeastCoveringSpotWhenNothingIsClear() {
+        // A toolbar wider than the screen leaves no room beside it, nothing fits under it,
+        // and the selection reaches to just over it: every spot on screen touches the selection.
+        let bar = CGRect(x: area.minX, y: area.maxY - 60, width: area.width, height: toolbar.height)
+        let selection = CGRect(x: area.minX, y: area.minY + 40, width: area.width, height: bar.minY - 20 - area.minY - 40)
+        let anchor = CGRect(x: bar.minX, y: bar.minY, width: 34, height: bar.height)
+        let placement = stylePanel(anchor: anchor, toolbar: bar, avoiding: [selection])
+        #expect(area.contains(placement.panel))
+        #expect(placement.above)
+        #expect(selection.intersection(placement.panel).height < placement.panel.height)
+    }
+
+    @Test func fixedLayoutLeavesRoomForTheStylePanelUnderTheImage() {
+        let area = CGRect(x: 0, y: 0, width: 800, height: 900)
+        let reserve = QuickShotStyleControls.size.height
+        let layout = QuickShotLayout.fixed(image: CGSize(width: 400, height: 1200), toolbar: toolbar,
+                                           reserve: reserve, area: area)
+        let anchor = CGRect(x: layout.toolbar.minX, y: layout.toolbar.minY, width: 34, height: toolbar.height)
+        let placement = stylePanel(anchor: anchor, toolbar: layout.toolbar, avoiding: [layout.image], in: area)
+        #expect(!placement.panel.intersects(layout.image))
+        #expect(placement.panel.minY > layout.toolbar.maxY)
+        #expect(area.contains(placement.panel))
+    }
+
+    private func stylePanel(anchor: CGRect, toolbar: CGRect, avoiding obstacles: [CGRect] = [],
+                            in area: CGRect? = nil) -> QuickShotLayout.StylePlacement {
         QuickShotLayout.stylePanel(size: QuickShotStyleControls.size,
                                   help: CGSize(width: QuickShotStyleControls.helpWidth,
                                                height: QuickShotStyleControls.helpHeight),
-                                  anchor: anchor, toolbar: toolbar, avoiding: nil, area: area)
+                                  anchor: anchor, toolbar: toolbar, avoiding: obstacles, area: area ?? self.area)
     }
 }

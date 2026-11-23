@@ -14,10 +14,10 @@ final class ShotAnnotationState: ObservableObject {
     }
 
     @discardableResult
-    func beginMark(in history: inout AnnotationHistory, at point: CGPoint, pixelWidth: CGFloat) -> Bool {
+    func beginMark(in history: inout AnnotationHistory, at point: CGPoint, viewWidth: CGFloat) -> Bool {
         guard let tool else { return false }
         let style = styles[keyPath: AnnotationStyles.path(for: tool)]
-        history.begin(tool, at: point, style: style, pixelWidth: pixelWidth)
+        history.begin(tool, at: point, style: style, viewWidth: viewWidth)
         return true
     }
 }

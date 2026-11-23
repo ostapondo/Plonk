@@ -601,20 +601,6 @@
 
 /* The screenshot editor. */
 "shotEditor.width" = "Width";
-"annotation.defaultStyles" = "Default Styles";
-"annotation.colors" = "Annotation Colors";
-"annotation.pixelUnit" = "px";
-"annotation.widthValue %lld" = "%lld px";
-"annotation.widthRange %lld %lld" = "Enter a whole number from %lld to %lld px.";
-"annotation.widthDragHelp" = "Drag right or down to increase, left or up to decrease.";
-"annotation.red" = "Red";
-"annotation.orange" = "Orange";
-"annotation.yellow" = "Yellow";
-"annotation.green" = "Green";
-"annotation.blue" = "Blue";
-"annotation.purple" = "Purple";
-"annotation.black" = "Black";
-"annotation.white" = "White";
 "shotEditor.undo" = "Undo";
 "shotEditor.redo" = "Redo";
 "shotEditor.saveAs" = "Save As";
@@ -627,6 +613,22 @@
 "tool.rectangle" = "Rectangle";
 "tool.ellipse" = "Ellipse";
 "tool.highlight" = "Highlight";
+
+/* Annotation styles: each tool's default colour and width. */
+"annotation.defaultStyles" = "Default Styles";
+"annotation.colors" = "Annotation Colors";
+"annotation.widthUnit" = "pt";
+"annotation.widthValue %lld" = "%lld pt";
+"annotation.widthRange %lld %lld" = "Enter a whole number from %lld to %lld pt.";
+"annotation.widthDragHelp" = "Drag right or down to increase, left or up to decrease.";
+"annotation.red" = "Red";
+"annotation.orange" = "Orange";
+"annotation.yellow" = "Yellow";
+"annotation.green" = "Green";
+"annotation.blue" = "Blue";
+"annotation.purple" = "Purple";
+"annotation.black" = "Black";
+"annotation.white" = "White";
 
 /* The shortcut guide, read off whatever app is in front. */
 "guide.filter" = "Filter";

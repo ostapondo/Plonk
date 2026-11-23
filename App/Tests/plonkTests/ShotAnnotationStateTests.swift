@@ -24,7 +24,7 @@ struct ShotAnnotationStateTests {
         capture.tool = .rectangle
 
         var history = AnnotationHistory()
-        capture.beginMark(in: &history, at: .zero, pixelWidth: 1000)
+        capture.beginMark(in: &history, at: .zero, viewWidth: 1000)
 
         let mark = try #require(history.live)
         #expect(mark.colorIndex == AnnotationColor.green.index)
@@ -66,7 +66,7 @@ struct ShotAnnotationStateTests {
 
         capture.enterEditor()
         var history = AnnotationHistory()
-        capture.beginMark(in: &history, at: .zero, pixelWidth: 500)
+        capture.beginMark(in: &history, at: .zero, viewWidth: 500)
 
         let mark = try #require(history.live)
         #expect(mark.colorIndex == AnnotationColor.green.index)

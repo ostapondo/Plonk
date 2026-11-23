@@ -3,6 +3,13 @@ import SwiftUI
 enum AnnotationColor: String, Codable, CaseIterable {
     case red, orange, yellow, green, blue, purple, black, white
 
+    /// An unknown name falls back to red instead of failing the whole config, so a colour
+    /// a newer release added, or a hand edit, cannot send the user back to defaults.
+    init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer().decode(String.self)
+        self = Self(rawValue: value.lowercased()) ?? .red
+    }
+
     var index: Int { Self.allCases.firstIndex(of: self) ?? 0 }
 
     var paint: Color {

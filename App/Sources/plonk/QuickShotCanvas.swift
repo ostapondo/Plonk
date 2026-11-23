@@ -152,7 +152,7 @@ final class QuickShotCanvas: NSView {
 
     private func beginMark(at point: CGPoint) {
         let start = ImageFit.unitPoint(point, in: backdrop.frame)
-        guard annotation.beginMark(in: &history, at: start, pixelWidth: bitmap.size.width) else { return }
+        guard annotation.beginMark(in: &history, at: start, viewWidth: backdrop.frame.width) else { return }
         gesture = .mark
     }
 
@@ -223,7 +223,8 @@ final class QuickShotCanvas: NSView {
         if fixed {
             dimensions.isHidden = true
             let barSize = toolbar.fittedSize(availableWidth: safeArea.width - 20)
-            let layout = QuickShotLayout.fixed(image: bitmap.displaySize, toolbar: barSize, area: safeArea)
+            let layout = QuickShotLayout.fixed(image: bitmap.displaySize, toolbar: barSize,
+                                                 reserve: QuickShotStyleControls.size.height, area: safeArea)
             backdrop.frame = layout.image
             markup.frame = layout.image
             markup.show(history, clippedTo: markup.bounds)
@@ -256,8 +257,10 @@ final class QuickShotCanvas: NSView {
         guard !toolbar.isHidden, let tool = annotation.tool, let anchor = toolbar.anchor(for: tool) else {
             return stylePanel.dismiss()
         }
+        var obstacles = [fixed ? backdrop.frame : selection.map(geometry.viewRect) ?? .null]
+        if !dimensions.isHidden { obstacles.append(dimensions.frame) }
         stylePanel.show(tool, annotation: annotation, anchor: anchor, toolbar: toolbar.frame,
-                        avoiding: dimensions.isHidden ? nil : dimensions.frame, area: safeArea)
+                        avoiding: obstacles.filter { !$0.isNull }, area: safeArea)
     }
 
     private func perform(_ action: QuickShotToolbar.Action) {

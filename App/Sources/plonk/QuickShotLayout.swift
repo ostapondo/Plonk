@@ -6,10 +6,15 @@ enum QuickShotLayout {
         let help: CGRect
         let anchorX: CGFloat
         let above: Bool
+        /// Set when the panel sits level with the toolbar, so no pointer is drawn.
+        var beside = false
     }
 
+    /// The panel goes under the toolbar, over it, then level with it on either side, taking
+    /// the first spot that stays on screen and off every obstacle: the selection is where
+    /// marks start, so a panel over it would swallow the clicks.
     static func stylePanel(size: CGSize, help: CGSize, anchor: CGRect, toolbar: CGRect,
-                           avoiding obstacle: CGRect?, area: CGRect) -> StylePlacement {
+                           avoiding obstacles: [CGRect], area: CGRect) -> StylePlacement {
         let area = area.insetBy(dx: 5, dy: 5)
         let gap: CGFloat = 12
         func fittingX(_ x: CGFloat, width: CGFloat) -> CGFloat {
@@ -20,10 +25,27 @@ enum QuickShotLayout {
         let below = CGRect(x: fittingX(x, width: size.width), y: toolbar.maxY + gap,
                            width: size.width, height: size.height)
         let above = below.offsetBy(dx: 0, dy: toolbar.minY - gap - size.height - below.minY)
-        let fitsAbove = above.minY >= area.minY && obstacle?.intersects(above) != true
-        let needsAbove = below.maxY > area.maxY || obstacle?.intersects(below) == true
-        let useAbove = needsAbove && (fitsAbove || (below.maxY > area.maxY && above.minY >= area.minY))
-        let panel = useAbove ? above : below
+        let besideY = toolbar.midY - size.height / 2
+        let right = CGRect(x: toolbar.maxX + gap, y: besideY, width: size.width, height: size.height)
+        let left = right.offsetBy(dx: toolbar.minX - gap - size.width - right.minX, dy: 0)
+        func onScreen(_ rect: CGRect) -> Bool {
+            rect.minX >= area.minX && rect.maxX <= area.maxX && rect.minY >= area.minY && rect.maxY <= area.maxY
+        }
+        func clear(_ rect: CGRect) -> Bool { onScreen(rect) && !obstacles.contains { $0.intersects(rect) } }
+        func overlap(_ rect: CGRect) -> CGFloat {
+            obstacles.reduce(0) { total, obstacle in
+                let shared = obstacle.intersection(rect)
+                return total + (shared.isNull ? 0 : shared.width * shared.height)
+            }
+        }
+        let candidates = [below, above, right, left]
+        // With a selection nearly the height of the screen every spot touches it; then the
+        // panel takes the one that covers least of it.
+        let panel = candidates.first(where: clear)
+            ?? candidates.filter(onScreen).min { overlap($0) < overlap($1) }
+            ?? (below.maxY > area.maxY && above.minY >= area.minY ? above : below)
+        let useAbove = panel == above
+        let beside = panel == right || panel == left
         let helpWidth = min(help.width, area.width)
         let helpBelow = panel.maxY + 3
         let helpAbove = panel.minY - help.height - 3
@@ -35,7 +57,7 @@ enum QuickShotLayout {
                               help: CGRect(x: fittingX(panel.midX - helpWidth / 2, width: helpWidth),
                                            y: helpY, width: helpWidth, height: help.height),
                               anchorX: anchor.midX.clamped(to: (panel.minX + 16)...(panel.maxX - 16)),
-                              above: useAbove)
+                              above: useAbove, beside: beside)
     }
 
     static func toolbar(dividers: [Bool], availableWidth: CGFloat) -> (size: CGSize, frames: [CGRect]) {
@@ -62,12 +84,16 @@ enum QuickShotLayout {
         return (CGSize(width: right + inset, height: y + buttonHeight + padding), frames)
     }
 
-    static func fixed(image: CGSize, toolbar: CGSize, area: CGRect) -> (image: CGRect, toolbar: CGRect) {
+    /// `reserve` is kept free under the toolbar for the style panel, so picking a tool never
+    /// puts the panel over the image.
+    static func fixed(image: CGSize, toolbar: CGSize, reserve: CGFloat = 0,
+                      area: CGRect) -> (image: CGRect, toolbar: CGRect) {
         let area = area.insetBy(dx: 10, dy: 10)
         let gap: CGFloat = 12
-        let scale = min(1, area.width / image.width, max(1, area.height - toolbar.height - gap) / image.height)
+        let below = gap + toolbar.height + (reserve > 0 ? gap + reserve : 0)
+        let scale = min(1, area.width / image.width, max(1, area.height - below) / image.height)
         let size = CGSize(width: image.width * scale, height: image.height * scale)
-        let top = area.midY - (size.height + gap + toolbar.height) / 2
+        let top = area.midY - (size.height + below) / 2
         return (CGRect(x: area.midX - size.width / 2, y: top, width: size.width, height: size.height),
                 CGRect(x: area.midX - toolbar.width / 2, y: top + size.height + gap,
                        width: toolbar.width, height: toolbar.height))

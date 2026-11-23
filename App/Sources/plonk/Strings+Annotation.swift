@@ -3,7 +3,7 @@ import Foundation
 extension LocalizedStringResource {
     static let annotationDefaultStyles = Self.key("annotation.defaultStyles")
     static let annotationColors = Self.key("annotation.colors")
-    static let annotationPixelUnit = Self.key("annotation.pixelUnit")
+    static let annotationWidthUnit = Self.key("annotation.widthUnit")
     static let annotationWidthDragHelp = Self.key("annotation.widthDragHelp")
 
     static func annotationWidthValue(_ width: Int) -> Self {

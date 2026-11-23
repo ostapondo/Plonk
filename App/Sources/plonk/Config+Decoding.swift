@@ -30,12 +30,13 @@ extension Config {
 
     /// `over` wins, key by key, recursing where both sides are objects. The
     /// recursion is what lets a file name one field of `appearance` without
-    /// losing the rest of it.
+    /// losing the rest of it. Where the default is an object and the file has
+    /// anything else, the default stays: that value could only fail to decode,
+    /// and failing takes the whole file with it.
     private static func merging(_ base: [String: Any], under over: [String: Any]) -> [String: Any] {
         base.merging(over) { mine, theirs in
-            guard let mine = mine as? [String: Any], let theirs = theirs as? [String: Any] else {
-                return theirs
-            }
+            guard let mine = mine as? [String: Any] else { return theirs }
+            guard let theirs = theirs as? [String: Any] else { return mine }
             return merging(mine, under: theirs)
         }
     }
