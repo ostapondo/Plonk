@@ -3,8 +3,10 @@ import AppKit
 @MainActor
 final class QuickShotSession: NSObject {
     private let previousApp: NSRunningApplication?
+    private let model: AppModel
     private let folder: () -> String
-    private let onEditor: (NSImage, AnnotationHistory) -> Void
+    private let annotation: ShotAnnotationState
+    private let onEditor: (NSImage, AnnotationHistory, ShotAnnotationState) -> Void
     private let onFinish: (Bool, String?) -> Void
     private var onClose: (() -> Void)?
     private var windows: [QuickShotWindow] = []
@@ -13,9 +15,13 @@ final class QuickShotSession: NSObject {
     private var picker: Process?
     private var pickLocation: CGPoint?
 
-    init(previousApp: NSRunningApplication?, folder: @escaping () -> String, onClose: @escaping () -> Void,
-         onEditor: @escaping (NSImage, AnnotationHistory) -> Void, onFinish: @escaping (Bool, String?) -> Void) {
+    init(previousApp: NSRunningApplication?, model: AppModel, folder: @escaping () -> String,
+         onClose: @escaping () -> Void,
+         onEditor: @escaping (NSImage, AnnotationHistory, ShotAnnotationState) -> Void,
+         onFinish: @escaping (Bool, String?) -> Void) {
         self.previousApp = previousApp
+        self.model = model
+        annotation = ShotAnnotationState(defaults: model.config.shotAnnotationStyles)
         self.folder = folder
         self.onClose = onClose
         self.onEditor = onEditor
@@ -90,7 +96,8 @@ final class QuickShotSession: NSObject {
     }
 
     private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) {
-        let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed)
+        let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed, model: model,
+                                     annotation: annotation)
         window.canvas.onCancel = { [weak self] in self?.cancel() }
         window.canvas.onSelect = { [weak self, weak window] in
             self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
@@ -129,7 +136,7 @@ final class QuickShotSession: NSObject {
         switch action {
         case .editor:
             close(restoreFocus: false)
-            onEditor(crop.image, crop.history)
+            onEditor(crop.image, crop.history, annotation)
         case .copy:
             guard let image = render(crop) else { return }
             guard ScreenshotManager.copyToClipboard(image) else {

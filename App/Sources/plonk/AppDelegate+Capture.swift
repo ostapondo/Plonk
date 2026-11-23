@@ -82,7 +82,7 @@ extension AppDelegate {
         hotkeys.setSuspended(true)
         HUD.shared.dismiss()
         let hidden = hideOwnWindows()
-        let session = QuickShotSession(previousApp: previousApp, folder: { [weak self] in
+        let session = QuickShotSession(previousApp: previousApp, model: model, folder: { [weak self] in
             self?.store.config.shotFolder ?? Config().shotFolder
         }, onClose: { [weak self, weak previousWindow] in
             guard let self else { return }
@@ -93,8 +93,8 @@ extension AppDelegate {
             }
             hotkeys.setSuspended(false)
             refreshHotkeyModel()
-        }, onEditor: { [weak self] image, history in
-            self?.presenter.showShotEditor(image: image, history: history)
+        }, onEditor: { [weak self] image, history, annotation in
+            self?.presenter.showShotEditor(image: image, history: history, annotation: annotation)
         }, onFinish: { [weak self] copied, path in
             self?.finishShot(copied: copied, path: path)
         })

@@ -17,13 +17,15 @@ struct Annotation: Identifiable, Equatable {
 
         var symbol: String {
             switch self {
-            case .pen: return "scribble"
+            case .pen: return "pencil.tip"
             case .arrow: return "arrow.up.right"
             case .rectangle: return "rectangle"
             case .ellipse: return "circle"
             case .highlight: return "highlighter"
             }
         }
+
+        var editorSymbol: String { self == .pen ? "scribble" : symbol }
 
         var title: LocalizedStringResource {
             switch self {
@@ -46,8 +48,7 @@ struct Annotation: Identifiable, Equatable {
     var width: Double
     var arrowHeadWidth: Double = 0.012
 
-    static let palette: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .black, .white]
-    static let colorNames = ["red", "orange", "yellow", "green", "blue", "purple", "black", "white"]
+    static let palette = AnnotationColor.allCases.map(\.paint)
 
     var color: Color { Self.palette[colorIndex.clamped(to: 0...(Self.palette.count - 1))] }
 
@@ -84,11 +85,13 @@ extension Annotation {
         guard points.count == rawPoints.count, points.count >= 2 else { return nil }
 
         let width = (dict["width"] as? NSNumber)?.doubleValue ?? 0.004
+        // The API's highlight width is one fifth of the rendered band.
+        let widthScale: Double = kind == .highlight ? 5 : 1
         self.init(kind: kind,
                   points: kind.tracksEveryPoint ? points : [points[0], points[points.count - 1]],
                   colorIndex: (dict["color"] as? String)
-                      .flatMap { Self.colorNames.firstIndex(of: $0.lowercased()) } ?? 0,
-                  width: width.clamped(to: 0.0005...0.1))
+                      .flatMap { AnnotationColor(rawValue: $0.lowercased()) }?.index ?? 0,
+                  width: width.clamped(to: 0.0005...0.1) * widthScale)
     }
 }
 
@@ -129,7 +132,7 @@ enum AnnotationRenderer {
                 context.stroke(
                     path,
                     with: .color(color.opacity(isHighlight ? 0.35 : 1)),
-                    style: StrokeStyle(lineWidth: isHighlight ? width * 5 : width, lineCap: .round, lineJoin: .round)
+                    style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round)
                 )
             case .rectangle:
                 context.stroke(Path(annotation.boundingRect(in: size)), with: .color(color),

@@ -8,6 +8,10 @@ struct AnnotationHistory {
     var canUndo: Bool { !annotations.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
 
+    mutating func begin(_ kind: Annotation.Kind, at point: CGPoint, style: AnnotationStyle, pixelWidth: CGFloat) {
+        begin(kind, at: point, color: style.color.index, width: Double(style.width) / Double(max(pixelWidth, 1)))
+    }
+
     mutating func begin(_ kind: Annotation.Kind, at point: CGPoint, color: Int, width: Double) {
         live = Annotation(kind: kind, points: [point], colorIndex: color, width: width)
     }

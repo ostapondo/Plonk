@@ -199,7 +199,7 @@ final class WindowPresenter: NSObject {
         workspaceLaunch?.orderOut(nil)
     }
 
-    func showShotEditor(image: NSImage, history: AnnotationHistory = .init()) {
+    func showShotEditor(image: NSImage, history: AnnotationHistory = .init(), annotation: ShotAnnotationState? = nil) {
         shotEditor?.close()
         let window = NSWindow(
             contentRect: .zero,
@@ -208,22 +208,18 @@ final class WindowPresenter: NSObject {
         )
         window.title = String(localized: .windowScreenshot)
         window.isReleasedWhenClosed = false
+        window.delegate = self
         window.contentViewController = NSHostingController(
-            rootView: ShotEditorView(image: image, history: history, defaultFolder: shotFolder()) { [weak self] copied, path in
-                self?.closeShotEditor()
+            rootView: ShotEditorView(model: model, image: image, history: history, annotation: annotation,
+                                     defaultFolder: shotFolder()) { [weak self] copied, path in
+                self?.shotEditor?.close()
                 self?.onShotFinished?(copied, path)
             }
         )
         window.setContentSize(NSSize(width: image.size.width.clamped(to: 700...1400),
                                      height: (image.size.height + 110).clamped(to: 520...900)))
-        window.center()
         shotEditor = window
-        bringForward(window)
-    }
-
-    func closeShotEditor() {
-        shotEditor?.close()
-        shotEditor = nil
+        present(window)
     }
 
     /// `unified` runs the content up under the title bar, so the sidebar and
@@ -273,8 +269,9 @@ final class WindowPresenter: NSObject {
 
 extension WindowPresenter: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        guard (notification.object as? NSWindow) === zonePicker else { return }
-        onZonePickerClosed?()
+        guard let window = notification.object as? NSWindow else { return }
+        if window === shotEditor { shotEditor = nil }
+        if window === zonePicker { onZonePickerClosed?() }
     }
 
     func windowDidResignKey(_ notification: Notification) {

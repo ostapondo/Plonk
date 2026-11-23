@@ -2,6 +2,7 @@ import CoreGraphics
 import Testing
 @testable import plonk
 
+@MainActor
 struct QuickShotLayoutTests {
     private let area = CGRect(x: 14, y: 24, width: 700, height: 500)
     private let dimensions = CGSize(width: 107, height: 29)
@@ -68,5 +69,35 @@ struct QuickShotLayoutTests {
         #expect(Set(layout.frames.map(\.minY)).count > 1)
         let bounds = CGRect(origin: .zero, size: layout.size)
         #expect(layout.frames.allSatisfy { bounds.contains($0) })
+    }
+
+    @Test(arguments: [false, true])
+    func stylePanelAndHelpStayVisibleAtEitherScreenEdge(_ trailing: Bool) {
+        let bar = CGRect(x: trailing ? area.maxX - toolbar.width : area.minX,
+                         y: area.minY + 70, width: toolbar.width, height: toolbar.height)
+        let anchor = CGRect(x: trailing ? bar.maxX - 34 : bar.minX,
+                            y: bar.minY, width: 34, height: bar.height)
+        let placement = stylePanel(anchor: anchor, toolbar: bar)
+        #expect(area.contains(placement.panel))
+        #expect(area.contains(placement.help))
+        #expect(placement.panel.minY > bar.maxY)
+        #expect((anchor.minX...anchor.maxX).contains(placement.anchorX))
+    }
+
+    @Test func stylePanelFlipsAboveTheToolbarNearTheBottom() {
+        let bar = CGRect(x: area.minX + 100, y: area.maxY - toolbar.height - 8,
+                         width: toolbar.width, height: toolbar.height)
+        let anchor = CGRect(x: bar.midX - 17, y: bar.minY, width: 34, height: bar.height)
+        let placement = stylePanel(anchor: anchor, toolbar: bar)
+        #expect(placement.above)
+        #expect(placement.panel.maxY < bar.minY)
+        #expect(placement.help.maxY < placement.panel.minY)
+    }
+
+    private func stylePanel(anchor: CGRect, toolbar: CGRect) -> QuickShotLayout.StylePlacement {
+        QuickShotLayout.stylePanel(size: QuickShotStyleControls.size,
+                                  help: CGSize(width: QuickShotStyleControls.helpWidth,
+                                               height: QuickShotStyleControls.helpHeight),
+                                  anchor: anchor, toolbar: toolbar, avoiding: nil, area: area)
     }
 }

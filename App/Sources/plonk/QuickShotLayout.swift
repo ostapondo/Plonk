@@ -1,6 +1,43 @@
 import CoreGraphics
 
 enum QuickShotLayout {
+    struct StylePlacement: Equatable {
+        let panel: CGRect
+        let help: CGRect
+        let anchorX: CGFloat
+        let above: Bool
+    }
+
+    static func stylePanel(size: CGSize, help: CGSize, anchor: CGRect, toolbar: CGRect,
+                           avoiding obstacle: CGRect?, area: CGRect) -> StylePlacement {
+        let area = area.insetBy(dx: 5, dy: 5)
+        let gap: CGFloat = 12
+        func fittingX(_ x: CGFloat, width: CGFloat) -> CGFloat {
+            x.clamped(to: area.minX...max(area.minX, area.maxX - width))
+        }
+        let x = (anchor.midX - size.width / 2)
+            .clamped(to: toolbar.minX...max(toolbar.minX, toolbar.maxX - size.width))
+        let below = CGRect(x: fittingX(x, width: size.width), y: toolbar.maxY + gap,
+                           width: size.width, height: size.height)
+        let above = below.offsetBy(dx: 0, dy: toolbar.minY - gap - size.height - below.minY)
+        let fitsAbove = above.minY >= area.minY && obstacle?.intersects(above) != true
+        let needsAbove = below.maxY > area.maxY || obstacle?.intersects(below) == true
+        let useAbove = needsAbove && (fitsAbove || (below.maxY > area.maxY && above.minY >= area.minY))
+        let panel = useAbove ? above : below
+        let helpWidth = min(help.width, area.width)
+        let helpBelow = panel.maxY + 3
+        let helpAbove = panel.minY - help.height - 3
+        let preferredY = useAbove ? helpAbove : helpBelow
+        let alternateY = useAbove ? helpBelow : helpAbove
+        let helpY = (preferredY >= area.minY && preferredY + help.height <= area.maxY ? preferredY : alternateY)
+            .clamped(to: area.minY...max(area.minY, area.maxY - help.height))
+        return StylePlacement(panel: panel,
+                              help: CGRect(x: fittingX(panel.midX - helpWidth / 2, width: helpWidth),
+                                           y: helpY, width: helpWidth, height: help.height),
+                              anchorX: anchor.midX.clamped(to: (panel.minX + 16)...(panel.maxX - 16)),
+                              above: useAbove)
+    }
+
     static func toolbar(dividers: [Bool], availableWidth: CGFloat) -> (size: CGSize, frames: [CGRect]) {
         let inset: CGFloat = 7
         let padding: CGFloat = 5
