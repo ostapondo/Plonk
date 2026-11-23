@@ -12,6 +12,10 @@ final class QuickShotToolbar: NSView {
     private var tools: [(QuickShotButton, Annotation.Kind?)] = []
     private let undo: QuickShotButton
     private let redo: QuickShotButton
+    /// Shared with the style panel, which reads as part of the toolbar.
+    static let surface = NSColor(srgbRed: 41 / 255, green: 45 / 255, blue: 52 / 255, alpha: 1)
+    static let edge = NSColor.white.withAlphaComponent(0.13)
+
     var accent = NSColor.controlAccentColor {
         didSet { tintTools() }
     }
@@ -21,10 +25,10 @@ final class QuickShotToolbar: NSView {
         redo = QuickShotButton(symbol: "arrow.uturn.forward", title: .shotEditorRedo) { perform(.redo) }
         super.init(frame: .zero)
         wantsLayer = true
-        layer?.backgroundColor = NSColor(srgbRed: 41 / 255, green: 45 / 255, blue: 52 / 255, alpha: 1).cgColor
+        layer?.backgroundColor = Self.surface.cgColor
         layer?.cornerRadius = 21
         layer?.borderWidth = 1
-        layer?.borderColor = NSColor.white.withAlphaComponent(0.13).cgColor
+        layer?.borderColor = Self.edge.cgColor
         layer?.shadowColor = NSColor.black.cgColor
         layer?.shadowOpacity = 0.4
         layer?.shadowRadius = 8

@@ -7,7 +7,8 @@ struct QuickShotFixedTests {
     @Test func scaledImageAndToolbarBothFitInTheVisibleArea() {
         let area = CGRect(x: 0, y: 24, width: 400, height: 276)
         let original = CGSize(width: 602, height: 402)
-        let layout = QuickShotLayout.fixed(image: original, toolbar: CGSize(width: 260, height: 42), area: area)
+        let layout = QuickShotLayout.fixed(image: original, toolbar: CGSize(width: 260, height: 42),
+                                           reserve: QuickShotStyleControls.size.height, area: area)
 
         #expect(area.contains(layout.image))
         #expect(area.contains(layout.toolbar))
@@ -70,7 +71,7 @@ struct QuickShotFixedTests {
         let mark = try #require(output?.history.annotations.first)
         #expect(mark.kind == .rectangle)
         #expect(mark.colorIndex == AnnotationColor.green.index)
-        #expect(abs(mark.width * 1204 - 5) < 0.0001)
+        #expect(abs(mark.width * backdrop.frame.width - 5) < 0.0001)
     }
 
     private func makeCanvas(annotation: ShotAnnotationState? = nil) throws -> QuickShotCanvas {

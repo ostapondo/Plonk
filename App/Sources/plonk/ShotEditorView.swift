@@ -8,7 +8,6 @@ struct ShotEditorView: View {
     let image: NSImage
     let defaultFolder: String
     let onFinish: (_ copied: Bool, _ savedPath: String?) -> Void
-    private let pixelWidth: CGFloat
 
     @ObservedObject private var annotation: ShotAnnotationState
     @State private var history: AnnotationHistory
@@ -23,7 +22,6 @@ struct ShotEditorView: View {
         let annotation = annotation ?? ShotAnnotationState(defaults: model.config.shotAnnotationStyles)
         annotation.enterEditor()
         self.annotation = annotation
-        pixelWidth = image.size.width * ScreenshotManager.nativeScale(of: image)
         _history = State(initialValue: history)
     }
 
@@ -105,7 +103,7 @@ struct ShotEditorView: View {
                             if history.live == nil {
                                 annotation.beginMark(in: &history,
                                                      at: ImageFit.unitPoint(value.startLocation, in: fitted),
-                                                     pixelWidth: pixelWidth)
+                                                     viewWidth: fitted.width)
                             }
                             history.drag(to: ImageFit.unitPoint(value.location, in: fitted))
                         }

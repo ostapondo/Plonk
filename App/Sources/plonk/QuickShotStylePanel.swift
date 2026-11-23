@@ -7,11 +7,11 @@ final class QuickShotStylePanel: NSView {
     override var isFlipped: Bool { true }
 
     func show(_ kind: Annotation.Kind, annotation: ShotAnnotationState, anchor: CGRect, toolbar: CGRect,
-              avoiding obstacle: CGRect?, area: CGRect) {
+              avoiding obstacles: [CGRect], area: CGRect) {
         let position = QuickShotLayout.stylePanel(
             size: QuickShotStyleControls.size,
             help: CGSize(width: QuickShotStyleControls.helpWidth, height: QuickShotStyleControls.helpHeight),
-            anchor: anchor, toolbar: toolbar, avoiding: obstacle, area: area
+            anchor: anchor, toolbar: toolbar, avoiding: obstacles, area: area
         )
         guard position != placement || host?.rootView.kind != kind else { return }
         placement = position
@@ -81,7 +81,7 @@ final class QuickShotStylePanel: NSView {
             ZStack {
                 QuickShotStyleControls(kind: kind, style: $style, widthHovered: $widthHovered)
                     .position(x: position.panel.midX - origin.x, y: position.panel.midY - origin.y)
-                pointer
+                if !position.beside { pointer }
                 if widthHovered {
                     QuickShotStyleControls.widthHelp
                         .frame(maxWidth: position.help.width)

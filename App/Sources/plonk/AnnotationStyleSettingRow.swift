@@ -15,7 +15,7 @@ struct AnnotationStyleSettingRow: View {
                     AnnotationPalette(selection: $style.color)
                     HStack(spacing: 4) {
                         widthField.frame(width: 48, height: 22)
-                        Text(.annotationPixelUnit)
+                        Text(.annotationWidthUnit)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
