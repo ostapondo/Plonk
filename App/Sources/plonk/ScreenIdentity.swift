@@ -36,11 +36,6 @@ enum ScreenIdentity {
         return NSScreen.screens.firstIndex { $0.frame.contains(point) } ?? 0
     }
 
-    static func screen(at point: CGPoint) -> NSScreen? {
-        let screens = NSScreen.screens
-        return screens.first { $0.frame.contains(point) } ?? screens.first
-    }
-
     /// Every display attached now, by UUID: what a desk is keyed by.
     static func attachedDisplays() -> Set<String> {
         Set(NSScreen.screens.indices.compactMap(uuid(forIndex:)))

@@ -20,4 +20,11 @@ struct ShotAfterCaptureTests {
         let decoded = try Config.decode(JSONEncoder().encode(config))
         #expect(decoded.shotAfterCapture == .editor)
     }
+
+    @Test func quickActionsOnlyApplyToManualRegionCapture() {
+        #expect(ShotAfterCapture.quickActions.usesOverlay(for: .region))
+        #expect(!ShotAfterCapture.quickActions.usesOverlay(for: .window))
+        #expect(!ShotAfterCapture.quickActions.usesOverlay(for: .screen))
+        #expect(!ShotAfterCapture.editor.usesOverlay(for: .region))
+    }
 }

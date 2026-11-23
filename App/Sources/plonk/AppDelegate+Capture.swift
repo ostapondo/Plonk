@@ -61,19 +61,15 @@ extension AppDelegate {
     }
 
     func captureManually(_ mode: CaptureMode) {
-        guard quickShot == nil, captureDepth == 0 else { return }
-        let screen = mode == .screen ? ScreenIdentity.screen(at: NSEvent.mouseLocation) : nil
-        if mode == .screen, screen == nil { return HUD.shared.show(.shotCaptureFailed) }
-        if store.config.shotAfterCapture == .editor {
-            runCapture(mode, openEditor: true, screen: screen) { image in
-                if image == nil, mode == .screen { HUD.shared.show(.shotCaptureFailed) }
-            }
-        } else {
-            MainActor.assumeIsolated { beginQuickShot(mode, screen: screen) }
+        guard store.config.shotAfterCapture.usesOverlay(for: mode) else {
+            return runCapture(mode, openEditor: true)
         }
+        MainActor.assumeIsolated { beginQuickShot() }
     }
 
-    @MainActor private func beginQuickShot(_ mode: CaptureMode, screen: NSScreen?) {
+    @MainActor private func beginQuickShot() {
+        guard quickShot == nil, captureDepth == 0 else { return }
+
         let previousWindow = NSApp.keyWindow
         let previousApp = NSWorkspace.shared.frontmostApplication
         hotkeys.setSuspended(true)
@@ -96,22 +92,17 @@ extension AppDelegate {
             self?.finishShot(copied: copied, path: path)
         })
         quickShot = session
-        session.begin(mode, screen: screen)
+        session.begin()
     }
 
-    func runCapture(_ mode: CaptureMode, openEditor: Bool, screen: NSScreen? = nil,
-                    completion: @escaping (NSImage?) -> Void = { _ in }) {
+    func runCapture(_ mode: CaptureMode, openEditor: Bool,
+                            completion: @escaping (NSImage?) -> Void = { _ in }) {
         guard quickShot == nil else { return completion(nil) }
         let hidden = hideOwnWindows()
-        let finish: (NSImage?) -> Void = { [weak self] image in
+        ScreenshotManager.capture(mode) { [weak self] image in
             self?.showOwnWindows(hidden)
             if let image, openEditor { self?.presenter.showShotEditor(image: image) }
             completion(image)
-        }
-        if let screen {
-            ScreenshotManager.captureDisplay(screen, completion: finish)
-        } else {
-            ScreenshotManager.capture(mode, completion: finish)
         }
     }
 
