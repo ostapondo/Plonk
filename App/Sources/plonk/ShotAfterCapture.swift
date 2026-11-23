@@ -6,4 +6,8 @@ enum ShotAfterCapture: String, Codable {
         let value = try decoder.singleValueContainer().decode(String.self)
         self = Self(rawValue: value) ?? .quickActions
     }
+
+    func usesOverlay(for mode: CaptureMode) -> Bool {
+        self == .quickActions && mode == .region
+    }
 }

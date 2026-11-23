@@ -24,11 +24,9 @@ extension LocalizedStringResource {
     static let shotCaptureFailed = Self.key("shot.captureFailed")
     static let shotCopyFailed = Self.key("shot.copyFailed")
     static let shotSelectionMove = Self.key("shot.selectionMove")
-    static let shotSelectionWidth = Self.key("shot.selectionWidth")
-    static let shotSelectionHeight = Self.key("shot.selectionHeight")
-    static let shotSelectionPixels = Self.key("shot.selectionPixels")
-    static let shotSelectionLock = Self.key("shot.selectionLock")
-    static let shotSelectionInvalid = Self.key("shot.selectionInvalid")
+    static func shotSelectionSize(_ width: Int, _ height: Int) -> Self {
+        Self.key("shot.selectionSize \(String(width)) \(String(height))")
+    }
 
     static let mousePointerHelp = Self.key("mouse.pointerHelp")
     static let mouseClicks = Self.key("mouse.clicks")

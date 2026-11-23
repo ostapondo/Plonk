@@ -44,44 +44,6 @@ struct ShotSelectionTests {
                 == CGRect(x: 60, y: 80, width: 540, height: 100))
     }
 
-    @Test func typedHeightGrowsUpFromTheBottomLeft() {
-        let rect = CGRect(x: 100, y: 150, width: 200, height: 100)
-        #expect(geometry.resize(rect, dimension: 175, horizontal: false, ratio: nil)
-                == CGRect(x: 100, y: 75, width: 200, height: 175))
-    }
-
-    @Test func typedWidthAtTheEdgeMovesTheRectBackOntoTheDisplay() {
-        let rect = CGRect(x: 450, y: 150, width: 80, height: 100)
-        #expect(geometry.resize(rect, dimension: 200, horizontal: true, ratio: nil)
-                == CGRect(x: 400, y: 150, width: 200, height: 100))
-    }
-
-    @Test func lockedWidthKeepsTheRatio() {
-        let geometry = ShotSelection(pixels: CGSize(width: 1600, height: 1000), view: .zero)
-        let rect = CGRect(x: 100, y: 450, width: 400, height: 300)
-        #expect(geometry.resize(rect, dimension: 800, horizontal: true, ratio: 4.0 / 3)
-                == CGRect(x: 100, y: 150, width: 800, height: 600))
-    }
-
-    @Test func oversizedLockedInputFitsBothDimensions() {
-        let geometry = ShotSelection(pixels: CGSize(width: 1600, height: 1000), view: .zero)
-        let rect = CGRect(x: 800, y: 200, width: 300, height: 300)
-        #expect(geometry.resize(rect, dimension: 2000, horizontal: true, ratio: 1)
-                == CGRect(x: 600, y: 0, width: 1000, height: 1000))
-    }
-
-    @Test func oversizedUnlockedInputOnlyClampsTheEditedAxis() {
-        let rect = CGRect(x: 100, y: 100, width: 200, height: 150)
-        #expect(geometry.resize(rect, dimension: 2000, horizontal: true, ratio: nil)
-                == CGRect(x: 0, y: 100, width: 600, height: 150))
-    }
-
-    @Test func draggingALockedEdgeMaintainsTheRatio() {
-        let rect = CGRect(x: 60, y: 80, width: 200, height: 100)
-        #expect(geometry.resize(rect, handle: CGPoint(x: 1, y: 0), by: CGPoint(x: 100, y: 0), ratio: 2)
-                == CGRect(x: 60, y: 80, width: 300, height: 150))
-    }
-
     @Test func visibleCornerHandleHasPriorityOverTheEdge() {
         let rect = CGRect(x: 80, y: 80, width: 320, height: 180)
         #expect(geometry.handle(at: CGPoint(x: 55, y: 42), of: rect) == CGPoint(x: -1, y: -1))

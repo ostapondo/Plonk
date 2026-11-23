@@ -13,7 +13,7 @@ final class QuickShotToolbar: NSView {
     private let undo: QuickShotButton
     private let redo: QuickShotButton
 
-    init(fixed: Bool, perform: @escaping (Action) -> Void) {
+    init(perform: @escaping (Action) -> Void) {
         undo = QuickShotButton(symbol: "arrow.uturn.backward", title: .shotEditorUndo) { perform(.undo) }
         redo = QuickShotButton(symbol: "arrow.uturn.forward", title: .shotEditorRedo) { perform(.redo) }
         super.init(frame: .zero)
@@ -34,13 +34,10 @@ final class QuickShotToolbar: NSView {
             (.rectangle, "rectangle"), (.ellipse, "circle"), (.arrow, "arrow.up.right"),
             (.pen, "pencil.tip"), (.highlight, "highlighter"),
         ]
-        if !fixed {
-            let move = QuickShotButton(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: .shotSelectionMove) {
-                perform(.tool(nil))
-            }
-            tools.append((move, nil))
+        let move = QuickShotButton(symbol: "arrow.up.and.down.and.arrow.left.and.right", title: .shotSelectionMove) {
+            perform(.tool(nil))
         }
-        tools += choices.map { kind, symbol in
+        tools = [(move, nil)] + choices.map { kind, symbol in
             (QuickShotButton(symbol: symbol, title: kind.title) { perform(.tool(kind)) }, kind)
         }
         tools.forEach { addSubview($0.0) }

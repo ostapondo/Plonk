@@ -67,15 +67,11 @@
 "shot.afterEditor" = "打开编辑器";
 "shot.captureFailed" = "无法截取屏幕。请在系统设置中检查屏幕录制权限。";
 "shot.copyFailed" = "无法复制截图。";
-"shot.selectionWidth" = "选区宽度";
-"shot.selectionHeight" = "选区高度";
-"shot.selectionPixels" = "px";
-"shot.selectionLock" = "锁定宽高比";
-"shot.selectionInvalid" = "请输入大于零的整数像素值。";
+"shot.selectionSize %@ %@" = "%@ × %@ 像素";
 "shot.selectionMove" = "移动或调整大小";
 "shot.captureWindow" = "窗口截图";
 "shot.captureScreen" = "全屏截图";
-"shot.captureHelp" = "使用快捷操作调整区域选区，也可以标注、复制或保存截图。需要继续编辑时，可以打开编辑器。截图需要屏幕录制权限。";
+"shot.captureHelp" = "截取区域后，可以直接在屏幕上调整选区、标注、复制或保存。需要继续编辑时，可以打开编辑器。截图需要屏幕录制权限。";
 "shot.pinPart" = "置顶屏幕区域";
 "shot.pinPartHelp" = "划取一块区域将它置顶显示。实时模式会同步原区域的内容，可以在工作时查看构建日志、图表或通话。静态模式保留选取时的画面，无需持续捕捉，也适用于实时模式无法跟随的窗口。关闭面板即视为结束。";
 "shot.language" = "语言";

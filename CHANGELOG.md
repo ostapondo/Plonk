@@ -6,17 +6,12 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Added
 
-- **Quick Actions for window and full-screen screenshots.** Annotate, copy, or
-  save the whole capture at its original pixel size. Full-screen capture uses
-  the display under the pointer.
-
 - **Region screenshots keep the selection on screen.** Choose Open Editor to
   continue editing, or change After capture in Screenshot settings to open
   the editor immediately.
 - **Adjust the region before opening the editor.** Drag inside the blue
-  outline to move it, drag an edge or corner, or enter exact pixel dimensions.
-  The width and height fields fit four digits while editing. Click the padlock
-  between them to lock the aspect ratio and resize both dimensions together.
+  outline to move it, or drag an edge or corner to resize. The size badge
+  shows the crop's pixel dimensions as plain integers.
 - **Annotate region screenshots on screen.** Draw rectangles, ellipses,
   arrows, pen strokes, or highlights. Open the editor to keep working with
   editable marks and their undo and redo history. Tool buttons keep a uniform

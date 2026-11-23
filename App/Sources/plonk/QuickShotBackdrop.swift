@@ -3,18 +3,16 @@ import AppKit
 final class QuickShotBackdrop: NSView {
     static let accent = NSColor(srgbRed: 0, green: 119 / 255, blue: 246 / 255, alpha: 1)
     private let image: CGImage
-    private let fixed: Bool
     var selection: CGRect? { didSet { needsDisplay = true } }
 
-    init(image: CGImage, frame: CGRect, fixed: Bool) {
+    init(image: CGImage, frame: CGRect) {
         self.image = image
-        self.fixed = fixed
         super.init(frame: frame)
     }
 
     required init?(coder: NSCoder) { nil }
     override var isFlipped: Bool { true }
-    override var isOpaque: Bool { !fixed }
+    override var isOpaque: Bool { true }
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
@@ -26,7 +24,6 @@ final class QuickShotBackdrop: NSView {
         context.draw(image, in: bounds)
         context.restoreGState()
 
-        guard !fixed else { return }
         let shade = NSBezierPath(rect: bounds)
         if let selection { shade.appendRect(selection) }
         shade.windingRule = .evenOdd

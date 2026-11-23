@@ -25,17 +25,6 @@ enum QuickShotLayout {
         return (CGSize(width: right + inset, height: y + buttonHeight + padding), frames)
     }
 
-    static func fixed(image: CGSize, toolbar: CGSize, area: CGRect) -> (image: CGRect, toolbar: CGRect) {
-        let area = area.insetBy(dx: 10, dy: 10)
-        let gap: CGFloat = 12
-        let scale = min(1, area.width / image.width, max(1, area.height - toolbar.height - gap) / image.height)
-        let size = CGSize(width: image.width * scale, height: image.height * scale)
-        let top = area.midY - (size.height + gap + toolbar.height) / 2
-        return (CGRect(x: area.midX - size.width / 2, y: top, width: size.width, height: size.height),
-                CGRect(x: area.midX - toolbar.width / 2, y: top + size.height + gap,
-                       width: toolbar.width, height: toolbar.height))
-    }
-
     static func place(dimensions: CGSize, toolbar: CGSize, selection: CGRect, area: CGRect)
         -> (dimensions: CGRect, toolbar: CGRect) {
         let area = area.insetBy(dx: 5, dy: 5)

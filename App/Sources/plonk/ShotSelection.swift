@@ -34,43 +34,16 @@ struct ShotSelection {
                width: rect.width, height: rect.height)
     }
 
-    func resize(_ rect: CGRect, dimension: CGFloat, horizontal: Bool, ratio: CGFloat?) -> CGRect {
-        let size = resized(rect.size, dimension: dimension, horizontal: horizontal, ratio: ratio, limit: pixels)
-        // The bottom edge is maxY because bitmap coordinates grow downward.
-        let resized = CGRect(x: rect.minX, y: rect.maxY - size.height, width: size.width, height: size.height)
-        return move(resized, by: .zero)
-    }
-
-    func resize(_ rect: CGRect, handle: CGPoint, by delta: CGPoint, ratio: CGFloat? = nil) -> CGRect {
-        let fixedX = handle.x < 0 ? rect.maxX : rect.minX
-        let fixedY = handle.y < 0 ? rect.maxY : rect.minY
-        let limit = CGSize(width: handle.x < 0 ? fixedX : handle.x > 0 ? pixels.width - fixedX : pixels.width,
-                           height: handle.y < 0 ? fixedY : handle.y > 0 ? pixels.height - fixedY : pixels.height)
-        var size = CGSize(width: (rect.width + delta.x * handle.x).clamped(to: 1...limit.width),
-                          height: (rect.height + delta.y * handle.y).clamped(to: 1...limit.height))
-        if let ratio {
-            let horizontal = handle.y == 0 ||
-                (handle.x != 0 && abs(delta.x) / rect.width >= abs(delta.y) / rect.height)
-            size = resized(size, dimension: horizontal ? size.width : size.height,
-                           horizontal: horizontal, ratio: ratio, limit: limit)
+    func resize(_ rect: CGRect, handle: CGPoint, by delta: CGPoint) -> CGRect {
+        func edges(_ low: CGFloat, _ high: CGFloat, direction: CGFloat, offset: CGFloat, max: CGFloat)
+            -> (CGFloat, CGFloat) {
+            if direction < 0 { return ((low + offset).clamped(to: 0...(high - 1)), high) }
+            if direction > 0 { return (low, (high + offset).clamped(to: (low + 1)...max)) }
+            return (low, high)
         }
-        return move(CGRect(x: handle.x < 0 ? fixedX - size.width : fixedX,
-                           y: handle.y < 0 ? fixedY - size.height : fixedY,
-                           width: size.width, height: size.height), by: .zero)
-    }
-
-    private func resized(_ size: CGSize, dimension: CGFloat, horizontal: Bool,
-                         ratio: CGFloat?, limit: CGSize) -> CGSize {
-        var width = horizontal ? dimension : size.width
-        var height = horizontal ? size.height : dimension
-        if let ratio {
-            if horizontal { height = width / ratio } else { width = height * ratio }
-            let scale = min(1, limit.width / width, limit.height / height)
-            width *= scale
-            height *= scale
-        }
-        return CGSize(width: width.rounded().clamped(to: 1...limit.width),
-                      height: height.rounded().clamped(to: 1...limit.height))
+        let x = edges(rect.minX, rect.maxX, direction: handle.x, offset: delta.x, max: pixels.width)
+        let y = edges(rect.minY, rect.maxY, direction: handle.y, offset: delta.y, max: pixels.height)
+        return CGRect(x: x.0, y: y.0, width: x.1 - x.0, height: y.1 - y.0)
     }
 
     func handle(at point: CGPoint, of rect: CGRect) -> CGPoint {
