@@ -1,62 +1,73 @@
 import AppKit
 
 final class QuickShotMagnifier: NSView {
-    private static let inset: CGFloat = 6
+    private final class CopyHint: NSTextField {
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    }
+
+    private static let size = CGSize(width: 128, height: 128)
+    private static let hexStyle: [NSAttributedString.Key: Any] = [
+        .font: NSFont(name: "Inter-Regular", size: 10) ?? NSFont.systemFont(ofSize: 10),
+        .foregroundColor: NSColor.white,
+    ]
+
     private let sampler: ShotPixelSampler
-    private let colorLabel = NSTextField(labelWithString: "")
-    private let copyHint = NSTextField(labelWithString: String(localized: .shotCopyColorHint))
+    private let copyHint = CopyHint(labelWithString: String(localized: .shotCopyColorHint))
     private var pixel: CGPoint?
+    private var sampledHex: String?
+    private var colorLabel: NSAttributedString?
     private var neighborhood: ShotPixelSampler.Neighborhood?
     private var zoom: ShotMagnifierZoom = .standard
-    var hex: String? { isHidden ? nil : colorLabel.stringValue }
+    var hex: String? { isHidden ? nil : sampledHex }
 
     init(image: CGImage) {
         sampler = ShotPixelSampler(image: image)
-        super.init(frame: .zero)
-        wantsLayer = true
-        layer?.backgroundColor = NSColor(calibratedWhite: 0.1, alpha: 1).cgColor
-        layer?.cornerRadius = 8
-        colorLabel.font = .monospacedSystemFont(ofSize: 13, weight: .semibold)
-        colorLabel.textColor = .white
+        super.init(frame: CGRect(origin: .zero, size: Self.size))
         copyHint.font = .systemFont(ofSize: 11)
-        copyHint.textColor = NSColor(calibratedWhite: 0.8, alpha: 1)
-        [colorLabel, copyHint].forEach {
-            $0.alignment = .center
-            addSubview($0)
-        }
-        isHidden = true
+        copyHint.textColor = .white
+        copyHint.alignment = .center
+        copyHint.wantsLayer = true
+        copyHint.layer?.cornerRadius = 4
+        copyHint.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.82).cgColor
+        hide()
     }
 
     required init?(coder: NSCoder) { nil }
     override var isFlipped: Bool { true }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
-    func update(at point: CGPoint, in area: CGRect, zoom: ShotMagnifierZoom, showsCopyHint: Bool) {
-        guard let nextPixel = sampler.pixel(at: point, in: area) else {
-            isHidden = true
-            return
-        }
+    func install(in canvas: NSView, safeArea: CGRect) {
+        let hintSize = copyHint.intrinsicContentSize
+        copyHint.frame = CGRect(x: safeArea.minX + 5, y: safeArea.maxY - hintSize.height - 5,
+                                width: hintSize.width + 12, height: hintSize.height)
+        canvas.addSubview(copyHint)
+        canvas.addSubview(self)
+    }
+
+    func hide() {
+        isHidden = true
+        copyHint.isHidden = true
+    }
+
+    func update(at point: CGPoint, in area: CGRect, avoiding selection: CGRect?,
+                zoom: ShotMagnifierZoom, showsCopyHint: Bool) {
+        guard let nextPixel = sampler.pixel(at: point, in: area) else { return hide() }
         if pixel != nextPixel {
-            guard let value = sampler.hex(at: nextPixel) else {
-                isHidden = true
-                return
-            }
-            colorLabel.stringValue = value
+            guard let hex = sampler.hex(at: nextPixel) else { return hide() }
+            sampledHex = hex
+            let digits = hex.dropFirst()
+            let grouped = "#\(digits.prefix(2)) \(digits.dropFirst(2).prefix(2)) \(digits.suffix(2))"
+            colorLabel = NSAttributedString(string: grouped, attributes: Self.hexStyle)
         }
         if pixel != nextPixel || self.zoom != zoom {
             pixel = nextPixel
             showNeighborhood(around: nextPixel, zoom: zoom)
         }
 
-        let inset = Self.inset
-        let width = ShotMagnifierZoom.gridWidth
-        colorLabel.frame = CGRect(x: inset, y: inset + width + 4, width: width, height: 18)
-        copyHint.frame = CGRect(x: inset, y: colorLabel.frame.maxY, width: width, height: 15)
-        copyHint.isHidden = !showsCopyHint
-        let bottom = showsCopyHint ? copyHint.frame.maxY : colorLabel.frame.maxY
-        let size = CGSize(width: width + 2 * inset, height: bottom + inset)
-        frame = QuickShotLayout.magnifier(size: size, near: point, area: area)
+        let placement = QuickShotLayout.magnifier(size: Self.size, near: point, area: area, avoiding: selection)
+        setFrameOrigin(placement.origin)
         isHidden = false
+        copyHint.isHidden = !showsCopyHint
     }
 
     func setZoom(_ zoom: ShotMagnifierZoom) {
@@ -71,61 +82,50 @@ final class QuickShotMagnifier: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        guard let context = NSGraphicsContext.current?.cgContext, let neighborhood else { return }
-        let cell = zoom.cellSize
-        let side = CGFloat(zoom.cells) * cell
-        let inset = Self.inset + floor((ShotMagnifierZoom.gridWidth - side) / 2)
-        let grid = CGRect(x: inset, y: inset, width: side, height: side)
-        context.setFillColor(NSColor(calibratedWhite: 0.2, alpha: 1).cgColor)
-        context.fill(grid)
+        guard let context = NSGraphicsContext.current?.cgContext, let neighborhood, let colorLabel else { return }
+        let viewport = bounds.insetBy(dx: 1, dy: 1)
+        drawPixels(neighborhood, in: viewport, context: context)
 
+        let blue = QuickShotBackdrop.accent
+        context.setStrokeColor(blue.cgColor)
+        context.stroke(bounds.insetBy(dx: 0.5, dy: 0.5), width: 1)
+        drawCrosshair(in: viewport, color: blue, context: context)
+
+        let badge = CGRect(x: bounds.minX, y: bounds.maxY - 14, width: 50, height: 14)
+        context.setFillColor(CGColor(srgbRed: 34 / 255, green: 34 / 255, blue: 34 / 255, alpha: 1))
+        context.fill(badge)
+        context.stroke(badge.insetBy(dx: 0.5, dy: 0.5), width: 1)
+        let labelSize = colorLabel.size()
+        colorLabel.draw(at: CGPoint(x: badge.midX - labelSize.width / 2, y: badge.midY - labelSize.height / 2))
+    }
+
+    private func drawPixels(_ neighborhood: ShotPixelSampler.Neighborhood, in viewport: CGRect, context: CGContext) {
+        let cell = viewport.width / CGFloat(zoom.pixelsPerRow)
+        let gridSide = CGFloat(zoom.cells) * cell
         let image = neighborhood.image
-        let patch = CGRect(x: grid.minX + neighborhood.offset.x * cell,
-                           y: grid.minY + neighborhood.offset.y * cell,
+        let patch = CGRect(x: viewport.midX - gridSide / 2 + neighborhood.offset.x * cell,
+                           y: viewport.midY - gridSide / 2 + neighborhood.offset.y * cell,
                            width: CGFloat(image.width) * cell, height: CGFloat(image.height) * cell)
         context.saveGState()
+        context.clip(to: viewport)
+        context.setFillColor(NSColor(calibratedWhite: 0.2, alpha: 1).cgColor)
+        context.fill(viewport)
         context.translateBy(x: patch.minX, y: patch.maxY)
         context.scaleBy(x: 1, y: -1)
         context.interpolationQuality = .none
         context.draw(image, in: CGRect(origin: .zero, size: patch.size))
         context.restoreGState()
-
-        let lines = CGMutablePath()
-        for index in 0...zoom.cells {
-            let offset = CGFloat(index) * cell
-            let x = grid.minX + offset
-            let y = grid.minY + offset
-            lines.move(to: CGPoint(x: x, y: grid.minY))
-            lines.addLine(to: CGPoint(x: x, y: grid.maxY))
-            lines.move(to: CGPoint(x: grid.minX, y: y))
-            lines.addLine(to: CGPoint(x: grid.maxX, y: y))
-        }
-        context.addPath(lines)
-        context.setStrokeColor(NSColor(calibratedWhite: 0.45, alpha: 0.5).cgColor)
-        context.setLineWidth(1)
-        context.strokePath()
-        drawCrosshair(in: grid, cell: cell, context: context)
     }
 
-    private func drawCrosshair(in grid: CGRect, cell: CGFloat, context: CGContext) {
-        let center = CGRect(x: grid.midX - cell / 2, y: grid.midY - cell / 2, width: cell, height: cell)
-        let crosshair = CGMutablePath()
-        crosshair.addRect(center)
-        crosshair.move(to: CGPoint(x: grid.minX, y: grid.midY))
-        crosshair.addLine(to: CGPoint(x: center.minX, y: grid.midY))
-        crosshair.move(to: CGPoint(x: center.maxX, y: grid.midY))
-        crosshair.addLine(to: CGPoint(x: grid.maxX, y: grid.midY))
-        crosshair.move(to: CGPoint(x: grid.midX, y: grid.minY))
-        crosshair.addLine(to: CGPoint(x: grid.midX, y: center.minY))
-        crosshair.move(to: CGPoint(x: grid.midX, y: center.maxY))
-        crosshair.addLine(to: CGPoint(x: grid.midX, y: grid.maxY))
-        context.addPath(crosshair)
-        context.setStrokeColor(NSColor.black.cgColor)
-        context.setLineWidth(3)
-        context.strokePath()
-        context.addPath(crosshair)
-        context.setStrokeColor(NSColor.white.cgColor)
-        context.setLineWidth(1)
-        context.strokePath()
+    private func drawCrosshair(in viewport: CGRect, color: NSColor, context: CGContext) {
+        let center = CGRect(x: viewport.midX - 2, y: viewport.midY - 2, width: 4, height: 4)
+        context.setFillColor(color.withAlphaComponent(0.12).cgColor)
+        context.fill([
+            CGRect(x: viewport.minX, y: center.minY, width: center.minX - viewport.minX, height: center.height),
+            CGRect(x: center.maxX, y: center.minY, width: viewport.maxX - center.maxX, height: center.height),
+            CGRect(x: center.minX, y: viewport.minY, width: center.width, height: center.minY - viewport.minY),
+            CGRect(x: center.minX, y: center.maxY, width: center.width, height: viewport.maxY - center.maxY),
+        ])
+        context.stroke(center.insetBy(dx: 0.25, dy: 0.25), width: 0.5)
     }
 }

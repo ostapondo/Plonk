@@ -1,13 +1,13 @@
-import CoreGraphics
+struct ShotMagnifierZoom: Equatable {
+    private static let range = 11...26
+    static let standard = Self(pixelsPerRow: 18)
 
-enum ShotMagnifierZoom: Int {
-    case lowest, low, standard, high, highest
+    let pixelsPerRow: Int
 
-    static let gridWidth: CGFloat = 147
-    var cells: Int { 15 - rawValue * 2 }
-    var cellSize: CGFloat { floor(Self.gridWidth / CGFloat(cells)) }
+    // An odd crop keeps the sampled pixel centered and covers both viewport edges.
+    var cells: Int { 2 * ((pixelsPerRow + 1) / 2) + 1 }
 
     func stepped(increasing: Bool) -> Self {
-        Self(rawValue: rawValue + (increasing ? 1 : -1)) ?? self
+        Self(pixelsPerRow: (pixelsPerRow + (increasing ? -1 : 1)).clamped(to: Self.range))
     }
 }

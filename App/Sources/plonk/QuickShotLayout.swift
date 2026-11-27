@@ -1,17 +1,27 @@
 import CoreGraphics
 
 enum QuickShotLayout {
-    static func magnifier(size: CGSize, near pointer: CGPoint, area: CGRect) -> CGRect {
-        let gap: CGFloat = 18
-        func origin(_ point: CGFloat, length: CGFloat, min lower: CGFloat, max upper: CGFloat) -> CGFloat {
-            let after = point + gap
-            let before = point - gap - length
-            let preferred = after + length <= upper ? after : before
-            return preferred.rounded().clamped(to: lower...max(lower, upper - length))
+    static func magnifier(size: CGSize, near pointer: CGPoint, area: CGRect, avoiding selection: CGRect?) -> CGRect {
+        let gap: CGFloat = 10
+        let left = (pointer.x - gap - size.width).rounded()
+        let right = (pointer.x + gap).rounded()
+        let above = (pointer.y - gap - size.height).rounded()
+        let below = (pointer.y + gap).rounded()
+        let candidates = [(left, above), (right, above), (right, below), (left, below)].map { x, y in
+            CGRect(origin: CGPoint(x: x, y: y), size: size)
         }
-        return CGRect(x: origin(pointer.x, length: size.width, min: area.minX, max: area.maxX),
-                      y: origin(pointer.y, length: size.height, min: area.minY, max: area.maxY),
-                      width: size.width, height: size.height)
+        let safeArea = area.insetBy(dx: 5, dy: 5)
+        let clear = candidates.filter { selection?.intersects($0) != true }
+        func visibleArea(_ rect: CGRect) -> CGFloat {
+            let visible = area.intersection(rect)
+            return visible.isNull ? 0 : visible.width * visible.height
+        }
+        // The overlay window clips the fallback without shifting the sampled pixel.
+        return clear.first(where: safeArea.contains)
+            ?? clear.first(where: area.contains)
+            ?? candidates.first(where: safeArea.contains)
+            ?? candidates.max { visibleArea($0) < visibleArea($1) }
+            ?? candidates[0]
     }
 
     struct StylePlacement: Equatable {

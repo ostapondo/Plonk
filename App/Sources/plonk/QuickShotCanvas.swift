@@ -50,7 +50,7 @@ final class QuickShotCanvas: NSView {
         addSubview(dimensions)
         addSubview(toolbar)
         addSubview(stylePanel)
-        if let magnifier { addSubview(magnifier) }
+        magnifier?.install(in: self, safeArea: safeArea)
         accentObservation = model.$config.map(\.appearance).removeDuplicates().sink { [weak self] appearance in
             self?.toolbar.accent = appearance.accent
         }
@@ -88,6 +88,7 @@ final class QuickShotCanvas: NSView {
         if case .create = gesture { return true }
         return false
     }
+    var draftFrame: CGRect? { isCreatingRegion ? selection.map(geometry.viewRect) : nil }
 
     private var geometry: ShotSelection { ShotSelection(pixels: bitmap.size, view: bounds.size) }
 

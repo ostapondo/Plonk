@@ -6,9 +6,10 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Added
 
-- **Magnify pixels and copy colors in region screenshots.** Press C to copy
-  the sRGB hex color and end the capture, even while drawing a region. Use +,
-  =, and - to change the zoom, or press F to select the entire display.
+- **Magnify pixels and copy colors in region screenshots.** The 128-point
+  magnifier shows the sampled color in its lower-left corner. Press C to
+  copy the sRGB hex color and end the capture, even while drawing a region.
+  Use +, =, and - to change the zoom, or press F to select the entire display.
 - **Set a default width and color for each screenshot annotation tool.** Use
   the Quick Actions dial or the editor slider to adjust width for the current
   screenshot. Opening the editor from Quick Actions keeps the selected tool
