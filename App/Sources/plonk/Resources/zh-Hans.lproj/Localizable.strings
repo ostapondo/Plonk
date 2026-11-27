@@ -66,6 +66,7 @@
 "shot.afterQuickActions" = "快捷操作";
 "shot.afterEditor" = "打开编辑器";
 "shot.captureFailed" = "无法截取屏幕。请在系统设置中检查屏幕录制权限。";
+"shot.selectDisplayHint" = "按 F 选择整个屏幕";
 "shot.copyColorHint" = "按 C 复制颜色";
 "shot.copyFailed" = "无法复制截图。";
 "shot.selectionWidth" = "选区宽度";

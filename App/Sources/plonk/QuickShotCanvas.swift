@@ -15,6 +15,7 @@ final class QuickShotCanvas: NSView {
     private let backdrop: QuickShotBackdrop
     private let markup: QuickShotMarkupView
     let magnifier: QuickShotMagnifier?
+    let regionTips: QuickShotTips?
     private var history = AnnotationHistory()
     private var selection: CGRect?
     private var aspectRatio: CGFloat?
@@ -39,6 +40,7 @@ final class QuickShotCanvas: NSView {
         backdrop = QuickShotBackdrop(image: bitmap.image, frame: frame, fixed: fixed)
         markup = QuickShotMarkupView(frame: frame)
         magnifier = fixed ? nil : QuickShotMagnifier(image: bitmap.image)
+        regionTips = fixed ? nil : QuickShotTips([.shotSelectDisplayHint, .shotCopyColorHint])
         super.init(frame: frame)
         if fixed {
             wantsLayer = true
@@ -50,7 +52,11 @@ final class QuickShotCanvas: NSView {
         addSubview(dimensions)
         addSubview(toolbar)
         addSubview(stylePanel)
-        magnifier?.install(in: self, safeArea: safeArea)
+        if let regionTips {
+            regionTips.setFrameOrigin(CGPoint(x: safeArea.minX + 5, y: safeArea.maxY - regionTips.frame.height - 5))
+            addSubview(regionTips)
+        }
+        if let magnifier { addSubview(magnifier) }
         accentObservation = model.$config.map(\.appearance).removeDuplicates().sink { [weak self] appearance in
             self?.toolbar.accent = appearance.accent
         }

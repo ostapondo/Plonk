@@ -1,10 +1,6 @@
 import AppKit
 
 final class QuickShotMagnifier: NSView {
-    private final class CopyHint: NSTextField {
-        override func hitTest(_ point: NSPoint) -> NSView? { nil }
-    }
-
     private static let contentWidth: CGFloat = 120
     private static let borderWidth: CGFloat = 2
     private static let size: CGSize = {
@@ -19,7 +15,6 @@ final class QuickShotMagnifier: NSView {
     ]
 
     private let sampler: ShotPixelSampler
-    private let copyHint = CopyHint(labelWithString: String(localized: .shotCopyColorHint))
     private var pixel: CGPoint?
     private var sampledHex: String?
     private var colorLabel: (text: NSAttributedString, size: CGSize)?
@@ -31,12 +26,6 @@ final class QuickShotMagnifier: NSView {
     init(image: CGImage) {
         sampler = ShotPixelSampler(image: image)
         super.init(frame: CGRect(origin: .zero, size: Self.size))
-        copyHint.font = .systemFont(ofSize: 11)
-        copyHint.textColor = .white
-        copyHint.alignment = .center
-        copyHint.wantsLayer = true
-        copyHint.layer?.cornerRadius = 4
-        copyHint.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.82).cgColor
         hide()
     }
 
@@ -44,21 +33,11 @@ final class QuickShotMagnifier: NSView {
     override var isFlipped: Bool { true }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
-    func install(in canvas: NSView, safeArea: CGRect) {
-        let hintSize = copyHint.intrinsicContentSize
-        copyHint.frame = CGRect(x: safeArea.minX + 5, y: safeArea.maxY - hintSize.height - 5,
-                                width: hintSize.width + 12, height: hintSize.height)
-        canvas.addSubview(copyHint)
-        canvas.addSubview(self)
-    }
-
     func hide() {
         isHidden = true
-        copyHint.isHidden = true
     }
 
-    func update(at point: CGPoint, in area: CGRect, avoiding selection: CGRect?,
-                zoom: ShotMagnifierZoom, showsCopyHint: Bool) {
+    func update(at point: CGPoint, in area: CGRect, avoiding obstacle: CGRect?, zoom: ShotMagnifierZoom) {
         guard let nextPixel = sampler.pixel(at: point, in: area) else { return hide() }
         if pixel != nextPixel {
             guard let hex = sampler.hex(at: nextPixel) else { return hide() }
@@ -76,14 +55,13 @@ final class QuickShotMagnifier: NSView {
         guard let colorLabel else { return hide() }
         let details = Self.sampledCell.union(Self.badgeFrame(for: colorLabel.size))
         guard let placement = QuickShotLayout.magnifier(size: Self.size, details: details, near: point,
-                                                         area: area, avoiding: selection) else { return hide() }
+                                                         area: area, avoiding: obstacle) else { return hide() }
         if frame.size != placement.frame.size || drawingOffset != placement.drawingOffset {
             drawingOffset = placement.drawingOffset
             needsDisplay = true
         }
         frame = placement.frame
         isHidden = false
-        copyHint.isHidden = !showsCopyHint
     }
 
     func setZoom(_ zoom: ShotMagnifierZoom) {

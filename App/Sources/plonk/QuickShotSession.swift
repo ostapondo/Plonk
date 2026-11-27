@@ -154,12 +154,17 @@ final class QuickShotSession: NSObject {
         let waiting = isWaitingForRegion
         // During a drag only its starting canvas can sample, even on another display.
         let target = windows.first { $0.canvas.isCreatingRegion } ?? (waiting ? regionWindow(at: pointer) : nil)
-        if magnifierWindow !== target { magnifierWindow?.canvas.magnifier?.hide() }
+        if let previous = magnifierWindow?.canvas, magnifierWindow !== target {
+            previous.magnifier?.hide()
+            previous.regionTips?.isHidden = true
+        }
         magnifierWindow = target
         guard let target else { return }
         let canvas = target.canvas
-        canvas.magnifier?.update(at: target.canvasPoint(at: pointer), in: canvas.bounds, avoiding: canvas.draftFrame,
-                                 zoom: magnifierZoom, showsCopyHint: waiting)
+        canvas.regionTips?.isHidden = !waiting
+        let obstacle = waiting ? canvas.regionTips?.frame : canvas.draftFrame
+        canvas.magnifier?.update(at: target.canvasPoint(at: pointer), in: canvas.bounds, avoiding: obstacle,
+                                 zoom: magnifierZoom)
     }
 
     private func handleShortcut(_ event: NSEvent) -> Bool {

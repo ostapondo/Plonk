@@ -8,7 +8,7 @@ enum QuickShotLayout {
 
     // `details` is measured from the uncropped magnifier's top-left.
     static func magnifier(size: CGSize, details: CGRect, near pointer: CGPoint, area: CGRect,
-                          avoiding selection: CGRect?) -> MagnifierPlacement? {
+                          avoiding obstacle: CGRect?) -> MagnifierPlacement? {
         let gap: CGFloat = 10
         let left = pointer.x - gap - size.width
         let right = pointer.x + gap
@@ -24,7 +24,7 @@ enum QuickShotLayout {
 
         func surface(_ rect: CGRect) -> CGFloat { rect.isEmpty ? 0 : rect.width * rect.height }
         func priority(_ candidate: (full: CGRect, visible: CGRect)) -> (Int, CGFloat, CGFloat) {
-            let overlap = selection.map { surface($0.intersection(candidate.visible)) } ?? 0
+            let overlap = obstacle.map { surface($0.intersection(candidate.visible)) } ?? 0
             let safe = safeArea.contains(candidate.full)
             if safe && overlap == 0 { return (3, 0, 0) }
             if area.contains(candidate.full) { return (2, -overlap, safe ? 1 : 0) }
