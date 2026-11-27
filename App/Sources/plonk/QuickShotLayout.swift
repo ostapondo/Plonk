@@ -6,7 +6,8 @@ enum QuickShotLayout {
         let drawingOffset: CGPoint
     }
 
-    static func magnifier(size: CGSize, near pointer: CGPoint, area: CGRect,
+    // `details` is measured from the uncropped magnifier's top-left.
+    static func magnifier(size: CGSize, details: CGRect, near pointer: CGPoint, area: CGRect,
                           avoiding selection: CGRect?) -> MagnifierPlacement? {
         let gap: CGFloat = 10
         let left = pointer.x - gap - size.width
@@ -20,11 +21,20 @@ enum QuickShotLayout {
             return visible.isEmpty ? nil : (full, visible)
         }
         let safeArea = area.insetBy(dx: 5, dy: 5)
-        let clear = candidates.filter { selection?.intersects($0.visible) != true }
-        let fallback = clear.isEmpty ? candidates : clear
-        guard let best = clear.first(where: { safeArea.contains($0.full) }) ?? fallback.max(by: {
-            $0.visible.width * $0.visible.height < $1.visible.width * $1.visible.height
-        }) else { return nil }
+
+        func surface(_ rect: CGRect) -> CGFloat { rect.isEmpty ? 0 : rect.width * rect.height }
+        func priority(_ candidate: (full: CGRect, visible: CGRect)) -> (Int, CGFloat, CGFloat) {
+            let overlap = selection.map { surface($0.intersection(candidate.visible)) } ?? 0
+            let safe = safeArea.contains(candidate.full)
+            if safe && overlap == 0 { return (3, 0, 0) }
+            if area.contains(candidate.full) { return (2, -overlap, safe ? 1 : 0) }
+
+            let translatedDetails = details.offsetBy(dx: candidate.full.minX, dy: candidate.full.minY)
+            let showsDetails = candidate.visible.contains(translatedDetails)
+            return (showsDetails ? 1 : 0, surface(candidate.visible), -overlap)
+        }
+
+        guard let best = candidates.max(by: { priority($0) < priority($1) }) else { return nil }
         // Keep the original drawing origin when the visible frame is cropped.
         return MagnifierPlacement(frame: best.visible,
                                   drawingOffset: CGPoint(x: best.full.minX - best.visible.minX,
