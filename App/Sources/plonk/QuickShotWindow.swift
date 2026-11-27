@@ -2,6 +2,7 @@ import AppKit
 
 final class QuickShotWindow: NSWindow {
     let canvas: QuickShotCanvas
+    var onRegionPointerChange: ((CGPoint) -> Void)?
     private var interactingWithStyle = false
 
     init(screen: NSScreen, bitmap: ShotBitmap, fixed: Bool, model: AppModel, annotation: ShotAnnotationState) {
@@ -23,6 +24,10 @@ final class QuickShotWindow: NSWindow {
 
     override var canBecomeKey: Bool { true }
 
+    func canvasPoint(at screenPoint: CGPoint) -> CGPoint {
+        canvas.convert(convertPoint(fromScreen: screenPoint), from: nil)
+    }
+
     override func sendEvent(_ event: NSEvent) {
         if event.type == .leftMouseDown, attachedSheet == nil {
             interactingWithStyle = canvas.handlesStyleClick(at: event.locationInWindow)
@@ -33,16 +38,18 @@ final class QuickShotWindow: NSWindow {
             interactingWithStyle = false
             makeFirstResponder(canvas)
         }
+        switch event.type {
+        case .leftMouseDown, .leftMouseDragged, .leftMouseUp:
+            onRegionPointerChange?(convertPoint(toScreen: event.locationInWindow))
+        default:
+            break
+        }
     }
 
-    func handleShortcut(_ event: NSEvent) -> Bool {
+    func shortcut(for event: NSEvent) -> ShotKeyCommand? {
         guard isKeyWindow, (event.window == nil || event.window === self),
-              attachedSheet == nil, firstResponder === canvas,
-              let command = ShotKeyCommand(keyCode: Int(event.keyCode),
-                                           characters: event.charactersIgnoringModifiers,
-                                           flags: event.modifierFlags,
-                                           repeating: event.isARepeat) else { return false }
-        canvas.handle(command)
-        return true
+              attachedSheet == nil, firstResponder === canvas else { return nil }
+        return ShotKeyCommand(keyCode: Int(event.keyCode), characters: event.charactersIgnoringModifiers,
+                              flags: event.modifierFlags, repeating: event.isARepeat)
     }
 }

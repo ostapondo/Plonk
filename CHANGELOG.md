@@ -6,6 +6,17 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Added
 
+- **Find the exact pixels to capture in a region screenshot.** In Quick Actions,
+  the magnifier follows the pointer before and during a selection. Press
+  `+` or `=` to zoom in and `-` to zoom out. The magnifier changes sides
+  near screen edges and avoids the selection when space allows.
+- **Pick a color from the screen.** While the magnifier is visible, press
+  `C` to copy the sampled sRGB color as plain text, such as `#212830`, and
+  end the capture. You can do this while dragging a selection.
+- **Select the entire display during region capture.** Press `F` before
+  drawing a region to select the display under the pointer. You can then
+  adjust the selection before copying or saving it. The region capture
+  overlay shows both the `F` and `C` shortcuts while you choose what to capture.
 - **Set a default width and color for each screenshot annotation tool.** Use
   the Quick Actions dial or the editor slider to adjust width for the current
   screenshot. Opening the editor from Quick Actions keeps the selected tool

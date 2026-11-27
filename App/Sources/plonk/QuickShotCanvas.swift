@@ -14,6 +14,8 @@ final class QuickShotCanvas: NSView {
     private let fixed: Bool
     private let backdrop: QuickShotBackdrop
     private let markup: QuickShotMarkupView
+    let magnifier: QuickShotMagnifier?
+    let regionTips: QuickShotTips?
     private var history = AnnotationHistory()
     private var selection: CGRect?
     private var aspectRatio: CGFloat?
@@ -37,6 +39,8 @@ final class QuickShotCanvas: NSView {
         let frame = CGRect(origin: .zero, size: size)
         backdrop = QuickShotBackdrop(image: bitmap.image, frame: frame, fixed: fixed)
         markup = QuickShotMarkupView(frame: frame)
+        magnifier = fixed ? nil : QuickShotMagnifier(image: bitmap.image)
+        regionTips = fixed ? nil : QuickShotTips([.shotSelectDisplayHint, .shotCopyColorHint])
         super.init(frame: frame)
         if fixed {
             wantsLayer = true
@@ -48,6 +52,11 @@ final class QuickShotCanvas: NSView {
         addSubview(dimensions)
         addSubview(toolbar)
         addSubview(stylePanel)
+        if let regionTips {
+            regionTips.setFrameOrigin(CGPoint(x: safeArea.minX + 5, y: safeArea.maxY - regionTips.frame.height - 5))
+            addSubview(regionTips)
+        }
+        if let magnifier { addSubview(magnifier) }
         accentObservation = model.$config.map(\.appearance).removeDuplicates().sink { [weak self] appearance in
             self?.toolbar.accent = appearance.accent
         }
@@ -80,6 +89,13 @@ final class QuickShotCanvas: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     var hasMarks: Bool { history.canUndo || history.canRedo }
+    var isWaitingForRegion: Bool { !fixed && selection == nil && gesture == nil }
+    var isDraggingRegionBoundary: Bool {
+        if case .create = gesture { return true }
+        if case .adjust(_, _, let handle) = gesture { return handle != .zero }
+        return false
+    }
+    var regionFrame: CGRect? { selection.map(geometry.viewRect) }
 
     private var geometry: ShotSelection { ShotSelection(pixels: bitmap.size, view: bounds.size) }
 
@@ -104,23 +120,11 @@ final class QuickShotCanvas: NSView {
         guard let selection else { return NSCursor.crosshair.set() }
         let handle = geometry.handle(at: point, of: selection)
         if handle != .zero {
-            resizeCursor(for: handle).set()
+            QuickShotResizeCursor.forHandle(handle).set()
         } else {
             let moving = annotation.tool == nil && geometry.viewRect(selection).contains(point)
             (moving ? NSCursor.openHand : .crosshair).set()
         }
-    }
-
-    private func resizeCursor(for handle: CGPoint) -> NSCursor {
-        if #available(macOS 15, *) {
-            if handle.x == 0 { return .rowResize(directions: .all) }
-            if handle.y == 0 { return .columnResize(directions: .all) }
-            let corner: NSCursor.FrameResizePosition = handle.y < 0
-                ? (handle.x < 0 ? .topLeft : .topRight)
-                : (handle.x < 0 ? .bottomLeft : .bottomRight)
-            return .frameResize(position: corner, directions: .all)
-        }
-        return handle.x == 0 ? .resizeUpDown : .resizeLeftRight
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -192,7 +196,16 @@ final class QuickShotCanvas: NSView {
         case .save: perform(.output(.save))
         case .undo: perform(.undo)
         case .redo: perform(.redo)
+        case .selectDisplay: selectEntireDisplay()
+        case .copyColor, .zoomMagnifier: break
         }
+    }
+
+    private func selectEntireDisplay() {
+        guard isWaitingForRegion else { return }
+        selection = CGRect(origin: .zero, size: bitmap.size)
+        onSelect?()
+        refresh()
     }
 
     func clearSelection() {
@@ -233,7 +246,8 @@ final class QuickShotCanvas: NSView {
             return
         }
 
-        let frame = selection.map(geometry.viewRect)
+        let frame = regionFrame
+        magnifier?.showsHex = frame == nil
         backdrop.selection = frame
         markup.show(history, clippedTo: frame)
         toolbar.isHidden = selection == nil
