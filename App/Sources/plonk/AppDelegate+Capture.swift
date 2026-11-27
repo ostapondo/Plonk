@@ -82,7 +82,9 @@ extension AppDelegate {
         hotkeys.setSuspended(true)
         HUD.shared.dismiss()
         let hidden = hideOwnWindows()
-        let session = QuickShotSession(previousApp: previousApp, model: model, folder: { [weak self] in
+        let session = QuickShotSession(previousApp: previousApp, model: model, lastRegion: lastShotRegion,
+                                       rememberRegion: { [weak self] in self?.lastShotRegion = $0 },
+                                       folder: { [weak self] in
             self?.store.config.shotFolder ?? Config().shotFolder
         }, onClose: { [weak self, weak previousWindow] in
             guard let self else { return }

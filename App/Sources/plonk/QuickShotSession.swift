@@ -4,6 +4,8 @@ import AppKit
 final class QuickShotSession: NSObject {
     private let previousApp: NSRunningApplication?
     private let model: AppModel
+    private let lastRegion: ShotRegionRecord?
+    private let rememberRegion: (ShotRegionRecord) -> Void
     private let folder: () -> String
     private let annotation: ShotAnnotationState
     private let onEditor: (NSImage, AnnotationHistory, ShotAnnotationState) -> Void
@@ -15,12 +17,15 @@ final class QuickShotSession: NSObject {
     private var picker: Process?
     private var pickLocation: CGPoint?
 
-    init(previousApp: NSRunningApplication?, model: AppModel, folder: @escaping () -> String,
+    init(previousApp: NSRunningApplication?, model: AppModel, lastRegion: ShotRegionRecord?,
+         rememberRegion: @escaping (ShotRegionRecord) -> Void, folder: @escaping () -> String,
          onClose: @escaping () -> Void,
          onEditor: @escaping (NSImage, AnnotationHistory, ShotAnnotationState) -> Void,
          onFinish: @escaping (Bool, String?) -> Void) {
         self.previousApp = previousApp
         self.model = model
+        self.lastRegion = lastRegion
+        self.rememberRegion = rememberRegion
         annotation = ShotAnnotationState(defaults: model.config.shotAnnotationStyles)
         self.folder = folder
         self.onClose = onClose
@@ -42,22 +47,32 @@ final class QuickShotSession: NSObject {
             case .window: pickWindow()
             case .screen:
                 guard let screen else { return captureFailed() }
-                ScreenshotManager.captureDisplay(screen) { [weak self] image in
-                    self?.presentFixed(image, on: screen)
-                }
+                captureRegions([screen], selectingEntireDisplay: true)
             }
         }
     }
 
-    private func captureRegions(_ screens: [NSScreen]) {
+    private func captureRegions(_ screens: [NSScreen], selectingEntireDisplay: Bool = false) {
+        let windowBounds = selectingEntireDisplay ? [] : WindowServer.screenshotWindowBounds()
         for screen in screens {
             ScreenshotManager.captureDisplay(screen) { [weak self] image in
                 guard let self, onClose != nil else { return }
                 guard let bitmap = ShotBitmap(capture: image, displaySize: screen.frame.size) else {
                     return captureFailed()
                 }
-                addWindow(for: screen, bitmap: bitmap, fixed: false)
-                if windows.count == screens.count { present() }
+                let window = addWindow(for: screen, bitmap: bitmap, fixed: false)
+                let origin = CGSpace.flip(screen.frame).origin
+                window.canvas.isDesktop = { [weak self] point in
+                    let location = CGPoint(x: origin.x + point.x, y: origin.y + point.y)
+                    return self?.isWaitingForSelection == true && !windowBounds.contains { $0.contains(location) }
+                }
+                window.canvas.onSelectDisplay = { [weak self, weak window] in
+                    guard let window else { return }
+                    self?.selectEntireDisplay(in: window)
+                }
+                guard windows.count == screens.count else { return }
+                if selectingEntireDisplay { selectEntireDisplay(in: window) }
+                present()
             }
         }
     }
@@ -95,13 +110,17 @@ final class QuickShotSession: NSObject {
         present()
     }
 
-    private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) {
+    @discardableResult
+    private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) -> QuickShotWindow {
         let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed, model: model,
                                      annotation: annotation)
         window.canvas.onCancel = { [weak self] in self?.cancel() }
         window.canvas.onSelect = { [weak self, weak window] in
-            self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
+            guard let self else { return }
+            windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
+            updateSelectionHints()
         }
+        window.canvas.onSelectionStateChange = { [weak self] in self?.updateSelectionHints() }
         window.canvas.marksAnywhere = { [weak self] in
             self?.windows.contains { $0.canvas.hasMarks } ?? false
         }
@@ -110,20 +129,75 @@ final class QuickShotSession: NSObject {
             perform(action, crop: crop, in: window)
         }
         windows.append(window)
+        return window
+    }
+
+    private var isWaitingForSelection: Bool {
+        windows.allSatisfy { $0.canvas.isWaitingForSelection }
+    }
+
+    private var restorableRegion: (window: QuickShotWindow, rect: CGRect)? {
+        guard let lastRegion else { return nil }
+        for window in windows {
+            if let rect = lastRegion.rect(on: window.regionDisplay) { return (window, rect) }
+        }
+        return nil
+    }
+
+    private func updateSelectionHints() {
+        let visible = isWaitingForSelection
+        windows.forEach { $0.canvas.showSelectionHint(visible) }
+    }
+
+    private func selectEntireDisplay(in window: QuickShotWindow) {
+        guard isWaitingForSelection else { return }
+        window.canvas.selectEntireDisplay()
+        if window.isVisible { focus(window) }
+        windows.filter { $0 !== window }.forEach { $0.orderOut(nil) }
+        windows = [window]
+    }
+
+    private func focus(_ window: QuickShotWindow) {
+        window.makeKey()
+        window.makeFirstResponder(window.canvas)
+    }
+
+    private var windowUnderPointer: QuickShotWindow? {
+        let point = NSEvent.mouseLocation
+        return windows.first { NSMouseInRect(point, $0.frame, false) }
+    }
+
+    private func handleShortcut(_ event: NSEvent) -> Bool {
+        guard let window = windows.first(where: \.isKeyWindow), let command = window.shortcut(for: event) else {
+            return false
+        }
+        switch command {
+        case .selectDisplay, .restoreRegion:
+            guard isWaitingForSelection, NSEvent.pressedMouseButtons & 1 == 0 else { return true }
+            if command == .selectDisplay {
+                if let target = windowUnderPointer { selectEntireDisplay(in: target) }
+            } else if let target = restorableRegion, target.window.canvas.selectRegion(target.rect) {
+                focus(target.window)
+            }
+        default:
+            window.canvas.handle(command)
+        }
+        return true
     }
 
     private func present() {
         NotificationCenter.default.addObserver(
             self, selector: #selector(cancel), name: NSApplication.didResignActiveNotification, object: NSApp
         )
+        if isWaitingForSelection {
+            let canRestore = restorableRegion != nil
+            windows.forEach { $0.canvas.installSelectionHint(canRestore: canRestore) }
+        }
         windows.forEach { $0.orderFrontRegardless() }
         NSApp.activate(ignoringOtherApps: true)
-        let target = windows.first { $0.frame.contains(NSEvent.mouseLocation) } ?? windows.first
-        target?.makeKey()
-        target?.makeFirstResponder(target?.canvas)
+        if let target = windowUnderPointer ?? windows.first { focus(target) }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.windows.contains(where: { $0.handleShortcut(event) }) == true { return nil }
-            return event
+            self?.handleShortcut(event) == true ? nil : event
         }
     }
 
@@ -137,22 +211,24 @@ final class QuickShotSession: NSObject {
         case .editor:
             close(restoreFocus: false)
             onEditor(crop.image, crop.history, annotation)
+            recordOutput(crop, in: window)
         case .copy:
             guard let image = render(crop) else { return }
             guard ScreenshotManager.copyToClipboard(image) else {
                 HUD.shared.show(.shotCopyFailed)
                 return
             }
+            recordOutput(crop, in: window)
             close(restoreFocus: true)
             onFinish(true, nil)
         case .save:
-            save(crop, to: .folder(folder()))
+            save(crop, in: window, to: .folder(folder()))
         case .saveAs:
             guard window.attachedSheet == nil else { return }
             let panel = ShotSavePanel.make(in: folder())
             panel.beginSheetModal(for: window) { [weak self] response in
                 guard let self, onClose != nil, response == .OK, let url = panel.url else { return }
-                save(crop, to: .path(url.path))
+                save(crop, in: window, to: .path(url.path))
             }
         }
     }
@@ -163,14 +239,20 @@ final class QuickShotSession: NSObject {
         return image
     }
 
-    private func save(_ crop: ShotCrop, to destination: ScreenshotManager.Destination) {
+    private func save(_ crop: ShotCrop, in window: QuickShotWindow, to destination: ScreenshotManager.Destination) {
         guard let image = render(crop) else { return }
         guard let path = ScreenshotManager.save(image, to: destination) else {
             HUD.shared.show(.shotEditorWriteFailed)
             return
         }
+        recordOutput(crop, in: window)
         close(restoreFocus: true)
         onFinish(false, path)
+    }
+
+    private func recordOutput(_ crop: ShotCrop, in window: QuickShotWindow) {
+        guard let display = window.regionDisplay else { return }
+        rememberRegion(ShotRegionRecord(display: display, rect: crop.rect))
     }
 
     @objc private func cancel() {

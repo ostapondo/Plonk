@@ -8,8 +8,12 @@ enum ScreenIdentity {
 
     static func uuid(forIndex index: Int) -> String? {
         let screens = NSScreen.screens
-        guard screens.indices.contains(index),
-              let number = screens[index].deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+        guard screens.indices.contains(index) else { return nil }
+        return uuid(for: screens[index])
+    }
+
+    static func uuid(for screen: NSScreen) -> String? {
+        guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
               let uuid = CGDisplayCreateUUIDFromDisplayID(CGDirectDisplayID(number.uint32Value))?.takeRetainedValue()
         else { return nil }
         return CFUUIDCreateString(nil, uuid) as String

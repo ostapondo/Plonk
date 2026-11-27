@@ -69,6 +69,8 @@
 /* Screenshots. */
 "shot.capture" = "Capture";
 "shot.captureRegion" = "Capture Region";
+"shot.selectDisplayHint" = "Press F to select the full screen";
+"shot.restoreRegionHint" = "Press R to restore the last selection";
 "shot.afterCapture" = "After capture";
 "shot.afterQuickActions" = "Quick Actions";
 "shot.afterEditor" = "Open Editor";
