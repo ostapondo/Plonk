@@ -21,12 +21,11 @@ final class ShotPixelSampler {
         pixelBounds = CGRect(x: 0, y: 0, width: image.width, height: image.height)
     }
 
-    // The canvas and crop use a top-left origin. Selection edges round to the
-    // nearest boundary, while sampling floors to the pixel containing the point.
-    func pixel(at point: CGPoint, in area: CGRect) -> CGPoint? {
+    // Keep fractional pixel coordinates so the view can magnify around the pointer.
+    func position(at point: CGPoint, in area: CGRect) -> CGPoint? {
         guard !area.isEmpty, area.contains(point) else { return nil }
-        return CGPoint(x: floor((point.x - area.minX) / area.width * pixelBounds.width),
-                       y: floor((point.y - area.minY) / area.height * pixelBounds.height))
+        return CGPoint(x: (point.x - area.minX) / area.width * pixelBounds.width,
+                       y: (point.y - area.minY) / area.height * pixelBounds.height)
     }
 
     func hex(at pixel: CGPoint) -> String? {

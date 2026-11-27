@@ -90,11 +90,12 @@ final class QuickShotCanvas: NSView {
 
     var hasMarks: Bool { history.canUndo || history.canRedo }
     var isWaitingForRegion: Bool { !fixed && selection == nil && gesture == nil }
-    var isCreatingRegion: Bool {
+    var isDraggingRegionBoundary: Bool {
         if case .create = gesture { return true }
+        if case .adjust(_, _, let handle) = gesture { return handle != .zero }
         return false
     }
-    var draftFrame: CGRect? { isCreatingRegion ? selection.map(geometry.viewRect) : nil }
+    var regionFrame: CGRect? { selection.map(geometry.viewRect) }
 
     private var geometry: ShotSelection { ShotSelection(pixels: bitmap.size, view: bounds.size) }
 
@@ -245,7 +246,8 @@ final class QuickShotCanvas: NSView {
             return
         }
 
-        let frame = selection.map(geometry.viewRect)
+        let frame = regionFrame
+        magnifier?.showsHex = frame == nil
         backdrop.selection = frame
         markup.show(history, clippedTo: frame)
         toolbar.isHidden = selection == nil

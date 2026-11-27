@@ -153,7 +153,7 @@ final class QuickShotSession: NSObject {
         guard onClose != nil else { return }
         let waiting = isWaitingForRegion
         // During a drag only its starting canvas can sample, even on another display.
-        let target = windows.first { $0.canvas.isCreatingRegion } ?? (waiting ? regionWindow(at: pointer) : nil)
+        let target = windows.first { $0.canvas.isDraggingRegionBoundary } ?? (waiting ? regionWindow(at: pointer) : nil)
         if let previous = magnifierWindow?.canvas, magnifierWindow !== target {
             previous.magnifier?.hide()
             previous.regionTips?.isHidden = true
@@ -162,7 +162,7 @@ final class QuickShotSession: NSObject {
         guard let target else { return }
         let canvas = target.canvas
         canvas.regionTips?.isHidden = !waiting
-        let obstacle = waiting ? canvas.regionTips?.frame : canvas.draftFrame
+        let obstacle = waiting ? canvas.regionTips?.frame : canvas.regionFrame
         canvas.magnifier?.update(at: target.canvasPoint(at: pointer), in: canvas.bounds, avoiding: obstacle,
                                  zoom: magnifierZoom)
     }
@@ -180,7 +180,7 @@ final class QuickShotSession: NSObject {
             }
         case .zoomMagnifier(let increasing):
             guard keyWindow.canvas.magnifier != nil else { return false }
-            if let magnifier, magnifier.hex != nil {
+            if let magnifier, !magnifier.isHidden {
                 magnifierZoom = magnifierZoom.stepped(increasing: increasing)
                 magnifier.setZoom(magnifierZoom)
             }
