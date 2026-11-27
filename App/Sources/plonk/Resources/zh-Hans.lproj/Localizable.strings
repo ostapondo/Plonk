@@ -62,6 +62,8 @@
 /* Screenshots. */
 "shot.capture" = "截图";
 "shot.captureRegion" = "区域截图";
+"shot.selectDisplayHint" = "按 F 选择全屏";
+"shot.restoreRegionHint" = "按 R 恢复上次选区";
 "shot.afterCapture" = "截图后";
 "shot.afterQuickActions" = "快捷操作";
 "shot.afterEditor" = "打开编辑器";

@@ -13,8 +13,11 @@ What changed in each release, from a user's side. The commit log has the rest.
   Widths are in screen points, so a stroke looks the same on Retina and
   standard displays.
 - **Quick Actions for window and full-screen screenshots.** Annotate, copy, or
-  save the whole capture at its original pixel size. Full-screen capture uses
-  the display under the pointer.
+  save the capture at its original pixel size. Full-screen capture starts with
+  an adjustable selection on the display under the pointer.
+- **Restore the last screenshot region.** Press R while choosing a region to
+  reuse the last copied, saved, or opened selection on its original display
+  with the current screenshot. Press F or click the desktop to select a full screen.
 - **Region screenshots keep the selection on screen.** Choose Open Editor to
   continue editing, or change After capture in Screenshot settings to open
   the editor immediately.

@@ -7,10 +7,11 @@ enum ShotKeyCommand: Equatable {
     case save
     case undo
     case redo
+    case selectDisplay
+    case restoreRegion
 
     /// `characters` is the event's `charactersIgnoringModifiers`. On a Latin layout the
-    /// typed letter decides, as macOS menus do; on any other layout ⌘ with that letter
-    /// names no shortcut, so the US key position decides instead.
+    /// typed letter decides, as macOS menus do; otherwise the US key position decides.
     init?(keyCode: Int, characters: String?, flags: NSEvent.ModifierFlags, repeating: Bool) {
         guard !repeating else { return nil }
         let modifiers = flags.intersection([.command, .shift, .option, .control])
@@ -19,6 +20,8 @@ enum ShotKeyCommand: Equatable {
         case (kVK_Return, []), (kVK_ANSI_KeypadEnter, []): self = .copy
         default:
             switch (Self.letter(keyCode: keyCode, characters: characters), modifiers) {
+            case ("f", []): self = .selectDisplay
+            case ("r", []): self = .restoreRegion
             case ("s", .command): self = .save
             case ("z", .command): self = .undo
             case ("z", [.command, .shift]): self = .redo
@@ -33,6 +36,8 @@ enum ShotKeyCommand: Equatable {
             return char
         }
         switch keyCode {
+        case kVK_ANSI_F: return "f"
+        case kVK_ANSI_R: return "r"
         case kVK_ANSI_S: return "s"
         case kVK_ANSI_Z: return "z"
         default: return nil
