@@ -5,7 +5,12 @@ final class QuickShotMagnifier: NSView {
         override func hitTest(_ point: NSPoint) -> NSView? { nil }
     }
 
-    private static let size = CGSize(width: 128, height: 128)
+    private static let contentWidth: CGFloat = 120
+    private static let borderWidth: CGFloat = 4
+    private static let size: CGSize = {
+        let side = contentWidth + 2 * borderWidth
+        return CGSize(width: side, height: side)
+    }()
     private static let hexStyle: [NSAttributedString.Key: Any] = [
         .font: NSFont(name: "Inter-Regular", size: 10) ?? NSFont.systemFont(ofSize: 10),
         .foregroundColor: NSColor.white,
@@ -18,6 +23,7 @@ final class QuickShotMagnifier: NSView {
     private var colorLabel: NSAttributedString?
     private var neighborhood: ShotPixelSampler.Neighborhood?
     private var zoom: ShotMagnifierZoom = .standard
+    private var drawingOffset = CGPoint.zero
     var hex: String? { isHidden ? nil : sampledHex }
 
     init(image: CGImage) {
@@ -64,8 +70,13 @@ final class QuickShotMagnifier: NSView {
             showNeighborhood(around: nextPixel, zoom: zoom)
         }
 
-        let placement = QuickShotLayout.magnifier(size: Self.size, near: point, area: area, avoiding: selection)
-        setFrameOrigin(placement.origin)
+        guard let placement = QuickShotLayout.magnifier(size: Self.size, near: point, area: area, avoiding: selection)
+        else { return hide() }
+        if frame.size != placement.frame.size || drawingOffset != placement.drawingOffset {
+            drawingOffset = placement.drawingOffset
+            needsDisplay = true
+        }
+        frame = placement.frame
         isHidden = false
         copyHint.isHidden = !showsCopyHint
     }
@@ -83,18 +94,24 @@ final class QuickShotMagnifier: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         guard let context = NSGraphicsContext.current?.cgContext, let neighborhood, let colorLabel else { return }
-        let viewport = bounds.insetBy(dx: 1, dy: 1)
+        context.saveGState()
+        defer { context.restoreGState() }
+        context.clip(to: bounds)
+        let panel = CGRect(origin: drawingOffset, size: Self.size)
+        let border = Self.borderWidth
+        let viewport = panel.insetBy(dx: border, dy: border)
         drawPixels(neighborhood, in: viewport, context: context)
 
         let blue = QuickShotBackdrop.accent
         context.setStrokeColor(blue.cgColor)
-        context.stroke(bounds.insetBy(dx: 0.5, dy: 0.5), width: 1)
         drawCrosshair(in: viewport, color: blue, context: context)
+        let outline = panel.insetBy(dx: border / 2, dy: border / 2)
+        context.stroke(outline, width: border)
 
-        let badge = CGRect(x: bounds.minX, y: bounds.maxY - 14, width: 50, height: 14)
+        let badge = CGRect(x: outline.minX, y: outline.maxY - 14, width: 50, height: 14)
         context.setFillColor(CGColor(srgbRed: 34 / 255, green: 34 / 255, blue: 34 / 255, alpha: 1))
         context.fill(badge)
-        context.stroke(badge.insetBy(dx: 0.5, dy: 0.5), width: 1)
+        context.stroke(badge.insetBy(dx: 1, dy: 1), width: 2)
         let labelSize = colorLabel.size()
         colorLabel.draw(at: CGPoint(x: badge.midX - labelSize.width / 2, y: badge.midY - labelSize.height / 2))
     }

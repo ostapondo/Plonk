@@ -1,27 +1,34 @@
 import CoreGraphics
 
 enum QuickShotLayout {
-    static func magnifier(size: CGSize, near pointer: CGPoint, area: CGRect, avoiding selection: CGRect?) -> CGRect {
+    struct MagnifierPlacement {
+        let frame: CGRect
+        let drawingOffset: CGPoint
+    }
+
+    static func magnifier(size: CGSize, near pointer: CGPoint, area: CGRect,
+                          avoiding selection: CGRect?) -> MagnifierPlacement? {
         let gap: CGFloat = 10
-        let left = (pointer.x - gap - size.width).rounded()
-        let right = (pointer.x + gap).rounded()
-        let above = (pointer.y - gap - size.height).rounded()
-        let below = (pointer.y + gap).rounded()
-        let candidates = [(left, above), (right, above), (right, below), (left, below)].map { x, y in
-            CGRect(origin: CGPoint(x: x, y: y), size: size)
+        let left = pointer.x - gap - size.width
+        let right = pointer.x + gap
+        let above = pointer.y - gap - size.height
+        let below = pointer.y + gap
+        let origins = [(left, above), (right, above), (right, below), (left, below)]
+        let candidates: [(full: CGRect, visible: CGRect)] = origins.compactMap { x, y in
+            let full = CGRect(origin: CGPoint(x: x, y: y), size: size)
+            let visible = full.intersection(area)
+            return visible.isEmpty ? nil : (full, visible)
         }
         let safeArea = area.insetBy(dx: 5, dy: 5)
-        let clear = candidates.filter { selection?.intersects($0) != true }
-        func visibleArea(_ rect: CGRect) -> CGFloat {
-            let visible = area.intersection(rect)
-            return visible.isNull ? 0 : visible.width * visible.height
-        }
-        // The overlay window clips the fallback without shifting the sampled pixel.
-        return clear.first(where: safeArea.contains)
-            ?? clear.first(where: area.contains)
-            ?? candidates.first(where: safeArea.contains)
-            ?? candidates.max { visibleArea($0) < visibleArea($1) }
-            ?? candidates[0]
+        let clear = candidates.filter { selection?.intersects($0.visible) != true }
+        let fallback = clear.isEmpty ? candidates : clear
+        guard let best = clear.first(where: { safeArea.contains($0.full) }) ?? fallback.max(by: {
+            $0.visible.width * $0.visible.height < $1.visible.width * $1.visible.height
+        }) else { return nil }
+        // Keep the original drawing origin when the visible frame is cropped.
+        return MagnifierPlacement(frame: best.visible,
+                                  drawingOffset: CGPoint(x: best.full.minX - best.visible.minX,
+                                                         y: best.full.minY - best.visible.minY))
     }
 
     struct StylePlacement: Equatable {
