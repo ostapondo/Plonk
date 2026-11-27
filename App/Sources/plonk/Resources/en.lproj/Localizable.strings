@@ -73,6 +73,7 @@
 "shot.afterQuickActions" = "Quick Actions";
 "shot.afterEditor" = "Open Editor";
 "shot.captureFailed" = "Could not capture the display. Check Screen Recording permission in System Settings.";
+"shot.copyColorHint" = "Press C to copy color";
 "shot.copyFailed" = "Could not copy the screenshot.";
 "shot.selectionWidth" = "Selection width";
 "shot.selectionHeight" = "Selection height";

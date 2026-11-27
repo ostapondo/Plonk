@@ -1,6 +1,19 @@
 import CoreGraphics
 
 enum QuickShotLayout {
+    static func magnifier(size: CGSize, near pointer: CGPoint, area: CGRect) -> CGRect {
+        let gap: CGFloat = 18
+        func origin(_ point: CGFloat, length: CGFloat, min lower: CGFloat, max upper: CGFloat) -> CGFloat {
+            let after = point + gap
+            let before = point - gap - length
+            let preferred = after + length <= upper ? after : before
+            return preferred.rounded().clamped(to: lower...max(lower, upper - length))
+        }
+        return CGRect(x: origin(pointer.x, length: size.width, min: area.minX, max: area.maxX),
+                      y: origin(pointer.y, length: size.height, min: area.minY, max: area.maxY),
+                      width: size.width, height: size.height)
+    }
+
     struct StylePlacement: Equatable {
         let panel: CGRect
         let help: CGRect

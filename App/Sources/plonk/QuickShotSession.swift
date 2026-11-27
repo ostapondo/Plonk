@@ -10,7 +10,9 @@ final class QuickShotSession: NSObject {
     private let onFinish: (Bool, String?) -> Void
     private var onClose: (() -> Void)?
     private var windows: [QuickShotWindow] = []
-    private var keyMonitor: Any?
+    private var inputMonitor: Any?
+    private weak var magnifierWindow: QuickShotWindow?
+    private var magnifierZoom: ShotMagnifierZoom = .standard
     private var pickerMonitor: Any?
     private var picker: Process?
     private var pickLocation: CGPoint?
@@ -99,6 +101,9 @@ final class QuickShotSession: NSObject {
         let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed, model: model,
                                      annotation: annotation)
         window.canvas.onCancel = { [weak self] in self?.cancel() }
+        if !fixed {
+            window.onRegionPointerChange = { [weak self] in self?.updateMagnifier(at: $0) }
+        }
         window.canvas.onSelect = { [weak self, weak window] in
             self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
         }
@@ -121,10 +126,71 @@ final class QuickShotSession: NSObject {
         let target = windows.first { $0.frame.contains(NSEvent.mouseLocation) } ?? windows.first
         target?.makeKey()
         target?.makeFirstResponder(target?.canvas)
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.windows.contains(where: { $0.handleShortcut(event) }) == true { return nil }
+        inputMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.keyDown, .mouseMoved, .mouseEntered, .mouseExited]
+        ) { [weak self] event in
+            guard let self else { return event }
+            if event.type == .keyDown {
+                return handleShortcut(event) ? nil : event
+            }
+            if event.type == .mouseMoved, let window = event.window {
+                updateMagnifier(at: window.convertPoint(toScreen: event.locationInWindow))
+            } else {
+                updateMagnifier(at: NSEvent.mouseLocation)
+            }
             return event
         }
+        updateMagnifier(at: NSEvent.mouseLocation)
+    }
+
+    private var isWaitingForRegion: Bool { windows.allSatisfy { $0.canvas.isWaitingForRegion } }
+
+    private func regionWindow(at pointer: CGPoint) -> QuickShotWindow? {
+        windows.first { $0.canvas.magnifier != nil && $0.canvas.bounds.contains($0.canvasPoint(at: pointer)) }
+    }
+
+    private func updateMagnifier(at pointer: CGPoint) {
+        guard onClose != nil else { return }
+        let waiting = isWaitingForRegion
+        // During a drag only its starting canvas can sample, even on another display.
+        let target = windows.first { $0.canvas.isCreatingRegion } ?? (waiting ? regionWindow(at: pointer) : nil)
+        if magnifierWindow !== target { magnifierWindow?.canvas.magnifier?.isHidden = true }
+        magnifierWindow = target
+        guard let target else { return }
+        target.canvas.magnifier?.update(at: target.canvasPoint(at: pointer), in: target.canvas.bounds,
+                                        zoom: magnifierZoom, showsCopyHint: waiting)
+    }
+
+    private func handleShortcut(_ event: NSEvent) -> Bool {
+        guard let keyWindow = windows.first(where: \.isKeyWindow), let command = keyWindow.shortcut(for: event)
+        else { return false }
+        let magnifier = magnifierWindow?.canvas.magnifier
+        switch command {
+        case .copyColor:
+            guard keyWindow.canvas.magnifier != nil else { return false }
+            if let hex = magnifier?.hex {
+                NSPasteboard.general.replaceContents(with: hex)
+                close(restoreFocus: true)
+            }
+        case .zoomMagnifier(let increasing):
+            guard keyWindow.canvas.magnifier != nil else { return false }
+            if let magnifier, magnifier.hex != nil {
+                magnifierZoom = magnifierZoom.stepped(increasing: increasing)
+                magnifier.setZoom(magnifierZoom)
+            }
+        case .selectDisplay:
+            guard keyWindow.canvas.magnifier != nil else { return false }
+            let pointer = NSEvent.mouseLocation
+            if isWaitingForRegion, NSEvent.pressedMouseButtons & 1 == 0, let target = regionWindow(at: pointer) {
+                target.makeKey()
+                target.makeFirstResponder(target.canvas)
+                target.canvas.handle(command)
+                updateMagnifier(at: pointer)
+            }
+        default:
+            keyWindow.canvas.handle(command)
+        }
+        return true
     }
 
     private func captureFailed() {
@@ -183,8 +249,9 @@ final class QuickShotSession: NSObject {
         self.onClose = nil
         stopPicker()
         NotificationCenter.default.removeObserver(self)
-        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
-        keyMonitor = nil
+        if let inputMonitor { NSEvent.removeMonitor(inputMonitor) }
+        inputMonitor = nil
+        magnifierWindow = nil
         for window in windows {
             if let sheet = window.attachedSheet { window.endSheet(sheet, returnCode: .cancel) }
             window.orderOut(nil)
