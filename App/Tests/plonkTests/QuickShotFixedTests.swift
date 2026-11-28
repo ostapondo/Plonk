@@ -74,6 +74,35 @@ struct QuickShotFixedTests {
         #expect(abs(mark.width * backdrop.frame.width - 5) < 0.0001)
     }
 
+    @Test(arguments: [false, true])
+    func shiftUpdatesTheLiveShapeWithoutMovingThePointer(shiftAtRelease: Bool) throws {
+        let annotation = ShotAnnotationState(defaults: .init())
+        annotation.tool = .ellipse
+        let canvas = try makeCanvas(annotation: annotation)
+        let window = NSWindow(contentRect: canvas.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.contentView = canvas
+        let markup = try #require(canvas.subviews.compactMap { $0 as? QuickShotMarkupView }.first)
+        let start = CGPoint(x: markup.frame.minX + 20, y: markup.frame.minY + 20)
+        let end = CGPoint(x: start.x + 60, y: start.y + 20)
+        canvas.mouseDown(with: try mouse(.leftMouseDown, at: start, in: canvas, window: window))
+        canvas.mouseDragged(with: try mouse(.leftMouseDragged, at: end, in: canvas, window: window))
+        let free = try #require(markup.rootView.live)
+        #expect(abs(free.boundingRect(in: markup.frame.size).height - 20) < 0.0001)
+
+        canvas.flagsChanged(with: try shiftEvent(down: true))
+        let constrained = try #require(markup.rootView.live)
+        #expect(abs(constrained.boundingRect(in: markup.frame.size).height - 60) < 0.0001)
+        if !shiftAtRelease { canvas.flagsChanged(with: try shiftEvent(down: false)) }
+        let preview = try #require(markup.rootView.live)
+        #expect(preview == (shiftAtRelease ? constrained : free))
+
+        canvas.mouseUp(with: try mouse(.leftMouseUp, at: end, in: canvas, window: window,
+                                       flags: shiftAtRelease ? .shift : []))
+        canvas.flagsChanged(with: try shiftEvent(down: false))
+        #expect(markup.rootView.live == nil)
+        #expect(markup.rootView.annotations == [preview])
+    }
+
     private func makeCanvas(annotation: ShotAnnotationState? = nil) throws -> QuickShotCanvas {
         _ = NSApplication.shared
         let context = try #require(CGContext(
@@ -92,15 +121,26 @@ struct QuickShotFixedTests {
             (.leftMouseUp, CGPoint(x: imageFrame.maxX - 20, y: imageFrame.midY))
         ]
         for (type, point) in points {
-            let event = try #require(NSEvent.mouseEvent(
-                with: type, location: canvas.convert(point, to: nil), modifierFlags: [],
-                timestamp: 0, windowNumber: window.windowNumber, context: nil,
-                eventNumber: 0, clickCount: 1, pressure: 1))
+            let event = try mouse(type, at: point, in: canvas, window: window)
             if type == .leftMouseDown {
                 canvas.mouseDown(with: event)
             } else {
                 canvas.mouseUp(with: event)
             }
         }
+    }
+
+    private func mouse(_ type: NSEvent.EventType, at point: CGPoint, in canvas: QuickShotCanvas, window: NSWindow,
+                       flags: NSEvent.ModifierFlags = []) throws -> NSEvent {
+        try #require(NSEvent.mouseEvent(with: type, location: canvas.convert(point, to: nil), modifierFlags: flags,
+                                         timestamp: 0, windowNumber: window.windowNumber, context: nil,
+                                         eventNumber: 0, clickCount: 1, pressure: 1))
+    }
+
+    private func shiftEvent(down: Bool) throws -> NSEvent {
+        let event = try #require(CGEvent(keyboardEventSource: nil, virtualKey: 56, keyDown: down))
+        event.type = .flagsChanged
+        event.flags = down ? .maskShift : []
+        return try #require(NSEvent(cgEvent: event))
     }
 }

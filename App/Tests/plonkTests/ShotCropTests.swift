@@ -30,7 +30,33 @@ struct ShotCropTests {
         #expect(try isWhite(rep, atX: 40, y: 70))
     }
 
+    @Test func pngClipsTheSquareWithoutShrinkingItToFitTheCrop() throws {
+        let bitmap = try makeBitmap(scale: 2)
+        let rect = CGRect(x: 80, y: 40, width: 160, height: 120)
+        var history = AnnotationHistory()
+        history.begin(.rectangle, at: CGPoint(x: 0.5, y: 0.25), color: 0, width: 0.02)
+        history.end(at: CGPoint(x: 0.55, y: 0.5), squareIn: bitmap.size)
+        let crop = try #require(ShotCrop(bitmap: bitmap, rect: rect, history: history))
+        let rep = try bitmapRep(try #require(crop.rendered()))
+
+        #expect(rep.pixelsWide == 160 && rep.pixelsHigh == 120)
+        for y in [20, 80] {
+            let edge = try #require(rep.colorAt(x: 159, y: y)?.usingColorSpace(.sRGB))
+            #expect(edge.redComponent > 0.8 && edge.greenComponent < 0.4)
+        }
+        #expect(try isWhite(rep, atX: 159, y: 50))
+    }
+
     private func annotatedCrop(scale: Int) throws -> ShotCrop {
+        let bitmap = try makeBitmap(scale: scale)
+        let rect = CGRect(x: 40 * scale, y: 20 * scale, width: 80 * scale, height: 60 * scale)
+        var history = AnnotationHistory()
+        history.begin(.pen, at: CGPoint(x: 0.1, y: 1.0 / 3), color: 0, width: 0.02)
+        history.end(at: CGPoint(x: 0.7, y: 1.0 / 3))
+        return try #require(ShotCrop(bitmap: bitmap, rect: rect, history: history))
+    }
+
+    private func makeBitmap(scale: Int) throws -> ShotBitmap {
         let width = 200 * scale
         let height = 120 * scale
         let context = try #require(CGContext(
@@ -39,12 +65,7 @@ struct ShotCropTests {
         context.setFillColor(NSColor.white.cgColor)
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         let image = try #require(context.makeImage())
-        let bitmap = ShotBitmap(image: image, displaySize: CGSize(width: 200, height: 120))
-        let rect = CGRect(x: 40 * scale, y: 20 * scale, width: 80 * scale, height: 60 * scale)
-        var history = AnnotationHistory()
-        history.begin(.pen, at: CGPoint(x: 0.1, y: 1.0 / 3), color: 0, width: 0.02)
-        history.end(at: CGPoint(x: 0.7, y: 1.0 / 3))
-        return try #require(ShotCrop(bitmap: bitmap, rect: rect, history: history))
+        return ShotBitmap(image: image, displaySize: CGSize(width: 200, height: 120))
     }
 
     private func bitmapRep(_ image: NSImage) throws -> NSBitmapImageRep {

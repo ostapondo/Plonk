@@ -4,6 +4,7 @@ struct AnnotationHistory {
     private(set) var annotations: [Annotation] = []
     private var redoStack: [Annotation] = []
     private(set) var live: Annotation?
+    private var lastDragPoint: CGPoint?
 
     var canUndo: Bool { !annotations.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
@@ -15,22 +16,41 @@ struct AnnotationHistory {
     }
 
     mutating func begin(_ kind: Annotation.Kind, at point: CGPoint, color: Int, width: Double) {
+        lastDragPoint = nil
         live = Annotation(kind: kind, points: [point], colorIndex: color, width: width)
     }
 
-    mutating func drag(to point: CGPoint) {
-        guard var mark = live, let start = mark.points.first, mark.points.last != point else { return }
+    mutating func drag(to point: CGPoint, squareIn imageSize: CGSize? = nil) {
+        guard var mark = live, let start = mark.points.first else { return }
+        lastDragPoint = point
         if mark.kind.tracksEveryPoint {
+            guard mark.points.last != point else { return }
             mark.points.append(point)
         } else {
-            mark.points = point == start ? [start] : [start, point]
+            let end: CGPoint
+            if let imageSize, mark.kind.supportsSquareConstraint {
+                end = Self.squareCorner(from: start, to: point, in: imageSize)
+            } else {
+                end = point
+            }
+            mark.points = point == start ? [start] : [start, end]
         }
         live = mark
     }
 
-    mutating func end(at point: CGPoint) {
-        drag(to: point)
-        defer { live = nil }
+    @discardableResult
+    mutating func updateSquareConstraint(in imageSize: CGSize?) -> Bool {
+        guard let mark = live, mark.kind.supportsSquareConstraint, let lastDragPoint else { return false }
+        drag(to: lastDragPoint, squareIn: imageSize)
+        return live != mark
+    }
+
+    mutating func end(at point: CGPoint, squareIn imageSize: CGSize? = nil) {
+        drag(to: point, squareIn: imageSize)
+        defer {
+            live = nil
+            lastDragPoint = nil
+        }
         guard let live, live.points.count > 1 else { return }
         annotations.append(live)
         redoStack.removeAll()
@@ -47,5 +67,15 @@ struct AnnotationHistory {
     func rebased(to crop: CGRect) -> Self {
         Self(annotations: annotations.map { $0.rebased(to: crop) },
              redoStack: redoStack.map { $0.rebased(to: crop) })
+    }
+
+    private static func squareCorner(from start: CGPoint, to point: CGPoint, in imageSize: CGSize) -> CGPoint {
+        guard imageSize.width > 0, imageSize.height > 0 else { return point }
+        // A unit of x and a unit of y cover different distances on a non-square image.
+        let dx = (point.x - start.x) * imageSize.width
+        let dy = (point.y - start.y) * imageSize.height
+        let side = max(abs(dx), abs(dy))
+        return CGPoint(x: start.x + (dx < 0 ? -side : side) / imageSize.width,
+                       y: start.y + (dy < 0 ? -side : side) / imageSize.height)
     }
 }
