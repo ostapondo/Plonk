@@ -6,11 +6,15 @@ import AppKit
 
 enum ScreenIdentity {
 
+    static func displayID(for screen: NSScreen) -> CGDirectDisplayID? {
+        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
+    }
+
     static func uuid(forIndex index: Int) -> String? {
         let screens = NSScreen.screens
         guard screens.indices.contains(index),
-              let number = screens[index].deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
-              let uuid = CGDisplayCreateUUIDFromDisplayID(CGDirectDisplayID(number.uint32Value))?.takeRetainedValue()
+              let id = displayID(for: screens[index]),
+              let uuid = CGDisplayCreateUUIDFromDisplayID(id)?.takeRetainedValue()
         else { return nil }
         return CFUUIDCreateString(nil, uuid) as String
     }

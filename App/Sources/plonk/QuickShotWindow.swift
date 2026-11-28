@@ -1,19 +1,20 @@
 import AppKit
 
-final class QuickShotWindow: NSWindow {
+final class QuickShotWindow: NSPanel {
     let canvas: QuickShotCanvas
     private var interactingWithStyle = false
 
-    init(screen: NSScreen, bitmap: ShotBitmap, fixed: Bool, model: AppModel, annotation: ShotAnnotationState) {
-        let frame = screen.frame
-        let visible = screen.visibleFrame
+    init(frame: CGRect, visibleFrame visible: CGRect, bitmap: ShotBitmap, fixed: Bool,
+         model: AppModel, annotation: ShotAnnotationState) {
         let safeArea = CGRect(x: visible.minX - frame.minX, y: frame.maxY - visible.maxY,
                               width: visible.width, height: visible.height)
         canvas = QuickShotCanvas(bitmap: bitmap, size: frame.size, safeArea: safeArea, fixed: fixed,
                                  model: model, annotation: annotation)
-        super.init(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
+        super.init(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         setFrame(frame, display: false)
         isReleasedWhenClosed = false
+        hidesOnDeactivate = false
+        animationBehavior = .none
         level = .screenSaver
         acceptsMouseMovedEvents = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
@@ -22,6 +23,12 @@ final class QuickShotWindow: NSWindow {
     }
 
     override var canBecomeKey: Bool { true }
+
+    func show() {
+        canvas.layoutSubtreeIfNeeded()
+        display()
+        orderFrontRegardless()
+    }
 
     override func sendEvent(_ event: NSEvent) {
         if event.type == .leftMouseDown, attachedSheet == nil {

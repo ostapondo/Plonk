@@ -9,6 +9,8 @@ enum CaptureMode: String {
     case window
     case screen
 
+    var quickShotNeedsHiddenWindows: Bool { self == .window }
+
     /// Read out loud rather than sent over the API, which uses `rawValue`.
     var title: LocalizedStringResource {
         switch self {

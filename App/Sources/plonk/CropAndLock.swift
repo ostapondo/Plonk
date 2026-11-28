@@ -114,11 +114,7 @@ final class CroppedPanel: NSPanel {
         configuration.showsCursor = false
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
         // Plonk's own windows are excluded, or the thumbnail films itself.
-        let filter = SCContentFilter(display: display,
-                                     excludingApplications: content.applications.filter {
-                                         $0.processID == ProcessInfo.processInfo.processIdentifier
-                                     },
-                                     exceptingWindows: [])
+        let filter = content.filterExcludingPlonk(on: display)
 
         let stream = SCStream(filter: filter, configuration: configuration, delegate: nil)
         try stream.addStreamOutput(panel.output, type: .screen,

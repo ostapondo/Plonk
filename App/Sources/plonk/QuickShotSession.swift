@@ -14,6 +14,7 @@ final class QuickShotSession: NSObject {
     private var pickerMonitor: Any?
     private var picker: Process?
     private var pickLocation: CGPoint?
+    private var captureTask: Task<Void, Never>?
 
     init(previousApp: NSRunningApplication?, model: AppModel, folder: @escaping () -> String,
          onClose: @escaping () -> Void,
@@ -34,30 +35,34 @@ final class QuickShotSession: NSObject {
         NotificationCenter.default.addObserver(
             self, selector: #selector(cancel), name: NSApplication.didChangeScreenParametersNotification, object: NSApp
         )
-        // Give the window server a turn after ordering Plonk's windows out.
-        DispatchQueue.main.async { [weak self] in
-            guard let self, onClose != nil else { return }
-            switch mode {
-            case .region: captureRegions(screens)
-            case .window: pickWindow()
-            case .screen:
-                guard let screen else { return captureFailed() }
-                ScreenshotManager.captureDisplay(screen) { [weak self] image in
-                    self?.presentFixed(image, on: screen)
-                }
+        switch mode {
+        case .region:
+            captureDisplays(screens, fixed: false)
+        case .window:
+            // Give the window server a turn after ordering Plonk's windows out.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, onClose != nil else { return }
+                pickWindow()
             }
+        case .screen:
+            guard let screen else { return captureFailed() }
+            captureDisplays([screen], fixed: true)
         }
     }
 
-    private func captureRegions(_ screens: [NSScreen]) {
-        for screen in screens {
-            ScreenshotManager.captureDisplay(screen) { [weak self] image in
+    private func captureDisplays(_ screens: [NSScreen], fixed: Bool) {
+        captureTask = Task { [weak self] in
+            do {
+                let bitmaps = try await ShotDisplayCapture.capture(screens)
+                try Task.checkCancellation()
                 guard let self, onClose != nil else { return }
-                guard let bitmap = ShotBitmap(capture: image, displaySize: screen.frame.size) else {
-                    return captureFailed()
+                for (screen, bitmap) in zip(screens, bitmaps) {
+                    addWindow(for: screen, bitmap: bitmap, fixed: fixed)
                 }
-                addWindow(for: screen, bitmap: bitmap, fixed: false)
-                if windows.count == screens.count { present() }
+                present()
+            } catch {
+                guard let self, onClose != nil else { return }
+                captureFailed()
             }
         }
     }
@@ -96,8 +101,8 @@ final class QuickShotSession: NSObject {
     }
 
     private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) {
-        let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed, model: model,
-                                     annotation: annotation)
+        let window = QuickShotWindow(frame: screen.frame, visibleFrame: screen.visibleFrame,
+                                     bitmap: bitmap, fixed: fixed, model: model, annotation: annotation)
         window.canvas.onCancel = { [weak self] in self?.cancel() }
         window.canvas.onSelect = { [weak self, weak window] in
             self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
@@ -116,14 +121,28 @@ final class QuickShotSession: NSObject {
         NotificationCenter.default.addObserver(
             self, selector: #selector(cancel), name: NSApplication.didResignActiveNotification, object: NSApp
         )
-        windows.forEach { $0.orderFrontRegardless() }
-        NSApp.activate(ignoringOtherApps: true)
+        for window in windows {
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(windowResignedKey), name: NSWindow.didResignKeyNotification, object: window
+            )
+            window.show()
+        }
         let target = windows.first { $0.frame.contains(NSEvent.mouseLocation) } ?? windows.first
         target?.makeKey()
         target?.makeFirstResponder(target?.canvas)
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if self?.windows.contains(where: { $0.handleShortcut(event) }) == true { return nil }
             return event
+        }
+    }
+
+    @objc private func windowResignedKey() {
+        // Another display's panel or the Save As sheet can take focus during this event.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, onClose != nil,
+                  !windows.contains(where: { $0.isKeyWindow || $0.attachedSheet?.isKeyWindow == true })
+            else { return }
+            cancel()
         }
     }
 
@@ -181,6 +200,8 @@ final class QuickShotSession: NSObject {
         guard let onClose else { return }
         let shouldRestore = restoreFocus && NSApp.isActive
         self.onClose = nil
+        captureTask?.cancel()
+        captureTask = nil
         stopPicker()
         NotificationCenter.default.removeObserver(self)
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }

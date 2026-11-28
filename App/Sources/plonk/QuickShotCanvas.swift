@@ -86,7 +86,7 @@ final class QuickShotCanvas: NSView {
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let pointerArea { removeTrackingArea(pointerArea) }
-        let area = NSTrackingArea(rect: .zero, options: [.activeInActiveApp, .inVisibleRect, .mouseMoved, .mouseEnteredAndExited],
+        let area = NSTrackingArea(rect: .zero, options: [.activeAlways, .inVisibleRect, .mouseMoved, .mouseEnteredAndExited],
                                   owner: self, userInfo: nil)
         addTrackingArea(area)
         pointerArea = area
