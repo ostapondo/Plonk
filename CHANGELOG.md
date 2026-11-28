@@ -4,6 +4,11 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ## Unreleased
 
+### Fixed
+
+- **Region and full-screen Quick Actions keep Plonk windows in place.** Settings
+  and other Plonk windows are excluded from the captured image.
+
 ### Added
 
 - **Set a default width and color for each screenshot annotation tool.** Use
