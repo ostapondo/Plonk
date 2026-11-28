@@ -6,6 +6,9 @@ What changed in each release, from a user's side. The commit log has the rest.
 
 ### Added
 
+- **Hold Shift to draw a square or circle on a screenshot.** In Quick Actions
+  and the editor, press or release Shift during a rectangle or ellipse drag to
+  switch between constrained and free drawing.
 - **Set a default width and color for each screenshot annotation tool.** Use
   the Quick Actions dial or the editor slider to adjust width for the current
   screenshot. Opening the editor from Quick Actions keeps the selected tool

@@ -38,6 +38,7 @@ struct Annotation: Identifiable, Equatable {
         }
 
         var tracksEveryPoint: Bool { self == .pen || self == .highlight }
+        var supportsSquareConstraint: Bool { self == .rectangle || self == .ellipse }
     }
 
     let id = UUID()

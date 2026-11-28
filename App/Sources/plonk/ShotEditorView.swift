@@ -96,21 +96,26 @@ struct ShotEditorView: View {
             let fitted = ImageFit.rect(for: image.size, in: geo.size)
             AnnotatedImage(image: image, annotations: history.annotations, live: history.live)
                 .frame(width: geo.size.width, height: geo.size.height)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 1)
-                        .onChanged { value in
+                .overlay {
+                    ShotEditorDragInput(
+                        onDrag: { start, point, shift in
                             if history.live == nil {
                                 annotation.beginMark(in: &history,
-                                                     at: ImageFit.unitPoint(value.startLocation, in: fitted),
+                                                     at: ImageFit.unitPoint(start, in: fitted),
                                                      viewWidth: fitted.width)
                             }
-                            history.drag(to: ImageFit.unitPoint(value.location, in: fitted))
+                            history.drag(to: ImageFit.unitPoint(point, in: fitted),
+                                         squareIn: shift ? image.size : nil)
+                        },
+                        onEnd: { point, shift in
+                            history.end(at: ImageFit.unitPoint(point, in: fitted),
+                                        squareIn: shift ? image.size : nil)
+                        },
+                        onShiftChange: { shift in
+                            history.updateSquareConstraint(in: shift ? image.size : nil)
                         }
-                        .onEnded { value in
-                            history.end(at: ImageFit.unitPoint(value.location, in: fitted))
-                        }
-                )
+                    )
+                }
         }
     }
 

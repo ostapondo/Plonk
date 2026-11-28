@@ -167,7 +167,7 @@ final class QuickShotCanvas: NSView {
             selection = handle == .zero ? geometry.move(original, by: delta)
                 : geometry.resize(original, handle: handle, by: delta, ratio: aspectRatio)
         case .mark:
-            history.drag(to: ImageFit.unitPoint(point, in: backdrop.frame))
+            history.drag(to: ImageFit.unitPoint(point, in: backdrop.frame), squareIn: squareSize(for: event))
         case nil:
             return
         }
@@ -176,13 +176,23 @@ final class QuickShotCanvas: NSView {
 
     override func mouseUp(with event: NSEvent) {
         if case .mark = gesture {
-            history.end(at: ImageFit.unitPoint(convert(event.locationInWindow, from: nil), in: backdrop.frame))
+            let point = ImageFit.unitPoint(convert(event.locationInWindow, from: nil), in: backdrop.frame)
+            history.end(at: point, squareIn: squareSize(for: event))
         } else {
             mouseDragged(with: event)
         }
         gesture = nil
         refresh()
         mouseMoved(with: event)
+    }
+
+    override func flagsChanged(with event: NSEvent) {
+        if case .mark = gesture, history.updateSquareConstraint(in: squareSize(for: event)) { refresh() }
+        super.flagsChanged(with: event)
+    }
+
+    private func squareSize(for event: NSEvent) -> CGSize? {
+        event.modifierFlags.contains(.shift) ? bitmap.size : nil
     }
 
     func handle(_ command: ShotKeyCommand) {
