@@ -4,6 +4,25 @@ import Testing
 
 @MainActor
 struct QuickShotRegionTests {
+    @Test(arguments: [false, true])
+    func overlayCanReceiveKeysWithoutActivatingOrAnimating(_ fixed: Bool) throws {
+        _ = NSApplication.shared
+        let context = try #require(CGContext(
+            data: nil, width: 320, height: 240, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        let frame = CGRect(x: 0, y: 0, width: 320, height: 240)
+        let bitmap = ShotBitmap(image: try #require(context.makeImage()), displaySize: frame.size)
+        let model = AppModel()
+        let window = QuickShotWindow(frame: frame, visibleFrame: frame, bitmap: bitmap, fixed: fixed, model: model,
+                                     annotation: ShotAnnotationState(defaults: model.config.shotAnnotationStyles))
+
+        #expect(window.styleMask.contains(.nonactivatingPanel))
+        #expect(window.animationBehavior == .none)
+        #expect(window.canBecomeKey)
+        #expect(!window.hidesOnDeactivate)
+        #expect(window.initialFirstResponder === window.canvas)
+    }
+
     @Test func exactDimensionsAreUsedByTheSavedRetinaCrop() throws {
         _ = NSApplication.shared
         let context = try #require(CGContext(

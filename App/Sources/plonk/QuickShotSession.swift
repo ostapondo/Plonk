@@ -101,8 +101,8 @@ final class QuickShotSession: NSObject {
     }
 
     private func addWindow(for screen: NSScreen, bitmap: ShotBitmap, fixed: Bool) {
-        let window = QuickShotWindow(screen: screen, bitmap: bitmap, fixed: fixed, model: model,
-                                     annotation: annotation)
+        let window = QuickShotWindow(frame: screen.frame, visibleFrame: screen.visibleFrame,
+                                     bitmap: bitmap, fixed: fixed, model: model, annotation: annotation)
         window.canvas.onCancel = { [weak self] in self?.cancel() }
         window.canvas.onSelect = { [weak self, weak window] in
             self?.windows.filter { $0 !== window }.forEach { $0.canvas.clearSelection() }
@@ -121,14 +121,28 @@ final class QuickShotSession: NSObject {
         NotificationCenter.default.addObserver(
             self, selector: #selector(cancel), name: NSApplication.didResignActiveNotification, object: NSApp
         )
-        windows.forEach { $0.orderFrontRegardless() }
-        if !NSApp.isActive { NSApp.activate(ignoringOtherApps: true) }
+        for window in windows {
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(windowResignedKey), name: NSWindow.didResignKeyNotification, object: window
+            )
+            window.show()
+        }
         let target = windows.first { $0.frame.contains(NSEvent.mouseLocation) } ?? windows.first
         target?.makeKey()
         target?.makeFirstResponder(target?.canvas)
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if self?.windows.contains(where: { $0.handleShortcut(event) }) == true { return nil }
             return event
+        }
+    }
+
+    @objc private func windowResignedKey() {
+        // Another display's panel or the Save As sheet can take focus during this event.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, onClose != nil,
+                  !windows.contains(where: { $0.isKeyWindow || $0.attachedSheet?.isKeyWindow == true })
+            else { return }
+            cancel()
         }
     }
 
